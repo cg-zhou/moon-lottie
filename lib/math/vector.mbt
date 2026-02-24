@@ -30,3 +30,10 @@ pub fn Vector2::length(self : Vector2) -> Double {
 pub fn Vector2::dot(self : Vector2, other : Vector2) -> Double {
   self.x * other.x + self.y * other.y
 }
+
+pub fn Vector2::lerp(self : Vector2, other : Vector2, t : Double) -> Vector2 {
+  {
+    x: self.x + (other.x - self.x) * t,
+    y: self.y + (other.y - self.y) * t,
+  }
+}

@@ -3,9 +3,21 @@ pub enum BezierValue {
   Multi(Array[Double])
 }
 
+pub fn BezierValue::new_single(v : Double) -> BezierValue {
+  BezierValue::Single(v)
+}
+
+pub fn BezierValue::new_multi(v : Array[Double]) -> BezierValue {
+  BezierValue::Multi(v)
+}
+
 pub struct Bezier {
   x : BezierValue
   y : BezierValue
+}
+
+pub fn Bezier::new(x : BezierValue, y : BezierValue) -> Bezier {
+  { x, y }
 }
 
 pub struct LottieKeyframe[T] {
@@ -16,6 +28,26 @@ pub struct LottieKeyframe[T] {
   value_in_tangent : Array[Double]?
   value_out_tangent : Array[Double]?
   hold : Int?
+}
+
+pub fn LottieKeyframe::new[T](
+  frame~ : Int,
+  start_value~ : T,
+  in_tangent~ : Bezier? = None,
+  out_tangent~ : Bezier? = None,
+  value_in_tangent~ : Array[Double]? = None,
+  value_out_tangent~ : Array[Double]? = None,
+  hold~ : Int? = None
+) -> LottieKeyframe[T] {
+  {
+    frame,
+    start_value,
+    in_tangent,
+    out_tangent,
+    value_in_tangent,
+    value_out_tangent,
+    hold,
+  }
 }
 
 pub enum PropertyValue[T] {
