@@ -1,9 +1,10 @@
 {
-  "name": "username/moon_lottie",
+  "name": "cg-zhou/moon-lottie",
   "version": "0.1.0",
+  "preferred-target": "wasm-gc",
   "readme": "README.mbt.md",
-  "repository": "",
+  "repository": "https://github.com/cg-zhou/moon-lottie",
   "license": "Apache-2.0",
   "keywords": [],
-  "description": ""
+  "description": "MoonBit 原生高性能 Lottie 动画引擎 | High-performance Lottie animation engine in native MoonBit"
 }

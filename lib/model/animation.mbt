@@ -1,15 +1,15 @@
 pub struct Animation {
-  pub v : String    // Version
-  pub fr : Double   // Frame rate
-  pub ip : Double   // In point
-  pub op : Double   // Out point
-  pub w : Int       // Width
-  pub h : Int       // Height
-  pub nm : String?  // Name
-  pub ddd : Int?    // 3D
-  pub assets : Array[Asset]?
-  pub layers : Array[Layer]
-  pub markers : Array[Marker]?
+  v : String    // Version
+  fr : Double   // Frame rate
+  ip : Double   // In point
+  op : Double   // Out point
+  w : Int       // Width
+  h : Int       // Height
+  nm : String?  // Name
+  ddd : Int?    // 3D
+  assets : Array[Asset]?
+  layers : Array[Layer]
+  markers : Array[Marker]?
 }
 
 pub enum Asset {
@@ -18,7 +18,7 @@ pub enum Asset {
 }
 
 pub struct Marker {
-  pub tm : Double   // Time
-  pub dur : Double  // Duration
-  pub dr : Double?  // Marker type?
+  tm : Double   // Time
+  dur : Double  // Duration
+  dr : Double?  // Marker type?
 }

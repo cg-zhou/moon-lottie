@@ -9,41 +9,41 @@ pub enum ShapeData {
 }
 
 pub struct Shape {
-  pub nm : String?
-  pub ty : String
-  pub d : Int?
-  pub data : ShapeData
+  nm : String?
+  ty : String
+  d : Int?
+  data : ShapeData
 }
 
 pub struct RectShape {
-  pub p : LottieProperty[Array[Double]] // Position
-  pub s : LottieProperty[Array[Double]] // Size
-  pub r : LottieProperty[Double]        // Roundness
+  p : LottieProperty[Array[Double]] // Position
+  s : LottieProperty[Array[Double]] // Size
+  r : LottieProperty[Double]        // Roundness
 }
 
 pub struct EllipseShape {
-  pub p : LottieProperty[Array[Double]] // Position
-  pub s : LottieProperty[Array[Double]] // Size
+  p : LottieProperty[Array[Double]] // Position
+  s : LottieProperty[Array[Double]] // Size
 }
 
 pub struct PathShape {
-  pub ks : LottieProperty[BezierPath]
+  ks : LottieProperty[BezierPath]
 }
 
 pub struct BezierPath {
-  pub v : Array[Array[Double]] // Vertices
-  pub i : Array[Array[Double]] // In tangents
-  pub o : Array[Array[Double]] // Out tangents
-  pub c : Bool                // Closed
+  v : Array[Array[Double]] // Vertices
+  i : Array[Array[Double]] // In tangents
+  o : Array[Array[Double]] // Out tangents
+  c : Bool                // Closed
 }
 
 pub struct FillShape {
-  pub c : LottieProperty[Array[Double]] // Color
-  pub o : LottieProperty[Double]        // Opacity
+  c : LottieProperty[Array[Double]] // Color
+  o : LottieProperty[Double]        // Opacity
 }
 
 pub struct StrokeShape {
-  pub c : LottieProperty[Array[Double]] // Color
-  pub o : LottieProperty[Double]        // Opacity
-  pub w : LottieProperty[Double]        // Width
+  c : LottieProperty[Array[Double]] // Color
+  o : LottieProperty[Double]        // Opacity
+  w : LottieProperty[Double]        // Width
 }

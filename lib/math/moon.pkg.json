@@ -1,2 +1,1 @@
-{
-}
+{"import": [{"path": "moonbitlang/core/math", "alias": "std_math"}]}

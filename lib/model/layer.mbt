@@ -7,16 +7,16 @@ pub enum LayerData {
 }
 
 pub struct Layer {
-  pub ddd : Int?
-  pub ind : Int
-  pub ty : Int
-  pub nm : String?
-  pub parent : Int?
-  pub ks : Transform
-  pub ao : Int?
-  pub ip : Double
-  pub op : Double
-  pub st : Double
-  pub bm : Int?
-  pub data : LayerData
+  ddd : Int?
+  ind : Int
+  ty : Int
+  nm : String?
+  parent : Int?
+  ks : Transform
+  ao : Int?
+  ip : Double
+  op : Double
+  st : Double
+  bm : Int?
+  data : LayerData
 }

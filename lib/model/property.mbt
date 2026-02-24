@@ -4,18 +4,18 @@ pub enum BezierValue {
 }
 
 pub struct Bezier {
-  pub x : BezierValue
-  pub y : BezierValue
+  x : BezierValue
+  y : BezierValue
 }
 
 pub struct LottieKeyframe[T] {
-  pub frame : Int
-  pub start_value : T
-  pub in_tangent : Bezier?
-  pub out_tangent : Bezier?
-  pub value_in_tangent : Array[Double]?
-  pub value_out_tangent : Array[Double]?
-  pub hold : Int?
+  frame : Int
+  start_value : T
+  in_tangent : Bezier?
+  out_tangent : Bezier?
+  value_in_tangent : Array[Double]?
+  value_out_tangent : Array[Double]?
+  hold : Int?
 }
 
 pub enum PropertyValue[T] {
@@ -24,9 +24,9 @@ pub enum PropertyValue[T] {
 }
 
 pub struct LottieProperty[T] {
-  pub animated : Int
-  pub value : PropertyValue[T]
-  pub expression : String?
+  animated : Int
+  value : PropertyValue[T]
+  expression : String?
 }
 
 pub fn LottieProperty::new_static[T](value : T) -> LottieProperty[T] {

@@ -1,0 +1,330 @@
+{
+  "source_dir": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie",
+  "name": "cg-zhou/moon-lottie",
+  "packages": [
+    {
+      "is-main": true,
+      "is-third-party": false,
+      "root-path": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\cmd\\main",
+      "root": "cg-zhou/moon-lottie",
+      "rel": "cmd/main",
+      "files": {
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\cmd\\main\\main.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        }
+      },
+      "wbtest-files": {},
+      "test-files": {},
+      "mbt-md-files": {},
+      "deps": [
+        {
+          "path": "cg-zhou/moon-lottie/lib/math",
+          "alias": "math",
+          "fspath": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math"
+        },
+        {
+          "path": "cg-zhou/moon-lottie/lib/model",
+          "alias": "model",
+          "fspath": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model"
+        },
+        {
+          "path": "cg-zhou/moon-lottie/lib/parser",
+          "alias": "parser",
+          "fspath": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\parser"
+        },
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "wbtest-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "test-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "artifact": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\_build\\wasm-gc\\release\\check\\cmd\\main\\main.mi"
+    },
+    {
+      "is-main": false,
+      "is-third-party": false,
+      "root-path": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math",
+      "root": "cg-zhou/moon-lottie",
+      "rel": "lib/math",
+      "files": {
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math\\bezier.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        },
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math\\matrix.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        },
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math\\vector.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        }
+      },
+      "wbtest-files": {},
+      "test-files": {
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math\\math_test.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        }
+      },
+      "mbt-md-files": {},
+      "deps": [
+        {
+          "path": "moonbitlang/core/math",
+          "alias": "std_math",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\math"
+        },
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "wbtest-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "test-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "artifact": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\_build\\wasm-gc\\release\\check\\lib\\math\\math.mi"
+    },
+    {
+      "is-main": false,
+      "is-third-party": false,
+      "root-path": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model",
+      "root": "cg-zhou/moon-lottie",
+      "rel": "lib/model",
+      "files": {
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model\\animation.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        },
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model\\layer.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        },
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model\\property.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        },
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model\\shape.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        },
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model\\transform.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        }
+      },
+      "wbtest-files": {},
+      "test-files": {},
+      "mbt-md-files": {},
+      "deps": [
+        {
+          "path": "cg-zhou/moon-lottie/lib/math",
+          "alias": "math",
+          "fspath": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math"
+        },
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "wbtest-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "test-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "artifact": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\_build\\wasm-gc\\release\\check\\lib\\model\\model.mi"
+    },
+    {
+      "is-main": false,
+      "is-third-party": false,
+      "root-path": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\parser",
+      "root": "cg-zhou/moon-lottie",
+      "rel": "lib/parser",
+      "files": {
+        "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\parser\\parser.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        }
+      },
+      "wbtest-files": {},
+      "test-files": {},
+      "mbt-md-files": {},
+      "deps": [
+        {
+          "path": "cg-zhou/moon-lottie/lib/math",
+          "alias": "math",
+          "fspath": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\math"
+        },
+        {
+          "path": "cg-zhou/moon-lottie/lib/model",
+          "alias": "model",
+          "fspath": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\lib\\model"
+        },
+        {
+          "path": "moonbitlang/core/json",
+          "alias": "json",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\json"
+        },
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "wbtest-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "test-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "C:\\Users\\asdl1c3dl061\\.moon\\lib\\core\\prelude"
+        }
+      ],
+      "artifact": "C:\\Users\\asdl1c3dl061\\Documents\\GitHub\\moonbit\\scc-2026\\moon-lottie\\_build\\wasm-gc\\release\\check\\lib\\parser\\parser.mi"
+    }
+  ],
+  "deps": [],
+  "backend": "wasm-gc",
+  "opt_level": "release",
+  "source": null
+}

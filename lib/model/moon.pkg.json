@@ -1,5 +1,1 @@
-{
-  "import": [
-    "username/moon_lottie/lib/math"
-  ]
-}
+{"import": ["cg-zhou/moon-lottie/lib/math"]}

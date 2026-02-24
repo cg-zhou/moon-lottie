@@ -1,9 +1,1 @@
-{
-  "is-main": true,
-  "import": [
-    {
-      "path": "username/moon_lottie",
-      "alias": "lib"
-    }
-  ]
-}
+{"is-main": true, "import": ["cg-zhou/moon-lottie/lib/math", "cg-zhou/moon-lottie/lib/model", "cg-zhou/moon-lottie/lib/parser"]}

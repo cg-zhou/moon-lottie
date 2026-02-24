@@ -1,9 +1,9 @@
 pub struct Transform {
-  pub anchor : LottieProperty[Array[Double]]
-  pub position : LottieProperty[Array[Double]]
-  pub scale : LottieProperty[Array[Double]]
-  pub rotation : LottieProperty[Double]
-  pub opacity : LottieProperty[Double]
-  pub skew : LottieProperty[Double]?
-  pub skew_axis : LottieProperty[Double]?
+  anchor : LottieProperty[Array[Double]]
+  position : LottieProperty[Array[Double]]
+  scale : LottieProperty[Array[Double]]
+  rotation : LottieProperty[Double]
+  opacity : LottieProperty[Double]
+  skew : LottieProperty[Double]?
+  skew_axis : LottieProperty[Double]?
 }
