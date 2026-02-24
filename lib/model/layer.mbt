@@ -6,6 +6,18 @@ pub enum LayerData {
   Image(String) // RefId
 }
 
+pub fn LayerData::new_shape(shapes : Array[Shape]) -> LayerData {
+  LayerData::Shape(shapes)
+}
+
+pub fn LayerData::new_solid(color : String, w : Int, h : Int) -> LayerData {
+  LayerData::Solid(color, w, h)
+}
+
+pub fn LayerData::new_null() -> LayerData {
+  LayerData::Null
+}
+
 pub struct Layer {
   ddd : Int?
   ind : Int
