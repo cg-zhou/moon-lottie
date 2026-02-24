@@ -195,13 +195,19 @@ fn parse_property_bezier(json : Json?) -> @model.LottieProperty[@model.BezierPat
     Some(j) =>
       match j {
         Object(obj) => {
-          let k = match obj.get("k") {
-            Some(k) => k
-            None => return None
-          }
-          match parse_bezier_path(k) {
-            Some(bp) => Some(@model.LottieProperty::new_static(bp))
-            None => None
+          // Case 1: Standard Lottie property { "a": 0, "k": { "v": ... } }
+          match obj.get("k") {
+            Some(k) =>
+              match parse_bezier_path(k) {
+                Some(bp) => Some(@model.LottieProperty::new_static(bp))
+                None => None
+              }
+            None =>
+              // Case 2: Simple path { "v": ... } without being wrapped in property
+              match parse_bezier_path(j) {
+                Some(bp) => Some(@model.LottieProperty::new_static(bp))
+                None => None
+              }
           }
         }
         _ => None
