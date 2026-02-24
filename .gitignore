@@ -1,4 +1,9 @@
 .DS_Store
 target/
+_build/
+.moonc/
 .mooncakes/
 .moonagent/
+*.wasm
+*.core
+*.mi

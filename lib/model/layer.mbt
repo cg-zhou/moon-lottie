@@ -20,3 +20,20 @@ pub struct Layer {
   bm : Int?
   data : LayerData
 }
+
+pub fn Layer::new(
+  ind~ : Int,
+  ty~ : Int,
+  ks~ : Transform,
+  ip~ : Double,
+  op~ : Double,
+  st~ : Double,
+  ddd~ : Int? = None,
+  nm~ : String? = None,
+  parent~ : Int? = None,
+  ao~ : Int? = None,
+  bm~ : Int? = None,
+  data~ : LayerData = LayerData::Null
+) -> Layer {
+  { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, data }
+}
