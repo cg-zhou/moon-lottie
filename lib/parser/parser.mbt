@@ -35,75 +35,155 @@ fn get_int(json : Json, key : String) -> Int? {
 ///| Parse a simple Property (non-animated for now)
 fn parse_property_double(json : Json?) -> @model.LottieProperty[Double]? {
   match json {
-    Some(j) => {
-      // Check if it's an object with "k"
+    Some(j) =>
       match j.as_object() {
         Some(obj) => {
-          match obj.get("k") {
-            Some(k) => {
+          let k = match obj.get("k") {
+            Some(k) => k
+            None => return None
+          }
+          match k.as_number() {
+            Some(n) => Some(@model.LottieProperty::new_static(n))
+            None => None
+          }
+        }
+        None =>
+          match j.as_number() {
+            Some(n) => Some(@model.LottieProperty::new_static(n))
+            None => None
+          }
+      }
+    None => None
+  }
+}
+
+fn parse_property_vec(json : Json?) -> @model.LottieProperty[Array[Double]]? {
+  match json {
+    Some(j) =>
+      match j.as_object() {
+        Some(obj) => {
+          let k = match obj.get("k") {
+            Some(k) => k
+            None => return None
+          }
+          match k.as_array() {
+            Some(arr) => {
+              let vals = []
+              for v in arr {
+                match v.as_number() {
+                  Some(n) => vals.push(n)
+                  None => ()
+                }
+              }
+              Some(@model.LottieProperty::new_static(vals))
+            }
+            None =>
               match k.as_number() {
-                Some(n) => Some({ a: 0, k: n, ix: None, x: None })
+                Some(n) => Some(@model.LottieProperty::new_static([n]))
                 None => None
               }
+          }
+        }
+        None =>
+          match j.as_array() {
+            Some(arr) => {
+              let vals = []
+              for v in arr {
+                match v.as_number() {
+                  Some(n) => vals.push(n)
+                  None => ()
+                }
+              }
+              Some(@model.LottieProperty::new_static(vals))
             }
             None => None
           }
-        }
-        None => {
-          // Maybe it's just a number
-          match j.as_number() {
-            Some(n) => Some({ a: 0, k: n, ix: None, x: None })
-            None => None
-          }
-        }
       }
-    }
     None => None
   }
 }
 
 ///| Parse Transform
 fn parse_transform(json : Json?) -> @model.Transform? {
-  let obj = json?.as_object()?
-  Some({
-    anchor: parse_property_vec(obj.get("a"))?,
-    position: parse_property_vec(obj.get("p"))?,
-    scale: parse_property_vec(obj.get("s"))?,
-    rotation: parse_property_double(obj.get("r"))?,
-    opacity: parse_property_double(obj.get("o"))?,
-    skew: None,
-    skew_axis: None,
-  })
-}
-
-fn parse_property_vec(json : Json?) -> @model.LottieProperty[Array[Double]]? {
-  // Simple vec parser placeholder
-  None
+  match json {
+    Some(j) =>
+      match j.as_object() {
+        Some(obj) => {
+          let anchor = match parse_property_vec(obj.get("a")) {
+            Some(v) => v
+            None => return None
+          }
+          let position = match parse_property_vec(obj.get("p")) {
+            Some(v) => v
+            None => return None
+          }
+          let scale = match parse_property_vec(obj.get("s")) {
+            Some(v) => v
+            None => return None
+          }
+          let rotation = match parse_property_double(obj.get("r")) {
+            Some(v) => v
+            None => return None
+          }
+          let opacity = match parse_property_double(obj.get("o")) {
+            Some(v) => v
+            None => return None
+          }
+          Some(
+            @model.Transform::new(
+              anchor~,
+              position~,
+              scale~,
+              rotation~,
+              opacity~,
+            ),
+          )
+        }
+        None => None
+      }
+    None => None
+  }
 }
 
 ///| Parse the top-level Animation object
 pub fn parse_animation(json : Json) -> @model.Animation? {
-  let v = get_string(json, "v")?
-  let fr = get_double(json, "fr")?
-  let ip = get_double(json, "ip")?
-  let op = get_double(json, "op")?
-  let w = get_int(json, "w")?
-  let h = get_int(json, "h")?
+  let v = match get_string(json, "v") {
+    Some(v) => v
+    None => return None
+  }
+  let fr = match get_double(json, "fr") {
+    Some(fr) => fr
+    None => return None
+  }
+  let ip = match get_double(json, "ip") {
+    Some(ip) => ip
+    None => return None
+  }
+  let op = match get_double(json, "op") {
+    Some(op) => op
+    None => return None
+  }
+  let w = match get_int(json, "w") {
+    Some(w) => w
+    None => return None
+  }
+  let h = match get_int(json, "h") {
+    Some(h) => h
+    None => return None
+  }
   
-  // Basic layers parsing placeholder
-  let layers = [] 
-  
-  Some({
-    v,
-    fr,
-    ip,
-    op,
-    w,
-    h,
-    nm: get_string(json, "nm"),
-    ddd: get_int(json, "ddd"),
-    assets: None, // TODO
-    layers,
-    markers: None,
-  })
+  let layers : Array[@model.Layer] = []
+  Some(
+    @model.Animation::new(
+      v~,
+      fr~,
+      ip~,
+      op~,
+      w~,
+      h~,
+      nm=get_string(json, "nm"),
+      ddd=get_int(json, "ddd"),
+      layers~,
+    ),
+  )
 }
