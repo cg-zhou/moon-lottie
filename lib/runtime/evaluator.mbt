@@ -98,3 +98,30 @@ pub fn evaluate_vec_property(
     }
   }
 }
+
+pub fn evaluate_transform(
+  transform : @model.Transform,
+  frame : Double
+) -> @math.Matrix {
+  let a = evaluate_vec_property(transform.anchor, frame)
+  let p = evaluate_vec_property(transform.position, frame)
+  let s = evaluate_vec_property(transform.scale, frame)
+  let r = evaluate_double_property(transform.rotation, frame)
+  
+  // Matrix transform construction
+  let m = @math.Matrix::identity()
+  
+  // 1. Translate to position
+  let m1 = m.translate(p[0], p[1])
+  
+  // 2. Rotate
+  // Lottie rotation is in degrees clockwise. Matrix::rotate expects radians.
+  let m2 = m1.rotate(r * 3.141592653589793 / 180.0)
+  
+  // 3. Scale
+  // Lottie scale is in percentage (0-100)
+  let m3 = m2.scale(s[0] / 100.0, s[1] / 100.0)
+  
+  // 4. Anchor offset (negative translation)
+  m3.translate(-a[0], -a[1])
+}
