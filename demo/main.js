@@ -5,12 +5,14 @@ const ctx = canvas.getContext('2d');
 const statusEl = document.getElementById('status');
 const frameInfoEl = document.getElementById('frame-info');
 const playPauseBtn = document.getElementById('play-pause');
+const seekBar = document.getElementById('seek-bar');
 const fileInput = document.getElementById('file-input');
 
 let isPlaying = true;
 let currentFrame = 0;
 let player = null;
 let currentJsonStr = "";
+let imageAssets = new Map();
 
 // Helper to convert MoonBit string (WasmGC array) to JS string
 function moonStringJS(moonStr) {
@@ -24,6 +26,8 @@ function moonStringJS(moonStr) {
 }
 
 let currentGradient = null;
+
+const fillRuleStack = [];
 
 // Canvas FFI
 const importObject = {
@@ -40,8 +44,14 @@ const importObject = {
     }
   },
   canvas: {
-    save: () => ctx.save(),
-    restore: () => ctx.restore(),
+    save: () => {
+        ctx.save();
+        fillRuleStack.push(ctx._currentFillRule || "nonzero");
+    },
+    restore: () => {
+        ctx.restore();
+        ctx._currentFillRule = fillRuleStack.pop() || "nonzero";
+    },
     beginPath: () => ctx.beginPath(),
     closePath: () => ctx.closePath(),
     moveTo: (x, y) => ctx.moveTo(x, y),
@@ -51,7 +61,7 @@ const importObject = {
         ctx.save();
         ctx.globalAlpha = a;
         ctx.fillStyle = `rgb(${r},${g},${b})`; 
-        ctx.fill(); 
+        ctx.fill(ctx._currentFillRule || "nonzero"); 
         ctx.restore();
     },
     stroke: (r, g, b, a, width) => { 
@@ -61,6 +71,19 @@ const importObject = {
         ctx.lineWidth = width; 
         ctx.stroke(); 
         ctx.restore();
+    },
+    setStrokeStyle: (cap, join, miter) => {
+        const caps = ["butt", "round", "square"];
+        const joins = ["miter", "round", "bevel"];
+        ctx.lineCap = caps[cap - 1] || "butt";
+        ctx.lineJoin = joins[join - 1] || "miter";
+        ctx.miterLimit = miter;
+    },
+    setFillRule: (rule) => {
+        // rule is "nonzero" or "evenodd"
+        // ctx doesn't have setFillRule, but fill() and clip() take the rule
+        // We'll store it on the context for our helpers
+        ctx._currentFillRule = moonStringJS(rule);
     },
     createLinearGradient: (x1, y1, x2, y2) => {
         currentGradient = ctx.createLinearGradient(x1, y1, x2, y2);
@@ -80,7 +103,7 @@ const importObject = {
             ctx.save();
             ctx.globalAlpha = a;
             ctx.fillStyle = currentGradient;
-            ctx.fill();
+            ctx.fill(ctx._currentFillRule || "nonzero");
             ctx.restore();
         }
     },
@@ -94,14 +117,19 @@ const importObject = {
             ctx.restore();
         }
     },
-    clip: () => ctx.clip(),
+    clip: () => ctx.clip(ctx._currentFillRule || "nonzero"),
     clearRect: (x, y, w, h) => ctx.clearRect(x, y, w, h),
     setGlobalAlpha: (a) => { ctx.globalAlpha = a; },
+    setOpacity: (a) => { ctx.globalAlpha *= a; },
 
     setTransform: (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
-        console.log("Draw image:", moonStringJS(id));
+        const idStr = moonStringJS(id);
+        const img = imageAssets.get(idStr);
+        if (img) {
+            ctx.drawImage(img, 0, 0, w, h);
+        }
     },
     setGlobalCompositeOperation: (mode) => {
         ctx.globalCompositeOperation = moonStringJS(mode);
@@ -146,7 +174,41 @@ function loadSample() {
         });
 }
 
-function startPlayer(jsonStr) {
+async function preloadAssets(json) {
+    if (!json.assets) return;
+    statusEl.innerText = "Loading assets...";
+    const promises = json.assets.map(asset => {
+        if (asset.p && (asset.p.startsWith('data:') || asset.u !== undefined)) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    imageAssets.set(asset.id, img);
+                    resolve();
+                };
+                img.onerror = () => {
+                    console.warn("Failed to load image asset:", asset.id);
+                    resolve();
+                };
+                const src = asset.p.startsWith('data:') ? asset.p : (asset.u || '') + asset.p;
+                img.src = src;
+            });
+        }
+        return Promise.resolve();
+    });
+    await Promise.all(promises);
+}
+
+async function startPlayer(jsonStr) {
+    let animationData;
+    try {
+        animationData = JSON.parse(jsonStr);
+    } catch (e) {
+        statusEl.innerText = "Invalid JSON file.";
+        return;
+    }
+
+    await preloadAssets(animationData);
+    
     currentJsonStr = jsonStr;
     
     if (player) {
@@ -155,7 +217,8 @@ function startPlayer(jsonStr) {
     
     // WebAssembly GC exports
     const createFn = window.moonLottie.create_player_from_js;
-    const updateFn = window.moonLottie.update_player;
+    const updateFn = window.moonLottie.update_player_with_speed;
+    const getFrameCountFn = window.moonLottie.get_frame_count;
 
     if (!createFn) {
         console.error("Available exports:", Object.keys(window.moonLottie));
@@ -166,6 +229,7 @@ function startPlayer(jsonStr) {
     // Cache functions
     window.currentCreateFn = createFn;
     window.currentUpdateFn = updateFn;
+    window.currentGetFrameCountFn = getFrameCountFn;
 
     try {
         player = createFn();
@@ -179,6 +243,11 @@ function startPlayer(jsonStr) {
         statusEl.innerText = "Failed to parse Lottie JSON.";
         return;
     }
+
+    const totalFrames = getFrameCountFn ? getFrameCountFn(player) : 100;
+    seekBar.max = totalFrames;
+    seekBar.value = 0;
+
     statusEl.innerText = "Playing animation...";
     currentFrame = 0;
     requestAnimationFrame(renderLoop);
@@ -188,15 +257,26 @@ function renderLoop() {
     if (!player) return;
     
     if (isPlaying) {
-        window.currentUpdateFn(player, currentFrame);
+        const speed = parseFloat(document.getElementById('speed').value);
+        currentFrame = window.currentUpdateFn(player, currentFrame, speed);
         frameInfoEl.innerText = `Frame: ${Math.floor(currentFrame)}`;
-        
-        currentFrame += 1.0;
-        if (currentFrame > 1000) currentFrame = 0; 
+        seekBar.value = currentFrame;
+
+        const totalFrames = window.currentGetFrameCountFn ? window.currentGetFrameCountFn(player) : 1000;
+        if (currentFrame >= totalFrames - 1) {
+            currentFrame = 0;
+        }
     }
     
     requestAnimationFrame(renderLoop);
 }
+
+seekBar.oninput = () => {
+    if (!player) return;
+    currentFrame = parseFloat(seekBar.value);
+    window.currentUpdateFn(player, currentFrame, 0); // Update but don't advance
+    frameInfoEl.innerText = `Frame: ${Math.floor(currentFrame)}`;
+};
 
 playPauseBtn.onclick = () => {
     isPlaying = !isPlaying;
@@ -207,8 +287,8 @@ fileInput.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
-        startPlayer(ev.target.result);
+    reader.onload = (event) => {
+        startPlayer(event.target.result);
     };
     reader.readAsText(file);
 };

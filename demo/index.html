@@ -62,7 +62,12 @@
         
         <div class="controls">
             <button id="play-pause">Pause</button>
+            <input type="range" id="seek-bar" min="0" max="100" value="0" style="width: 200px;">
             <span id="frame-info">Frame: 0</span>
+        </div>
+        <div class="controls" style="margin-top: 10px;">
+            <label for="speed">Speed: </label>
+            <input type="range" id="speed" min="0" max="2" step="0.1" value="1.0">
         </div>
 
         <div class="info">

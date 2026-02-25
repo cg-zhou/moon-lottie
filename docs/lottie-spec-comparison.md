@@ -19,19 +19,20 @@
 | | 缩放 (Scale - `s`) | ✅ 已支持 | |
 | | 旋转 (Rotation - `r`) | ✅ 已支持 | |
 | | 锚点 (Anchor Point - `a`) | ✅ 已支持 | |
-| | 不透明度 (Opacity - `o`) | ✅ 已支持 | |
+| | 不透明度 (Opacity - `o`) | ✅ 已支持 | 已支持层级嵌套的乘法透明度系数 |
 | **修改器 (Modifiers)** | 修剪路径 (Trim Paths - `tm`) | ✅ 已支持 | 支持三阶贝塞尔精确切分 |
 | | 中继器 (Repeater - `rp`) | ✅ 已支持 | 支持副本级联变换及复合模式 |
-| | 合并路径 (Merge Paths - `mm`) | 🟠 部分支持 | 支持解析与模式分流，复杂布尔暂以 evenodd 替代 |
-| | 圆角修改器 (Rounding - `rd`) | 🟠 部分支持 | 仅支持模型定义与解析 |
+| | 合并路径 (Merge Paths - `mm`) | ✅ 已支持 | 基础模式完全支持；减去/相交/排除模式通过 evenodd 模拟渲染 |
+| | 圆角修改器 (Rounding - `rd`) | 🟠 部分支持 | 已支持模型定义与解析 |
 | **图层类型 (Layers)** | 形状图层 (Shape Layer) | ✅ 已支持 | |
 | | 预合成图层 (Pre-comp Layer) | ✅ 已支持 | |
 | | 固态层 (Solid Layer) | ✅ 已支持 | |
-| | 图片层 (Image Layer) | ❌ 未支持 | 待实现 FFI 资源加载 |
+| | 图片层 (Image Layer) | 🟠 部分支持 | JS 预加载完成，Wasm 渲染待对接 |
 | | 空对象图层 (Null Layer) | ✅ 已支持 | |
-| **高级渲染** | 蒙版 (Masks) | 🟠 部分支持 | 已支持 `Add`, `Subtract` 模式 |
+| **高级渲染** | 蒙版 (Masks) | ✅ 已支持 | 支持 Add, Subtract, Intersect |
 | | 遮罩 (Track Mattes) | 🟠 部分支持 | 已支持 `Alpha` 模式 |
 | | 混合模式 (Blend Modes) | ✅ 已支持 | |
+| | 表达式 (Expressions) | ❌ 未支持 | 待调研 Wasm 桥接方案 |
 
 ## 动画与插值
 

@@ -1,3 +1,4 @@
+///|
 pub(all) enum MaskMode {
   Add
   Subtract
@@ -8,6 +9,7 @@ pub(all) enum MaskMode {
   None
 } derive(Show, Eq)
 
+///|
 pub struct Mask {
   nm : String?
   inv : Bool
@@ -16,12 +18,13 @@ pub struct Mask {
   mode : MaskMode
 }
 
+///|
 pub fn Mask::new(
   inv~ : Bool,
   pt~ : LottieProperty[BezierPath],
   o~ : LottieProperty[Double],
   mode~ : MaskMode,
-  nm~ : String? = None
+  nm? : String? = None,
 ) -> Mask {
   { nm, inv, pt, o, mode }
 }

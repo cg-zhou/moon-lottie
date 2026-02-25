@@ -1,3 +1,4 @@
+///|
 pub(all) enum LayerData {
   Shape(Array[Shape])
   Solid(String, Int, Int) // Color, width, height
@@ -6,18 +7,22 @@ pub(all) enum LayerData {
   Image(String) // RefId
 }
 
+///|
 pub fn LayerData::new_shape(shapes : Array[Shape]) -> LayerData {
   LayerData::Shape(shapes)
 }
 
+///|
 pub fn LayerData::new_solid(color : String, w : Int, h : Int) -> LayerData {
   LayerData::Solid(color, w, h)
 }
 
+///|
 pub fn LayerData::new_null() -> LayerData {
   LayerData::Null
 }
 
+///|
 pub struct Layer {
   ddd : Int?
   ind : Int
@@ -37,6 +42,7 @@ pub struct Layer {
   data : LayerData
 }
 
+///|
 pub fn Layer::new(
   ind~ : Int,
   ty~ : Int,
@@ -44,16 +50,16 @@ pub fn Layer::new(
   ip~ : Double,
   op~ : Double,
   st~ : Double,
-  ddd~ : Int? = None,
-  nm~ : String? = None,
-  parent~ : Int? = None,
-  ao~ : Int? = None,
-  bm~ : Int? = None,
-  hd~ : Bool? = None,
-  masks~ : Array[Mask]? = None,
-  tt~ : Int? = None,
-  td~ : Int? = None,
-  data~ : LayerData = LayerData::Null
+  ddd? : Int? = None,
+  nm? : String? = None,
+  parent? : Int? = None,
+  ao? : Int? = None,
+  bm? : Int? = None,
+  hd? : Bool? = None,
+  masks? : Array[Mask]? = None,
+  tt? : Int? = None,
+  td? : Int? = None,
+  data? : LayerData = LayerData::Null,
 ) -> Layer {
   { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, hd, masks, tt, td, data }
 }

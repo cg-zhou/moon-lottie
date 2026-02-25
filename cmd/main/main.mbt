@@ -1,11 +1,18 @@
+///|
 extern "wasm" fn js_get_json_len() -> Int = "demo" "get_json_len"
+
+///|
 extern "wasm" fn js_get_json_char(idx : Int) -> Int = "demo" "get_json_char"
+
+///|
 extern "wasm" fn js_log_frame(frame : Double) -> Unit = "demo" "log_frame"
 
+///|
 fn main {
   // main can be empty
 }
 
+///|
 fn get_json_from_js() -> String {
   let len = js_get_json_len()
   let sb = @builtin.StringBuilder::new(size_hint=len)
@@ -16,6 +23,7 @@ fn get_json_from_js() -> String {
   sb.to_string()
 }
 
+///|
 pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
   try {
     let json_str = get_json_from_js()
@@ -27,8 +35,26 @@ pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
   }
 }
 
-pub fn update_player(player : @renderer.Player[@renderer.CanvasRenderer], frame : Double) -> Unit {
+///|
+pub fn update_player(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+  frame : Double,
+) -> Unit {
   js_log_frame(frame)
   player.set_frame(frame)
   player.render()
+}
+
+///|
+pub fn get_total_frames(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> Double {
+  player.animation.op - player.animation.ip
+}
+
+///|
+pub fn get_in_point(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> Double {
+  player.animation.ip
 }

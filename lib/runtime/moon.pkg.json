@@ -1,6 +1,0 @@
-{
-  "import": [
-    "cg-zhou/moon-lottie/lib/math",
-    "cg-zhou/moon-lottie/lib/model"
-  ]
-}

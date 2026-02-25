@@ -1,6 +1,0 @@
-{
-  "import": [
-    "moonbitlang/core/json",
-    "cg-zhou/moon-lottie/lib/model"
-  ]
-}
