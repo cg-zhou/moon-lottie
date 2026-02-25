@@ -499,6 +499,68 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
         "tr" => {
           @model.ShapeData::new_transform(parse_transform(Some(json)))
         }
+        "tm" => {
+          let s = try {
+            parse_property_double(obj.get("s"))
+          } catch {
+            _ => @model.LottieProperty::new_static(0.0)
+          }
+          let e = try {
+            parse_property_double(obj.get("e"))
+          } catch {
+            _ => @model.LottieProperty::new_static(100.0)
+          }
+          let o = try {
+            parse_property_double(obj.get("o"))
+          } catch {
+            _ => @model.LottieProperty::new_static(0.0)
+          }
+          let m = try {
+            get_int(json, "m")
+          } catch {
+            _ => 1
+          }
+          @model.ShapeData::new_trim_path(@model.TrimPath::new(s~, e~, o~, m~))
+        }
+        "sr" => {
+          let pt = parse_property_double(obj.get("pt"))
+          let p = parse_property_vec(obj.get("p"))
+          let r = parse_property_double(obj.get("r"))
+          let ir = try {
+            parse_property_double(obj.get("ir"))
+          } catch {
+            _ => @model.LottieProperty::new_static(0.0)
+          }
+          let ir_round = try {
+            parse_property_double(obj.get("is"))
+          } catch {
+            _ => @model.LottieProperty::new_static(0.0)
+          }
+          let or = parse_property_double(obj.get("or"))
+          let or_round = try {
+            parse_property_double(obj.get("os"))
+          } catch {
+            _ => @model.LottieProperty::new_static(0.0)
+          }
+          let sy = match obj.get("sy") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          @model.ShapeData::new_polystar(
+            @model.PolystarShape::new(pt~, p~, r~, ir~, ir_round~, or~, or_round~, sy~),
+          )
+        }
+        "rp" => {
+          let c = parse_property_double(obj.get("c"))
+          let o = parse_property_double(obj.get("o"))
+          let m = try {
+            get_int(json, "m")
+          } catch {
+            _ => 1
+          }
+          let tr = parse_transform(obj.get("tr"))
+          @model.ShapeData::new_repeater(@model.Repeater::new(c~, o~, m~, tr~))
+        }
         _ => raise InvalidJson("Unknown shape type: " + ty)
       }
       @model.Shape::new(ty~, data~, nm~, hd~)

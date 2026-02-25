@@ -47,6 +47,12 @@ pub fn Matrix::rotate(self : Matrix, angle : Double) -> Matrix {
   self.multiply({ a: cos, b: sin, c: -sin, d: cos, e: 0.0, f: 0.0 })
 }
 
+pub fn Matrix::transform_point(self : Matrix, x : Double, y : Double) -> (Double, Double) {
+  let nx = self.a * x + self.c * y + self.e
+  let ny = self.b * x + self.d * y + self.f
+  (nx, ny)
+}
+
 pub fn sqrt(x : Double) -> Double {
   x.sqrt()
 }

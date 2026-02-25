@@ -34,4 +34,15 @@
 | `py` | posY | Number | 独立 Y 位置分量 |
 | `ti` | tangentIn | Vector | 空间插值入切线 (Spatial Bezier) |
 | `to` | tangentOut | Vector | 空间插值出切线 (Spatial Bezier) |
+| `tm` | trimPath | Object | 路径修整 (Trim Path) |
+| `sr` | polystar | Object | 星形/多边形 (Polystar) |
+| `sy` | starType | Int | 星形类型 (1: Star, 2: Polygon) |
+| `pt` | points | Number | 顶点/边数 |
+| `ir` | innerRadius | Number | 内半径 |
+| `is` | innerRoundness | Number | 内圆角 (Lottie 内部名, MoonBit 对应 ir_round) |
+| `or` | outerRadius | Number | 外半径 |
+| `os` | outerRoundness | Number | 外圆角 (Lottie 内部名, MoonBit 对应 or_round) |
+| `rp` | repeater | Object | 中继器 (Repeater) |
+| `c` | copies | Number | 副本数量 |
+| `m` | composite | Int | 中继器复合模式 (1: Above, 2: Below) |
 ```

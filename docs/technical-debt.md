@@ -17,6 +17,10 @@
 - [ ] **性能优化 (SIMD)**: 探索在矩阵运算中使用 MoonBit SIMD 以加速关键帧密集的动画。
 - [x] **错误处理**: 解析器已全面引入 `raise LottieError` 机制，提供明确的错误类型反馈，解决了空值默认填充导致的调试困难。
 - [x] **色彩渐变 (Gradients)**: 已支持线性渐变 (`gf`) 和径向渐变 (`gs`) 的解析与 FFI 渲染，通过多步 FFI 调用规避了 `Array` 传递的限制。
+- [x] **高级几何修改器 (Advanced Modifiers)**: 已实现路径修整 (Trim Paths)、星形/多边形 (Polystar) 及中继器 (Repeater) 的解析与渲染逻辑。
+- [x] **Trim Paths 精确切分**: 采用 De Casteljau 算法实现了对三阶贝塞尔曲线在任意百分比位置的精确切分与路径保留。
+- [x] **Polystar 与圆角生成**: 实现了星形与多边形的动态生成，并支持基于 Lottie 标准曲率魔数的内/外圆角平滑。
+- [x] **Repeater 复合绘制**: 实现了中继器的多副本偏移、缩放、旋转级联变换，并支持 Above/Below 两种复合模式。
 
 ## 验证协议 (Verification Protocol)
 

@@ -36,3 +36,19 @@ pub fn get_cubic_bezier_length(
   }
   length
 }
+
+pub fn split_cubic_bezier(
+  p0 : Vector2,
+  p1 : Vector2,
+  p2 : Vector2,
+  p3 : Vector2,
+  t : Double
+) -> (Vector2, Vector2, Vector2, Vector2, Vector2, Vector2, Vector2) {
+  let p01 = Vector2::new(p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t)
+  let p12 = Vector2::new(p1.x + (p2.x - p1.x) * t, p1.y + (p2.y - p1.y) * t)
+  let p23 = Vector2::new(p2.x + (p3.x - p2.x) * t, p2.y + (p3.y - p2.y) * t)
+  let p012 = Vector2::new(p01.x + (p12.x - p01.x) * t, p01.y + (p12.y - p01.y) * t)
+  let p123 = Vector2::new(p12.x + (p23.x - p12.x) * t, p12.y + (p23.y - p12.y) * t)
+  let p0123 = Vector2::new(p012.x + (p123.x - p012.x) * t, p012.y + (p123.y - p012.y) * t)
+  (p0, p01, p012, p0123, p123, p23, p3)
+}

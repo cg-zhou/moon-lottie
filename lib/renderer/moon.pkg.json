@@ -1,6 +1,7 @@
 {
   "import": [
     "cg-zhou/moon-lottie/lib/math",
+    {"path": "moonbitlang/core/math", "alias": "std_math"},
     "cg-zhou/moon-lottie/lib/model",
     "cg-zhou/moon-lottie/lib/runtime",
     "moonbitlang/core/json"

@@ -1,4 +1,4 @@
-pub enum ShapeData {
+﻿pub enum ShapeData {
   Group(Array[Shape])
   Rect(RectShape)
   Ellipse(EllipseShape)
@@ -8,6 +8,9 @@ pub enum ShapeData {
   GradientFill(GradientFillShape)
   GradientStroke(GradientStrokeShape)
   Transform(Transform)
+  TrimPath(TrimPath)
+  Polystar(PolystarShape)
+  Repeater(Repeater)
 }
 
 pub fn ShapeData::new_group(items : Array[Shape]) -> ShapeData {
@@ -44,6 +47,18 @@ pub fn ShapeData::new_gradient_stroke(stroke : GradientStrokeShape) -> ShapeData
 
 pub fn ShapeData::new_transform(transform : Transform) -> ShapeData {
   ShapeData::Transform(transform)
+}
+
+pub fn ShapeData::new_trim_path(trim : TrimPath) -> ShapeData {
+  ShapeData::TrimPath(trim)
+}
+
+pub fn ShapeData::new_polystar(polystar : PolystarShape) -> ShapeData {
+  ShapeData::Polystar(polystar)
+}
+
+pub fn ShapeData::new_repeater(repeater : Repeater) -> ShapeData {
+  ShapeData::Repeater(repeater)
 }
 
 pub struct Shape {
@@ -112,6 +127,17 @@ pub fn BezierPath::new(
   c~ : Bool
 ) -> BezierPath {
   { v, i, o, c }
+}
+
+pub fn BezierPath::new_rect(x : Double, y : Double, w : Double, h : Double) -> BezierPath {
+  let hw = w / 2.0
+  let hh = h / 2.0
+  BezierPath::new(
+    v=[[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh]],
+    i=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    o=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    c=true
+  )
 }
 
 pub struct FillShape {
@@ -195,4 +221,60 @@ pub fn GradientStrokeShape::new(
 ) -> GradientStrokeShape {
   let ty = if t == 1 { GradientType::Linear } else { GradientType::Radial }
   { t: ty, o, s, e, g, w }
+}
+
+pub struct TrimPath {
+  s : LottieProperty[Double] // Start
+  e : LottieProperty[Double] // End
+  o : LottieProperty[Double] // Offset
+  m : Int // Trim Multiple Shapes: 1=Simultaneously, 2=Individually
+}
+
+pub fn TrimPath::new(
+  s~ : LottieProperty[Double],
+  e~ : LottieProperty[Double],
+  o~ : LottieProperty[Double],
+  m~ : Int = 1
+) -> TrimPath {
+  { s, e, o, m }
+}
+
+pub struct PolystarShape {
+  pt : LottieProperty[Double] // Points
+  p : LottieProperty[Array[Double]] // Position
+  r : LottieProperty[Double] // Rotation
+  ir : LottieProperty[Double] // Inner Radius
+  ir_round : LottieProperty[Double] // Inner Roundness
+  or : LottieProperty[Double] // Outer Radius
+  or_round : LottieProperty[Double] // Outer Roundness
+  sy : Int // Star Type: 1=Star, 2=Polygon
+}
+
+pub fn PolystarShape::new(
+  pt~ : LottieProperty[Double],
+  p~ : LottieProperty[Array[Double]],
+  r~ : LottieProperty[Double],
+  ir~ : LottieProperty[Double],
+  ir_round~ : LottieProperty[Double],
+  or~ : LottieProperty[Double],
+  or_round~ : LottieProperty[Double],
+  sy~ : Int
+) -> PolystarShape {
+  { pt, p, r, ir, ir_round, or, or_round, sy }
+}
+
+pub struct Repeater {
+  c : LottieProperty[Double] // Copies
+  o : LottieProperty[Double] // Offset
+  m : Int // Composite: 1=Above, 2=Below
+  tr : Transform // Transform
+}
+
+pub fn Repeater::new(
+  c~ : LottieProperty[Double],
+  o~ : LottieProperty[Double],
+  m~ : Int = 1,
+  tr~ : Transform
+) -> Repeater {
+  { c, o, m, tr }
 }
