@@ -1,4 +1,20 @@
 ///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn ffi_evaluate_expression_double(
+  code : String,
+  time : Double,
+  default_val : Double
+) -> Double = "expressions" "evaluate_double"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn ffi_evaluate_expression_vec_into(
+  code : String,
+  time : Double,
+  result : Array[Double]
+) -> Unit = "expressions" "evaluate_vec_into"
+
+///|
 /// Find the keyframe for a given frame
 fn[T] find_keyframe(
   keyframes : Array[@model.LottieKeyframe[T]],
@@ -62,7 +78,7 @@ pub fn evaluate_double_property(
   prop : @model.LottieProperty[Double],
   frame : Double,
 ) -> Double {
-  match prop.value {
+  let val = match prop.value {
     Static(v) => v
     Animated(keyframes) => {
       let (idx, t) = find_keyframe(keyframes, frame)
@@ -71,41 +87,52 @@ pub fn evaluate_double_property(
       }
       let k1 = keyframes[idx]
       if t <= 0.0 || idx >= keyframes.length() - 1 {
-        return k1.start_value
-      }
+        k1.start_value
+      } else {
+        let k2 = keyframes[idx + 1]
 
-      let k2 = keyframes[idx + 1]
-
-      // Easing solve
-      let eased_t = match (k1.out_tangent, k1.in_tangent) {
-        (Some(ot), Some(it)) => {
-          let x1 = match ot.x {
-            Single(v) => v
-            Multi(arr) => arr[0]
+        // Easing solve
+        let eased_t = match (k1.out_tangent, k1.in_tangent) {
+          (Some(ot), Some(it)) => {
+            let x1 = match ot.x {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let y1 = match ot.y {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let x2 = match it.x {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let y2 = match it.y {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
           }
-          let y1 = match ot.y {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          let x2 = match it.x {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          let y2 = match it.y {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
+          _ => t
         }
-        _ => t
-      }
 
-      let next_val = match k1.end_value {
-        Some(v) => v
-        None => k2.start_value
+        let next_val = match k1.end_value {
+          Some(v) => v
+          None => k2.start_value
+        }
+        @math.lerp_double(k1.start_value, next_val, eased_t)
       }
-      @math.lerp_double(k1.start_value, next_val, eased_t)
     }
+  }
+  match prop.expression {
+    Some(code) => {
+      #cfg(any(target="wasm", target="wasm-gc")) {
+        ffi_evaluate_expression_double(code, frame, val)
+      }
+      #cfg(not(any(target="wasm", target="wasm-gc"))) {
+        val
+      }
+    }
+    None => val
   }
 }
 
@@ -114,7 +141,7 @@ pub fn evaluate_vec_property(
   prop : @model.LottieProperty[Array[Double]],
   frame : Double,
 ) -> Array[Double] {
-  match prop.value {
+  let val = match prop.value {
     Static(v) => v
     Animated(keyframes) => {
       let (idx, t) = find_keyframe(keyframes, frame)
@@ -123,67 +150,156 @@ pub fn evaluate_vec_property(
       }
       let k1 = keyframes[idx]
       if t <= 0.0 || idx >= keyframes.length() - 1 {
-        return k1.start_value
-      }
+        k1.start_value
+      } else {
+        let k2 = keyframes[idx + 1]
 
-      let k2 = keyframes[idx + 1]
-
-      // For simplicity, we use the first component of the tangents for multidimensional easing
-      // Lottie can have multidimensional easing but it's often synchronized.
-      let eased_t = match (k1.out_tangent, k1.in_tangent) {
-        (Some(ot), Some(it)) => {
-          let x1 = match ot.x {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          let y1 = match ot.y {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          let x2 = match it.x {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          let y2 = match it.y {
-            Single(v) => v
-            Multi(arr) => arr[0]
-          }
-          @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
-        }
-        _ => t
-      }
-
-      let next_val = match k1.end_value {
-        Some(v) => v
-        None => k2.start_value
-      }
-
-      match (k1.value_out_tangent, k1.value_in_tangent) {
-        (Some(to), Some(ti)) =>
-          if k1.start_value.length() >= 2 &&
-            next_val.length() >= 2 &&
-            to.length() >= 2 &&
-            ti.length() >= 2 {
-            let res = []
-            for i = 0; i < k1.start_value.length(); i = i + 1 {
-              let p0 = k1.start_value[i]
-              let p3 = next_val[i]
-              // Check if tangents have the component. If not, fallback to p0/p3.
-              let p1 = if i < to.length() { p0 + to[i] } else { p0 }
-              let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
-              let val = (1.0 - eased_t) * (1.0 - eased_t) * (1.0 - eased_t) * p0 +
-                3.0 * (1.0 - eased_t) * (1.0 - eased_t) * eased_t * p1 +
-                3.0 * (1.0 - eased_t) * eased_t * eased_t * p2 +
-                eased_t * eased_t * eased_t * p3
-              res.push(val)
+        // For simplicity, we use the first component of the tangents for multidimensional easing
+        let eased_t = match (k1.out_tangent, k1.in_tangent) {
+          (Some(ot), Some(it)) => {
+            let x1 = match ot.x {
+              Single(v) => v
+              Multi(arr) => arr[0]
             }
-            res
-          } else {
-            @math.lerp_array(k1.start_value, next_val, eased_t)
+            let y1 = match ot.y {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let x2 = match it.x {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let y2 = match it.y {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
           }
-        _ => @math.lerp_array(k1.start_value, next_val, eased_t)
+          _ => t
+        }
+
+        let next_val = match k1.end_value {
+          Some(v) => v
+          None => k2.start_value
+        }
+
+        match (k1.value_out_tangent, k1.value_in_tangent) {
+          (Some(to), Some(ti)) =>
+            if k1.start_value.length() >= 2 &&
+              next_val.length() >= 2 &&
+              to.length() >= 2 &&
+              ti.length() >= 2 {
+              let res = []
+              for i = 0; i < k1.start_value.length(); i = i + 1 {
+                let p0 = k1.start_value[i]
+                let p3 = next_val[i]
+                // Check if tangents have the component. If not, fallback to p0/p3.
+                let p1 = if i < to.length() { p0 + to[i] } else { p0 }
+                let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
+                let val = (1.0 - eased_t) * (1.0 - eased_t) * (1.0 - eased_t) * p0 +
+                  3.0 * (1.0 - eased_t) * (1.0 - eased_t) * eased_t * p1 +
+                  3.0 * (1.0 - eased_t) * eased_t * eased_t * p2 +
+                  eased_t * eased_t * eased_t * p3
+                res.push(val)
+              }
+              res
+            } else {
+              @math.lerp_array(k1.start_value, next_val, eased_t)
+            }
+          _ => @math.lerp_array(k1.start_value, next_val, eased_t)
+        }
       }
     }
+  }
+  match prop.expression {
+    Some(code) => {
+      #cfg(any(target="wasm", target="wasm-gc")) {
+        let res = val.copy()
+        ffi_evaluate_expression_vec_into(code, frame, res)
+        res
+      }
+      #cfg(not(any(target="wasm", target="wasm-gc"))) {
+        val
+      }
+    }
+    None => val
+  }
+}
+      let k1 = keyframes[idx]
+      if t <= 0.0 || idx >= keyframes.length() - 1 {
+        k1.start_value
+      } else {
+        let k2 = keyframes[idx + 1]
+
+        // For simplicity, we use the first component of the tangents for multidimensional easing
+        let eased_t = match (k1.out_tangent, k1.in_tangent) {
+          (Some(ot), Some(it)) => {
+            let x1 = match ot.x {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let y1 = match ot.y {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let x2 = match it.x {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            let y2 = match it.y {
+              Single(v) => v
+              Multi(arr) => arr[0]
+            }
+            @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
+          }
+          _ => t
+        }
+
+        let next_val = match k1.end_value {
+          Some(v) => v
+          None => k2.start_value
+        }
+
+        match (k1.value_out_tangent, k1.value_in_tangent) {
+          (Some(to), Some(ti)) =>
+            if k1.start_value.length() >= 2 &&
+              next_val.length() >= 2 &&
+              to.length() >= 2 &&
+              ti.length() >= 2 {
+              let res = []
+              for i = 0; i < k1.start_value.length(); i = i + 1 {
+                let p0 = k1.start_value[i]
+                let p3 = next_val[i]
+                // Check if tangents have the component. If not, fallback to p0/p3.
+                let p1 = if i < to.length() { p0 + to[i] } else { p0 }
+                let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
+                let val = (1.0 - eased_t) * (1.0 - eased_t) * (1.0 - eased_t) * p0 +
+                  3.0 * (1.0 - eased_t) * (1.0 - eased_t) * eased_t * p1 +
+                  3.0 * (1.0 - eased_t) * eased_t * eased_t * p2 +
+                  eased_t * eased_t * eased_t * p3
+                res.push(val)
+              }
+              res
+            } else {
+              @math.lerp_array(k1.start_value, next_val, eased_t)
+            }
+          _ => @math.lerp_array(k1.start_value, next_val, eased_t)
+        }
+      }
+    }
+  }
+  match prop.expression {
+    Some(code) => {
+      #cfg(any(target="wasm", target="wasm-gc")) {
+        let res = val.copy()
+        ffi_evaluate_expression_vec_into(code, frame, res)
+        res
+      }
+      #cfg(not(any(target="wasm", target="wasm-gc"))) {
+        val
+      }
+    }
+    None => val
   }
 }
 

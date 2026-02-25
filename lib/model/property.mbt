@@ -74,13 +74,17 @@ pub struct LottieProperty[T] {
 }
 
 ///|
-pub fn[T] LottieProperty::new_static(value : T) -> LottieProperty[T] {
-  { animated: 0, value: PropertyValue::Static(value), expression: None }
+pub fn[T] LottieProperty::new_static(
+  value : T,
+  expression? : String? = None,
+) -> LottieProperty[T] {
+  { animated: 0, value: PropertyValue::Static(value), expression }
 }
 
 ///|
 pub fn[T] LottieProperty::new_animated(
   keyframes : Array[LottieKeyframe[T]],
+  expression? : String? = None,
 ) -> LottieProperty[T] {
-  { animated: 1, value: PropertyValue::Animated(keyframes), expression: None }
+  { animated: 1, value: PropertyValue::Animated(keyframes), expression }
 }

@@ -53,6 +53,10 @@ fn parse_property_double(
             Some(Number(n, ..)) => n == 1.0
             _ => false
           }
+          let x = match obj.get("x") {
+            Some(String(s)) => Some(s)
+            _ => None
+          }
           let k = match obj.get("k") {
             Some(k) => k
             None => raise MissingKey("k in property")
@@ -92,10 +96,10 @@ fn parse_property_double(
                 }
               _ => ()
             }
-            @model.LottieProperty::new_animated(keyframes)
+            @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
             match k {
-              Number(n, ..) => @model.LottieProperty::new_static(n)
+              Number(n, ..) => @model.LottieProperty::new_static(n, expression=x)
               _ => raise UnexpectedType("k", "Number")
             }
           }
@@ -118,6 +122,10 @@ fn parse_property_vec(
           let a = match obj.get("a") {
             Some(Number(n, ..)) => n == 1.0
             _ => false
+          }
+          let x = match obj.get("x") {
+            Some(String(s)) => Some(s)
+            _ => None
           }
           let k = match obj.get("k") {
             Some(k) => k
@@ -174,7 +182,7 @@ fn parse_property_vec(
                 }
               _ => ()
             }
-            @model.LottieProperty::new_animated(keyframes)
+            @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
             match k {
               Array(arr) => {
@@ -185,9 +193,9 @@ fn parse_property_vec(
                     _ => ()
                   }
                 }
-                @model.LottieProperty::new_static(vals)
+                @model.LottieProperty::new_static(vals, expression=x)
               }
-              Number(n, ..) => @model.LottieProperty::new_static([n])
+              Number(n, ..) => @model.LottieProperty::new_static([n], expression=x)
               _ => raise UnexpectedType("k", "Array or Number")
             }
           }

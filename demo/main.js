@@ -146,6 +146,42 @@ const importObject = {
     setGlobalCompositeOperation: (mode) => {
         ctx.globalCompositeOperation = moonStringJS(mode);
     }
+  },
+  expressions: {
+    evaluate_double: (code_ptr, time, val) => {
+        const code = moonStringJS(code_ptr);
+        try {
+            // Lottie expressions can return numbers or assume last expression is return value
+            // We wrap it in a function. Lottie expressions often reference 'thisLayer', 'content', etc.
+            // For now we only support 'value' and 'time'.
+            const fn = new Function('value', 'time', `"use strict"; return (${code});`);
+            const res = fn(val, time);
+            return typeof res === 'number' ? res : val;
+        } catch (e) {
+            console.debug("Expression eval failed:", e, code);
+            return val;
+        }
+    },
+    evaluate_vec_into: (code_ptr, time, arr) => {
+        const code = moonStringJS(code_ptr);
+        try {
+            const val = [];
+            for (let i = 0; i < arr.length; i++) {
+                val.push(arr.get(i));
+            }
+            const fn = new Function('value', 'time', `"use strict"; return (${code});`);
+            const res = fn(val, time);
+            if (Array.isArray(res)) {
+                for (let i = 0; i < Math.min(res.length, arr.length); i++) {
+                    arr.set(i, res[i]);
+                }
+            } else if (typeof res === 'number') {
+                arr.set(0, res); // In case it returns single number for vec
+            }
+        } catch (e) {
+            console.debug("Expression eval (vec) failed:", e, code);
+        }
+    }
   }
 };
 
