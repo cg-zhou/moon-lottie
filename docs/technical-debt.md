@@ -11,7 +11,8 @@
 - [x] **路径与插值优化**: 完善了 `Path` 属性的关键帧插值 (`evaluate_path_property`), 修正了模型使其支持 `end_value` 过渡动画。
 - [x] **空间贝塞尔插值 (Spatial Bezier)**: 已在 `evaluate_vec_property` 中实现基于 `ti` / `to` 的三阶贝塞尔空间插值。
 - [x] **多维独立分量插值**: 评价器已支持解析和计算独立的 X (`px`) 和 Y (`py`) 位置属性。
-- [ ] **遮罩与蒙版 (Masks/Matte)**: 模型与解析已支持 `masksProperties`, `tt` (Matte Type), `td` (Matte Inherit)。渲染逻辑需进一步对接 Canvas `clip` 与 `GlobalCompositeOperation`。
+- [x] **遮罩与蒙版基础支持 (Masks/Matte)**: 已支持 `Add` 模式的遮罩剪切 (`Clipping Path`)，以及基于 `destination-in` 的 Alpha Track Matte 渲染。
+- [ ] **高阶混合模式 (BlendModes/LumaMatte)**: 需实现真正的 Luma Matte (亮度叠加) 以及图层混合模式 (`bm` 字段)。
 - [ ] **路径变形动画 (Morphing)**: 确保两个贝塞尔路径点数一致时的插值正确性 (目前 evaluate_path_property 已有基础实现)。
 - [ ] **性能优化 (SIMD)**: 探索在矩阵运算中使用 MoonBit SIMD 以加速关键帧密集的动画。
 - [x] **错误处理**: 解析器已全面引入 `raise LottieError` 机制，提供明确的错误类型反馈，解决了空值默认填充导致的调试困难。

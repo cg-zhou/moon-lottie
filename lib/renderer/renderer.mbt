@@ -29,6 +29,9 @@ pub trait Renderer {
   
   // Canvas size
   clear_rect(self : Self, x : Double, y : Double, w : Double, h : Double) -> Unit
+  
+  // Blend Modes & Matte
+  set_blend_mode(self : Self, mode : String) -> Unit
 }
 
 fn canvas_save() = "canvas" "save"
@@ -50,6 +53,7 @@ fn canvas_stroke_gradient(opacity : Double, width : Double) = "canvas" "strokeGr
 fn canvas_clip() = "canvas" "clip"
 fn canvas_clear_rect(x: Double, y: Double, w: Double, h: Double) = "canvas" "clearRect"
 fn canvas_draw_image(id: String, w: Double, h: Double) = "canvas" "drawImage"
+fn canvas_set_global_composite_operation(mode: String) = "canvas" "setGlobalCompositeOperation"
 
 pub struct CanvasRenderer {}
 
@@ -169,6 +173,11 @@ pub impl Renderer for CanvasRenderer with draw_image(self : CanvasRenderer, id :
   canvas_draw_image(id, w, h)
 }
 
+pub impl Renderer for CanvasRenderer with set_blend_mode(self : CanvasRenderer, mode : String) {
+  let _ = self
+  canvas_set_global_composite_operation(mode)
+}
+
 ///| DrawCommand representing a single drawing operation.
 ///| Useful for testing, serialization, and cross-platform recording.
 pub enum DrawCommand {
@@ -190,6 +199,7 @@ pub enum DrawCommand {
   Clip
   ClearRect(Double, Double, Double, Double)
   DrawImage(String, Double, Double)
+  SetBlendMode(String)
 } derive(Show, Eq)
 
 ///| Renderer that records all commands into a list.
@@ -275,4 +285,8 @@ pub impl Renderer for CommandRecorder with clear_rect(self : CommandRecorder, x 
 
 pub impl Renderer for CommandRecorder with draw_image(self : CommandRecorder, id : String, w : Double, h : Double) {
   self.commands.push(DrawImage(id, w, h))
+}
+
+pub impl Renderer for CommandRecorder with set_blend_mode(self : CommandRecorder, mode : String) {
+  self.commands.push(SetBlendMode(mode))
 }

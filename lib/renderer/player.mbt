@@ -23,10 +23,16 @@ pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
   let layers = self.animation.layers
   for i = layers.length() - 1; i >= 0; i = i - 1 {
     let layer = layers[i]
-    match layer.hd {
-      Some(true) => ()
-      _ => self.render_layer(layer, layers)
+    // Skip if hidden
+    if layer.hd == Some(true) {
+      continue
     }
+    // Skip if this is a matte source (it will be rendered by the matted layer)
+    if layer.td == Some(1) {
+      continue
+    }
+
+    self.render_layer(layer, layers)
   }
 }
 
@@ -86,6 +92,45 @@ fn[R : Renderer] Player::render_layer(self : Player[R], layer : @model.Layer, sc
   }
   
   // 2. Render Layer Content
+  self.render_layer_content(layer)
+
+  // 3. Apply Track Matte
+  match layer.tt {
+    Some(1) | Some(2) | Some(3) | Some(4) => {
+      // Find the matte source layer. In Lottie, it's the layer with the index preceding the current layer's array index.
+      // But wait, the `ind` field might be different.
+      // The spec says "the layer above" in the stack.
+      let mut matte_source : @model.Layer? = None
+      for i = 0; i < scope.length(); i = i + 1 {
+        if scope[i].ind == layer.ind && i > 0 {
+          matte_source = Some(scope[i-1])
+          break
+        }
+      }
+
+      match matte_source {
+        Some(m_layer) => {
+          let mode = match layer.tt {
+            Some(1) => "destination-in"
+            Some(2) => "destination-out"
+            Some(3) => "destination-in" // Luma requires more, fallback to Alpha
+            Some(4) => "destination-out"
+            _ => "source-over"
+          }
+          self.renderer.set_blend_mode(mode)
+          self.render_layer(m_layer, scope)
+          self.renderer.set_blend_mode("source-over")
+        }
+        None => ()
+      }
+    }
+    _ => ()
+  }
+  
+  self.renderer.restore()
+}
+
+fn[R : Renderer] Player::render_layer_content(self : Player[R], layer : @model.Layer) -> Unit {
   match layer.data {
     Shape(shapes) => {
       // Shape layers often have a group of shapes, strokes, and fills
@@ -136,8 +181,6 @@ fn[R : Renderer] Player::render_layer(self : Player[R], layer : @model.Layer, sc
     }
     _ => ()
   }
-  
-  self.renderer.restore()
 }
 
 fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) -> Unit {

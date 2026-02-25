@@ -28,4 +28,10 @@
 | `ind` | index | Int | 图层在合成中的索引标识 |
 | `assets` | assets | Array | 动画引用的外部资源列表 (图片/预合成) |
 | `refId` | referenceId | String | 引用资产的 ID |
+| `tt` | matteType | Int | 蒙版类型 (Alpha, Luma 等) |
+| `td` | matteInherit | Int | 蒙版继承 |
+| `px` | posX | Number | 独立 X 位置分量 |
+| `py` | posY | Number | 独立 Y 位置分量 |
+| `ti` | tangentIn | Vector | 空间插值入切线 (Spatial Bezier) |
+| `to` | tangentOut | Vector | 空间插值出切线 (Spatial Bezier) |
 ```
