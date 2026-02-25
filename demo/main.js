@@ -13,8 +13,11 @@ const viewport = document.getElementById('viewport');
 
 let isPlaying = true;
 let currentFrame = 0;
+let lastTimestamp = 0;
 let player = null;
 let currentJsonStr = "";
+let currentFileName = "";
+let currentFileSize = 0;
 let imageAssets = new Map();
 
 // Helper to convert MoonBit string (WasmGC array) to JS string
@@ -119,8 +122,14 @@ async function init() {
 }
 
 function loadSample() {
-    fetch('assets/sample.json').then(r => r.json()).then(data => {
-        startPlayer(JSON.stringify(data));
+    fetch('assets/sample.json').then(r => {
+        currentFileName = "sample.json";
+        return r.blob();
+    }).then(blob => {
+        currentFileSize = blob.size;
+        return blob.text();
+    }).then(text => {
+        startPlayer(text);
     }).catch(e => {
         console.warn("Sample not found.");
     });
@@ -156,46 +165,69 @@ async function startPlayer(jsonStr) {
     player = create_player_from_js();
     if (!player) { statusMsg.innerText = "动画解析失败"; return; }
 
-    // Update Metadata
+    // Update File & Metadata
+    document.getElementById('info-filename').innerText = currentFileName || "未知";
+    document.getElementById('info-filesize').innerText = (currentFileSize / 1024).toFixed(2) + " KB";
+    
     document.getElementById('info-size').innerText = `${get_width(player)} x ${get_height(player)}`;
-    document.getElementById('info-fps').innerText = get_fps(player);
+    const fps = get_fps(player);
+    document.getElementById('info-fps').innerText = fps.toFixed(2) + " fps";
     const totalFrames = get_frame_count(player);
     document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
+    document.getElementById('info-duration').innerText = (totalFrames / fps).toFixed(2) + "s";
     document.getElementById('info-version').innerText = moonStringJS(get_version(player));
 
     // Update Canvas Size
     canvas.width = get_width(player);
     canvas.height = get_height(player);
 
-    seekBar.max = totalFrames;
-    seekBar.value = 0;
-    currentFrame = 0;
+    const inPoint = window.moonLottie.get_in_point(player);
+    seekBar.min = inPoint;
+    seekBar.max = inPoint + totalFrames;
+    seekBar.value = inPoint;
+    currentFrame = inPoint;
     isPlaying = true;
+    lastTimestamp = performance.now();
     updatePlayPauseButton();
     
     statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
     requestAnimationFrame(renderLoop);
 }
 
-function renderLoop() {
+function renderLoop(timestamp) {
     if (!player) return;
     
     if (isPlaying) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const deltaTime = (timestamp - lastTimestamp) / 1000;
+        lastTimestamp = timestamp;
+
+        const fps = window.moonLottie.get_fps(player);
         const speed = parseFloat(document.getElementById('speed').value);
-        currentFrame = window.moonLottie.update_player_with_speed(player, currentFrame, speed);
         
+        // 基于真实时间计算应该前进的帧数
+        // delta_frames = delta_time(s) * fps * speed
+        const frameDelta = deltaTime * fps * speed;
+        
+        currentFrame = window.moonLottie.update_player_with_speed(player, currentFrame, frameDelta);
+        
+        const inPoint = window.moonLottie.get_in_point(player);
         const totalFrames = window.moonLottie.get_frame_count(player);
-        if (currentFrame >= totalFrames - 1) currentFrame = 0;
+        if (currentFrame >= inPoint + totalFrames) currentFrame = inPoint;
 
         updateUI();
+    } else {
+        lastTimestamp = 0;
     }
     
     requestAnimationFrame(renderLoop);
 }
 
 function updateUI() {
+    const inPoint = window.moonLottie.get_in_point(player);
     const totalFrames = window.moonLottie.get_frame_count(player);
-    frameInfoEl.innerText = `${Math.floor(currentFrame)} / ${Math.floor(totalFrames)}`;
+    const relativeFrame = currentFrame - inPoint;
+    frameInfoEl.innerText = `${Math.floor(relativeFrame)} / ${Math.floor(totalFrames)}`;
     seekBar.value = currentFrame;
 }
 
@@ -255,6 +287,8 @@ dropZone.ondrop = (e) => {
 };
 
 function handleFile(file) {
+    currentFileName = file.name;
+    currentFileSize = file.size;
     const reader = new FileReader();
     reader.onload = (e) => startPlayer(e.target.result);
     reader.readAsText(file);
