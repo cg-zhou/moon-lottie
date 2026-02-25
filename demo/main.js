@@ -171,14 +171,17 @@ async function startPlayer(jsonStr) {
         officialPlayer.destroy();
     }
     const container = document.getElementById('official-lottie-container');
-    container.style.width = get_width(player) + 'px';
-    container.style.height = get_height(player) + 'px';
+    // The container size should be controlled by CSS (width: 100%), 
+    // but the Lottie-web renderer needs an aspect ratio or internal size.
     officialPlayer = lottie.loadAnimation({
         container: container,
         renderer: 'canvas',
         loop: false,
         autoplay: false,
-        animationData: animationData
+        animationData: animationData,
+        rendererSettings: {
+            preserveAspectRatio: 'xMidYMid meet'
+        }
     });
 
     // Update File & Metadata
