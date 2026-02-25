@@ -44,6 +44,9 @@ impl Renderer for TestRenderer with stroke(self, color, opacity, width) {
 impl Renderer for TestRenderer with clear_rect(self, _x, _y, _w, _h) {
   self.commands.push("clear")
 }
+impl Renderer for TestRenderer with draw_image(self, id, _w, _h) {
+  self.commands.push("draw_image(\{id})")
+}
 
 test "player_mock_render" {
   // 1. Setup a simple animation with one rect layer
@@ -118,4 +121,65 @@ test "player_mock_render" {
   
   if not(has_transform) { fail("Missing transform command") }
   if not(has_fill) { fail("Missing fill command") }
+}
+
+test "player_path_render" {
+  // 1. Setup a triangle path
+  let path_data = @model.BezierPath::new(
+    v=[[0.0, 0.0], [100.0, 0.0], [50.0, 100.0]],
+    i=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    o=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    c=true
+  )
+  
+  let path_shape = @model.Shape::new(
+    ty="sh",
+    data=@model.ShapeData::new_path(
+      @model.PathShape::new(ks=@model.LottieProperty::new_static(path_data))
+    )
+  )
+  
+  let stroke = @model.Shape::new(
+    ty="st",
+    data=@model.ShapeData::new_stroke(
+      @model.StrokeShape::new(
+        c=@model.LottieProperty::new_static([0.0, 1.0, 0.0]),
+        o=@model.LottieProperty::new_static(100.0),
+        w=@model.LottieProperty::new_static(2.0)
+      )
+    )
+  )
+  
+  let layer = @model.Layer::new(
+    ind=2,
+    ty=4,
+    ks=@model.Transform::new_default(),
+    ip=0.0,
+    op=100.0,
+    st=0.0,
+    data=@model.LayerData::new_shape([path_shape, stroke])
+  )
+  
+  let animation = @model.Animation::new(
+    v="5.5.0",
+    fr=60.0,
+    ip=0.0,
+    op=100.0,
+    w=500,
+    h=500,
+    layers=[layer]
+  )
+  
+  let mock = TestRenderer::new()
+  let player = Player::new(animation, mock)
+  player.render()
+  
+  let cmds = mock.commands
+  let mut has_cubic_to = false
+  for c in cmds {
+    if c.contains("cubic_to") { has_cubic_to = true }
+  }
+  
+  // Actually triangle with no tangents will still use cubic_to in our logic
+  if not(has_cubic_to) { fail("Missing cubic_to command for path") }
 }

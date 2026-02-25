@@ -40,6 +40,7 @@ pub struct Shape {
   nm : String?
   ty : String
   d : Int?
+  hd : Bool?
   data : ShapeData
 }
 
@@ -47,9 +48,10 @@ pub fn Shape::new(
   ty~ : String,
   data~ : ShapeData,
   nm~ : String? = None,
-  d~ : Int? = None
+  d~ : Int? = None,
+  hd~ : Bool? = None
 ) -> Shape {
-  { nm, ty, d, data }
+  { nm, ty, d, hd, data }
 }
 
 pub struct RectShape {

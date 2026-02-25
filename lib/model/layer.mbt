@@ -30,6 +30,7 @@ pub struct Layer {
   op : Double
   st : Double
   bm : Int?
+  hd : Bool? // Hidden
   data : LayerData
 }
 
@@ -45,7 +46,8 @@ pub fn Layer::new(
   parent~ : Int? = None,
   ao~ : Int? = None,
   bm~ : Int? = None,
+  hd~ : Bool? = None,
   data~ : LayerData = LayerData::Null
 ) -> Layer {
-  { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, data }
+  { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, hd, data }
 }

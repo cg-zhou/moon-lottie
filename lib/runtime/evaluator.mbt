@@ -99,6 +99,56 @@ pub fn evaluate_vec_property(
   }
 }
 
+pub fn evaluate_path_property(
+  prop : @model.LottieProperty[@model.BezierPath],
+  frame : Double
+) -> @model.BezierPath {
+  match prop.value {
+    Static(v) => v
+    Animated(keyframes) => {
+      let (idx, t) = find_keyframe(keyframes, frame)
+      if idx < 0 {
+        return @model.BezierPath::new(v=[], i=[], o=[], c=false)
+      }
+      let kf = keyframes[idx]
+      if t <= 0.0 { return kf.start_value }
+      
+      let next_val = match kf.end_value {
+        Some(v) => v
+        None => return kf.start_value
+      }
+      
+      if t >= 1.0 { return next_val }
+
+      // Path interpolation
+      let start_v = kf.start_value.v
+      let end_v = next_val.v
+      if start_v.length() != end_v.length() {
+        return kf.start_value
+      }
+
+      let res_v = []
+      let res_i = []
+      let res_o = []
+      for i = 0; i < start_v.length(); i = i + 1 {
+        res_v.push([
+          start_v[i][0] + (end_v[i][0] - start_v[i][0]) * t,
+          start_v[i][1] + (end_v[i][1] - start_v[i][1]) * t
+        ])
+        res_i.push([
+          kf.start_value.i[i][0] + (next_val.i[i][0] - kf.start_value.i[i][0]) * t,
+          kf.start_value.i[i][1] + (next_val.i[i][1] - kf.start_value.i[i][1]) * t
+        ])
+        res_o.push([
+          kf.start_value.o[i][0] + (next_val.o[i][0] - kf.start_value.o[i][0]) * t,
+          kf.start_value.o[i][1] + (next_val.o[i][1] - kf.start_value.o[i][1]) * t
+        ])
+      }
+      @model.BezierPath::new(v=res_v, i=res_i, o=res_o, c=kf.start_value.c)
+    }
+  }
+}
+
 pub fn evaluate_transform(
   transform : @model.Transform,
   frame : Double

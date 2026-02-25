@@ -23,6 +23,7 @@ pub fn Bezier::new(x : BezierValue, y : BezierValue) -> Bezier {
 pub struct LottieKeyframe[T] {
   frame : Int
   start_value : T
+  end_value : T?
   in_tangent : Bezier?
   out_tangent : Bezier?
   value_in_tangent : Array[Double]?
@@ -33,6 +34,7 @@ pub struct LottieKeyframe[T] {
 pub fn LottieKeyframe::new[T](
   frame~ : Int,
   start_value~ : T,
+  end_value~ : T? = None,
   in_tangent~ : Bezier? = None,
   out_tangent~ : Bezier? = None,
   value_in_tangent~ : Array[Double]? = None,
@@ -42,6 +44,7 @@ pub fn LottieKeyframe::new[T](
   {
     frame,
     start_value,
+    end_value,
     in_tangent,
     out_tangent,
     value_in_tangent,

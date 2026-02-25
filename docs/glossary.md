@@ -21,3 +21,9 @@
 | `p` | position | Vector | 位置 |
 | `r` | roundedness | Number | 矩形的圆角半径 |
 | `d` | direction | Number | 路径方向 (1: 顺时针, 2: 逆时针) |
+| `hd` | hidden | Boolean | 指示元素是否被隐藏 |
+| `parent` | parent | Int | 引用父层的 `ind` (Index) |
+| `ind` | index | Int | 图层在合成中的索引标识 |
+| `assets` | assets | Array | 动画引用的外部资源列表 (图片/预合成) |
+| `refId` | referenceId | String | 引用资产的 ID |
+```

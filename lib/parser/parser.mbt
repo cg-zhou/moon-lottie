@@ -36,13 +36,49 @@ fn parse_property_double(json : Json?) -> @model.LottieProperty[Double]? {
     Some(j) =>
       match j {
         Object(obj) => {
+          let a = match obj.get("a") {
+            Some(Number(n, ..)) => n == 1.0
+            _ => false
+          }
           let k = match obj.get("k") {
             Some(k) => k
             None => return None
           }
-          match k {
-            Number(n, ..) => Some(@model.LottieProperty::new_static(n))
-            _ => None
+          if a {
+            // Animated
+            let keyframes = []
+            match k {
+              Array(arr) =>
+                for kf_json in arr {
+                  match kf_json {
+                    Object(kf_obj) => {
+                      let t = match kf_obj.get("t") {
+                        Some(Number(n, ..)) => n.to_int()
+                        _ => 0
+                      }
+                      let s = match kf_obj.get("s") {
+                        Some(Array([Number(n, ..)])) => n
+                        Some(Number(n, ..)) => n
+                        _ => 0.0
+                      }
+                      let e = match kf_obj.get("e") {
+                        Some(Array([Number(n, ..)])) => Some(n)
+                        Some(Number(n, ..)) => Some(n)
+                        _ => None
+                      }
+                      keyframes.push(@model.LottieKeyframe::new(frame=t, start_value=s, end_value=e))
+                    }
+                    _ => ()
+                  }
+                }
+              _ => ()
+            }
+            Some(@model.LottieProperty::new_animated(keyframes))
+          } else {
+            match k {
+              Number(n, ..) => Some(@model.LottieProperty::new_static(n))
+              _ => None
+            }
           }
         }
         Number(n, ..) => Some(@model.LottieProperty::new_static(n))
@@ -57,23 +93,75 @@ fn parse_property_vec(json : Json?) -> @model.LottieProperty[Array[Double]]? {
     Some(j) =>
       match j {
         Object(obj) => {
+          let a = match obj.get("a") {
+            Some(Number(n, ..)) => n == 1.0
+            _ => false
+          }
           let k = match obj.get("k") {
             Some(k) => k
             None => return None
           }
-          match k {
-            Array(arr) => {
-              let vals = []
-              for v in arr {
-                match v {
-                  Number(n, ..) => vals.push(n)
-                  _ => ()
+          if a {
+            // Animated
+            let keyframes = []
+            match k {
+              Array(arr) =>
+                for kf_json in arr {
+                  match kf_json {
+                    Object(kf_obj) => {
+                      let t = match kf_obj.get("t") {
+                        Some(Number(n, ..)) => n.to_int()
+                        _ => 0
+                      }
+                      let s = match kf_obj.get("s") {
+                        Some(Array(arr)) => {
+                          let res = []
+                          for v in arr {
+                            match v {
+                              Number(n, ..) => res.push(n)
+                              _ => ()
+                            }
+                          }
+                          res
+                        }
+                        _ => []
+                      }
+                      let e = match kf_obj.get("e") {
+                        Some(Array(arr)) => {
+                          let res = []
+                          for v in arr {
+                            match v {
+                              Number(n, ..) => res.push(n)
+                              _ => ()
+                            }
+                          }
+                          Some(res)
+                        }
+                        _ => None
+                      }
+                      keyframes.push(@model.LottieKeyframe::new(frame=t, start_value=s, end_value=e))
+                    }
+                    _ => ()
+                  }
                 }
-              }
-              Some(@model.LottieProperty::new_static(vals))
+              _ => ()
             }
-            Number(n, ..) => Some(@model.LottieProperty::new_static([n]))
-            _ => None
+            Some(@model.LottieProperty::new_animated(keyframes))
+          } else {
+            match k {
+              Array(arr) => {
+                let vals = []
+                for v in arr {
+                  match v {
+                    Number(n, ..) => vals.push(n)
+                    _ => ()
+                  }
+                }
+                Some(@model.LottieProperty::new_static(vals))
+              }
+              Number(n, ..) => Some(@model.LottieProperty::new_static([n]))
+              _ => None
+            }
           }
         }
         Array(arr) => {
@@ -195,13 +283,52 @@ fn parse_property_bezier(json : Json?) -> @model.LottieProperty[@model.BezierPat
     Some(j) =>
       match j {
         Object(obj) => {
-          // Case 1: Standard Lottie property { "a": 0, "k": { "v": ... } }
+          let a = match obj.get("a") {
+            Some(Number(n, ..)) => n == 1.0
+            _ => false
+          }
           match obj.get("k") {
-            Some(k) =>
-              match parse_bezier_path(k) {
-                Some(bp) => Some(@model.LottieProperty::new_static(bp))
-                None => None
+            Some(k) => {
+              if a {
+                // Animated
+                let keyframes = []
+                match k {
+                  Array(arr) =>
+                    for kf_json in arr {
+                      match kf_json {
+                        Object(kf_obj) => {
+                          let t = match kf_obj.get("t") {
+                            Some(Number(n, ..)) => n.to_int()
+                            _ => 0
+                          }
+                          let s = match kf_obj.get("s") {
+                            Some(Array([val])) => parse_bezier_path(val)
+                            Some(val) => parse_bezier_path(val)
+                            None => None
+                          }
+                          let e = match kf_obj.get("e") {
+                            Some(Array([val])) => parse_bezier_path(val)
+                            Some(val) => parse_bezier_path(val)
+                            None => None
+                          }
+                          match s {
+                            Some(path) => keyframes.push(@model.LottieKeyframe::new(frame=t, start_value=path, end_value=e))
+                            None => ()
+                          }
+                        }
+                        _ => ()
+                      }
+                    }
+                  _ => ()
+                }
+                Some(@model.LottieProperty::new_animated(keyframes))
+              } else {
+                match parse_bezier_path(k) {
+                  Some(bp) => Some(@model.LottieProperty::new_static(bp))
+                  None => None
+                }
               }
+            }
             None =>
               // Case 2: Simple path { "v": ... } without being wrapped in property
               match parse_bezier_path(j) {
@@ -226,6 +353,11 @@ fn parse_shape(json : Json) -> @model.Shape? {
       }
       let nm = match obj.get("nm") {
         Some(String(s)) => Some(s)
+        _ => None
+      }
+      let hd = match obj.get("hd") {
+        Some(True) => Some(true)
+        Some(False) => Some(false)
         _ => None
       }
       let data : @model.ShapeData = match ty {
@@ -310,7 +442,7 @@ fn parse_shape(json : Json) -> @model.Shape? {
         }
         _ => return None
       }
-      Some(@model.Shape::new(ty~, data~, nm~))
+      Some(@model.Shape::new(ty~, data~, nm~, hd~))
     }
     _ => None
   }
@@ -348,6 +480,12 @@ fn parse_layer(json : Json) -> @model.Layer? {
         Some(String(s)) => Some(s)
         _ => None
       }
+      let hd = match obj.get("hd") {
+        Some(True) => Some(true)
+        Some(False) => Some(false)
+        _ => None
+      }
+      let parent = get_int(json, "parent")
       let data : @model.LayerData = match ty {
         4 => {
           // Shape Layer
@@ -382,7 +520,7 @@ fn parse_layer(json : Json) -> @model.Layer? {
         }
         _ => @model.LayerData::new_null()
       }
-      Some(@model.Layer::new(ind~, ty~, ks~, ip~, op~, st~, nm~, data~))
+      Some(@model.Layer::new(ind~, ty~, ks~, ip~, op~, st~, nm~, data~, hd~, parent~))
     }
     _ => None
   }
