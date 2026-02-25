@@ -18,6 +18,7 @@ pub trait Renderer {
   // Painting
   fill(self : Self, r : Int, g : Int, b : Int, opacity : Double) -> Unit
   stroke(self : Self, r : Int, g : Int, b : Int, opacity : Double, width : Double) -> Unit
+  set_stroke_style(self : Self, line_cap : Int, line_join : Int, miter_limit : Double) -> Unit
   fill_linear_gradient(self : Self, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double) -> Unit
   stroke_linear_gradient(self : Self, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double, width : Double) -> Unit
   fill_radial_gradient(self : Self, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double) -> Unit
@@ -45,6 +46,7 @@ fn canvas_line_to(x: Double, y: Double) = "canvas" "lineTo"
 fn canvas_cubic_to(cp1x: Double, cp1y: Double, cp2x: Double, cp2y: Double, x: Double, y: Double) = "canvas" "bezierCurveTo"
 fn canvas_fill(r : Int, g : Int, b : Int, a : Double) = "canvas" "fill"
 fn canvas_stroke(r : Int, g : Int, b : Int, a : Double, width: Double) = "canvas" "stroke"
+fn canvas_set_stroke_style(cap : Int, join : Int, miter : Double) = "canvas" "setStrokeStyle"
 fn canvas_create_linear_gradient(x1 : Double, y1 : Double, x2 : Double, y2 : Double) = "canvas" "createLinearGradient"
 fn canvas_create_radial_gradient(cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double) = "canvas" "createRadialGradient"
 fn canvas_add_gradient_stop(stop : Double, r : Double, g : Double, b : Double, a : Double) = "canvas" "addGradientStop"
@@ -114,6 +116,11 @@ pub impl Renderer for CanvasRenderer with fill(self : CanvasRenderer, r : Int, g
 pub impl Renderer for CanvasRenderer with stroke(self : CanvasRenderer, r : Int, g : Int, b : Int, opacity : Double, width : Double) {
   let _ = self
   canvas_stroke(r, g, b, opacity, width)
+}
+
+pub impl Renderer for CanvasRenderer with set_stroke_style(self : CanvasRenderer, line_cap : Int, line_join : Int, miter_limit : Double) {
+  let _ = self
+  canvas_set_stroke_style(line_cap, line_join, miter_limit)
 }
 
 pub impl Renderer for CanvasRenderer with fill_linear_gradient(self : CanvasRenderer, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double) {
@@ -192,6 +199,7 @@ pub enum DrawCommand {
   CubicTo(Double, Double, Double, Double, Double, Double)
   Fill(Int, Int, Int, Double)
   Stroke(Int, Int, Int, Double, Double)
+  SetStrokeStyle(Int, Int, Double)
   FillLinearGradient(Double, Double, Double, Double, Array[Double], Double)
   StrokeLinearGradient(Double, Double, Double, Double, Array[Double], Double, Double)
   FillRadialGradient(Double, Double, Double, Double, Double, Double, Array[Double], Double)
@@ -257,6 +265,10 @@ pub impl Renderer for CommandRecorder with fill(self : CommandRecorder, r : Int,
 
 pub impl Renderer for CommandRecorder with stroke(self : CommandRecorder, r : Int, g : Int, b : Int, opacity : Double, width : Double) {
   self.commands.push(Stroke(r, g, b, opacity, width))
+}
+
+pub impl Renderer for CommandRecorder with set_stroke_style(self : CommandRecorder, line_cap : Int, line_join : Int, miter_limit : Double) {
+  self.commands.push(SetStrokeStyle(line_cap, line_join, miter_limit))
 }
 
 pub impl Renderer for CommandRecorder with fill_linear_gradient(self : CommandRecorder, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double) {

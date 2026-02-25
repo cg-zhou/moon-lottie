@@ -154,16 +154,22 @@ pub fn FillShape::new(
 
 pub struct StrokeShape {
   c : LottieProperty[Array[Double]] // Color
-  o : LottieProperty[Double]        // Opacity
-  w : LottieProperty[Double]        // Width
+  o : LottieProperty[Double] // Opacity
+  w : LottieProperty[Double] // Width
+  lc : Int // Line Cap
+  lj : Int // Line Join
+  ml : Double // Miter Limit
 }
 
 pub fn StrokeShape::new(
   c~ : LottieProperty[Array[Double]],
   o~ : LottieProperty[Double],
-  w~ : LottieProperty[Double]
+  w~ : LottieProperty[Double],
+  lc~ : Int = 1,
+  lj~ : Int = 1,
+  ml~ : Double = 0.0
 ) -> StrokeShape {
-  { c, o, w }
+  { c, o, w, lc, lj, ml }
 }
 
 pub enum GradientType {
@@ -208,7 +214,10 @@ pub struct GradientStrokeShape {
   s : LottieProperty[Array[Double]] // Start point
   e : LottieProperty[Array[Double]] // End point
   g : GradientColors
-  w : LottieProperty[Double]        // Stroke width
+  w : LottieProperty[Double] // Stroke width
+  lc : Int // Line Cap
+  lj : Int // Line Join
+  ml : Double // Miter Limit
 }
 
 pub fn GradientStrokeShape::new(
@@ -217,10 +226,13 @@ pub fn GradientStrokeShape::new(
   s~ : LottieProperty[Array[Double]],
   e~ : LottieProperty[Array[Double]],
   g~ : GradientColors,
-  w~ : LottieProperty[Double]
+  w~ : LottieProperty[Double],
+  lc~ : Int = 1,
+  lj~ : Int = 1,
+  ml~ : Double = 0.0
 ) -> GradientStrokeShape {
   let ty = if t == 1 { GradientType::Linear } else { GradientType::Radial }
-  { t: ty, o, s, e, g, w }
+  { t: ty, o, s, e, g, w, lc, lj, ml }
 }
 
 pub struct TrimPath {

@@ -1,4 +1,4 @@
-pub enum LayerData {
+pub(all) enum LayerData {
   Shape(Array[Shape])
   Solid(String, Int, Int) // Color, width, height
   PreComp(String, Int, Int) // RefId, width, height

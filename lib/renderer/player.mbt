@@ -140,6 +140,31 @@ fn[R : Renderer] Player::render_layer(
   self.renderer.restore()
 }
 
+fn parse_hex_color(hex : String) -> (Int, Int, Int) {
+  if hex.length() < 7 || hex[0] != '#' {
+    return (0, 0, 0)
+  }
+  fn hex_to_int(c : Char) -> Int {
+    if c >= '0' && c <= '9' {
+      c.to_int() - '0'.to_int()
+    } else if c >= 'a' && c <= 'f' {
+      c.to_int() - 'a'.to_int() + 10
+    } else if c >= 'A' && c <= 'F' {
+      c.to_int() - 'A'.to_int() + 10
+    } else {
+      0
+    }
+  }
+
+  let r = hex_to_int(hex[1].to_int().unsafe_to_char()) * 16 +
+    hex_to_int(hex[2].to_int().unsafe_to_char())
+  let g = hex_to_int(hex[3].to_int().unsafe_to_char()) * 16 +
+    hex_to_int(hex[4].to_int().unsafe_to_char())
+  let b = hex_to_int(hex[5].to_int().unsafe_to_char()) * 16 +
+    hex_to_int(hex[6].to_int().unsafe_to_char())
+  (r, g, b)
+}
+
 fn[R : Renderer] Player::render_layer_content(
   self : Player[R],
   layer : @model.Layer
@@ -153,25 +178,35 @@ fn[R : Renderer] Player::render_layer_content(
       }
     }
     Solid(color, w, h) => {
-      let _ = color
       self.renderer.begin_path()
       self.renderer.move_to(0.0, 0.0)
       self.renderer.line_to(w.to_double(), 0.0)
       self.renderer.line_to(w.to_double(), h.to_double())
       self.renderer.line_to(0.0, h.to_double())
       self.renderer.close_path()
-      self.renderer.fill(128, 128, 128, 1.0)
+      let (r, g, b) = parse_hex_color(color)
+      self.renderer.fill(r, g, b, 1.0)
     }
     PreComp(ref_id, _w, _h) => {
       match self.animation.assets {
         Some(assets) =>
           for asset in assets {
-            match asset {
-              PreComp(id, layers) if id == ref_id =>
-                for i = layers.length() - 1; i >= 0; i = i - 1 {
-                  self.render_layer(layers[i], layers)
-                }
-              _ => ()
+            if asset.id == ref_id {
+              match asset.layers {
+                Some(layers) =>
+                  for i = layers.length() - 1; i >= 0; i = i - 1 {
+                    let child_layer = layers[i]
+                    if child_layer.hd == Some(true) {
+                      continue
+                    }
+                    if child_layer.td == Some(1) {
+                      continue
+                    }
+                    self.render_layer(child_layer, layers)
+                  }
+                None => ()
+              }
+              break
             }
           }
         _ => ()
@@ -181,16 +216,23 @@ fn[R : Renderer] Player::render_layer_content(
       match self.animation.assets {
         Some(assets) =>
           for asset in assets {
-            match asset {
-              Image(id, _path, w, h) if id == ref_id =>
-                self.renderer.draw_image(id, w.to_double(), h.to_double())
-              _ => ()
+            if asset.id == ref_id {
+              let w = match asset.w {
+                Some(v) => v
+                None => 0
+              }
+              let h = match asset.h {
+                Some(v) => v
+                None => 0
+              }
+              self.renderer.draw_image(asset.id, w.to_double(), h.to_double())
+              break
             }
           }
         _ => ()
       }
     }
-    _ => ()
+    Null => ()
   }
 }
 
@@ -280,6 +322,7 @@ pub fn[R : Renderer] Player::render_shape(
       for p in self.current_paths {
         self.draw_lottie_path(p)
       }
+      self.renderer.set_stroke_style(s.lc, s.lj, s.ml)
       self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
     GradientFill(f) => {
@@ -328,6 +371,7 @@ pub fn[R : Renderer] Player::render_shape(
       for p in self.current_paths {
         self.draw_lottie_path(p)
       }
+      self.renderer.set_stroke_style(s.lc, s.lj, s.ml)
       match s.t {
         Linear =>
           self.renderer.stroke_linear_gradient(

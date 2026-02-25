@@ -28,9 +28,13 @@ pub fn Animation::new(
   { v, fr, ip, op, w, h, nm, ddd, assets, layers, markers }
 }
 
-pub enum Asset {
-  Image(String, String, Int, Int) // Id, path, width, height
-  PreComp(String, Array[Layer])   // Id, layers
+pub(all) struct Asset {
+  id : String
+  layers : Array[Layer]?
+  p : String? // path/image data
+  u : String? // image folder
+  w : Int?    // width
+  h : Int?    // height
 }
 
 pub struct Marker {

@@ -6,6 +6,10 @@ pub fn TestRenderer::new() -> TestRenderer {
   { commands: [] }
 }
 
+impl Renderer for TestRenderer with set_stroke_style(_self, _lc, _lj, _ml) {
+  ()
+}
+
 impl Renderer for TestRenderer with save(self) {
   self.commands.push("save")
 }

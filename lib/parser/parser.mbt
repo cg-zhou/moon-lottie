@@ -433,7 +433,19 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           } catch {
             _ => @model.LottieProperty::new_static(1.0)
           }
-          @model.ShapeData::new_stroke(@model.StrokeShape::new(c~, o~, w~))
+          let lc = match obj.get("lc") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          let lj = match obj.get("lj") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          let ml = match obj.get("ml") {
+            Some(Number(n, ..)) => n
+            _ => 4.0
+          }
+          @model.ShapeData::new_stroke(@model.StrokeShape::new(c~, o~, w~, lc~, lj~, ml~))
         }
         "gf" => {
           let t = match obj.get("t") {
@@ -480,6 +492,18 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           } catch {
             _ => @model.LottieProperty::new_static(1.0)
           }
+          let lc = match obj.get("lc") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          let lj = match obj.get("lj") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          let ml = match obj.get("ml") {
+            Some(Number(n, ..)) => n
+            _ => 4.0
+          }
           let g_json = match obj.get("g") {
             Some(j) => j
             _ => raise MissingKey("g in gs")
@@ -494,7 +518,9 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           }
           let g_k = parse_property_vec(Some(g_json))
           let g_colors = @model.GradientColors::new(p=g_p, k=g_k)
-          @model.ShapeData::new_gradient_stroke(@model.GradientStrokeShape::new(t~, o~, s~, e~, g=g_colors, w~))
+          @model.ShapeData::new_gradient_stroke(
+            @model.GradientStrokeShape::new(t~, o~, s~, e~, g=g_colors, w~, lc~, lj~, ml~),
+          )
         }
         "tr" => {
           @model.ShapeData::new_transform(parse_transform(Some(json)))
@@ -654,24 +680,13 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
       let tt = try { Some(get_int(json, "tt")) } catch { _ => None }
       let td = try { Some(get_int(json, "td")) } catch { _ => None }
       let data : @model.LayerData = match ty {
-        4 => {
-          // Shape Layer
-          let shapes = []
-          match obj.get("shapes") {
-            Some(Array(arr)) =>
-              for s_json in arr {
-                try {
-                  shapes.push(parse_shape(s_json))
-                } catch {
-                  _ => ()
-                }
-              }
-            _ => ()
-          }
-          @model.LayerData::new_shape(shapes)
+        0 => {
+          let ref_id = try { get_string(json, "refId") } catch { _ => "" }
+          let w = try { get_int(json, "w") } catch { _ => 0 }
+          let h = try { get_int(json, "h") } catch { _ => 0 }
+          @model.LayerData::PreComp(ref_id, w, h)
         }
         1 => {
-          // Solid Layer
           let sc = match obj.get("sc") {
             Some(String(s)) => s
             _ => "#000000"
@@ -684,9 +699,29 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
             Some(Number(n, ..)) => n.to_int()
             _ => 0
           }
-          @model.LayerData::new_solid(sc, sw, sh)
+          @model.LayerData::Solid(sc, sw, sh)
         }
-        _ => @model.LayerData::new_null()
+        2 => {
+          let ref_id = try { get_string(json, "refId") } catch { _ => "" }
+          @model.LayerData::Image(ref_id)
+        }
+        3 => @model.LayerData::Null
+        4 => {
+          let shapes = []
+          match obj.get("shapes") {
+            Some(Array(arr)) =>
+              for s_json in arr {
+                try {
+                  shapes.push(parse_shape(s_json))
+                } catch {
+                  _ => ()
+                }
+              }
+            _ => ()
+          }
+          @model.LayerData::Shape(shapes)
+        }
+        _ => @model.LayerData::Null
       }
       @model.Layer::new(
         ind~,
@@ -718,8 +753,22 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
   let h = get_int(json, "h")
 
   let layers = []
+  let assets = []
   match json {
-    Object(obj) =>
+    Object(obj) => {
+      // Parse Assets
+      match obj.get("assets") {
+        Some(Array(arr)) =>
+          for a_json in arr {
+            try {
+              assets.push(parse_asset(a_json))
+            } catch {
+              _ => ()
+            }
+          }
+        _ => ()
+      }
+      // Parse Layers
       match obj.get("layers") {
         Some(Array(arr)) =>
           for l_json in arr {
@@ -731,6 +780,7 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
           }
         _ => ()
       }
+    }
     _ => ()
   }
 
@@ -743,6 +793,40 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     h~,
     nm=try { Some(get_string(json, "nm")) } catch { _ => None },
     ddd=try { Some(get_int(json, "ddd")) } catch { _ => None },
+    assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
   )
+}
+
+///| Parse a single asset object (Image or PreComp)
+fn parse_asset(json : Json) -> @model.Asset raise LottieError {
+  match json {
+    Object(obj) => {
+      let id = get_string(json, "id")
+      if obj.get("layers") != None {
+        // PreComp
+        let layers = []
+        match obj.get("layers") {
+          Some(Array(arr)) =>
+            for l_json in arr {
+              try {
+                layers.push(parse_layer(l_json))
+              } catch {
+                _ => ()
+              }
+            }
+          _ => ()
+        }
+        { id, layers: Some(layers), p: None, u: None, w: None, h: None }
+      } else {
+        // Image asset
+        let p = try { get_string(json, "p") } catch { _ => "" }
+        let u = try { get_string(json, "u") } catch { _ => "" }
+        let w = try { get_int(json, "w") } catch { _ => 0 }
+        let h = try { get_int(json, "h") } catch { _ => 0 }
+        { id, layers: None, p: Some(p), u: Some(u), w: Some(w), h: Some(h) }
+      }
+    }
+    _ => raise UnexpectedType("asset", "Object")
+  }
 }
