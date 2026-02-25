@@ -85,7 +85,7 @@ pub struct PathShape {
 }
 
 pub fn PathShape::new(ks~ : LottieProperty[BezierPath]) -> PathShape {
-  { ks }
+  { ks, }
 }
 
 pub struct BezierPath {

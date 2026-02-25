@@ -11,7 +11,7 @@
 - [x] **路径与插值优化**: 完善了 `Path` 属性的关键帧插值 (`evaluate_path_property`), 修正了模型使其支持 `end_value` 过渡动画。
 - [ ] **空间贝塞尔插值 (Spatial Bezier)**: 当前 `evaluate_vec_property` 仅支持时间轴上的 Easing, 尚未实现位置属性的 `ti` / `to` 空间插值。
 - [ ] **多维独立分量插值**: 某些 Lottie 属性 (如 Position) 可能被拆分为独立的 X 和 Y 分量, 评价器需支持此逻辑。
-- [ ] **错误处理**: 当前解析器遇到不匹配类型会直接抛出空值或默认值, 缺乏明确的错误位置报告。
+- [x] **错误处理**: 解析器已全面引入 `raise LottieError` 机制，提供明确的错误类型反馈，解决了空值默认填充导致的调试困难。
 
 ## 验证协议 (Verification Protocol)
 

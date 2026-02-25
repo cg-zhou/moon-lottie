@@ -2,7 +2,8 @@
   "import": [
     "cg-zhou/moon-lottie/lib/parser",
     "cg-zhou/moon-lottie/lib/renderer",
-    "moonbitlang/core/json"
+    "moonbitlang/core/json",
+    "moonbitlang/core/builtin"
   ],
   "is-main": true,
   "link": {

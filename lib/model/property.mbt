@@ -31,7 +31,7 @@ pub struct LottieKeyframe[T] {
   hold : Int?
 }
 
-pub fn LottieKeyframe::new[T](
+pub fn[T] LottieKeyframe::new(
   frame~ : Int,
   start_value~ : T,
   end_value~ : T? = None,
@@ -64,11 +64,11 @@ pub struct LottieProperty[T] {
   expression : String?
 }
 
-pub fn LottieProperty::new_static[T](value : T) -> LottieProperty[T] {
+pub fn[T] LottieProperty::new_static(value : T) -> LottieProperty[T] {
   { animated: 0, value: PropertyValue::Static(value), expression: None }
 }
 
-pub fn LottieProperty::new_animated[T](
+pub fn[T] LottieProperty::new_animated(
   keyframes : Array[LottieKeyframe[T]]
 ) -> LottieProperty[T] {
   { animated: 1, value: PropertyValue::Animated(keyframes), expression: None }

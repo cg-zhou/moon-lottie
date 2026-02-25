@@ -1,9 +1,10 @@
 test "parse_animation_basic" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"
   let json = @json.parse(json_str)
-  let ani = match @parser.parse_animation(json) {
-    Some(ani) => ani
-    None => fail("Failed to parse animation")
+  let ani = try {
+    @parser.parse_animation(json)
+  } catch {
+    e => fail("Failed to parse animation: \{e}")
   }
   
   // Guardrails: Full field assertion for root animation
@@ -24,9 +25,10 @@ test "parse_simple_path_shape" {
   // A shape layer with a path that doesn't use "k" wrapper
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[1,1]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"sh\",\"nm\":\"path1\",\"ks\":{\"v\":[[0,0],[10,10]],\"i\":[[0,0],[0,0]],\"o\":[[0,0],[0,0]],\"c\":true}}]}]}"
   let json = @json.parse(json_str)
-  let ani = match @parser.parse_animation(json) {
-    Some(ani) => ani
-    None => fail("Failed to parse animation with simple path")
+  let ani = try {
+    @parser.parse_animation(json)
+  } catch {
+    e => fail("Failed to parse animation with simple path: \{e}")
   }
   
   match ani.layers[0].data {

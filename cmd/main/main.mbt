@@ -20,10 +20,8 @@ pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
   try {
     let json_str = get_json_from_js()
     let json = @json.parse(json_str)
-    match @parser.parse_animation(json) {
-      Some(anim) => Some(@renderer.create_canvas_player(anim))
-      None => None
-    }
+    let anim = @parser.parse_animation(json)
+    Some(@renderer.create_canvas_player(anim))
   } catch {
     _ => None
   }

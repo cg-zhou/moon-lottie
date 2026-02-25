@@ -2,6 +2,10 @@
   "import": [
     "cg-zhou/moon-lottie/lib/math",
     "cg-zhou/moon-lottie/lib/model",
-    "cg-zhou/moon-lottie/lib/runtime"
+    "cg-zhou/moon-lottie/lib/runtime",
+    "moonbitlang/core/json"
+  ],
+  "test_import": [
+    "cg-zhou/moon-lottie/lib/parser"
   ]
 }

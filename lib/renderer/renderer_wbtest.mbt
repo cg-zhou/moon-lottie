@@ -41,6 +41,9 @@ impl Renderer for TestRenderer with fill(self, r, g, b, opacity) {
 impl Renderer for TestRenderer with stroke(self, r, g, b, opacity, width) {
   self.commands.push("stroke(\{r}, \{g}, \{b}, \{opacity}, \{width})")
 }
+impl Renderer for TestRenderer with clip(self) {
+  self.commands.push("clip")
+}
 impl Renderer for TestRenderer with clear_rect(self, _x, _y, _w, _h) {
   self.commands.push("clear")
 }

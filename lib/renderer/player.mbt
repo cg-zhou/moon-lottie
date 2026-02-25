@@ -243,7 +243,6 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
       let matrix = @runtime.evaluate_transform(tr, self.current_frame)
       self.renderer.concat_transform(matrix)
     }
-    _ => ()
   }
 }
 
