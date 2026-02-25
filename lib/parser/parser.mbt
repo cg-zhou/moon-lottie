@@ -617,15 +617,20 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
             Some(j) => j
             _ => raise MissingKey("g in gf")
           }
-          let g_p = match g_json {
-            Object(g_obj) =>
-              match g_obj.get("p") {
+          let (g_p, g_k) = match g_json {
+            Object(g_obj) => {
+              let p = match g_obj.get("p") {
                 Some(Number(n, ..)) => n.to_int()
                 _ => 0
               }
-            _ => 0
+              let k = match g_obj.get("k") {
+                Some(k_json) => parse_property_vec(Some(k_json))
+                _ => parse_property_vec(Some(g_json))
+              }
+              (p, k)
+            }
+            _ => (0, parse_property_vec(Some(g_json)))
           }
-          let g_k = parse_property_vec(Some(g_json))
           let g_colors = @model.GradientColors::new(p=g_p, k=g_k)
           @model.ShapeData::new_gradient_fill(
             @model.GradientFillShape::new(t~, o~, s~, e~, g=g_colors),
@@ -660,15 +665,20 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
             Some(j) => j
             _ => raise MissingKey("g in gs")
           }
-          let g_p = match g_json {
-            Object(g_obj) =>
-              match g_obj.get("p") {
+          let (g_p, g_k) = match g_json {
+            Object(g_obj) => {
+              let p = match g_obj.get("p") {
                 Some(Number(n, ..)) => n.to_int()
                 _ => 0
               }
-            _ => 0
+              let k = match g_obj.get("k") {
+                Some(k_json) => parse_property_vec(Some(k_json))
+                _ => parse_property_vec(Some(g_json))
+              }
+              (p, k)
+            }
+            _ => (0, parse_property_vec(Some(g_json)))
           }
-          let g_k = parse_property_vec(Some(g_json))
           let g_colors = @model.GradientColors::new(p=g_p, k=g_k)
           @model.ShapeData::new_gradient_stroke(
             @model.GradientStrokeShape::new(

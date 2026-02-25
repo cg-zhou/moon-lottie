@@ -6,7 +6,7 @@ test "trim_single_path/basic" {
   let path = @model.BezierPath::new(v~, i~, o~, c=false)
 
   // Trim from 25% to 75%
-  let trimmed = trim_single_path(path, 0.25, 0.75, 0.0)
+  let trimmed = trim_single_path(path, 0.25, 0.75, 0.0)[0]
 
   // Note: with p1=p0 and p2=p3, it's not linear. 
   // x(t) = 300t^2 - 200t^3
@@ -24,7 +24,7 @@ test "trim_single_path/linear_proper" {
   let i = [[0.0, 0.0], [-33.333333333333336, 0.0]]
   let path = @model.BezierPath::new(v~, i~, o~, c=false)
 
-  let trimmed = trim_single_path(path, 0.25, 0.75, 0.0)
+  let trimmed = trim_single_path(path, 0.25, 0.75, 0.0)[0]
   // Accuracy is good enough
   inspect(trimmed.v[0][0], content="24.999999999999993")
   inspect(trimmed.v[1][0], content="75")
@@ -39,7 +39,7 @@ test "trim_single_path/cubic" {
   let path = @model.BezierPath::new(v~, i~, o~, c=false)
 
   // Trim from 0% to 50%
-  let trimmed = trim_single_path(path, 0.0, 0.5, 0.0)
+  let trimmed = trim_single_path(path, 0.0, 0.5, 0.0)[0]
 
   inspect(trimmed.v.length(), content="2")
   inspect(trimmed.v[0][0], content="0")

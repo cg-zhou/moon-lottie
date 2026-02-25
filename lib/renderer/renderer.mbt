@@ -47,6 +47,7 @@ pub trait Renderer {
     y1 : Double,
     x2 : Double,
     y2 : Double,
+    p : Int,
     stops : Array[Double],
     opacity : Double,
   ) -> Unit
@@ -56,6 +57,7 @@ pub trait Renderer {
     y1 : Double,
     x2 : Double,
     y2 : Double,
+    p : Int,
     stops : Array[Double],
     opacity : Double,
     width : Double,
@@ -68,6 +70,7 @@ pub trait Renderer {
     fx : Double,
     fy : Double,
     fr : Double,
+    p : Int,
     stops : Array[Double],
     opacity : Double,
   ) -> Unit
@@ -79,6 +82,7 @@ pub trait Renderer {
     fx : Double,
     fy : Double,
     fr : Double,
+    p : Int,
     stops : Array[Double],
     opacity : Double,
     width : Double,
@@ -127,12 +131,13 @@ pub enum DrawCommand {
   Fill(Int, Int, Int, Double)
   Stroke(Int, Int, Int, Double, Double)
   SetStrokeStyle(Int, Int, Double)
-  FillLinearGradient(Double, Double, Double, Double, Array[Double], Double)
+  FillLinearGradient(Double, Double, Double, Double, Int, Array[Double], Double)
   StrokeLinearGradient(
     Double,
     Double,
     Double,
     Double,
+    Int,
     Array[Double],
     Double,
     Double
@@ -144,6 +149,7 @@ pub enum DrawCommand {
     Double,
     Double,
     Double,
+    Int,
     Array[Double],
     Double
   )
@@ -154,14 +160,15 @@ pub enum DrawCommand {
     Double,
     Double,
     Double,
+    Int,
     Array[Double],
     Double,
     Double
   )
-  Clip
-  ClearRect(Double, Double, Double, Double)
   DrawImage(String, Double, Double)
   DrawText(String, String, Double, Int, Int, Int, Double, Int)
+  Clip
+  ClearRect(Double, Double, Double, Double)
   SetBlendMode(String)
   SetFillRule(String)
   SetOpacity(Double)
@@ -292,10 +299,11 @@ pub impl Renderer for CommandRecorder with fill_linear_gradient(
   y1 : Double,
   x2 : Double,
   y2 : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
 ) {
-  self.commands.push(FillLinearGradient(x1, y1, x2, y2, stops, opacity))
+  self.commands.push(FillLinearGradient(x1, y1, x2, y2, p, stops, opacity))
 }
 
 ///|
@@ -305,12 +313,13 @@ pub impl Renderer for CommandRecorder with stroke_linear_gradient(
   y1 : Double,
   x2 : Double,
   y2 : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
   width : Double,
 ) {
   self.commands.push(
-    StrokeLinearGradient(x1, y1, x2, y2, stops, opacity, width),
+    StrokeLinearGradient(x1, y1, x2, y2, p, stops, opacity, width),
   )
 }
 
@@ -323,10 +332,13 @@ pub impl Renderer for CommandRecorder with fill_radial_gradient(
   fx : Double,
   fy : Double,
   fr : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
 ) {
-  self.commands.push(FillRadialGradient(cx, cy, r, fx, fy, fr, stops, opacity))
+  self.commands.push(
+    FillRadialGradient(cx, cy, r, fx, fy, fr, p, stops, opacity),
+  )
 }
 
 ///|
@@ -338,12 +350,13 @@ pub impl Renderer for CommandRecorder with stroke_radial_gradient(
   fx : Double,
   fy : Double,
   fr : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
   width : Double,
 ) {
   self.commands.push(
-    StrokeRadialGradient(cx, cy, r, fx, fy, fr, stops, opacity, width),
+    StrokeRadialGradient(cx, cy, r, fx, fy, fr, p, stops, opacity, width),
   )
 }
 

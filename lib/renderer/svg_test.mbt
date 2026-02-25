@@ -33,7 +33,7 @@ fn[R : Renderer] draw_gradient(renderer : R) -> Unit {
   renderer.line_to(100.0, 100.0)
 
   let stops = [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0] // Red to Blue
-  renderer.fill_linear_gradient(0.0, 0.0, 100.0, 100.0, stops, 1.0)
+  renderer.fill_linear_gradient(0.0, 0.0, 100.0, 100.0, 2, stops, 1.0)
 }
 
 ///|

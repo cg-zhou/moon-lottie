@@ -3,25 +3,57 @@
 fn[T] find_keyframe(
   keyframes : Array[@model.LottieKeyframe[T]],
   frame : Double,
+  expression? : String? = None,
 ) -> (Int, Double) {
   let len = keyframes.length()
   if len == 0 {
     return (-1, 0.0)
   }
 
-  if frame <= keyframes[0].frame.to_double() {
+  let mut f = frame
+
+  // Simple loopOut('cycle') and loopOut('pingpong') support
+  match expression {
+    Some(e) =>
+      if len > 1 && e.contains("loopOut") {
+        let is_cycle = e.contains("cycle")
+        let is_pingpong = e.contains("pingpong")
+        if is_cycle || is_pingpong {
+          let first = keyframes[0].frame.to_double()
+          let last = keyframes[len - 1].frame.to_double()
+          let duration = last - first
+          if f > last && duration > 0.0 {
+            let offset = f - first
+            if is_cycle {
+              f = first + (offset - (offset / duration).floor() * duration)
+            } else if is_pingpong {
+              let cycle = (offset / duration).floor().to_int()
+              let t_in_cycle = offset - (offset / duration).floor() * duration
+              if cycle % 2 == 1 {
+                f = last - t_in_cycle
+              } else {
+                f = first + t_in_cycle
+              }
+            }
+          }
+        }
+      }
+    None => ()
+  }
+
+  if f <= keyframes[0].frame.to_double() {
     return (0, 0.0)
   }
 
-  if frame >= keyframes[len - 1].frame.to_double() {
+  if f >= keyframes[len - 1].frame.to_double() {
     return (len - 1, 0.0)
   }
 
   for i = 0; i < len - 1; i = i + 1 {
     let k1 = keyframes[i]
     let k2 = keyframes[i + 1]
-    if frame >= k1.frame.to_double() && frame < k2.frame.to_double() {
-      let progress = (frame - k1.frame.to_double()) /
+    if f >= k1.frame.to_double() && f < k2.frame.to_double() {
+      let progress = (f - k1.frame.to_double()) /
         (k2.frame.to_double() - k1.frame.to_double())
       return (i, progress)
     }
@@ -38,7 +70,11 @@ pub fn evaluate_text_document_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, _t) = find_keyframe(keyframes, frame)
+      let (idx, _t) = find_keyframe(
+        keyframes,
+        frame,
+        expression=prop.expression,
+      )
       if idx < 0 {
         // Return a dummy document
         return {
@@ -65,7 +101,7 @@ pub fn evaluate_double_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, t) = find_keyframe(keyframes, frame)
+      let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
       if idx < 0 {
         return 0.0
       }
@@ -81,19 +117,19 @@ pub fn evaluate_double_property(
         (Some(ot), Some(it)) => {
           let x1 = match ot.x {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           let y1 = match ot.y {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           let x2 = match it.x {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           let y2 = match it.y {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
         }
@@ -117,7 +153,7 @@ pub fn evaluate_vec_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, t) = find_keyframe(keyframes, frame)
+      let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
       if idx < 0 {
         return []
       }
@@ -134,19 +170,19 @@ pub fn evaluate_vec_property(
         (Some(ot), Some(it)) => {
           let x1 = match ot.x {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           let y1 = match ot.y {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           let x2 = match it.x {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           let y2 = match it.y {
             Single(v) => v
-            Multi(arr) => arr[0]
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
           }
           @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
         }
@@ -195,7 +231,7 @@ pub fn evaluate_path_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, t) = find_keyframe(keyframes, frame)
+      let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
       if idx < 0 {
         return @model.BezierPath::new(v=[], i=[], o=[], c=false)
       }

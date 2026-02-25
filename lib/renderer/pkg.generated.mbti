@@ -13,7 +13,7 @@ pub fn create_canvas_player(@model.Animation) -> Player[CanvasRenderer]
 
 pub fn render_animation_to_svgs(@model.Animation, Int) -> Array[String]
 
-pub fn trim_single_path(@model.BezierPath, Double, Double, Double) -> @model.BezierPath
+pub fn trim_single_path(@model.BezierPath, Double, Double, Double) -> Array[@model.BezierPath]
 
 // Errors
 
@@ -43,14 +43,14 @@ pub enum DrawCommand {
   Fill(Int, Int, Int, Double)
   Stroke(Int, Int, Int, Double, Double)
   SetStrokeStyle(Int, Int, Double)
-  FillLinearGradient(Double, Double, Double, Double, Array[Double], Double)
-  StrokeLinearGradient(Double, Double, Double, Double, Array[Double], Double, Double)
-  FillRadialGradient(Double, Double, Double, Double, Double, Double, Array[Double], Double)
-  StrokeRadialGradient(Double, Double, Double, Double, Double, Double, Array[Double], Double, Double)
-  Clip
-  ClearRect(Double, Double, Double, Double)
+  FillLinearGradient(Double, Double, Double, Double, Int, Array[Double], Double)
+  StrokeLinearGradient(Double, Double, Double, Double, Int, Array[Double], Double, Double)
+  FillRadialGradient(Double, Double, Double, Double, Double, Double, Int, Array[Double], Double)
+  StrokeRadialGradient(Double, Double, Double, Double, Double, Double, Int, Array[Double], Double, Double)
   DrawImage(String, Double, Double)
   DrawText(String, String, Double, Int, Int, Int, Double, Int)
+  Clip
+  ClearRect(Double, Double, Double, Double)
   SetBlendMode(String)
   SetFillRule(String)
   SetOpacity(Double)
@@ -101,10 +101,10 @@ pub trait Renderer {
   fill(Self, Int, Int, Int, Double) -> Unit
   stroke(Self, Int, Int, Int, Double, Double) -> Unit
   set_stroke_style(Self, Int, Int, Double) -> Unit
-  fill_linear_gradient(Self, Double, Double, Double, Double, Array[Double], Double) -> Unit
-  stroke_linear_gradient(Self, Double, Double, Double, Double, Array[Double], Double, Double) -> Unit
-  fill_radial_gradient(Self, Double, Double, Double, Double, Double, Double, Array[Double], Double) -> Unit
-  stroke_radial_gradient(Self, Double, Double, Double, Double, Double, Double, Array[Double], Double, Double) -> Unit
+  fill_linear_gradient(Self, Double, Double, Double, Double, Int, Array[Double], Double) -> Unit
+  stroke_linear_gradient(Self, Double, Double, Double, Double, Int, Array[Double], Double, Double) -> Unit
+  fill_radial_gradient(Self, Double, Double, Double, Double, Double, Double, Int, Array[Double], Double) -> Unit
+  stroke_radial_gradient(Self, Double, Double, Double, Double, Double, Double, Int, Array[Double], Double, Double) -> Unit
   clip(Self) -> Unit
   draw_image(Self, String, Double, Double) -> Unit
   draw_text(Self, String, String, Double, Int, Int, Int, Double, Int) -> Unit

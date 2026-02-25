@@ -284,20 +284,24 @@ pub impl Renderer for CanvasRenderer with fill_linear_gradient(
   y1 : Double,
   x2 : Double,
   y2 : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
 ) {
   let _ = self
   canvas_create_linear_gradient(x1, y1, x2, y2)
-  let n = stops.length()
-  for i = 0; i < n; i = i + 4 {
-    canvas_add_gradient_stop(
-      stops[i],
-      stops[i + 1],
-      stops[i + 2],
-      stops[i + 3],
-      1.0,
-    )
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
+    let r = (stops[i * 4 + 1] * 255.0).to_int().to_double()
+    let g = (stops[i * 4 + 2] * 255.0).to_int().to_double()
+    let b = (stops[i * 4 + 3] * 255.0).to_int().to_double()
+    // Try to find matching alpha stop
+    let mut a = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      // Simplification: assume alpha stops are in the same order as color stops
+      a = stops[p * 4 + i * 2 + 1]
+    }
+    canvas_add_gradient_stop(offset, r, g, b, a)
   }
   canvas_fill_gradient(opacity)
 }
@@ -310,21 +314,23 @@ pub impl Renderer for CanvasRenderer with stroke_linear_gradient(
   y1 : Double,
   x2 : Double,
   y2 : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
   width : Double,
 ) {
   let _ = self
   canvas_create_linear_gradient(x1, y1, x2, y2)
-  let n = stops.length()
-  for i = 0; i < n; i = i + 4 {
-    canvas_add_gradient_stop(
-      stops[i],
-      stops[i + 1],
-      stops[i + 2],
-      stops[i + 3],
-      1.0,
-    )
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
+    let r = (stops[i * 4 + 1] * 255.0).to_int().to_double()
+    let g = (stops[i * 4 + 2] * 255.0).to_int().to_double()
+    let b = (stops[i * 4 + 3] * 255.0).to_int().to_double()
+    let mut a = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      a = stops[p * 4 + i * 2 + 1]
+    }
+    canvas_add_gradient_stop(offset, r, g, b, a)
   }
   canvas_stroke_gradient(opacity, width)
 }
@@ -339,20 +345,22 @@ pub impl Renderer for CanvasRenderer with fill_radial_gradient(
   fx : Double,
   fy : Double,
   fr : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
 ) {
   let _ = self
   canvas_create_radial_gradient(cx, cy, r, fx, fy, fr)
-  let n = stops.length()
-  for i = 0; i < n; i = i + 4 {
-    canvas_add_gradient_stop(
-      stops[i],
-      stops[i + 1],
-      stops[i + 2],
-      stops[i + 3],
-      1.0,
-    )
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
+    let r = (stops[i * 4 + 1] * 255.0).to_int().to_double()
+    let g = (stops[i * 4 + 2] * 255.0).to_int().to_double()
+    let b = (stops[i * 4 + 3] * 255.0).to_int().to_double()
+    let mut a = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      a = stops[p * 4 + i * 2 + 1]
+    }
+    canvas_add_gradient_stop(offset, r, g, b, a)
   }
   canvas_fill_gradient(opacity)
 }
@@ -367,21 +375,23 @@ pub impl Renderer for CanvasRenderer with stroke_radial_gradient(
   fx : Double,
   fy : Double,
   fr : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
   width : Double,
 ) {
   let _ = self
   canvas_create_radial_gradient(cx, cy, r, fx, fy, fr)
-  let n = stops.length()
-  for i = 0; i < n; i = i + 4 {
-    canvas_add_gradient_stop(
-      stops[i],
-      stops[i + 1],
-      stops[i + 2],
-      stops[i + 3],
-      1.0,
-    )
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
+    let r = (stops[i * 4 + 1] * 255.0).to_int().to_double()
+    let g = (stops[i * 4 + 2] * 255.0).to_int().to_double()
+    let b = (stops[i * 4 + 3] * 255.0).to_int().to_double()
+    let mut a = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      a = stops[p * 4 + i * 2 + 1]
+    }
+    canvas_add_gradient_stop(offset, r, g, b, a)
   }
   canvas_stroke_gradient(opacity, width)
 }

@@ -285,6 +285,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   y1 : Double,
   x2 : Double,
   y2 : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
@@ -297,23 +298,29 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   self.defs_buffer.write_string(
     "<linearGradient id=\"\{id}\" x1=\"\{p1.0}\" y1=\"\{p1.1}\" x2=\"\{p2.0}\" y2=\"\{p2.1}\" gradientUnits=\"userSpaceOnUse\">",
   )
-  for i = 0; i < stops.length(); i = i + 4 {
-    let offset = stops[i]
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
     let color = color_to_hex(
-      (stops[i + 1] * 255.0).to_int(),
-      (stops[i + 2] * 255.0).to_int(),
-      (stops[i + 3] * 255.0).to_int(),
+      (stops[i * 4 + 1] * 255.0).to_int(),
+      (stops[i * 4 + 2] * 255.0).to_int(),
+      (stops[i * 4 + 3] * 255.0).to_int(),
     )
+    let mut opacity_stop = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      opacity_stop = stops[p * 4 + i * 2 + 1]
+    }
     self.defs_buffer.write_string(
-      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" />",
+      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" stop-opacity=\"\{opacity_stop}\" />",
     )
   }
   self.defs_buffer.write_string("</linearGradient>")
 
   let path_data = self.path_buffer.to_string()
-  self.buffer.write_string(
-    "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
-  )
+  if path_data.length() > 0 {
+    self.buffer.write_string(
+      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
+    )
+  }
 }
 
 ///|
@@ -323,6 +330,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   y1 : Double,
   x2 : Double,
   y2 : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
   width : Double,
@@ -336,23 +344,29 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   self.defs_buffer.write_string(
     "<linearGradient id=\"\{id}\" x1=\"\{p1.0}\" y1=\"\{p1.1}\" x2=\"\{p2.0}\" y2=\"\{p2.1}\" gradientUnits=\"userSpaceOnUse\">",
   )
-  for i = 0; i < stops.length(); i = i + 4 {
-    let offset = stops[i]
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
     let color = color_to_hex(
-      (stops[i + 1] * 255.0).to_int(),
-      (stops[i + 2] * 255.0).to_int(),
-      (stops[i + 3] * 255.0).to_int(),
+      (stops[i * 4 + 1] * 255.0).to_int(),
+      (stops[i * 4 + 2] * 255.0).to_int(),
+      (stops[i * 4 + 3] * 255.0).to_int(),
     )
+    let mut opacity_stop = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      opacity_stop = stops[p * 4 + i * 2 + 1]
+    }
     self.defs_buffer.write_string(
-      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" />",
+      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" stop-opacity=\"\{opacity_stop}\" />",
     )
   }
   self.defs_buffer.write_string("</linearGradient>")
 
   let path_data = self.path_buffer.to_string()
-  self.buffer.write_string(
-    "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
-  )
+  if path_data.length() > 0 {
+    self.buffer.write_string(
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+    )
+  }
 }
 
 ///|
@@ -364,6 +378,7 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   fx : Double,
   fy : Double,
   fr : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
@@ -376,23 +391,29 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   self.defs_buffer.write_string(
     "<radialGradient id=\"\{id}\" cx=\"\{p_c.0}\" cy=\"\{p_c.1}\" r=\"\{r}\" fx=\"\{p_f.0}\" fy=\"\{p_f.1}\" gradientUnits=\"userSpaceOnUse\">",
   )
-  for i = 0; i < stops.length(); i = i + 4 {
-    let offset = stops[i]
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
     let color = color_to_hex(
-      (stops[i + 1] * 255.0).to_int(),
-      (stops[i + 2] * 255.0).to_int(),
-      (stops[i + 3] * 255.0).to_int(),
+      (stops[i * 4 + 1] * 255.0).to_int(),
+      (stops[i * 4 + 2] * 255.0).to_int(),
+      (stops[i * 4 + 3] * 255.0).to_int(),
     )
+    let mut opacity_stop = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      opacity_stop = stops[p * 4 + i * 2 + 1]
+    }
     self.defs_buffer.write_string(
-      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" />",
+      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" stop-opacity=\"\{opacity_stop}\" />",
     )
   }
   self.defs_buffer.write_string("</radialGradient>")
 
   let path_data = self.path_buffer.to_string()
-  self.buffer.write_string(
-    "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
-  )
+  if path_data.length() > 0 {
+    self.buffer.write_string(
+      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
+    )
+  }
 }
 
 ///|
@@ -404,6 +425,7 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   fx : Double,
   fy : Double,
   fr : Double,
+  p : Int,
   stops : Array[Double],
   opacity : Double,
   width : Double,
@@ -417,23 +439,29 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   self.defs_buffer.write_string(
     "<radialGradient id=\"\{id}\" cx=\"\{p_c.0}\" cy=\"\{p_c.1}\" r=\"\{r}\" fx=\"\{p_f.0}\" fy=\"\{p_f.1}\" gradientUnits=\"userSpaceOnUse\">",
   )
-  for i = 0; i < stops.length(); i = i + 4 {
-    let offset = stops[i]
+  for i = 0; i < p; i = i + 1 {
+    let offset = stops[i * 4]
     let color = color_to_hex(
-      (stops[i + 1] * 255.0).to_int(),
-      (stops[i + 2] * 255.0).to_int(),
-      (stops[i + 3] * 255.0).to_int(),
+      (stops[i * 4 + 1] * 255.0).to_int(),
+      (stops[i * 4 + 2] * 255.0).to_int(),
+      (stops[i * 4 + 3] * 255.0).to_int(),
     )
+    let mut opacity_stop = 1.0
+    if stops.length() >= p * 4 + p * 2 {
+      opacity_stop = stops[p * 4 + i * 2 + 1]
+    }
     self.defs_buffer.write_string(
-      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" />",
+      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" stop-opacity=\"\{opacity_stop}\" />",
     )
   }
   self.defs_buffer.write_string("</radialGradient>")
 
   let path_data = self.path_buffer.to_string()
-  self.buffer.write_string(
-    "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
-  )
+  if path_data.length() > 0 {
+    self.buffer.write_string(
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+    )
+  }
 }
 
 ///|
