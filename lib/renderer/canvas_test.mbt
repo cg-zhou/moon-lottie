@@ -1,3 +1,4 @@
+#cfg(any(target = "wasm", target = "wasm-gc"))
 test "canvas_renderer_impl" {
   let r = CanvasRenderer::new()
   // This should compile if the impl is visible here

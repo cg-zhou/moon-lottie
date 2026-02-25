@@ -519,6 +519,7 @@ fn[R : Renderer] Player::draw_lottie_path(
   }
 }
 
+#cfg(any(target = "wasm", target = "wasm-gc"))
 pub fn create_canvas_player(
   animation : @model.Animation
 ) -> Player[CanvasRenderer] {

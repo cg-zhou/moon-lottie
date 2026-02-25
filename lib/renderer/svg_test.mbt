@@ -14,11 +14,11 @@ test "SvgRenderer basic" {
   
   let output = renderer.get_output()
   // Basic check
-  assert_true(output.contains("<svg"))
-  assert_true(output.contains("fill=\"#FF0000\""))
-  assert_true(output.contains("M10"))
-  assert_true(output.contains("L90"))
-  assert_true(output.contains("Z"))
+  assert_true(output.contains("<svg"), "Output should contain svg tag")
+  assert_true(output.contains("fill=\"#FF0000\""), "Output should contain red fill")
+  assert_true(output.contains("M10"), "Output should contain move to 10")
+  assert_true(output.contains("L90"), "Output should contain line to 90")
+  assert_true(output.contains("Z"), "Output should contain close path")
 }
 
 fn[R : Renderer] draw_gradient(renderer : R) -> Unit {
@@ -35,9 +35,9 @@ test "SvgRenderer with gradient" {
   draw_gradient(renderer)
   
   let output = renderer.get_output()
-  assert_true(output.contains("<linearGradient"))
-  assert_true(output.contains("stop-color=\"#FF0000\""))
-  assert_true(output.contains("stop-color=\"#0000FF\""))
+  assert_true(output.contains("<linearGradient"), "Output should contain linearGradient")
+  assert_true(output.contains("stop-color=\"#FF0000\""), "Output should contain red stop color")
+  assert_true(output.contains("stop-color=\"#0000FF\""), "Output should contain blue stop color")
 }
 
 test "SvgRenderer subtract mask logic" {
@@ -62,9 +62,9 @@ test "SvgRenderer subtract mask logic" {
   renderer.clip()
   
   let output = renderer.get_output()
-  assert_true(output.contains("fill-rule=\"evenodd\""))
-  assert_true(output.contains("<clipPath"))
-  assert_true(output.contains("clip-path=\"url(#clip_0)\""))
+  assert_true(output.contains("fill-rule=\"evenodd\""), "Output should contain fill-rule evenodd")
+  assert_true(output.contains("<clipPath"), "Output should contain clipPath")
+  assert_true(output.contains("clip-path=\"url(#clip_0)\""), "Output should contain clip-path reference")
 }
 
 test "render_animation_to_svgs utility" {
@@ -77,6 +77,6 @@ test "render_animation_to_svgs utility" {
   }
   
   let svgs = render_animation_to_svgs(ani, 3)
-  assert_eq!(svgs.length(), 3)
-  assert_true(svgs[0].contains("<svg"))
+  assert_eq(svgs.length(), 3)
+  assert_true(svgs[0].contains("<svg"), "First frame should contain svg tag")
 }

@@ -24,8 +24,10 @@
 - [x] **子合成与资产系统 (PreComps/Assets)**: 已解析并实现 `PreComp` 的递归渲染逻辑以及 `Solid` 纯色层支持。
 - [x] **线条样式样式对标 (Stroke Styles)**: 全面支持 Line Cap, Line Join 和 Miter Limit 的解析与渲染。
 - [ ] **图像加载 FFI (Image Loading)**: 虽模型已支持 `Image` 层，但 Wasm -> JS 的图像加载预处理机制尚未闭环。
-- [x] **多模式遮罩 (Non-Add Masks)**: 实现了 `Subtract` (减去) 模式，已在 `SvgRenderer` 中完成适配（Giant Rect 方案）。
-- [x] **SVG 快照回测系统 (SVG Regressions)**: 建立了 `SvgRenderer` 指令后。
+- [x] **多模式遮罩 (Non-Add Masks)**: 实现了 `Subtract` (减去) 模式，通过 SvgRenderer 的 Giant Rect 方案适配快照测试。
+- [x] **SVG 抽帧回测系统 (SVG Regressions)**: 建立了 `SvgRenderer` 指令后端，并成功跑通了官方 `starfish.json` (24KB) 的 300 帧全量路径渲染测试。
+- [ ] **大型 JSON 加载方案**: 当前 `starfish.json` 采用硬编码字符串拼接，未来需重构为通过 `#embed` 或 `test/fixtures` 自动构建加载。
+- [x] **变换属性容错**: 修正了 `evaluate_transform` 等评估器对非标尺度数组（如 [1] vs [1, 1, 1]）的兼容性。
 
 ## 验证协议 (Verification Protocol)
 

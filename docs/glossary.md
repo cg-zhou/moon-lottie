@@ -48,8 +48,14 @@
 | `lc` | lineCap | Int | 线条末端样式 (1: Butt, 2: Round, 3: Square) |
 | `lj` | lineJoin | Int | 线条转角样式 (1: Miter, 2: Round, 3: Bevel) |
 | `ml` | miterLimit | Number | 斜接限制 |
+| `gf` | gradientFill | Object | 渐变填充 (Gradient Fill) |
 | `gs` | gradientStroke | Object | 渐变描边 (Gradient Stroke) |
 | `g` | gradientColors | Object | 渐变颜色停止位数据 |
+| `t` | gradientType | Int | 渐变类型 (1: Linear, 2: Radial) |
+| `s` | startPoint | Vector | 渐变起点 |
+| `e` | endPoint | Vector | 渐变终点 |
+| `h` | highlightLength| Number | 径向渐变高亮长度 |
+| `a` | highlightAngle | Number | 径向渐变高亮角度 |
 | `p` | assetPath | String | 图像资产的文件名/Base64 数据 |
 | `u` | assetUrl | String | 图像资产的存放路径 |
 | `sc` | solidColor | String | 纯色层颜色 (Hex String) |

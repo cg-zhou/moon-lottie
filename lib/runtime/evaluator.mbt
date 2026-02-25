@@ -201,17 +201,25 @@ pub fn evaluate_transform(
   // Matrix transform construction
   let m = @math.Matrix::identity()
   
+  // Safely get components
+  let ax = if a.length() > 0 { a[0] } else { 0.0 }
+  let ay = if a.length() > 1 { a[1] } else { 0.0 }
+  
+  let px = if p.length() > 0 { p[0] } else { 0.0 }
+  let py = if p.length() > 1 { p[1] } else { 0.0 }
+  
+  let sx = if s.length() > 0 { s[0] } else { 100.0 }
+  let sy = if s.length() > 1 { s[1] } else { 100.0 }
+  
   // 1. Translate to position
-  let m1 = m.translate(p[0], p[1])
+  let m1 = m.translate(px, py)
   
   // 2. Rotate
-  // Lottie rotation is in degrees clockwise. Matrix::rotate expects radians.
   let m2 = m1.rotate(r * 3.141592653589793 / 180.0)
   
   // 3. Scale
-  // Lottie scale is in percentage (0-100)
-  let m3 = m2.scale(s[0] / 100.0, s[1] / 100.0)
+  let m3 = m2.scale(sx / 100.0, sy / 100.0)
   
-  // 4. Anchor offset (negative translation)
-  m3.translate(-a[0], -a[1])
+  // 4. Anchor offset
+  m3.translate(-ax, -ay)
 }
