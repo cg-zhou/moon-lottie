@@ -1,78 +1,313 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoonLottie - WebAssembly Lottie Player</title>
+    <title>MoonLottie - Wasm GC 动画预览</title>
     <style>
+        :root {
+            --sidebar-width: 320px;
+            --primary-color: #007aff;
+            --bg-color: #f5f5f7;
+            --panel-color: #ffffff;
+            --border-color: #e5e5e7;
+            --text-color: #1d1d1f;
+            --secondary-text: #86868b;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f5f7;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        aside {
+            width: var(--sidebar-width);
+            background: var(--panel-color);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            align-items: center;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
             margin: 0;
+            font-weight: 600;
         }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            text-align: center;
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin: 4px 0 0 0;
         }
-        canvas {
-            border: 1px solid #eee;
-            background-color: #fff;
-            border-radius: 8px;
-            margin-bottom: 20px;
+
+        .scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
         }
-        .controls {
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--secondary-text);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        /* Control Groups */
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .info-row {
             display: flex;
-            gap: 10px;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
         }
-        button {
-            padding: 8px 16px;
-            border-radius: 6px;
+
+        .info-label { color: var(--secondary-text); }
+        .info-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+        /* Buttons & Inputs */
+        .file-drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 32px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .file-drop-zone:hover, .file-drop-zone.dragover {
+            border-color: var(--primary-color);
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
             border: none;
-            background-color: #007aff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+
+        .btn-primary:hover { filter: brightness(1.1); }
+
+        /* Main Preview Area */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: #222;
+        }
+
+        .viewport-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            /* Grid background */
+            background-color: #f0f0f2;
+            background-image: 
+                linear-gradient(45deg, #e5e5e7 25%, transparent 25%),
+                linear-gradient(-45deg, #e5e5e7 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e5e5e7 75%),
+                linear-gradient(-45deg, transparent 75%, #e5e5e7 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        .viewport-container.bg-white { background-color: white; background-image: none; }
+        .viewport-container.bg-black { background-color: black; background-image: none; }
+
+        canvas {
+            max-width: 90%;
+            max-height: 90%;
+            background: transparent;
+        }
+
+        /* Bottom Toolbar */
+        .bottom-bar {
+            background: var(--panel-color);
+            border-top: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        #play-pause {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: none;
             color: white;
             cursor: pointer;
-            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
         }
-        button:hover { background-color: #0063cc; }
-        .info {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #666;
+
+        .progress-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        #file-input { margin-bottom: 15px; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            flex: 1;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(1.5);
+        }
+
+        #frame-info {
+            font-size: 13px;
+            width: 80px;
+            color: var(--secondary-text);
+        }
+
+        /* BG Selectors */
+        .bg-switcher {
+            display: flex;
+            gap: 8px;
+        }
+
+        .bg-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+        }
+        .bg-grid { background: #eee; background-image: conic-gradient(#fff 90deg, #ccc 90deg 180deg, #fff 180deg 270deg, #ccc 270deg); background-size: 8px 8px; }
+        .bg-btn-white { background: white; }
+        .bg-btn-black { background: black; }
+        .bg-btn.active { border-color: var(--primary-color); }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>MoonLottie Demo</h1>
-        <p>Powered by MoonBit & WebAssembly GC</p>
-        
-        <input type="file" id="file-input" accept=".json">
-        <br>
-        <canvas id="lottie-canvas" width="500" height="500"></canvas>
-        
-        <div class="controls">
-            <button id="play-pause">Pause</button>
-            <input type="range" id="seek-bar" min="0" max="100" value="0" style="width: 200px;">
-            <span id="frame-info">Frame: 0</span>
+    <aside>
+        <div class="sidebar-header">
+            <h1>MoonLottie</h1>
+            <p>Wasm GC Player <span id="status-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ccc; margin-left:4px;"></span></p>
         </div>
-        <div class="controls" style="margin-top: 10px;">
-            <label for="speed">Speed: </label>
-            <input type="range" id="speed" min="0" max="2" step="0.1" value="1.0">
+        <div class="scroll-area">
+            <div class="section">
+                <div class="section-title">上传动画</div>
+                <div class="file-drop-zone" id="drop-zone">
+                    <p style="margin:0; font-size:14px; color:var(--secondary-text);">点击或拖拽 JSON 文件</p>
+                    <input type="file" id="file-input" accept=".json" style="display:none">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">动画属性</div>
+                <div id="anim-info">
+                    <div class="info-row"><span class="info-label">大小</span><span class="info-value" id="info-size">-</span></div>
+                    <div class="info-row"><span class="info-label">帧率</span><span class="info-value" id="info-fps">-</span></div>
+                    <div class="info-row"><span class="info-label">总帧数</span><span class="info-value" id="info-total-frames">-</span></div>
+                    <div class="info-row"><span class="info-label">版本</span><span class="info-value" id="info-version">-</span></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">设置</div>
+                <div class="control-group">
+                    <label>背景切换</label>
+                    <div class="bg-switcher">
+                        <div class="bg-btn bg-grid active" data-bg="grid"></div>
+                        <div class="bg-btn bg-btn-white" data-bg="white"></div>
+                        <div class="bg-btn bg-btn-black" data-bg="black"></div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="speed-slider">播放速度: <span id="speed-val">1.0</span>x</label>
+                    <input type="range" id="speed" min="0" max="3" step="0.1" value="1.0">
+                </div>
+            </div>
+
+            <div class="section" id="status-msg" style="font-size: 12px; color: var(--secondary-text);">
+                等待 WebAssembly 初始化...
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <div class="viewport-container" id="viewport">
+            <canvas id="lottie-canvas" width="500" height="500"></canvas>
         </div>
 
-        <div class="info">
-            Status: <span id="status">Loading WebAssembly...</span>
+        <div class="bottom-bar">
+            <div class="progress-container">
+                <input type="range" id="seek-bar" min="0" max="100" value="0">
+                <span id="frame-info">0 / 0</span>
+            </div>
+            <div class="playback-controls">
+                <button id="play-pause">▶</button>
+                <div style="font-size: 12px; color: var(--secondary-text);">
+                    按空格播放/暂停
+                </div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <script type="module" src="main.js"></script>
 </body>

@@ -56,6 +56,34 @@ pub fn get_frame_count(
 }
 
 ///|
+pub fn get_width(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> Int {
+  player.animation.w
+}
+
+///|
+pub fn get_height(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> Int {
+  player.animation.h
+}
+
+///|
+pub fn get_fps(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> Double {
+  player.animation.fr
+}
+
+///|
+pub fn get_version(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> String {
+  player.animation.v
+}
+
+///|
 pub fn update_player(
   player : @renderer.Player[@renderer.CanvasRenderer],
   frame : Double,
