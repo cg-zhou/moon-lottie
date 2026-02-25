@@ -8,6 +8,14 @@ import {
 options(
   "is-main": true,
   link: {
-    "wasm-gc": { "exports": [ "create_player_from_js", "update_player" ] },
+    "wasm-gc": {
+      "exports": [
+        "create_player_from_js",
+        "update_player",
+        "update_player_with_speed",
+        "get_frame_count",
+        "get_in_point",
+      ],
+    },
   },
 )

@@ -36,6 +36,26 @@ pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
 }
 
 ///|
+pub fn update_player_with_speed(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+  frame : Double,
+  speed : Double,
+) -> Double {
+  let next_frame = frame + speed
+  js_log_frame(next_frame)
+  player.set_frame(next_frame)
+  player.render()
+  next_frame
+}
+
+///|
+pub fn get_frame_count(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+) -> Double {
+  player.animation.op - player.animation.ip
+}
+
+///|
 pub fn update_player(
   player : @renderer.Player[@renderer.CanvasRenderer],
   frame : Double,
@@ -43,13 +63,6 @@ pub fn update_player(
   js_log_frame(frame)
   player.set_frame(frame)
   player.render()
-}
-
-///|
-pub fn get_total_frames(
-  player : @renderer.Player[@renderer.CanvasRenderer],
-) -> Double {
-  player.animation.op - player.animation.ip
 }
 
 ///|
