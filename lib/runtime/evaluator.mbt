@@ -162,7 +162,13 @@ pub fn evaluate_transform(
   frame : Double
 ) -> @math.Matrix {
   let a = evaluate_vec_property(transform.anchor, frame)
-  let p = evaluate_vec_property(transform.position, frame)
+  let p = if transform.s == Some(true) {
+    let x = match transform.px { Some(prop) => evaluate_double_property(prop, frame); None => 0.0 }
+    let y = match transform.py { Some(prop) => evaluate_double_property(prop, frame); None => 0.0 }
+    [x, y]
+  } else {
+    evaluate_vec_property(transform.position, frame)
+  }
   let s = evaluate_vec_property(transform.scale, frame)
   let r = evaluate_double_property(transform.rotation, frame)
   

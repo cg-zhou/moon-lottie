@@ -192,8 +192,34 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
     Some(j) =>
       match j {
         Object(obj) => {
+          let s = match obj.get("p") {
+            Some(Object(p_obj)) =>
+              match p_obj.get("s") {
+                Some(True) => true
+                _ => false
+              }
+            _ => false
+          }
           let anchor = parse_property_vec(obj.get("a"))
           let position = parse_property_vec(obj.get("p"))
+          let px = if s {
+            try {
+              Some(parse_property_double(obj.get("x")))
+            } catch {
+              _ => None
+            }
+          } else {
+            None
+          }
+          let py = if s {
+            try {
+              Some(parse_property_double(obj.get("y")))
+            } catch {
+              _ => None
+            }
+          } else {
+            None
+          }
           let scale = parse_property_vec(obj.get("s"))
           let rotation = parse_property_double(obj.get("r"))
           let opacity = parse_property_double(obj.get("o"))
@@ -203,6 +229,9 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
             scale~,
             rotation~,
             opacity~,
+            px=px,
+            py=py,
+            s=if s { Some(true) } else { None },
           )
         }
         _ => raise UnexpectedType("transform", "Object")
