@@ -102,7 +102,33 @@ pub fn evaluate_vec_property(
         Some(v) => v
         None => k2.start_value
       }
-      @math.lerp_array(k1.start_value, next_val, eased_t)
+
+      match (k1.value_out_tangent, k1.value_in_tangent) {
+        (Some(to), Some(ti)) => {
+          if k1.start_value.length() >= 2 &&
+            next_val.length() >= 2 &&
+            to.length() >= 2 &&
+            ti.length() >= 2 {
+            let res = []
+            for i = 0; i < k1.start_value.length(); i = i + 1 {
+              let p0 = k1.start_value[i]
+              let p3 = next_val[i]
+              // Check if tangents have the component. If not, fallback to p0/p3.
+              let p1 = if i < to.length() { p0 + to[i] } else { p0 }
+              let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
+              let val = (1.0 - eased_t) * (1.0 - eased_t) * (1.0 - eased_t) * p0 +
+                3.0 * (1.0 - eased_t) * (1.0 - eased_t) * eased_t * p1 +
+                3.0 * (1.0 - eased_t) * eased_t * eased_t * p2 +
+                eased_t * eased_t * eased_t * p3
+              res.push(val)
+            }
+            res
+          } else {
+            @math.lerp_array(k1.start_value, next_val, eased_t)
+          }
+        }
+        _ => @math.lerp_array(k1.start_value, next_val, eased_t)
+      }
     }
   }
 }

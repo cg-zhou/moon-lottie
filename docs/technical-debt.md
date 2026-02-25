@@ -9,8 +9,11 @@
 - [x] **隐藏字段与父级绑定**: 已实现 `hd` 字段解析及渲染逻辑跳过, 以及 `parent` 字段图层级联变换。
 - [x] **颜色 FFI 桥接与渲染**: 重构为数值型颜色传递 (`r, g, b, opacity/width`), 解决了字符串编码导致的 Canvas 渲染失效问题。
 - [x] **路径与插值优化**: 完善了 `Path` 属性的关键帧插值 (`evaluate_path_property`), 修正了模型使其支持 `end_value` 过渡动画。
-- [ ] **空间贝塞尔插值 (Spatial Bezier)**: 当前 `evaluate_vec_property` 仅支持时间轴上的 Easing, 尚未实现位置属性的 `ti` / `to` 空间插值。
-- [ ] **多维独立分量插值**: 某些 Lottie 属性 (如 Position) 可能被拆分为独立的 X 和 Y 分量, 评价器需支持此逻辑。
+- [x] **空间贝塞尔插值 (Spatial Bezier)**: 已在 `evaluate_vec_property` 中实现基于 `ti` / `to` 的三阶贝塞尔空间插值。
+- [x] **多维独立分量插值**: 评价器已支持解析和计算独立的 X (`px`) 和 Y (`py`) 位置属性。
+- [ ] **遮罩与蒙版 (Masks/Matte)**: 模型与解析已支持 `masksProperties`, `tt` (Matte Type), `td` (Matte Inherit)。渲染逻辑需进一步对接 Canvas `clip` 与 `GlobalCompositeOperation`。
+- [ ] **路径变形动画 (Morphing)**: 确保两个贝塞尔路径点数一致时的插值正确性 (目前 evaluate_path_property 已有基础实现)。
+- [ ] **性能优化 (SIMD)**: 探索在矩阵运算中使用 MoonBit SIMD 以加速关键帧密集的动画。
 - [x] **错误处理**: 解析器已全面引入 `raise LottieError` 机制，提供明确的错误类型反馈，解决了空值默认填充导致的调试困难。
 - [x] **色彩渐变 (Gradients)**: 已支持线性渐变 (`gf`) 和径向渐变 (`gs`) 的解析与 FFI 渲染，通过多步 FFI 调用规避了 `Array` 传递的限制。
 
