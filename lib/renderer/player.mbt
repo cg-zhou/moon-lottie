@@ -80,46 +80,82 @@ fn[R : Renderer] Player::render_layer(
   self.renderer.concat_transform(matrix)
 
   // 1.5 Apply Layer Masks
+  let mut mask_restore_count = 0
   match layer.masks {
     Some(masks) => {
-      let mut has_clip = false
-      let mut is_first = true
-      for mask in masks {
-        match mask.mode {
-          @model.MaskMode::Add => {
-            if is_first {
-              self.renderer.begin_path()
-              has_clip = true
+      let mut i = 0
+      while i < masks.length() {
+        let mask = masks[i]
+        
+        // Group contiguous Add masks
+        if mask.mode == @model.MaskMode::Add && not(mask.inv) {
+          self.renderer.begin_path()
+          self.renderer.set_fill_rule("nonzero")
+          while i < masks.length() {
+            let m = masks[i]
+            if m.mode == @model.MaskMode::Add && not(m.inv) {
+              let path_val = @runtime.evaluate_path_property(m.pt, self.current_frame)
+              self.draw_lottie_path(path_val)
+              i = i + 1
+            } else {
+              break
             }
-            let path_val = @runtime.evaluate_path_property(
-              mask.pt,
-              self.current_frame,
-            )
-            self.draw_lottie_path(path_val)
           }
-          @model.MaskMode::Subtract => {
-            if is_first {
+          self.renderer.clip()
+          continue
+        }
+        
+        // Handle Subtract or Inverted Add/Subtract
+        match mask.mode {
+          @model.MaskMode::Subtract | @model.MaskMode::Add => {
+            let is_inv = (mask.mode == @model.MaskMode::Add && mask.inv) ||
+                         (mask.mode == @model.MaskMode::Subtract && not(mask.inv))
+            
+            if is_inv {
+              // Difference: Save current state, then clip with a hole
+              self.renderer.save()
+              mask_restore_count = mask_restore_count + 1
               self.renderer.begin_path()
-              // Giant rectangle to support subtraction via evenodd/holes
               self.renderer.move_to(-10000.0, -10000.0)
               self.renderer.line_to(10000.0, -10000.0)
               self.renderer.line_to(10000.0, 10000.0)
               self.renderer.line_to(-10000.0, 10000.0)
               self.renderer.close_path()
-              has_clip = true
+              
+              let path_val = @runtime.evaluate_path_property(mask.pt, self.current_frame)
+              self.draw_lottie_path(path_val)
+              self.renderer.set_fill_rule("evenodd")
+              self.renderer.clip()
+            } else {
+              // Non-inverted Add was handled in the grouped block
+              // Inverted Subtract is same as Add
+              self.renderer.begin_path()
+              let path_val = @runtime.evaluate_path_property(mask.pt, self.current_frame)
+              self.draw_lottie_path(path_val)
+              self.renderer.set_fill_rule("nonzero")
+              self.renderer.clip()
             }
-            let path_val = @runtime.evaluate_path_property(
-              mask.pt,
-              self.current_frame,
-            )
-            self.draw_lottie_path(path_val)
           }
-          _ => () // Other modes not yet supported
+          @model.MaskMode::Intersect => {
+             self.renderer.begin_path()
+             let path_val = @runtime.evaluate_path_property(mask.pt, self.current_frame)
+             self.draw_lottie_path(path_val)
+             if mask.inv {
+                // Inverted Intersect involves complex logic, simplified:
+                self.renderer.move_to(-10000.0, -10000.0)
+                self.renderer.line_to(10000.0, -10000.0)
+                self.renderer.line_to(10000.0, 10000.0)
+                self.renderer.line_to(-10000.0, 10000.0)
+                self.renderer.close_path()
+                self.renderer.set_fill_rule("evenodd")
+             } else {
+                self.renderer.set_fill_rule("nonzero")
+             }
+             self.renderer.clip()
+          }
+          _ => ()
         }
-        is_first = false
-      }
-      if has_clip {
-        self.renderer.clip()
+        i = i + 1
       }
     }
     None => ()
@@ -128,7 +164,12 @@ fn[R : Renderer] Player::render_layer(
   // 2. Render Layer Content
   self.render_layer_content(layer)
 
-  // 3. Apply Track Matte
+  // 3. Restore mask states
+  for _ in 0..<mask_restore_count {
+    self.renderer.restore()
+  }
+
+  // 4. Apply Track Matte
   match layer.tt {
     Some(1) | Some(2) | Some(3) | Some(4) => {
       let mut matte_source : @model.Layer? = None

@@ -31,8 +31,9 @@ pub trait Renderer {
   // Canvas size
   clear_rect(self : Self, x : Double, y : Double, w : Double, h : Double) -> Unit
   
-  // Blend Modes & Matte
+  // Blend Modes & Matte & Rules
   set_blend_mode(self : Self, mode : String) -> Unit
+  set_fill_rule(self : Self, rule : String) -> Unit
 }
 
 ///| DrawCommand representing a single drawing operation.
@@ -58,6 +59,7 @@ pub enum DrawCommand {
   ClearRect(Double, Double, Double, Double)
   DrawImage(String, Double, Double)
   SetBlendMode(String)
+  SetFillRule(String)
 } derive(Show, Eq)
 
 ///| Renderer that records all commands into a list.
@@ -151,4 +153,8 @@ pub impl Renderer for CommandRecorder with draw_image(self : CommandRecorder, id
 
 pub impl Renderer for CommandRecorder with set_blend_mode(self : CommandRecorder, mode : String) {
   self.commands.push(SetBlendMode(mode))
+}
+
+pub impl Renderer for CommandRecorder with set_fill_rule(self : CommandRecorder, rule : String) {
+  self.commands.push(SetFillRule(rule))
 }

@@ -59,6 +59,7 @@ test "SvgRenderer subtract mask logic" {
   renderer.line_to(100.0, 200.0)
   renderer.close_path()
   
+  renderer.set_fill_rule("evenodd")
   renderer.clip()
   
   let output = renderer.get_output()

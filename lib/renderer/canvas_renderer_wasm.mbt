@@ -41,6 +41,8 @@ fn canvas_clear_rect(x: Double, y: Double, w: Double, h: Double) = "canvas" "cle
 fn canvas_draw_image(id: String, w: Double, h: Double) = "canvas" "drawImage"
 #cfg(any(target = "wasm", target = "wasm-gc"))
 fn canvas_set_global_composite_operation(mode: String) = "canvas" "setGlobalCompositeOperation"
+#cfg(any(target = "wasm", target = "wasm-gc"))
+fn canvas_set_fill_rule(rule: String) = "canvas" "setFillRule"
 
 #cfg(any(target = "wasm", target = "wasm-gc"))
 pub struct CanvasRenderer {}
@@ -188,5 +190,11 @@ pub impl Renderer for CanvasRenderer with draw_image(self : CanvasRenderer, id :
 pub impl Renderer for CanvasRenderer with set_blend_mode(self : CanvasRenderer, mode : String) {
   let _ = self
   canvas_set_global_composite_operation(mode)
+}
+
+#cfg(any(target = "wasm", target = "wasm-gc"))
+pub impl Renderer for CanvasRenderer with set_fill_rule(self : CanvasRenderer, rule : String) {
+  let _ = self
+  canvas_set_fill_rule(rule)
 }
 

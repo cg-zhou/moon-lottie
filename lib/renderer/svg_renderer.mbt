@@ -5,11 +5,12 @@ pub struct SvgRenderer {
   height : Double
   buffer : StringBuilder
   defs_buffer : StringBuilder
-  transform_stack : Array[@math.Matrix]
+  state_stack : Array[(@math.Matrix, String)]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
   mut gradient_count : Int
   mut group_depth : Int
+  mut current_fill_rule : String
 }
 
 pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
@@ -18,11 +19,12 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
     height,
     buffer: StringBuilder::new(),
     defs_buffer: StringBuilder::new(),
-    transform_stack: [],
+    state_stack: [],
     current_matrix: @math.Matrix::identity(),
     path_buffer: StringBuilder::new(),
     gradient_count: 0,
     group_depth: 0,
+    current_fill_rule: "nonzero",
   }
 }
 
@@ -40,14 +42,17 @@ pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
 }
 
 pub impl Renderer for SvgRenderer with save(self : SvgRenderer) -> Unit {
-  self.transform_stack.push(self.current_matrix)
+  self.state_stack.push((self.current_matrix, self.current_fill_rule))
   self.buffer.write_string("<g>")
   self.group_depth = self.group_depth + 1
 }
 
 pub impl Renderer for SvgRenderer with restore(self : SvgRenderer) -> Unit {
-  match self.transform_stack.pop() {
-    Some(m) => self.current_matrix = m
+  match self.state_stack.pop() {
+    Some((m, fr)) => {
+      self.current_matrix = m
+      self.current_fill_rule = fr
+    }
     None => ()
   }
   self.buffer.write_string("</g>")
@@ -107,7 +112,7 @@ pub impl Renderer for SvgRenderer with fill(self : SvgRenderer, r : Int, g : Int
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" />",
+      "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
     )
   }
 }
@@ -152,7 +157,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(self : SvgRenderer, 
   self.defs_buffer.write_string("</linearGradient>")
   
   let path_data = self.path_buffer.to_string()
-  self.buffer.write_string("<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" />")
+  self.buffer.write_string("<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />")
 }
 
 pub impl Renderer for SvgRenderer with stroke_linear_gradient(self : SvgRenderer, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double, width : Double) -> Unit {
@@ -198,7 +203,7 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(self : SvgRenderer, 
   self.defs_buffer.write_string("</radialGradient>")
   
   let path_data = self.path_buffer.to_string()
-  self.buffer.write_string("<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" />")
+  self.buffer.write_string("<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />")
 }
 
 pub impl Renderer for SvgRenderer with stroke_radial_gradient(self : SvgRenderer, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double, width : Double) -> Unit {
@@ -228,7 +233,7 @@ pub impl Renderer for SvgRenderer with clip(self : SvgRenderer) -> Unit {
   let id = "clip_\{self.gradient_count}"
   self.gradient_count = self.gradient_count + 1
   let path_data = self.path_buffer.to_string()
-  self.defs_buffer.write_string("<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"evenodd\" /></clipPath>")
+  self.defs_buffer.write_string("<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"\{self.current_fill_rule}\" /></clipPath>")
   self.buffer.write_string("<g clip-path=\"url(#\{id})\">")
   self.group_depth = self.group_depth + 1
 }
@@ -248,6 +253,10 @@ pub impl Renderer for SvgRenderer with clear_rect(self : SvgRenderer, x : Double
 pub impl Renderer for SvgRenderer with set_blend_mode(self : SvgRenderer, mode : String) -> Unit {
   let _ = self
   let _ = mode
+}
+
+pub impl Renderer for SvgRenderer with set_fill_rule(self : SvgRenderer, rule : String) -> Unit {
+  self.current_fill_rule = rule
 }
 
 ///| Helper to render an animation to a set of SVG snapshots.
