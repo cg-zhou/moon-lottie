@@ -24,6 +24,7 @@
 - [x] **子合成与资产系统 (PreComps/Assets)**: 已解析并实现 `PreComp` 的递归渲染逻辑以及 `Solid` 纯色层支持。
 - [x] **线条样式样式对标 (Stroke Styles)**: 全面支持 Line Cap, Line Join 和 Miter Limit 的解析与渲染。
 - [x] **模型架构对齐 (MergePaths/Rounding)**: 已补齐 `Merge Paths` 与 `Rounding` 的数据模型及解析支持。
+- [x] **路径合并逻辑 (MergePaths Logic)**: 实现了基础的 `Merge/Add` 模式支持，并为 `Subtract/Intersect/Exclude` 提供了基于 `evenodd` 的渲染回退。
 - [ ] **图像加载 FFI (Image Loading)**: 虽模型已支持 `Image` 层，但 Wasm -> JS 的图像加载预处理机制尚未闭环。
 - [x] **多模式遮罩 (Masks Modes)**: 已实现 `Add`, `Subtract`, `Intersect` 模式，通过 SvgRenderer 的 State Stack 方案适配复杂遮罩逻辑。
 - [x] **SVG 抽帧回测系统 (SVG Regressions)**: 建立了 `SvgRenderer` 指令后端，并成功跑通了官方 `starfish.json` (24KB) 的 300 帧全量路径渲染测试。

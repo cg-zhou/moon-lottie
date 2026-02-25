@@ -64,4 +64,7 @@
 | `mode` | maskMode | String | 蒙版模式 ("a": Add, "s": Subtract, "i": Intersect) |
 | `inv` | inverted | Boolean | 蒙版是否反转 |
 | `pt` | maskPath | Object | 蒙版路径 (Bezier Path) |
+| `mm` | mergePaths | Object | 合并路径修改器 (Merge Paths) |
+| `mm` | mergeMode | Int | 合并模式 (1: Merge, 2: Add, 3: Subtract, 4: Intersect, 5: Exclude) |
+| `rd` | rounding | Object | 圆角修改器 (Rounding) |
 ```

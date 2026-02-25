@@ -506,7 +506,17 @@ pub fn[R : Renderer] Player::render_shape(
       }
       self.current_paths = new_paths
     }
-    MergePaths(_merge) => ()
+    MergePaths(merge) => {
+      // Lottie MergePaths: 1=Merge, 2=Add, 3=Subtract, 4=Intersect, 5=Exclude
+      // For SVG, we use fill-rule="evenodd" to approximate boolean operations
+      // since we don't have a path boolean engine in MoonBit yet.
+      match merge.mm {
+        @model.MergeMode::Merge | @model.MergeMode::Add => 
+          self.renderer.set_fill_rule("nonzero")
+        @model.MergeMode::Subtract | @model.MergeMode::Intersect | @model.MergeMode::Exclude => 
+          self.renderer.set_fill_rule("evenodd")
+      }
+    }
     Rounding(_rounding) => ()
   }
 }

@@ -22,7 +22,8 @@
 | | 不透明度 (Opacity - `o`) | ✅ 已支持 | |
 | **修改器 (Modifiers)** | 修剪路径 (Trim Paths - `tm`) | ✅ 已支持 | 支持三阶贝塞尔精确切分 |
 | | 中继器 (Repeater - `rp`) | ✅ 已支持 | 支持副本级联变换及复合模式 |
-| | 合并路径 (Merge Paths - `mm`) | ❌ 未支持 | 待实现 |
+| | 合并路径 (Merge Paths - `mm`) | 🟠 部分支持 | 支持解析与模式分流，复杂布尔暂以 evenodd 替代 |
+| | 圆角修改器 (Rounding - `rd`) | 🟠 部分支持 | 仅支持模型定义与解析 |
 | **图层类型 (Layers)** | 形状图层 (Shape Layer) | ✅ 已支持 | |
 | | 预合成图层 (Pre-comp Layer) | ✅ 已支持 | |
 | | 固态层 (Solid Layer) | ✅ 已支持 | |
