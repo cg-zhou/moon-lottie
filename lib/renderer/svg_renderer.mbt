@@ -99,8 +99,8 @@ fn color_to_hex(r : Int, g : Int, b : Int) -> String {
     let high = v / 16
     let low = v % 16
     let s = StringBuilder::new()
-    s.write_char(Char::from_int(chars[high].to_int()))
-    s.write_char(Char::from_int(chars[low].to_int()))
+    s.write_char(chars[high].to_int().unsafe_to_char())
+    s.write_char(chars[low].to_int().unsafe_to_char())
     s.to_string()
   }
 
