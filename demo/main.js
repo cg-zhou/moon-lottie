@@ -123,8 +123,15 @@ async function init() {
 }
 
 function loadSample() {
-    fetch('assets/sample.json').then(r => {
-        currentFileName = "sample.json";
+    loadRemoteAnimation('bacon.json');
+}
+
+function loadRemoteAnimation(filename) {
+    const isFixture = filename !== 'sample.json';
+    const path = isFixture ? `../fixtures/${filename}` : `assets/${filename}`;
+    
+    fetch(path).then(r => {
+        currentFileName = filename;
         return r.blob();
     }).then(blob => {
         currentFileSize = blob.size;
@@ -132,7 +139,7 @@ function loadSample() {
     }).then(text => {
         startPlayer(text);
     }).catch(e => {
-        console.warn("Sample not found.");
+        console.warn(`${filename} not found at ${path}`);
     });
 }
 
@@ -167,12 +174,24 @@ async function startPlayer(jsonStr) {
     if (!player) { statusMsg.innerText = "动画解析失败"; return; }
 
     // Official Player Init (if exists)
+    // Update Canvas & Container Styles
+    const w = get_width(player);
+    const h = get_height(player);
+    const aspectRatio = `${w} / ${h}`;
+
+    // Wasm Canvas
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.aspectRatio = aspectRatio;
+
+    // Official Lottie
+    const container = document.getElementById('official-lottie-container');
+    container.style.aspectRatio = aspectRatio;
+    
     if (officialPlayer) {
         officialPlayer.destroy();
     }
-    const container = document.getElementById('official-lottie-container');
-    // The container size should be controlled by CSS (width: 100%), 
-    // but the Lottie-web renderer needs an aspect ratio or internal size.
+    
     officialPlayer = lottie.loadAnimation({
         container: container,
         renderer: 'canvas',
@@ -180,25 +199,22 @@ async function startPlayer(jsonStr) {
         autoplay: false,
         animationData: animationData,
         rendererSettings: {
-            preserveAspectRatio: 'xMidYMid meet'
+            preserveAspectRatio: 'xMidYMid meet',
+            clearCanvas: true
         }
     });
 
     // Update File & Metadata
     document.getElementById('info-filename').innerText = currentFileName || "未知";
     document.getElementById('info-filesize').innerText = (currentFileSize / 1024).toFixed(2) + " KB";
+    document.getElementById('info-size').innerText = `${w} x ${h}`;
     
-    document.getElementById('info-size').innerText = `${get_width(player)} x ${get_height(player)}`;
     const fps = get_fps(player);
     document.getElementById('info-fps').innerText = fps.toFixed(2) + " fps";
     const totalFrames = get_frame_count(player);
     document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
     document.getElementById('info-duration').innerText = (totalFrames / fps).toFixed(2) + "s";
     document.getElementById('info-version').innerText = moonStringJS(get_version(player));
-
-    // Update Canvas Size
-    canvas.width = get_width(player);
-    canvas.height = get_height(player);
 
     const inPoint = window.moonLottie.get_in_point(player);
     seekBar.min = inPoint;
@@ -299,6 +315,11 @@ document.getElementById('compare-toggle').onchange = (e) => {
     document.getElementById('official-wrapper').style.display = isCompare ? 'flex' : 'none';
     viewport.classList.toggle('comparison-mode', isCompare);
     if (isCompare) updateUI();
+};
+
+// Animation list change
+document.getElementById('anim-list').onchange = (e) => {
+    loadRemoteAnimation(e.target.value);
 };
 
 // Drag & Drop
