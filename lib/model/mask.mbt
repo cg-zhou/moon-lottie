@@ -6,7 +6,7 @@ pub(all) enum MaskMode {
   Darken
   Difference
   None
-}
+} derive(Show, Eq)
 
 pub struct Mask {
   nm : String?

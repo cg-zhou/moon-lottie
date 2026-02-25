@@ -47,10 +47,10 @@ impl Renderer for TestRenderer with fill_linear_gradient(self, x1, y1, x2, y2, _
 impl Renderer for TestRenderer with stroke_linear_gradient(self, x1, y1, x2, y2, _stops, opacity, width) {
   self.commands.push("stroke_linear_gradient(\{x1}, \{y1}, \{x2}, \{y2}, \{opacity}, \{width})")
 }
-impl Renderer for TestRenderer with fill_radial_gradient(self, cx, cy, r, fx, fy, fr, _stops, opacity) {
+impl Renderer for TestRenderer with fill_radial_gradient(self, cx, cy, r, _fx, _fy, _fr, _stops, opacity) {
   self.commands.push("fill_radial_gradient(\{cx}, \{cy}, \{r}, \{opacity})")
 }
-impl Renderer for TestRenderer with stroke_radial_gradient(self, cx, cy, r, fx, fy, fr, _stops, opacity, width) {
+impl Renderer for TestRenderer with stroke_radial_gradient(self, cx, cy, r, _fx, _fy, _fr, _stops, opacity, width) {
   self.commands.push("stroke_radial_gradient(\{cx}, \{cy}, \{r}, \{opacity}, \{width})")
 }
 impl Renderer for TestRenderer with clip(self) {
@@ -61,6 +61,9 @@ impl Renderer for TestRenderer with clear_rect(self, _x, _y, _w, _h) {
 }
 impl Renderer for TestRenderer with draw_image(self, id, _w, _h) {
   self.commands.push("draw_image(\{id})")
+}
+impl Renderer for TestRenderer with set_blend_mode(self, mode) {
+  self.commands.push("set_blend_mode(\{mode})")
 }
 
 test "player_mock_render" {
