@@ -31,6 +31,9 @@ pub struct Layer {
   st : Double
   bm : Int?
   hd : Bool? // Hidden
+  masks : Array[Mask]?
+  tt : Int? // Matte Type
+  td : Int? // Matte Inherit (1 or 0)
   data : LayerData
 }
 
@@ -47,7 +50,10 @@ pub fn Layer::new(
   ao~ : Int? = None,
   bm~ : Int? = None,
   hd~ : Bool? = None,
+  masks~ : Array[Mask]? = None,
+  tt~ : Int? = None,
+  td~ : Int? = None,
   data~ : LayerData = LayerData::Null
 ) -> Layer {
-  { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, hd, data }
+  { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, hd, masks, tt, td, data }
 }

@@ -12,6 +12,7 @@
 - [ ] **空间贝塞尔插值 (Spatial Bezier)**: 当前 `evaluate_vec_property` 仅支持时间轴上的 Easing, 尚未实现位置属性的 `ti` / `to` 空间插值。
 - [ ] **多维独立分量插值**: 某些 Lottie 属性 (如 Position) 可能被拆分为独立的 X 和 Y 分量, 评价器需支持此逻辑。
 - [x] **错误处理**: 解析器已全面引入 `raise LottieError` 机制，提供明确的错误类型反馈，解决了空值默认填充导致的调试困难。
+- [x] **色彩渐变 (Gradients)**: 已支持线性渐变 (`gf`) 和径向渐变 (`gs`) 的解析与 FFI 渲染，通过多步 FFI 调用规避了 `Array` 传递的限制。
 
 ## 验证协议 (Verification Protocol)
 

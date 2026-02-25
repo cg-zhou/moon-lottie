@@ -5,6 +5,8 @@ pub enum ShapeData {
   Path(PathShape)
   Fill(FillShape)
   Stroke(StrokeShape)
+  GradientFill(GradientFillShape)
+  GradientStroke(GradientStrokeShape)
   Transform(Transform)
 }
 
@@ -30,6 +32,14 @@ pub fn ShapeData::new_fill(fill : FillShape) -> ShapeData {
 
 pub fn ShapeData::new_stroke(stroke : StrokeShape) -> ShapeData {
   ShapeData::Stroke(stroke)
+}
+
+pub fn ShapeData::new_gradient_fill(fill : GradientFillShape) -> ShapeData {
+  ShapeData::GradientFill(fill)
+}
+
+pub fn ShapeData::new_gradient_stroke(stroke : GradientStrokeShape) -> ShapeData {
+  ShapeData::GradientStroke(stroke)
 }
 
 pub fn ShapeData::new_transform(transform : Transform) -> ShapeData {
@@ -128,4 +138,61 @@ pub fn StrokeShape::new(
   w~ : LottieProperty[Double]
 ) -> StrokeShape {
   { c, o, w }
+}
+
+pub enum GradientType {
+  Linear
+  Radial
+}
+
+pub struct GradientColors {
+  p : Int // Number of colors
+  k : LottieProperty[Array[Double]] // Stops and Colors
+}
+
+pub fn GradientColors::new(
+  p~ : Int,
+  k~ : LottieProperty[Array[Double]]
+) -> GradientColors {
+  { p, k }
+}
+
+pub struct GradientFillShape {
+  t : GradientType
+  o : LottieProperty[Double]
+  s : LottieProperty[Array[Double]] // Start point
+  e : LottieProperty[Array[Double]] // End point
+  g : GradientColors
+}
+
+pub fn GradientFillShape::new(
+  t~ : Int,
+  o~ : LottieProperty[Double],
+  s~ : LottieProperty[Array[Double]],
+  e~ : LottieProperty[Array[Double]],
+  g~ : GradientColors
+) -> GradientFillShape {
+  let ty = if t == 1 { GradientType::Linear } else { GradientType::Radial }
+  { t: ty, o, s, e, g }
+}
+
+pub struct GradientStrokeShape {
+  t : GradientType
+  o : LottieProperty[Double]
+  s : LottieProperty[Array[Double]] // Start point
+  e : LottieProperty[Array[Double]] // End point
+  g : GradientColors
+  w : LottieProperty[Double]        // Stroke width
+}
+
+pub fn GradientStrokeShape::new(
+  t~ : Int,
+  o~ : LottieProperty[Double],
+  s~ : LottieProperty[Array[Double]],
+  e~ : LottieProperty[Array[Double]],
+  g~ : GradientColors,
+  w~ : LottieProperty[Double]
+) -> GradientStrokeShape {
+  let ty = if t == 1 { GradientType::Linear } else { GradientType::Radial }
+  { t: ty, o, s, e, g, w }
 }

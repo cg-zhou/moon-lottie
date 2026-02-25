@@ -46,3 +46,7 @@ pub fn Matrix::rotate(self : Matrix, angle : Double) -> Matrix {
   let sin = @std_math.sin(angle)
   self.multiply({ a: cos, b: sin, c: -sin, d: cos, e: 0.0, f: 0.0 })
 }
+
+pub fn sqrt(x : Double) -> Double {
+  x.sqrt()
+}

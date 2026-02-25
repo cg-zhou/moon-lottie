@@ -41,6 +41,18 @@ impl Renderer for TestRenderer with fill(self, r, g, b, opacity) {
 impl Renderer for TestRenderer with stroke(self, r, g, b, opacity, width) {
   self.commands.push("stroke(\{r}, \{g}, \{b}, \{opacity}, \{width})")
 }
+impl Renderer for TestRenderer with fill_linear_gradient(self, x1, y1, x2, y2, _stops, opacity) {
+  self.commands.push("fill_linear_gradient(\{x1}, \{y1}, \{x2}, \{y2}, \{opacity})")
+}
+impl Renderer for TestRenderer with stroke_linear_gradient(self, x1, y1, x2, y2, _stops, opacity, width) {
+  self.commands.push("stroke_linear_gradient(\{x1}, \{y1}, \{x2}, \{y2}, \{opacity}, \{width})")
+}
+impl Renderer for TestRenderer with fill_radial_gradient(self, cx, cy, r, fx, fy, fr, _stops, opacity) {
+  self.commands.push("fill_radial_gradient(\{cx}, \{cy}, \{r}, \{opacity})")
+}
+impl Renderer for TestRenderer with stroke_radial_gradient(self, cx, cy, r, fx, fy, fr, _stops, opacity, width) {
+  self.commands.push("stroke_radial_gradient(\{cx}, \{cy}, \{r}, \{opacity}, \{width})")
+}
 impl Renderer for TestRenderer with clip(self) {
   self.commands.push("clip")
 }

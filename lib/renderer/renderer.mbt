@@ -18,6 +18,10 @@ pub trait Renderer {
   // Painting
   fill(self : Self, r : Int, g : Int, b : Int, opacity : Double) -> Unit
   stroke(self : Self, r : Int, g : Int, b : Int, opacity : Double, width : Double) -> Unit
+  fill_linear_gradient(self : Self, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double) -> Unit
+  stroke_linear_gradient(self : Self, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double, width : Double) -> Unit
+  fill_radial_gradient(self : Self, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double) -> Unit
+  stroke_radial_gradient(self : Self, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double, width : Double) -> Unit
   clip(self : Self) -> Unit
   
   // Images
@@ -38,6 +42,11 @@ fn canvas_line_to(x: Double, y: Double) = "canvas" "lineTo"
 fn canvas_cubic_to(cp1x: Double, cp1y: Double, cp2x: Double, cp2y: Double, x: Double, y: Double) = "canvas" "bezierCurveTo"
 fn canvas_fill(r : Int, g : Int, b : Int, a : Double) = "canvas" "fill"
 fn canvas_stroke(r : Int, g : Int, b : Int, a : Double, width: Double) = "canvas" "stroke"
+fn canvas_create_linear_gradient(x1 : Double, y1 : Double, x2 : Double, y2 : Double) = "canvas" "createLinearGradient"
+fn canvas_create_radial_gradient(cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double) = "canvas" "createRadialGradient"
+fn canvas_add_gradient_stop(stop : Double, r : Double, g : Double, b : Double, a : Double) = "canvas" "addGradientStop"
+fn canvas_fill_gradient(opacity : Double) = "canvas" "fillGradient"
+fn canvas_stroke_gradient(opacity : Double, width : Double) = "canvas" "strokeGradient"
 fn canvas_clip() = "canvas" "clip"
 fn canvas_clear_rect(x: Double, y: Double, w: Double, h: Double) = "canvas" "clearRect"
 fn canvas_draw_image(id: String, w: Double, h: Double) = "canvas" "drawImage"
@@ -103,6 +112,48 @@ pub impl Renderer for CanvasRenderer with stroke(self : CanvasRenderer, r : Int,
   canvas_stroke(r, g, b, opacity, width)
 }
 
+pub impl Renderer for CanvasRenderer with fill_linear_gradient(self : CanvasRenderer, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double) {
+  let _ = self
+  canvas_create_linear_gradient(x1, y1, x2, y2)
+  let n = stops.length()
+  for i = 0; i < n; i = i + 4 {
+    canvas_add_gradient_stop(stops[i], stops[i+1], stops[i+2], stops[i+3], 1.0)
+  }
+  // If stops contain alpha stops after the color stops, Lottie spec usually puts them at the end.
+  // For now, we only support RGB stops for simplicity.
+  canvas_fill_gradient(opacity)
+}
+
+pub impl Renderer for CanvasRenderer with stroke_linear_gradient(self : CanvasRenderer, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double, width : Double) {
+  let _ = self
+  canvas_create_linear_gradient(x1, y1, x2, y2)
+  let n = stops.length()
+  for i = 0; i < n; i = i + 4 {
+    canvas_add_gradient_stop(stops[i], stops[i+1], stops[i+2], stops[i+3], 1.0)
+  }
+  canvas_stroke_gradient(opacity, width)
+}
+
+pub impl Renderer for CanvasRenderer with fill_radial_gradient(self : CanvasRenderer, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double) {
+  let _ = self
+  canvas_create_radial_gradient(cx, cy, r, fx, fy, fr)
+  let n = stops.length()
+  for i = 0; i < n; i = i + 4 {
+    canvas_add_gradient_stop(stops[i], stops[i+1], stops[i+2], stops[i+3], 1.0)
+  }
+  canvas_fill_gradient(opacity)
+}
+
+pub impl Renderer for CanvasRenderer with stroke_radial_gradient(self : CanvasRenderer, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double, width : Double) {
+  let _ = self
+  canvas_create_radial_gradient(cx, cy, r, fx, fy, fr)
+  let n = stops.length()
+  for i = 0; i < n; i = i + 4 {
+    canvas_add_gradient_stop(stops[i], stops[i+1], stops[i+2], stops[i+3], 1.0)
+  }
+  canvas_stroke_gradient(opacity, width)
+}
+
 pub impl Renderer for CanvasRenderer with clip(self : CanvasRenderer) {
   let _ = self
   canvas_clip()
@@ -132,6 +183,10 @@ pub enum DrawCommand {
   CubicTo(Double, Double, Double, Double, Double, Double)
   Fill(Int, Int, Int, Double)
   Stroke(Int, Int, Int, Double, Double)
+  FillLinearGradient(Double, Double, Double, Double, Array[Double], Double)
+  StrokeLinearGradient(Double, Double, Double, Double, Array[Double], Double, Double)
+  FillRadialGradient(Double, Double, Double, Double, Double, Double, Array[Double], Double)
+  StrokeRadialGradient(Double, Double, Double, Double, Double, Double, Array[Double], Double, Double)
   Clip
   ClearRect(Double, Double, Double, Double)
   DrawImage(String, Double, Double)
@@ -192,6 +247,22 @@ pub impl Renderer for CommandRecorder with fill(self : CommandRecorder, r : Int,
 
 pub impl Renderer for CommandRecorder with stroke(self : CommandRecorder, r : Int, g : Int, b : Int, opacity : Double, width : Double) {
   self.commands.push(Stroke(r, g, b, opacity, width))
+}
+
+pub impl Renderer for CommandRecorder with fill_linear_gradient(self : CommandRecorder, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double) {
+  self.commands.push(FillLinearGradient(x1, y1, x2, y2, stops, opacity))
+}
+
+pub impl Renderer for CommandRecorder with stroke_linear_gradient(self : CommandRecorder, x1 : Double, y1 : Double, x2 : Double, y2 : Double, stops : Array[Double], opacity : Double, width : Double) {
+  self.commands.push(StrokeLinearGradient(x1, y1, x2, y2, stops, opacity, width))
+}
+
+pub impl Renderer for CommandRecorder with fill_radial_gradient(self : CommandRecorder, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double) {
+  self.commands.push(FillRadialGradient(cx, cy, r, fx, fy, fr, stops, opacity))
+}
+
+pub impl Renderer for CommandRecorder with stroke_radial_gradient(self : CommandRecorder, cx : Double, cy : Double, r : Double, fx : Double, fy : Double, fr : Double, stops : Array[Double], opacity : Double, width : Double) {
+  self.commands.push(StrokeRadialGradient(cx, cy, r, fx, fy, fr, stops, opacity, width))
 }
 
 pub impl Renderer for CommandRecorder with clip(self : CommandRecorder) {

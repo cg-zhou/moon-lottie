@@ -406,6 +406,67 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           }
           @model.ShapeData::new_stroke(@model.StrokeShape::new(c~, o~, w~))
         }
+        "gf" => {
+          let t = match obj.get("t") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          let s = parse_property_vec(obj.get("s"))
+          let e = parse_property_vec(obj.get("e"))
+          let o = try {
+            parse_property_double(obj.get("o"))
+          } catch {
+            _ => @model.LottieProperty::new_static(100.0)
+          }
+          let g_json = match obj.get("g") {
+            Some(j) => j
+            _ => raise MissingKey("g in gf")
+          }
+          let g_p = match g_json {
+            Object(g_obj) =>
+              match g_obj.get("p") {
+                Some(Number(n, ..)) => n.to_int()
+                _ => 0
+              }
+            _ => 0
+          }
+          let g_k = parse_property_vec(Some(g_json))
+          let g_colors = @model.GradientColors::new(p=g_p, k=g_k)
+          @model.ShapeData::new_gradient_fill(@model.GradientFillShape::new(t~, o~, s~, e~, g=g_colors))
+        }
+        "gs" => {
+          let t = match obj.get("t") {
+            Some(Number(n, ..)) => n.to_int()
+            _ => 1
+          }
+          let s = parse_property_vec(obj.get("s"))
+          let e = parse_property_vec(obj.get("e"))
+          let o = try {
+            parse_property_double(obj.get("o"))
+          } catch {
+            _ => @model.LottieProperty::new_static(100.0)
+          }
+          let w = try {
+            parse_property_double(obj.get("w"))
+          } catch {
+            _ => @model.LottieProperty::new_static(1.0)
+          }
+          let g_json = match obj.get("g") {
+            Some(j) => j
+            _ => raise MissingKey("g in gs")
+          }
+          let g_p = match g_json {
+            Object(g_obj) =>
+              match g_obj.get("p") {
+                Some(Number(n, ..)) => n.to_int()
+                _ => 0
+              }
+            _ => 0
+          }
+          let g_k = parse_property_vec(Some(g_json))
+          let g_colors = @model.GradientColors::new(p=g_p, k=g_k)
+          @model.ShapeData::new_gradient_stroke(@model.GradientStrokeShape::new(t~, o~, s~, e~, g=g_colors, w~))
+        }
         "tr" => {
           @model.ShapeData::new_transform(parse_transform(Some(json)))
         }
@@ -414,6 +475,39 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       @model.Shape::new(ty~, data~, nm~, hd~)
     }
     _ => raise UnexpectedType("shape", "Object")
+  }
+}
+
+///| Parse a single Mask object
+fn parse_mask(json : Json) -> @model.Mask raise LottieError {
+  match json {
+    Object(obj) => {
+      let inv = match obj.get("inv") {
+        Some(True) => true
+        _ => false
+      }
+      let pt = parse_property_bezier(obj.get("pt"))
+      let o = try {
+        parse_property_double(obj.get("o"))
+      } catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
+      let mode = match obj.get("mode") {
+        Some(String("a")) => @model.MaskMode::Add
+        Some(String("s")) => @model.MaskMode::Subtract
+        Some(String("i")) => @model.MaskMode::Intersect
+        Some(String("l")) => @model.MaskMode::Lighten
+        Some(String("d")) => @model.MaskMode::Darken
+        Some(String("f")) => @model.MaskMode::Difference
+        _ => @model.MaskMode::None
+      }
+      let nm = match obj.get("nm") {
+        Some(String(s)) => Some(s)
+        _ => None
+      }
+      @model.Mask::new(inv~, pt~, o~, mode~, nm~)
+    }
+    _ => raise UnexpectedType("mask", "Object")
   }
 }
 
@@ -452,6 +546,22 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
         _ => None
       }
       let parent = try { Some(get_int(json, "parent")) } catch { _ => None }
+      let masks = match obj.get("masksProperties") {
+        Some(Array(arr)) => {
+          let res = []
+          for m_json in arr {
+            try {
+              res.push(parse_mask(m_json))
+            } catch {
+              _ => ()
+            }
+          }
+          Some(res)
+        }
+        _ => None
+      }
+      let tt = try { Some(get_int(json, "tt")) } catch { _ => None }
+      let td = try { Some(get_int(json, "td")) } catch { _ => None }
       let data : @model.LayerData = match ty {
         4 => {
           // Shape Layer
@@ -487,7 +597,21 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
         }
         _ => @model.LayerData::new_null()
       }
-      @model.Layer::new(ind~, ty~, ks~, ip~, op~, st~, nm~, data~, hd~, parent~)
+      @model.Layer::new(
+        ind~,
+        ty~,
+        ks~,
+        ip~,
+        op~,
+        st~,
+        nm~,
+        data~,
+        hd~,
+        parent~,
+        masks~,
+        tt~,
+        td~,
+      )
     }
     _ => raise UnexpectedType("layer", "Object")
   }

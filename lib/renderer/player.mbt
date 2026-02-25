@@ -239,6 +239,73 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
       let b = (color_vec[2] * 255.0).to_int()
       self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
+    GradientFill(f) => {
+      let start_p = @runtime.evaluate_vec_property(f.s, self.current_frame)
+      let end_p = @runtime.evaluate_vec_property(f.e, self.current_frame)
+      let stops = @runtime.evaluate_vec_property(f.g.k, self.current_frame)
+      let opacity = @runtime.evaluate_double_property(f.o, self.current_frame)
+      match f.t {
+        Linear =>
+          self.renderer.fill_linear_gradient(
+            start_p[0],
+            start_p[1],
+            end_p[0],
+            end_p[1],
+            stops,
+            opacity / 100.0,
+          )
+        Radial => {
+          let dx = end_p[0] - start_p[0]
+          let dy = end_p[1] - start_p[1]
+          let r = @math.sqrt(dx * dx + dy * dy)
+          self.renderer.fill_radial_gradient(
+            start_p[0],
+            start_p[1],
+            r,
+            start_p[0],
+            start_p[1],
+            0.0,
+            stops,
+            opacity / 100.0,
+          )
+        }
+      }
+    }
+    GradientStroke(s) => {
+      let start_p = @runtime.evaluate_vec_property(s.s, self.current_frame)
+      let end_p = @runtime.evaluate_vec_property(s.e, self.current_frame)
+      let stops = @runtime.evaluate_vec_property(s.g.k, self.current_frame)
+      let opacity = @runtime.evaluate_double_property(s.o, self.current_frame)
+      let width = @runtime.evaluate_double_property(s.w, self.current_frame)
+      match s.t {
+        Linear =>
+          self.renderer.stroke_linear_gradient(
+            start_p[0],
+            start_p[1],
+            end_p[0],
+            end_p[1],
+            stops,
+            opacity / 100.0,
+            width,
+          )
+        Radial => {
+          let dx = end_p[0] - start_p[0]
+          let dy = end_p[1] - start_p[1]
+          let r = @math.sqrt(dx * dx + dy * dy)
+          self.renderer.stroke_radial_gradient(
+            start_p[0],
+            start_p[1],
+            r,
+            start_p[0],
+            start_p[1],
+            0.0,
+            stops,
+            opacity / 100.0,
+            width,
+          )
+        }
+      }
+    }
     Transform(tr) => {
       let matrix = @runtime.evaluate_transform(tr, self.current_frame)
       self.renderer.concat_transform(matrix)
