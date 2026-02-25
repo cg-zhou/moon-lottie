@@ -1,1 +1,10 @@
-{"is-main": true, "import": ["cg-zhou/moon-lottie/lib/math", "cg-zhou/moon-lottie/lib/model", "cg-zhou/moon-lottie/lib/parser"]}
+{
+  "is-main": true,
+  "import": [
+    "cg-zhou/moon-lottie/lib/math",
+    "cg-zhou/moon-lottie/lib/model",
+    "cg-zhou/moon-lottie/lib/parser",
+    "cg-zhou/moon-lottie/lib/renderer",
+    "moonbitlang/core/json"
+  ]
+}

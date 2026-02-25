@@ -245,3 +245,8 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
     _ => ()
   }
 }
+
+///| Create a player for the browser canvas
+pub fn create_canvas_player(animation : @model.Animation) -> Player[CanvasRenderer] {
+  Player::new(animation, CanvasRenderer::new())
+}

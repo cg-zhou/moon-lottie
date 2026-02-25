@@ -46,7 +46,7 @@ pub fn evaluate_double_property(
       
       let k2 = keyframes[idx + 1]
       
-      // Handle easing
+      // Easing solve
       let eased_t = match (k1.out_tangent, k1.in_tangent) {
         (Some(ot), Some(it)) => {
           let x1 = match ot.x { Single(v) => v; Multi(arr) => arr[0] }
@@ -58,7 +58,11 @@ pub fn evaluate_double_property(
         _ => t
       }
       
-      @math.lerp_double(k1.start_value, k2.start_value, eased_t)
+      let next_val = match k1.end_value {
+        Some(v) => v
+        None => k2.start_value
+      }
+      @math.lerp_double(k1.start_value, next_val, eased_t)
     }
   }
 }
@@ -94,7 +98,11 @@ pub fn evaluate_vec_property(
         _ => t
       }
       
-      @math.lerp_array(k1.start_value, k2.start_value, eased_t)
+      let next_val = match k1.end_value {
+        Some(v) => v
+        None => k2.start_value
+      }
+      @math.lerp_array(k1.start_value, next_val, eased_t)
     }
   }
 }
