@@ -83,11 +83,29 @@ fn[R : Renderer] Player::render_layer(
   match layer.masks {
     Some(masks) => {
       let mut has_clip = false
+      let mut is_first = true
       for mask in masks {
         match mask.mode {
-          Add => {
-            if not(has_clip) {
+          @model.MaskMode::Add => {
+            if is_first {
               self.renderer.begin_path()
+              has_clip = true
+            }
+            let path_val = @runtime.evaluate_path_property(
+              mask.pt,
+              self.current_frame,
+            )
+            self.draw_lottie_path(path_val)
+          }
+          @model.MaskMode::Subtract => {
+            if is_first {
+              self.renderer.begin_path()
+              // Giant rectangle to support subtraction via evenodd/holes
+              self.renderer.move_to(-10000.0, -10000.0)
+              self.renderer.line_to(10000.0, -10000.0)
+              self.renderer.line_to(10000.0, 10000.0)
+              self.renderer.line_to(-10000.0, 10000.0)
+              self.renderer.close_path()
               has_clip = true
             }
             let path_val = @runtime.evaluate_path_property(
@@ -98,6 +116,7 @@ fn[R : Renderer] Player::render_layer(
           }
           _ => () // Other modes not yet supported
         }
+        is_first = false
       }
       if has_clip {
         self.renderer.clip()

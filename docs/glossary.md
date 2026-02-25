@@ -45,4 +45,17 @@
 | `rp` | repeater | Object | 中继器 (Repeater) |
 | `c` | copies | Number | 副本数量 |
 | `m` | composite | Int | 中继器复合模式 (1: Above, 2: Below) |
+| `lc` | lineCap | Int | 线条末端样式 (1: Butt, 2: Round, 3: Square) |
+| `lj` | lineJoin | Int | 线条转角样式 (1: Miter, 2: Round, 3: Bevel) |
+| `ml` | miterLimit | Number | 斜接限制 |
+| `gs` | gradientStroke | Object | 渐变描边 (Gradient Stroke) |
+| `g` | gradientColors | Object | 渐变颜色停止位数据 |
+| `p` | assetPath | String | 图像资产的文件名/Base64 数据 |
+| `u` | assetUrl | String | 图像资产的存放路径 |
+| `sc` | solidColor | String | 纯色层颜色 (Hex String) |
+| `sw` | solidWidth | Number | 纯色层宽度 |
+| `sh` | solidHeight | Number | 纯色层高度 |
+| `mode` | maskMode | String | 蒙版模式 ("a": Add, "s": Subtract, "i": Intersect) |
+| `inv` | inverted | Boolean | 蒙版是否反转 |
+| `pt` | maskPath | Object | 蒙版路径 (Bezier Path) |
 ```

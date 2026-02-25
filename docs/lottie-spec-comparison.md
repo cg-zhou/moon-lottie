@@ -28,7 +28,7 @@
 | | 固态层 (Solid Layer) | ✅ 已支持 | |
 | | 图片层 (Image Layer) | ❌ 未支持 | 待实现 FFI 资源加载 |
 | | 空对象图层 (Null Layer) | ✅ 已支持 | |
-| **高级渲染** | 蒙版 (Masks) | 🟠 部分支持 | 已支持 `Add` 模式 |
+| **高级渲染** | 蒙版 (Masks) | 🟠 部分支持 | 已支持 `Add`, `Subtract` 模式 |
 | | 遮罩 (Track Mattes) | 🟠 部分支持 | 已支持 `Alpha` 模式 |
 | | 混合模式 (Blend Modes) | ✅ 已支持 | |
 

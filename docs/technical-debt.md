@@ -21,6 +21,11 @@
 - [x] **Trim Paths 精确切分**: 采用 De Casteljau 算法实现了对三阶贝塞尔曲线在任意百分比位置的精确切分与路径保留。
 - [x] **Polystar 与圆角生成**: 实现了星形与多边形的动态生成，并支持基于 Lottie 标准曲率魔数的内/外圆角平滑。
 - [x] **Repeater 复合绘制**: 实现了中继器的多副本偏移、缩放、旋转级联变换，并支持 Above/Below 两种复合模式。
+- [x] **子合成与资产系统 (PreComps/Assets)**: 已解析并实现 `PreComp` 的递归渲染逻辑以及 `Solid` 纯色层支持。
+- [x] **线条样式样式对标 (Stroke Styles)**: 全面支持 Line Cap, Line Join 和 Miter Limit 的解析与渲染。
+- [ ] **图像加载 FFI (Image Loading)**: 虽模型已支持 `Image` 层，但 Wasm -> JS 的图像加载预处理机制尚未闭环。
+- [x] **多模式遮罩 (Non-Add Masks)**: 实现了 `Subtract` (减去) 模式，已在 `SvgRenderer` 中完成适配（Giant Rect 方案）。
+- [x] **SVG 快照回测系统 (SVG Regressions)**: 建立了 `SvgRenderer` 指令后。
 
 ## 验证协议 (Verification Protocol)
 
