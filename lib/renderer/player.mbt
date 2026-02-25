@@ -314,7 +314,26 @@ fn[R : Renderer] Player::render_layer_content(
           }
         _ => ()
       }
+    Text(data) => {
+      let doc = @runtime.evaluate_text_document_property(
+        data.text,
+        self.current_frame,
+      )
+      if doc.t != "" {
+        let (r, g, b) = if doc.fc.length() >= 3 {
+          (
+            (doc.fc[0] * 255.0).to_int(),
+            (doc.fc[1] * 255.0).to_int(),
+            (doc.fc[2] * 255.0).to_int(),
+          )
+        } else {
+          (0, 0, 0)
+        }
+        self.renderer.draw_text(doc.t, doc.f, doc.s, r, g, b, 1.0, doc.j)
+      }
+    }
     Null => ()
+    _ => ()
   }
 }
 

@@ -31,6 +31,33 @@ fn[T] find_keyframe(
 }
 
 ///|
+pub fn evaluate_text_document_property(
+  prop : @model.LottieProperty[@model.TextDocument],
+  frame : Double,
+) -> @model.TextDocument {
+  match prop.value {
+    Static(v) => v
+    Animated(keyframes) => {
+      let (idx, _t) = find_keyframe(keyframes, frame)
+      if idx < 0 {
+        // Return a dummy document
+        return {
+          s: 0.0,
+          f: "",
+          t: "",
+          j: 0,
+          tr: 0.0,
+          lh: 0.0,
+          ls: 0.0,
+          fc: [0.0, 0.0, 0.0],
+        }
+      }
+      keyframes[idx].start_value
+    }
+  }
+}
+
+///|
 pub fn evaluate_double_property(
   prop : @model.LottieProperty[Double],
   frame : Double,

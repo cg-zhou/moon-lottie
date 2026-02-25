@@ -256,6 +256,29 @@ pub impl Renderer for SvgRenderer with draw_image(
 }
 
 ///|
+pub impl Renderer for SvgRenderer with draw_text(
+  self : SvgRenderer,
+  text : String,
+  font : String,
+  size : Double,
+  r : Int,
+  g : Int,
+  b : Int,
+  opacity : Double,
+  justify : Int,
+) -> Unit {
+  let color = color_to_hex(r, g, b)
+  let anchor = match justify {
+    1 => "end"
+    2 => "middle"
+    _ => "start"
+  }
+  self.buffer.write_string(
+    "<text font-family=\"\{font}\" font-size=\"\{size}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" text-anchor=\"\{anchor}\">\{text}</text>",
+  )
+}
+
+///|
 pub impl Renderer for SvgRenderer with fill_linear_gradient(
   self : SvgRenderer,
   x1 : Double,

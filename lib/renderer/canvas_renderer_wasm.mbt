@@ -119,6 +119,19 @@ fn canvas_draw_image(id : String, w : Double, h : Double) = "canvas" "drawImage"
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_draw_text(
+  text : String,
+  font : String,
+  size : Double,
+  r : Int,
+  g : Int,
+  b : Int,
+  opacity : Double,
+  justify : Int,
+) = "canvas" "drawText"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 fn canvas_set_global_composite_operation(mode : String) = "canvas" "setGlobalCompositeOperation"
 
 ///|
@@ -403,6 +416,23 @@ pub impl Renderer for CanvasRenderer with draw_image(
 ) {
   let _ = self
   canvas_draw_image(id, w, h)
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with draw_text(
+  self : CanvasRenderer,
+  text : String,
+  font : String,
+  size : Double,
+  r : Int,
+  g : Int,
+  b : Int,
+  opacity : Double,
+  justify : Int,
+) {
+  let _ = self
+  canvas_draw_text(text, font, size, r, g, b, opacity, justify)
 }
 
 ///|

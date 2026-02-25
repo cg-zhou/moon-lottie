@@ -209,6 +209,129 @@ fn parse_property_vec(
 }
 
 ///|
+fn parse_text_document(json : Json) -> @model.TextDocument raise LottieError {
+  match json {
+    Object(obj) => {
+      let s = match obj.get("s") {
+        Some(Number(n, ..)) => n
+        _ => 12.0
+      }
+      let f = match obj.get("f") {
+        Some(String(s)) => s
+        _ => ""
+      }
+      let t = match obj.get("t") {
+        Some(String(s)) => s
+        _ => ""
+      }
+      let j = match obj.get("j") {
+        Some(Number(n, ..)) => n.to_int()
+        _ => 0
+      }
+      let tr = match obj.get("tr") {
+        Some(Number(n, ..)) => n
+        _ => 0.0
+      }
+      let lh = match obj.get("lh") {
+        Some(Number(n, ..)) => n
+        _ => 0.0
+      }
+      let ls = match obj.get("ls") {
+        Some(Number(n, ..)) => n
+        _ => 0.0
+      }
+      let fc = match obj.get("fc") {
+        Some(Array(arr)) => {
+          let res = []
+          for v in arr {
+            match v {
+              Number(n, ..) => res.push(n)
+              _ => ()
+            }
+          }
+          res
+        }
+        _ => [0.0, 0.0, 0.0]
+      }
+      { s, f, t, j, tr, lh, ls, fc }
+    }
+    _ => raise UnexpectedType("text document", "Object")
+  }
+}
+
+///|
+fn parse_text_document_property(
+  json : Json?,
+) -> @model.LottieProperty[@model.TextDocument] raise LottieError {
+  match json {
+    Some(j) =>
+      match j {
+        Object(obj) => {
+          let a = match obj.get("a") {
+            Some(Number(n, ..)) => n == 1.0
+            _ => false
+          }
+          let k = match obj.get("k") {
+            Some(k) => k
+            None => raise MissingKey("k in text property")
+          }
+          if a {
+            let keyframes = []
+            match k {
+              Array(arr) =>
+                for kf_json in arr {
+                  match kf_json {
+                    Object(kf_obj) => {
+                      let t = match kf_obj.get("t") {
+                        Some(Number(n, ..)) => n.to_int()
+                        _ => 0
+                      }
+                      let s = match kf_obj.get("s") {
+                        Some(json) => parse_text_document(json)
+                        _ => raise MissingKey("s in text keyframe")
+                      }
+                      keyframes.push(
+                        @model.LottieKeyframe::new(frame=t, start_value=s),
+                      )
+                    }
+                    _ => ()
+                  }
+                }
+              _ => ()
+            }
+            @model.LottieProperty::new_animated(keyframes)
+          } else {
+            match k {
+              Array(arr) =>
+                if arr.length() > 0 {
+                  @model.LottieProperty::new_static(parse_text_document(arr[0]))
+                } else {
+                  raise MissingKey("k array is empty")
+                }
+              Object(_) =>
+                @model.LottieProperty::new_static(parse_text_document(k))
+              _ => raise UnexpectedType("k", "Array or Object")
+            }
+          }
+        }
+        _ => raise UnexpectedType("text property", "Object")
+      }
+    None => raise InvalidJson("Text property missing")
+  }
+}
+
+///|
+fn parse_text_data(json : Json?) -> @model.TextData raise LottieError {
+  match json {
+    Some(Object(obj)) => {
+      let d = parse_text_document_property(obj.get("d"))
+      { text: d }
+    }
+    _ => raise UnexpectedType("text data", "Object")
+  }
+}
+
+///|
 /// Parse Transform
 fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
   match json {
@@ -743,6 +866,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
           }
           @model.LayerData::Shape(shapes)
         }
+        5 => @model.LayerData::Text(parse_text_data(obj.get("t")))
         _ => @model.LayerData::Null
       }
       @model.Layer::new(

@@ -5,6 +5,24 @@ pub(all) enum LayerData {
   PreComp(String, Int, Int) // RefId, width, height
   Null
   Image(String) // RefId
+  Text(TextData)
+}
+
+///|
+pub(all) struct TextData {
+  text : LottieProperty[TextDocument]
+}
+
+///|
+pub(all) struct TextDocument {
+  s : Double // Size
+  f : String // Font
+  t : String // Text
+  j : Int // Justify
+  tr : Double // Tracking
+  lh : Double // Line height
+  ls : Double // Baseline shift
+  fc : Array[Double] // Fill color
 }
 
 ///|

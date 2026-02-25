@@ -131,6 +131,18 @@ const importObject = {
             ctx.drawImage(img, 0, 0, w, h);
         }
     },
+    drawText: (text, font, size, r, g, b, a, justify) => {
+        const textStr = moonStringJS(text);
+        const fontStr = moonStringJS(font);
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.font = `${size}px ${fontStr || 'Arial'}`;
+        const aligns = ["left", "right", "center"];
+        ctx.textAlign = aligns[justify] || "left";
+        ctx.fillText(textStr, 0, 0);
+        ctx.restore();
+    },
     setGlobalCompositeOperation: (mode) => {
         ctx.globalCompositeOperation = moonStringJS(mode);
     }

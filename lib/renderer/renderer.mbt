@@ -88,6 +88,19 @@ pub trait Renderer {
   // Images
   draw_image(self : Self, id : String, width : Double, height : Double) -> Unit
 
+  // Text
+  draw_text(
+    self : Self,
+    text : String,
+    font : String,
+    size : Double,
+    r : Int,
+    g : Int,
+    b : Int,
+    opacity : Double,
+    justify : Int,
+  ) -> Unit
+
   // Canvas size
   clear_rect(self : Self, x : Double, y : Double, w : Double, h : Double) -> Unit
 
@@ -148,6 +161,7 @@ pub enum DrawCommand {
   Clip
   ClearRect(Double, Double, Double, Double)
   DrawImage(String, Double, Double)
+  DrawText(String, String, Double, Int, Int, Int, Double, Int)
   SetBlendMode(String)
   SetFillRule(String)
   SetOpacity(Double)
@@ -357,6 +371,21 @@ pub impl Renderer for CommandRecorder with draw_image(
   h : Double,
 ) {
   self.commands.push(DrawImage(id, w, h))
+}
+
+///|
+pub impl Renderer for CommandRecorder with draw_text(
+  self : CommandRecorder,
+  text : String,
+  font : String,
+  size : Double,
+  r : Int,
+  g : Int,
+  b : Int,
+  opacity : Double,
+  justify : Int,
+) {
+  self.commands.push(DrawText(text, font, size, r, g, b, opacity, justify))
 }
 
 ///|
