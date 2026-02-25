@@ -17,6 +17,8 @@
 | `it` | items | Array | Shape 组内的元素列表 |
 | `ks` | transform | Object | 变换 (Anchor, Pos, Scale, Rot, Opacity) |
 | `o` | opacity | Object/Num | 透明度/不透明度 (0-100) |
+| `c` | color | Vector/Array | 颜色属性 (RGB 0-1) |
+| `w` | width | Number/Object | 描边宽度 |
 | `s` | size | Vector | 矩形/椭圆的大小 |
 | `p` | position | Vector | 位置 |
 | `r` | roundedness | Number | 矩形的圆角半径 |
