@@ -49,3 +49,38 @@ test "parse_simple_path_shape" {
     _ => fail("Should be a Shape layer")
   }
 }
+
+test "parse_merge_paths_and_rounding" {
+  let json_str = "{\"ty\":\"gr\",\"it\":[{\"ty\":\"mm\",\"mm\":2},{\"ty\":\"rd\",\"r\":{\"k\":5}}]}"
+  let json = @json.parse(json_str)
+  let shape = try {
+    @parser.parse_shape(json)
+  } catch {
+    e => fail("Failed to parse group with mm and rd: \{e}")
+  }
+  
+  match shape.data {
+    @model.ShapeData::Group(items) => {
+      if items.length() != 2 { fail("Items length mismatch") }
+      match items[0].data {
+        @model.ShapeData::MergePaths(m) => {
+          match m.mm {
+             @model.MergeMode::Add => ()
+             _ => fail("MergeMode mismatch")
+          }
+        }
+        _ => fail("First item should be MergePaths")
+      }
+      match items[1].data {
+        @model.ShapeData::Rounding(r) => {
+          match r.r.value {
+            @model.PropertyValue::Static(val) => if val != 5.0 { fail("Rounding value mismatch") }
+            _ => fail("Rounding should be static")
+          }
+        }
+        _ => fail("Second item should be Rounding")
+      }
+    }
+    _ => fail("Should be a Group")
+  }
+}

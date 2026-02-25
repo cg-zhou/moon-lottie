@@ -506,6 +506,8 @@ pub fn[R : Renderer] Player::render_shape(
       }
       self.current_paths = new_paths
     }
+    MergePaths(_merge) => ()
+    Rounding(_rounding) => ()
   }
 }
 

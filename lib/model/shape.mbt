@@ -11,6 +11,8 @@
   TrimPath(TrimPath)
   Polystar(PolystarShape)
   Repeater(Repeater)
+  MergePaths(MergePaths)
+  Rounding(Rounding)
 }
 
 pub fn ShapeData::new_group(items : Array[Shape]) -> ShapeData {
@@ -59,6 +61,14 @@ pub fn ShapeData::new_polystar(polystar : PolystarShape) -> ShapeData {
 
 pub fn ShapeData::new_repeater(repeater : Repeater) -> ShapeData {
   ShapeData::Repeater(repeater)
+}
+
+pub fn ShapeData::new_merge_paths(merge : MergePaths) -> ShapeData {
+  ShapeData::MergePaths(merge)
+}
+
+pub fn ShapeData::new_rounding(rounding : Rounding) -> ShapeData {
+  ShapeData::Rounding(rounding)
 }
 
 pub struct Shape {
@@ -289,4 +299,36 @@ pub fn Repeater::new(
   tr~ : Transform
 ) -> Repeater {
   { c, o, m, tr }
+}
+
+pub enum MergeMode {
+  Merge
+  Add
+  Subtract
+  Intersect
+  Exclude
+}
+
+pub struct MergePaths {
+  mm : MergeMode
+}
+
+pub fn MergePaths::new(mm : Int) -> MergePaths {
+  let mode = match mm {
+    1 => MergeMode::Merge
+    2 => MergeMode::Add
+    3 => MergeMode::Subtract
+    4 => MergeMode::Intersect
+    5 => MergeMode::Exclude
+    _ => MergeMode::Merge
+  }
+  { mm: mode }
+}
+
+pub struct Rounding {
+  r : LottieProperty[Double]
+}
+
+pub fn Rounding::new(r~ : LottieProperty[Double]) -> Rounding {
+  { r, }
 }

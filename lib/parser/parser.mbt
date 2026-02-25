@@ -361,7 +361,8 @@ fn parse_property_bezier(json : Json?) -> @model.LottieProperty[@model.BezierPat
 }
 
 ///| Parse a single Shape object
-fn parse_shape(json : Json) -> @model.Shape raise LottieError {
+///| Parse a shape from Json
+pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
   match json {
     Object(obj) => {
       let ty = match obj.get("ty") {
@@ -586,6 +587,22 @@ fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           }
           let tr = parse_transform(obj.get("tr"))
           @model.ShapeData::new_repeater(@model.Repeater::new(c~, o~, m~, tr~))
+        }
+        "mm" => {
+          let mm = try {
+            get_int(json, "mm")
+          } catch {
+            _ => 1
+          }
+          @model.ShapeData::new_merge_paths(@model.MergePaths::new(mm))
+        }
+        "rd" => {
+          let r = try {
+            parse_property_double(obj.get("r"))
+          } catch {
+            _ => @model.LottieProperty::new_static(0.0)
+          }
+          @model.ShapeData::new_rounding(@model.Rounding::new(r~))
         }
         _ => raise InvalidJson("Unknown shape type: " + ty)
       }
