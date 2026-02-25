@@ -99,7 +99,8 @@ fn parse_property_double(
             @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
             match k {
-              Number(n, ..) => @model.LottieProperty::new_static(n, expression=x)
+              Number(n, ..) =>
+                @model.LottieProperty::new_static(n, expression=x)
               _ => raise UnexpectedType("k", "Number")
             }
           }
@@ -195,7 +196,8 @@ fn parse_property_vec(
                 }
                 @model.LottieProperty::new_static(vals, expression=x)
               }
-              Number(n, ..) => @model.LottieProperty::new_static([n], expression=x)
+              Number(n, ..) =>
+                @model.LottieProperty::new_static([n], expression=x)
               _ => raise UnexpectedType("k", "Array or Number")
             }
           }

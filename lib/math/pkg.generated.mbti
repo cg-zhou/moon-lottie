@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cg-zhou/moon-lottie/lib/math"
+
+// Values
+pub fn get_cubic_bezier_length(Vector2, Vector2, Vector2, Vector2, Int) -> Double
+
+pub fn lerp_array(Array[Double], Array[Double], Double) -> Array[Double]
+
+pub fn lerp_double(Double, Double, Double) -> Double
+
+pub fn point_on_cubic_bezier(Vector2, Vector2, Vector2, Vector2, Double) -> Vector2
+
+pub fn solve_cubic_bezier_easing(Double, Double, Double, Double, Double) -> Double
+
+pub fn split_cubic_bezier(Vector2, Vector2, Vector2, Vector2, Double) -> (Vector2, Vector2, Vector2, Vector2, Vector2, Vector2, Vector2)
+
+pub fn sqrt(Double) -> Double
+
+// Errors
+
+// Types and methods
+pub struct Matrix {
+  a : Double
+  b : Double
+  c : Double
+  d : Double
+  e : Double
+  f : Double
+}
+pub fn Matrix::identity() -> Self
+pub fn Matrix::multiply(Self, Self) -> Self
+pub fn Matrix::new(Double, Double, Double, Double, Double, Double) -> Self
+pub fn Matrix::rotate(Self, Double) -> Self
+pub fn Matrix::scale(Self, Double, Double) -> Self
+pub fn Matrix::transform_point(Self, Double, Double) -> (Double, Double)
+pub fn Matrix::translate(Self, Double, Double) -> Self
+pub impl Eq for Matrix
+pub impl Show for Matrix
+
+pub struct Vector2 {
+  x : Double
+  y : Double
+}
+pub fn Vector2::add(Self, Self) -> Self
+pub fn Vector2::dot(Self, Self) -> Double
+pub fn Vector2::length(Self) -> Double
+pub fn Vector2::lerp(Self, Self, Double) -> Self
+pub fn Vector2::new(Double, Double) -> Self
+pub fn Vector2::scale(Self, Double) -> Self
+pub fn Vector2::sub(Self, Self) -> Self
+pub fn Vector2::zero() -> Self
+
+// Type aliases
+
+// Traits
+

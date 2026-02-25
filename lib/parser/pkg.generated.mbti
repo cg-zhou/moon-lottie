@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cg-zhou/moon-lottie/lib/parser"
+
+import {
+  "cg-zhou/moon-lottie/lib/model",
+}
+
+// Values
+pub fn parse_animation(Json) -> @model.Animation raise LottieError
+
+pub fn parse_shape(Json) -> @model.Shape raise LottieError
+
+// Errors
+pub suberror LottieError {
+  InvalidJson(String)
+  MissingKey(String)
+  UnexpectedType(String, String)
+}
+pub impl Show for LottieError
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

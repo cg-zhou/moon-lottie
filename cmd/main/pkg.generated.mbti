@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cg-zhou/moon-lottie/cmd/main"
+
+import {
+  "cg-zhou/moon-lottie/lib/renderer",
+}
+
+// Values
+pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]?
+
+pub fn get_fps(@renderer.Player[@renderer.CanvasRenderer]) -> Double
+
+pub fn get_frame_count(@renderer.Player[@renderer.CanvasRenderer]) -> Double
+
+pub fn get_height(@renderer.Player[@renderer.CanvasRenderer]) -> Int
+
+pub fn get_in_point(@renderer.Player[@renderer.CanvasRenderer]) -> Double
+
+pub fn get_version(@renderer.Player[@renderer.CanvasRenderer]) -> String
+
+pub fn get_width(@renderer.Player[@renderer.CanvasRenderer]) -> Int
+
+pub fn update_player(@renderer.Player[@renderer.CanvasRenderer], Double) -> Unit
+
+pub fn update_player_with_speed(@renderer.Player[@renderer.CanvasRenderer], Double, Double) -> Double
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

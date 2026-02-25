@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cg-zhou/moon-lottie/lib/runtime"
+
+import {
+  "cg-zhou/moon-lottie/lib/math",
+  "cg-zhou/moon-lottie/lib/model",
+}
+
+// Values
+pub fn evaluate_double_property(@model.LottieProperty[Double], Double) -> Double
+
+pub fn evaluate_path_property(@model.LottieProperty[@model.BezierPath], Double) -> @model.BezierPath
+
+pub fn evaluate_text_document_property(@model.LottieProperty[@model.TextDocument], Double) -> @model.TextDocument
+
+pub fn evaluate_transform(@model.Transform, Double) -> @math.Matrix
+
+pub fn evaluate_vec_property(@model.LottieProperty[Array[Double]], Double) -> Array[Double]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
