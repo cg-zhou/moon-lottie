@@ -15,6 +15,7 @@ let isPlaying = true;
 let currentFrame = 0;
 let lastTimestamp = 0;
 let player = null;
+let officialPlayer = null;
 let currentJsonStr = "";
 let currentFileName = "";
 let currentFileSize = 0;
@@ -165,6 +166,21 @@ async function startPlayer(jsonStr) {
     player = create_player_from_js();
     if (!player) { statusMsg.innerText = "动画解析失败"; return; }
 
+    // Official Player Init (if exists)
+    if (officialPlayer) {
+        officialPlayer.destroy();
+    }
+    const container = document.getElementById('official-lottie-container');
+    container.style.width = get_width(player) + 'px';
+    container.style.height = get_height(player) + 'px';
+    officialPlayer = lottie.loadAnimation({
+        container: container,
+        renderer: 'canvas',
+        loop: false,
+        autoplay: false,
+        animationData: animationData
+    });
+
     // Update File & Metadata
     document.getElementById('info-filename').innerText = currentFileName || "未知";
     document.getElementById('info-filesize').innerText = (currentFileSize / 1024).toFixed(2) + " KB";
@@ -229,6 +245,10 @@ function updateUI() {
     const relativeFrame = currentFrame - inPoint;
     frameInfoEl.innerText = `${Math.floor(relativeFrame)} / ${Math.floor(totalFrames)}`;
     seekBar.value = currentFrame;
+
+    if (officialPlayer) {
+        officialPlayer.goToAndStop(currentFrame, true);
+    }
 }
 
 function updatePlayPauseButton() {
@@ -266,9 +286,17 @@ document.querySelectorAll('.bg-btn').forEach(btn => {
         document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const bg = btn.dataset.bg;
-        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '');
+        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '') + (document.getElementById('compare-toggle').checked ? ' comparison-mode' : '');
     };
 });
+
+// Comparison Toggle
+document.getElementById('compare-toggle').onchange = (e) => {
+    const isCompare = e.target.checked;
+    document.getElementById('official-wrapper').style.display = isCompare ? 'flex' : 'none';
+    viewport.classList.toggle('comparison-mode', isCompare);
+    if (isCompare) updateUI();
+};
 
 // Drag & Drop
 dropZone.onclick = () => fileInput.click();

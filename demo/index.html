@@ -147,6 +147,11 @@
                 linear-gradient(-45deg, transparent 75%, #e5e5e7 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+
+            /* Default to side-by-side comparison layout */
+            flex-direction: row;
+            gap: 20px;
+            padding: 40px;
         }
 
         .viewport-container.bg-white { background-color: white; background-image: none; }
@@ -241,7 +246,36 @@
         .bg-btn-black { background: black; }
         .bg-btn.active { border-color: var(--primary-color); }
 
+        /* Comparison Mode (Now Default) */
+        .viewport-container {
+            /* Handled in base class */
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            max-width: 45%;
+        }
+
+        .canvas-tag {
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #official-lottie-container {
+            background: transparent;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
 <body>
     <aside>
@@ -291,6 +325,11 @@
                     <label for="speed-slider">播放速度: <span id="speed-val">1.0</span>x</label>
                     <input type="range" id="speed" min="0" max="3" step="0.1" value="1.0">
                 </div>
+                <div class="control-group" style="margin-top: 24px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="compare-toggle" checked> 对照官方渲染 (lottie-web)
+                    </label>
+                </div>
             </div>
 
             <div class="section" id="status-msg" style="font-size: 12px; color: var(--secondary-text);">
@@ -301,7 +340,14 @@
 
     <main>
         <div class="viewport-container" id="viewport">
-            <canvas id="lottie-canvas" width="500" height="500"></canvas>
+            <div class="canvas-wrapper" id="wasm-wrapper">
+                <div class="canvas-tag">MoonLottie (Wasm)</div>
+                <canvas id="lottie-canvas" width="500" height="500"></canvas>
+            </div>
+            <div class="canvas-wrapper" id="official-wrapper">
+                <div class="canvas-tag">Official (lottie-web)</div>
+                <div id="official-lottie-container"></div>
+            </div>
         </div>
 
         <div class="bottom-bar">
