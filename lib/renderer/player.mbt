@@ -61,6 +61,30 @@ fn[R : Renderer] Player::render_layer(self : Player[R], layer : @model.Layer, sc
   let matrix = @runtime.evaluate_transform(layer.ks, self.current_frame)
   self.renderer.concat_transform(matrix)
   
+  // 1.5 Apply Layer Masks
+  match layer.masks {
+    Some(masks) => {
+      let mut has_clip = false
+      for mask in masks {
+        match mask.mode {
+          Add => {
+            if not(has_clip) {
+              self.renderer.begin_path()
+              has_clip = true
+            }
+            let path_val = @runtime.evaluate_path_property(mask.pt, self.current_frame)
+            self.draw_lottie_path(path_val)
+          }
+          _ => () // Other modes not yet supported
+        }
+      }
+      if has_clip {
+        self.renderer.clip()
+      }
+    }
+    None => ()
+  }
+  
   // 2. Render Layer Content
   match layer.data {
     Shape(shapes) => {
@@ -197,29 +221,8 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
     }
     Path(p) => {
       let path = @runtime.evaluate_path_property(p.ks, self.current_frame)
-      let v = path.v
-      if v.length() > 0 {
-        let i = path.i
-        let o = path.o
-        self.renderer.begin_path()
-        self.renderer.move_to(v[0][0], v[0][1])
-        for n = 1; n < v.length(); n = n + 1 {
-          let cp1x = v[n - 1][0] + o[n - 1][0]
-          let cp1y = v[n - 1][1] + o[n - 1][1]
-          let cp2x = v[n][0] + i[n][0]
-          let cp2y = v[n][1] + i[n][1]
-          self.renderer.cubic_to(cp1x, cp1y, cp2x, cp2y, v[n][0], v[n][1])
-        }
-        if path.c {
-          let n = v.length()
-          let cp1x = v[n - 1][0] + o[n - 1][0]
-          let cp1y = v[n - 1][1] + o[n - 1][1]
-          let cp2x = v[0][0] + i[0][0]
-          let cp2y = v[0][1] + i[0][1]
-          self.renderer.cubic_to(cp1x, cp1y, cp2x, cp2y, v[0][0], v[0][1])
-          self.renderer.close_path()
-        }
-      }
+      self.renderer.begin_path()
+      self.draw_lottie_path(path)
     }
     Fill(f) => {
       let color_vec = @runtime.evaluate_vec_property(f.c, self.current_frame)
@@ -309,6 +312,31 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
     Transform(tr) => {
       let matrix = @runtime.evaluate_transform(tr, self.current_frame)
       self.renderer.concat_transform(matrix)
+    }
+  }
+}
+
+fn[R : Renderer] Player::draw_lottie_path(self : Player[R], path : @model.BezierPath) -> Unit {
+  let v = path.v
+  if v.length() > 0 {
+    let i = path.i
+    let o = path.o
+    self.renderer.move_to(v[0][0], v[0][1])
+    for n = 1; n < v.length(); n = n + 1 {
+      let cp1x = v[n - 1][0] + o[n - 1][0]
+      let cp1y = v[n - 1][1] + o[n - 1][1]
+      let cp2x = v[n][0] + i[n][0]
+      let cp2y = v[n][1] + i[n][1]
+      self.renderer.cubic_to(cp1x, cp1y, cp2x, cp2y, v[n][0], v[n][1])
+    }
+    if path.c {
+      let n = v.length()
+      let cp1x = v[n - 1][0] + o[n - 1][0]
+      let cp1y = v[n - 1][1] + o[n - 1][1]
+      let cp2x = v[0][0] + i[0][0]
+      let cp2y = v[0][1] + i[0][1]
+      self.renderer.cubic_to(cp1x, cp1y, cp2x, cp2y, v[0][0], v[0][1])
+      self.renderer.close_path()
     }
   }
 }
