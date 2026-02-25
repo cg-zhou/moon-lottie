@@ -23,6 +23,8 @@ function moonStringJS(moonStr) {
     return res;
 }
 
+let currentGradient = null;
+
 // Canvas FFI
 const importObject = {
   demo: {
@@ -60,6 +62,39 @@ const importObject = {
         ctx.stroke(); 
         ctx.restore();
     },
+    createLinearGradient: (x1, y1, x2, y2) => {
+        currentGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    },
+    createRadialGradient: (cx, cy, r, fx, fy, fr) => {
+        // Lottie radial: cx, cy is start (inner), r is radius (outer)
+        // Canvas radial: x1, y1, r1, x2, y2, r2
+        currentGradient = ctx.createRadialGradient(fx, fy, fr, cx, cy, r);
+    },
+    addGradientStop: (offset, r, g, b, a) => {
+        if (currentGradient) {
+            currentGradient.addColorStop(offset, `rgba(${r},${g},${b},${a})`);
+        }
+    },
+    fillGradient: (a) => {
+        if (currentGradient) {
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.fillStyle = currentGradient;
+            ctx.fill();
+            ctx.restore();
+        }
+    },
+    strokeGradient: (a, w) => {
+        if (currentGradient) {
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.strokeStyle = currentGradient;
+            ctx.lineWidth = w;
+            ctx.stroke();
+            ctx.restore();
+        }
+    },
+    clip: () => ctx.clip(),
     clearRect: (x, y, w, h) => ctx.clearRect(x, y, w, h),
     setGlobalAlpha: (a) => { ctx.globalAlpha = a; },
 
@@ -67,6 +102,9 @@ const importObject = {
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
         console.log("Draw image:", moonStringJS(id));
+    },
+    setGlobalCompositeOperation: (mode) => {
+        ctx.globalCompositeOperation = moonStringJS(mode);
     }
   }
 };
