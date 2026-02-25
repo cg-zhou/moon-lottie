@@ -35,11 +35,11 @@ impl Renderer for TestRenderer with line_to(self, x, y) {
 impl Renderer for TestRenderer with cubic_to(self, _cp1, _cp2, _cp3, _cp4, x, y) {
   self.commands.push("cubic_to(\{x}, \{y})")
 }
-impl Renderer for TestRenderer with fill(self, color, opacity) {
-  self.commands.push("fill(\{color}, \{opacity})")
+impl Renderer for TestRenderer with fill(self, r, g, b, opacity) {
+  self.commands.push("fill(\{r}, \{g}, \{b}, \{opacity})")
 }
-impl Renderer for TestRenderer with stroke(self, color, opacity, width) {
-  self.commands.push("stroke(\{color}, \{opacity}, \{width})")
+impl Renderer for TestRenderer with stroke(self, r, g, b, opacity, width) {
+  self.commands.push("stroke(\{r}, \{g}, \{b}, \{opacity}, \{width})")
 }
 impl Renderer for TestRenderer with clear_rect(self, _x, _y, _w, _h) {
   self.commands.push("clear")

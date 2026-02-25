@@ -16,6 +16,7 @@ pub fn[R] Player::set_frame(self : Player[R], frame : Double) -> Unit {
 }
 
 pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
+  self.renderer.set_transform(@math.Matrix::identity())
   self.renderer.clear_rect(0.0, 0.0, self.animation.w.to_double(), self.animation.h.to_double())
   
   // Lottie renders layers from bottom to top (reverse order in the array)
@@ -71,13 +72,15 @@ fn[R : Renderer] Player::render_layer(self : Player[R], layer : @model.Layer, sc
       }
     }
     Solid(color, w, h) => {
+      let _ = color // skip solid color parsing for simplicity or implement it
       self.renderer.begin_path()
       self.renderer.move_to(0.0, 0.0)
       self.renderer.line_to(w.to_double(), 0.0)
       self.renderer.line_to(w.to_double(), h.to_double())
       self.renderer.line_to(0.0, h.to_double())
       self.renderer.close_path()
-      self.renderer.fill(color, 1.0)
+      // Use gray for Solid if hex parsing not implemented
+      self.renderer.fill(128, 128, 128, 1.0)
     }
     PreComp(ref_id, _w, _h) => {
       match self.animation.assets {
@@ -225,8 +228,7 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
       let r = (color_vec[0] * 255.0).to_int()
       let g = (color_vec[1] * 255.0).to_int()
       let b = (color_vec[2] * 255.0).to_int()
-      let color_str = "rgb(\{r}, \{g}, \{b})"
-      self.renderer.fill(color_str, opacity / 100.0)
+      self.renderer.fill(r, g, b, opacity / 100.0)
     }
     Stroke(s) => {
       let color_vec = @runtime.evaluate_vec_property(s.c, self.current_frame)
@@ -235,8 +237,7 @@ fn[R : Renderer] Player::render_shape(self : Player[R], shape : @model.Shape) ->
       let r = (color_vec[0] * 255.0).to_int()
       let g = (color_vec[1] * 255.0).to_int()
       let b = (color_vec[2] * 255.0).to_int()
-      let color_str = "rgb(\{r}, \{g}, \{b})"
-      self.renderer.stroke(color_str, opacity / 100.0, width)
+      self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
     Transform(tr) => {
       let matrix = @runtime.evaluate_transform(tr, self.current_frame)

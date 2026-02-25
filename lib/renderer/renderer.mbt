@@ -16,8 +16,8 @@ pub trait Renderer {
   cubic_to(self : Self, cp1x : Double, cp1y : Double, cp2x : Double, cp2y : Double, x : Double, y : Double) -> Unit
   
   // Painting
-  fill(self : Self, color : String, opacity : Double) -> Unit
-  stroke(self : Self, color : String, opacity : Double, width : Double) -> Unit
+  fill(self : Self, r : Int, g : Int, b : Int, opacity : Double) -> Unit
+  stroke(self : Self, r : Int, g : Int, b : Int, opacity : Double, width : Double) -> Unit
   
   // Images
   draw_image(self : Self, id : String, width : Double, height : Double) -> Unit
@@ -35,14 +35,10 @@ fn canvas_close_path() = "canvas" "closePath"
 fn canvas_move_to(x: Double, y: Double) = "canvas" "moveTo"
 fn canvas_line_to(x: Double, y: Double) = "canvas" "lineTo"
 fn canvas_cubic_to(cp1x: Double, cp1y: Double, cp2x: Double, cp2y: Double, x: Double, y: Double) = "canvas" "bezierCurveTo"
-fn canvas_fill(color: String) = "canvas" "fill"
-fn canvas_stroke(color: String, width: Double) = "canvas" "stroke"
+fn canvas_fill(r : Int, g : Int, b : Int, a : Double) = "canvas" "fill"
+fn canvas_stroke(r : Int, g : Int, b : Int, a : Double, width: Double) = "canvas" "stroke"
 fn canvas_clear_rect(x: Double, y: Double, w: Double, h: Double) = "canvas" "clearRect"
 fn canvas_draw_image(id: String, w: Double, h: Double) = "canvas" "drawImage"
-fn canvas_set_global_alpha(alpha: Double) = "canvas" "setGlobalAlpha"
-fn canvas_set_fill_style(color: String) = "canvas" "setFillStyle"
-fn canvas_set_stroke_style(color: String) = "canvas" "setStrokeStyle"
-fn canvas_set_line_width(width: Double) = "canvas" "setLineWidth"
 
 pub struct CanvasRenderer {}
 
@@ -95,23 +91,14 @@ pub impl Renderer for CanvasRenderer with cubic_to(self : CanvasRenderer, cp1x :
   canvas_cubic_to(cp1x, cp1y, cp2x, cp2y, x, y)
 }
 
-pub impl Renderer for CanvasRenderer with fill(self : CanvasRenderer, color : String, opacity : Double) {
+pub impl Renderer for CanvasRenderer with fill(self : CanvasRenderer, r : Int, g : Int, b : Int, opacity : Double) {
   let _ = self
-  canvas_save()
-  canvas_set_global_alpha(opacity)
-  canvas_set_fill_style(color)
-  canvas_fill(color)
-  canvas_restore()
+  canvas_fill(r, g, b, opacity)
 }
 
-pub impl Renderer for CanvasRenderer with stroke(self : CanvasRenderer, color : String, opacity : Double, width : Double) {
+pub impl Renderer for CanvasRenderer with stroke(self : CanvasRenderer, r : Int, g : Int, b : Int, opacity : Double, width : Double) {
   let _ = self
-  canvas_save()
-  canvas_set_global_alpha(opacity)
-  canvas_set_stroke_style(color)
-  canvas_set_line_width(width)
-  canvas_stroke(color, width)
-  canvas_restore()
+  canvas_stroke(r, g, b, opacity, width)
 }
 
 pub impl Renderer for CanvasRenderer with clear_rect(self : CanvasRenderer, x : Double, y : Double, w : Double, h : Double) {

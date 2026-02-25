@@ -1,10 +1,13 @@
 {
-  "is-main": true,
   "import": [
-    "cg-zhou/moon-lottie/lib/math",
-    "cg-zhou/moon-lottie/lib/model",
     "cg-zhou/moon-lottie/lib/parser",
     "cg-zhou/moon-lottie/lib/renderer",
     "moonbitlang/core/json"
-  ]
+  ],
+  "is-main": true,
+  "link": {
+    "wasm-gc": {
+      "exports": ["create_player_from_js", "update_player"]
+    }
+  }
 }
