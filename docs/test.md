@@ -13,14 +13,14 @@
 
 | 动画文件 (Fixtures) | L1 (结构) | L2 (静态) | L3 (动态) | L4 (高级) | 进度 / 瓶颈 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| [starfish.json](../fixtures/starfish.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 待全量回归验证 |
-| [bacon.json](../fixtures/bacon.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 待全量回归验证 |
-| [ripple.json](../fixtures/ripple.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 关键瓶颈：L4 (表达式) 驱动缺失 |
-| [lights.json](../fixtures/lights.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 关键瓶颈：L4 (表达式) 驱动缺失 |
-| [adrock.json](../fixtures/adrock.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
-| [monster.json](../fixtures/monster.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
-| [dalek.json](../fixtures/dalek.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
-| [navidad.json](../fixtures/navidad.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
+| [starfish.json](../samples/starfish.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 待全量回归验证 |
+| [bacon.json](../samples/bacon.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 待全量回归验证 |
+| [ripple.json](../samples/ripple.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 关键瓶颈：L4 (表达式) 驱动缺失 |
+| [lights.json](../samples/lights.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | 关键瓶颈：L4 (表达式) 驱动缺失 |
+| [adrock.json](../samples/adrock.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
+| [monster.json](../samples/monster.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
+| [dalek.json](../samples/dalek.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
+| [navidad.json](../samples/navidad.json) | ⏳ Pending | ⏳ Pending | ⏳ Pending | ⏳ Pending | - |
 
 ## 待建立的自动化工具
 

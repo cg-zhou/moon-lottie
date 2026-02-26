@@ -44,8 +44,8 @@ dom.window.HTMLCanvasElement.prototype.getContext = function() {
 
 const lottie = require('lottie-web');
 
-const fixturesDir = path.join(__dirname, '../../fixtures');
-const outputDir = path.join(__dirname, '../../test_data/golden');
+const fixturesDir = path.join(__dirname, '../../samples');
+const outputDir = path.join(__dirname, '../snapshots');
 
 if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
