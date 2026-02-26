@@ -7,3 +7,5 @@ _build/
 *.wasm
 *.core
 *.mi
+
+node_modules

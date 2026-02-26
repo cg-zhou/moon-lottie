@@ -28,10 +28,14 @@
 - [x] **SVG 渲染器状态栈 (Renderer State Stack)**: 已修复嵌套透明度与剪解路径导致的 SVG 标签不匹配问题，实现 `gc` (Group Counter) 计数。
 - [ ] **表达式支持 (Expressions/JS Engine)**: Wasm 端拟采用 JS FFI 转发 eval，Native 端暂不支持（考虑 Baking 方案）。
 - [ ] **图像加载与渲染 (Image Layer)**: 虽模型已支持 `Image` 层且 JS 端已实现预加载，但 Wasm -> JS 的 `draw_image` 映射尚未闭环。
-- [x] **多模式遮罩 (Masks Modes)**: 已实现 `Add`, `Subtract`, `Intersect` 模式，通过 SvgRenderer 的 State Stack 方案适配复杂遮罩逻辑。
+- [x] **多模式遮罩 (Masks Modes)**: 已实现 `Add`, `Subtract`, `Intersect` 模式，通过 SvgRenderer 的 State Stack 方案适配复杂遮罩逻辑。- [ ] **特效控制器与变量系统 (Effects/Variables)**: `ripple.json` 与 `lights.json` 等依赖 `ef` 字段进行驱动。需在 `Layer` 模型中增加特效解析，并将 Effects 注册到 `Evaluator` 上下文中。
+- [ ] **表达式执行上下文 (Expression Context)**: 表达式如 `layer('A').effect('B')('C')` 需要全局寻址能力。需在 `Player` 层级维护图层与特效的索引表。
 - [x] **SVG 抽帧回测系统 (SVG Regressions)**: 建立了 `SvgRenderer` 指令后端，并成功跑通了官方 `starfish.json` (24KB) 的 300 帧全量路径渲染测试。
 - [ ] **大型 JSON 加载方案**: 当前 `starfish.json` 采用硬编码字符串拼接，未来需重构为通过 `#embed` 或 `test/fixtures` 自动构建加载。
 - [x] **变换属性容错**: 修正了 `evaluate_transform` 等评估器对非标尺度数组（如 [1] vs [1, 1, 1]）的兼容性。
+- [x] **SVG 归一化与 ID 稳定化**: 已实现 `fmt()` 辅助函数（精度 0.01）及 `lottie-id` 占位符，解决了跨环境下的字符串不匹配问题，支持 bit-for-bit 回归测试。
+- [x] **L1 Parser 探测器 (Unknown Keys Reporter)**: 实现了 `report_unknown_keys` 工具，可自动识别 JSON 中未被模型定义的字段，量化 Spec 覆盖率。
+- [x] **构建稳定性修复 (Config Corruption)**: 解决了 `Native` 目标下由于 `nocturnejs` 配置冲突导致的构建崩溃，统一了 `moon.pkg.json` 规范。
 
 ## 验证协议 (Verification Protocol)
 

@@ -7,6 +7,52 @@ pub suberror LottieError {
 } derive(Show)
 
 ///|
+/// Global tracker for unknown keys (for L1 Reporting)
+let known_keys : Array[String] = [
+  "v", "fr", "ip", "op", "w", "h", "nm", "ddd", "assets", "layers", "fonts", "chars",
+  "ty", "ks", "p", "a", "k", "s", "e", "o", "r", "sk", "sa", "x", "y", "z",
+  "d", "st", "bm", "ind", "cl", "ln", "tg", "sr", "parent", "sh", "sw", "sc", "lc", "lj", "ml",
+  "shapes", "it", "c", "g", "t", "hd", "v", "fc", "fill-rule", "gr", "tr", "p", "s", "r", "o",
+  "expressions", "markers", "metadata", "masks", "inv", "pt", "mode", "px", "py", "pz",
+]
+
+///|
+fn contains_key(arr : Array[String], key : String) -> Bool {
+  for k in arr {
+    if k == key {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Traverse Json to find any keys not in known_keys
+pub fn report_unknown_keys(json : Json) -> Array[String] {
+  let unknown = []
+  fn traverse(j : Json, path : String) {
+    match j {
+      Object(obj) =>
+        for k, v in obj {
+          if not(contains_key(known_keys, k)) {
+            unknown.push(if path == "" { k } else { path + "." + k })
+          }
+          traverse(v, if path == "" { k } else { path + "." + k })
+        }
+      Array(arr) =>
+        for i, v in arr {
+          let p = if path == "" { "" } else { path }
+          traverse(v, "\{p}[\{i}]")
+        }
+      _ => ()
+    }
+  }
+
+  traverse(json, "")
+  unknown
+}
+
+///|
 /// Helper to get string from Json
 fn get_string(json : Json, key : String) -> String raise LottieError {
   match json {

@@ -32,10 +32,17 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
 }
 
 ///|
+fn fmt(v : Double) -> String {
+  let factor = 100.0
+  let rounded = (v * factor).to_int().to_double() / factor
+  rounded.to_string()
+}
+
+///|
 pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
   let output = StringBuilder::new()
   output.write_string(
-    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{self.width}\" height=\"\{self.height}\" viewBox=\"0 0 \{self.width} \{self.height}\">",
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" viewBox=\"0 0 \{fmt(self.width)} \{fmt(self.height)}\">",
   )
   if self.defs_buffer.to_string().length() > 0 {
     output.write_string("<defs>")
@@ -102,7 +109,7 @@ pub impl Renderer for SvgRenderer with move_to(
   y : Double,
 ) -> Unit {
   let p = self.current_matrix.transform_point(x, y)
-  self.path_buffer.write_string("M\{p.0},\{p.1} ")
+  self.path_buffer.write_string("M\{fmt(p.0)},\{fmt(p.1)} ")
 }
 
 ///|
@@ -112,7 +119,7 @@ pub impl Renderer for SvgRenderer with line_to(
   y : Double,
 ) -> Unit {
   let p = self.current_matrix.transform_point(x, y)
-  self.path_buffer.write_string("L\{p.0},\{p.1} ")
+  self.path_buffer.write_string("L\{fmt(p.0)},\{fmt(p.1)} ")
 }
 
 ///|
@@ -129,7 +136,7 @@ pub impl Renderer for SvgRenderer with cubic_to(
   let p2 = self.current_matrix.transform_point(cp2x, cp2y)
   let p = self.current_matrix.transform_point(x, y)
   self.path_buffer.write_string(
-    "C\{p1.0},\{p1.1} \{p2.0},\{p2.1} \{p.0},\{p.1} ",
+    "C\{fmt(p1.0)},\{fmt(p1.1)} \{fmt(p2.0)},\{fmt(p2.1)} \{fmt(p.0)},\{fmt(p.1)} ",
   )
 }
 
@@ -161,7 +168,7 @@ pub impl Renderer for SvgRenderer with fill(
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
+      "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
     )
   }
 }
@@ -179,7 +186,7 @@ pub impl Renderer for SvgRenderer with stroke(
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\" />",
     )
   }
 }
@@ -215,7 +222,7 @@ pub impl Renderer for SvgRenderer with set_opacity(
     let (m, fr, gc) = self.state_stack[last_idx]
     self.state_stack[last_idx] = (m, fr, gc + 1)
   }
-  self.buffer.write_string("<g opacity=\"\{opacity}\">")
+  self.buffer.write_string("<g opacity=\"\{fmt(opacity)}\">")
   self.group_depth = self.group_depth + 1
 }
 
@@ -289,14 +296,14 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
+  let id = "lottie-id" // Normalized ID
   self.gradient_count = self.gradient_count + 1
 
   let p1 = self.current_matrix.transform_point(x1, y1)
   let p2 = self.current_matrix.transform_point(x2, y2)
 
   self.defs_buffer.write_string(
-    "<linearGradient id=\"\{id}\" x1=\"\{p1.0}\" y1=\"\{p1.1}\" x2=\"\{p2.0}\" y2=\"\{p2.1}\" gradientUnits=\"userSpaceOnUse\">",
+    "<linearGradient id=\"\{id}\" x1=\"\{fmt(p1.0)}\" y1=\"\{fmt(p1.1)}\" x2=\"\{fmt(p2.0)}\" y2=\"\{fmt(p2.1)}\" gradientUnits=\"userSpaceOnUse\">",
   )
   for i = 0; i < p; i = i + 1 {
     let offset = stops[i * 4]
@@ -310,7 +317,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
       opacity_stop = stops[p * 4 + i * 2 + 1]
     }
     self.defs_buffer.write_string(
-      "<stop offset=\"\{offset}\" stop-color=\"\{color}\" stop-opacity=\"\{opacity_stop}\" />",
+      "<stop offset=\"\{fmt(offset)}\" stop-color=\"\{color}\" stop-opacity=\"\{fmt(opacity_stop)}\" />",
     )
   }
   self.defs_buffer.write_string("</linearGradient>")
@@ -318,7 +325,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
+      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
     )
   }
 }

@@ -43,6 +43,14 @@
 | 空间贝塞尔 (Spatial Bezier) | ✅ 已支持 | 通过 `ti` 和 `to` 控制运动路径 |
 | 关键帧延迟 (Hold) | ✅ 已支持 | |
 
+## 工程化与质量体系 (Engineering & Quality)
+
+| 关键能力 | 状态 | 备注 |
+| :--- | :--- | :--- |
+| **L1 解析器分析 (L1 Reporter)** | ✅ 已支持 | 自动化未识别键检测，量化解析覆盖率 |
+| **全环境 SVG 归一化 (Fidelity)** | ✅ 已支持 | 数值精度 (0.01) 与 ID 稳定，支持 Bit-for-bit 对比 |
+| **金标回归测试集 (Golden Snapshots)** | ✅ 已支持 | 集成 Node.js 官方渲染抽帧对比流水线 |
+
 ## 待办优先级 (Roadmap)
 
 1. **Image Support**: 完善 FFI 以支持位图。

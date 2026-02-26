@@ -1,0 +1,10 @@
+{
+  "name": "lottie-golden-generator",
+  "version": "1.0.0",
+  "description": "Extract golden SVG snapshots from Lottie JSON files using the official lottie-web engine.",
+  "main": "index.js",
+  "dependencies": {
+    "jsdom": "^24.0.0",
+    "lottie-web": "^5.12.2"
+  }
+}
