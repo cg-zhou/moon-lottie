@@ -1,0 +1,6 @@
+import {
+  "cg-zhou/moon-lottie/lib/renderer" @renderer,
+  "cg-zhou/moon-lottie/lib/model" @model,
+  "cg-zhou/moon-lottie/lib/parser" @parser,
+  "moonbitlang/core/json" @json,
+}
