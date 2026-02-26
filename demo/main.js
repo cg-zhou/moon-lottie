@@ -128,7 +128,7 @@ function loadSample() {
 
 function loadRemoteAnimation(filename) {
     const isFixture = filename !== 'sample.json';
-    const path = isFixture ? `../fixtures/${filename}` : `assets/${filename}`;
+    const path = isFixture ? `../samples/${filename}` : `assets/${filename}`;
     
     fetch(path).then(r => {
         currentFileName = filename;
