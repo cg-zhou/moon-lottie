@@ -123,12 +123,11 @@ async function init() {
 }
 
 function loadSample() {
-    loadRemoteAnimation('bacon.json');
+    loadRemoteAnimation('1-1 Super Mario.json');
 }
 
 function loadRemoteAnimation(filename) {
-    const isFixture = filename !== 'sample.json';
-    const path = isFixture ? `../samples/${filename}` : `assets/${filename}`;
+    const path = `../samples/${filename}`;
     
     fetch(path).then(r => {
         currentFileName = filename;

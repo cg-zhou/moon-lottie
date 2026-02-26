@@ -106,7 +106,7 @@ async function main() {
             console.error(`Error processing ${file}:`, e.message);
         }
     }
-    console.log('\nGolden snapshots generated successfully in test_data/golden/');
+    console.log('\nGolden snapshots generated successfully in test/snapshots/');
 }
 
 main();
