@@ -50,9 +50,11 @@ fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
 
 ///|
 pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
-  self.debug_logs = []
-  self.debug_layer = ""
-  self.debug_shape = ""
+  if self.debug_enabled || self.debug_logs.length() > 0 {
+    self.debug_logs = []
+    self.debug_layer = ""
+    self.debug_shape = ""
+  }
   self.renderer.set_transform(@math.Matrix::identity())
   self.renderer.clear_rect(
     0.0,
