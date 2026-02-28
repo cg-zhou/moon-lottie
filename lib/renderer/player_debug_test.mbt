@@ -45,7 +45,7 @@ test "sibling groups with own fill should not leak paths to next group" {
   let mut fill_count = 0
   let mut in_path = false
   let mut move_count_in_current_path = 0
-  let mut second_fill_move_count = -1
+  let mut second_fill_path_move_count : Int? = None
 
   for command in commands {
     match command {
@@ -60,7 +60,7 @@ test "sibling groups with own fill should not leak paths to next group" {
       Fill(_, _, _, _) => {
         fill_count = fill_count + 1
         if fill_count == 2 {
-          second_fill_move_count = move_count_in_current_path
+          second_fill_path_move_count = Some(move_count_in_current_path)
         }
         in_path = false
       }
@@ -69,5 +69,5 @@ test "sibling groups with own fill should not leak paths to next group" {
   }
 
   assert_eq(fill_count, 2)
-  assert_eq(second_fill_move_count, 1)
+  assert_eq(second_fill_path_move_count, Some(1))
 }
