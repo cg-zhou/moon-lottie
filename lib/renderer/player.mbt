@@ -303,6 +303,20 @@ fn parse_hex_color(hex : String) -> (Int, Int, Int) {
 }
 
 ///|
+fn color_channel_to_u8(v : Double) -> Int {
+  if v <= 1.0 {
+    let normalized = if v < 0.0 { 0.0 } else { v }
+    (normalized * 255.0).to_int()
+  } else {
+    if v > 255.0 {
+      255
+    } else {
+      v.to_int()
+    }
+  }
+}
+
+///|
 fn get_vec_at(v : Array[Double], i : Int, default : Double) -> Double {
   if i >= 0 && i < v.length() {
     v[i]
@@ -410,7 +424,16 @@ fn[R : Renderer] Player::render_layer_content(
                 Some(v) => v
                 None => 0
               }
-              self.renderer.draw_image(asset.id, w.to_double(), h.to_double())
+              let p = match asset.p {
+                Some(v) => v
+                None => ""
+              }
+              let u = match asset.u {
+                Some(v) => v
+                None => ""
+              }
+              let src = if p == "" { asset.id } else { u + p }
+              self.renderer.draw_image(src, w.to_double(), h.to_double())
               break
             }
           }
@@ -424,9 +447,9 @@ fn[R : Renderer] Player::render_layer_content(
       if doc.t != "" {
         let (r, g, b) = if doc.fc.length() >= 3 {
           (
-            (get_vec_at(doc.fc, 0, 0.0) * 255.0).to_int(),
-            (get_vec_at(doc.fc, 1, 0.0) * 255.0).to_int(),
-            (get_vec_at(doc.fc, 2, 0.0) * 255.0).to_int(),
+            color_channel_to_u8(get_vec_at(doc.fc, 0, 0.0)),
+            color_channel_to_u8(get_vec_at(doc.fc, 1, 0.0)),
+            color_channel_to_u8(get_vec_at(doc.fc, 2, 0.0)),
           )
         } else {
           (0, 0, 0)
@@ -519,9 +542,9 @@ pub fn[R : Renderer] Player::render_shape(
     Fill(f) => {
       let color_vec = @runtime.evaluate_vec_property(f.c, self.current_frame)
       let opacity = @runtime.evaluate_double_property(f.o, self.current_frame)
-      let r = (get_vec_at(color_vec, 0, 0.0) * 255.0).to_int()
-      let g = (get_vec_at(color_vec, 1, 0.0) * 255.0).to_int()
-      let b = (get_vec_at(color_vec, 2, 0.0) * 255.0).to_int()
+      let r = color_channel_to_u8(get_vec_at(color_vec, 0, 0.0))
+      let g = color_channel_to_u8(get_vec_at(color_vec, 1, 0.0))
+      let b = color_channel_to_u8(get_vec_at(color_vec, 2, 0.0))
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -532,9 +555,9 @@ pub fn[R : Renderer] Player::render_shape(
       let color_vec = @runtime.evaluate_vec_property(s.c, self.current_frame)
       let opacity = @runtime.evaluate_double_property(s.o, self.current_frame)
       let width = @runtime.evaluate_double_property(s.w, self.current_frame)
-      let r = (get_vec_at(color_vec, 0, 0.0) * 255.0).to_int()
-      let g = (get_vec_at(color_vec, 1, 0.0) * 255.0).to_int()
-      let b = (get_vec_at(color_vec, 2, 0.0) * 255.0).to_int()
+      let r = color_channel_to_u8(get_vec_at(color_vec, 0, 0.0))
+      let g = color_channel_to_u8(get_vec_at(color_vec, 1, 0.0))
+      let b = color_channel_to_u8(get_vec_at(color_vec, 2, 0.0))
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
