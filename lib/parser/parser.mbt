@@ -181,7 +181,7 @@ fn parse_property_double(
     Some(j) =>
       match j {
         Object(obj) => {
-          let a = match obj.get("a") {
+          let a_flag = match obj.get("a") {
             Some(Number(n, ..)) => n == 1.0
             _ => false
           }
@@ -193,7 +193,23 @@ fn parse_property_double(
             Some(k) => k
             None => raise MissingKey("k in property")
           }
-          if a {
+          let animated_from_k = match k {
+            Array(arr) =>
+              if arr.length() > 0 {
+                match arr[0] {
+                  Object(first) =>
+                    match first.get("t") {
+                      Some(_) => true
+                      _ => false
+                    }
+                  _ => false
+                }
+              } else {
+                false
+              }
+            _ => false
+          }
+          if a_flag || animated_from_k {
             // Animated
             let keyframes = []
             let mut prev_value : Double? = None
@@ -270,7 +286,7 @@ fn parse_property_vec(
     Some(j) =>
       match j {
         Object(obj) => {
-          let a = match obj.get("a") {
+          let a_flag = match obj.get("a") {
             Some(Number(n, ..)) => n == 1.0
             _ => false
           }
@@ -282,7 +298,23 @@ fn parse_property_vec(
             Some(k) => k
             None => raise MissingKey("k in property")
           }
-          if a {
+          let animated_from_k = match k {
+            Array(arr) =>
+              if arr.length() > 0 {
+                match arr[0] {
+                  Object(first) =>
+                    match first.get("t") {
+                      Some(_) => true
+                      _ => false
+                    }
+                  _ => false
+                }
+              } else {
+                false
+              }
+            _ => false
+          }
+          if a_flag || animated_from_k {
             // Animated
             let keyframes = []
             let mut prev_value : Array[Double]? = None
@@ -641,13 +673,30 @@ fn parse_property_bezier(
     Some(j) =>
       match j {
         Object(obj) => {
-          let a = match obj.get("a") {
+          let a_flag = match obj.get("a") {
             Some(Number(n, ..)) => n == 1.0
             _ => false
           }
           match obj.get("k") {
             Some(k) =>
-              if a {
+              if a_flag || (
+                match k {
+                  Array(arr) =>
+                    if arr.length() > 0 {
+                      match arr[0] {
+                        Object(first) =>
+                          match first.get("t") {
+                            Some(_) => true
+                            _ => false
+                          }
+                        _ => false
+                      }
+                    } else {
+                      false
+                    }
+                  _ => false
+                }
+              ) {
                 // Animated
                 let keyframes = []
                 match k {
