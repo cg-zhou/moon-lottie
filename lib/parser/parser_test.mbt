@@ -205,3 +205,26 @@ test "parse_animated_transform_trailing_time_marker_uses_previous_value" {
     _ => fail("rotation should be animated")
   }
 }
+
+///|
+test "parse_animated_transform_without_a_flag" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[{\"t\":0,\"s\":[0,0,0],\"e\":[100,0,0]},{\"t\":10}]},\"s\":{\"k\":[{\"t\":0,\"s\":[100,100,100],\"e\":[50,50,100]},{\"t\":10}]},\"r\":{\"k\":[{\"t\":0,\"s\":[0],\"e\":[30]},{\"t\":10}]},\"o\":{\"k\":100}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse keyframes without a flag: \{e}")
+  }
+
+  match ani.layers[0].ks.position.value {
+    @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
+    _ => fail("position should be treated as animated when keyframes contain t")
+  }
+  match ani.layers[0].ks.scale.value {
+    @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
+    _ => fail("scale should be treated as animated when keyframes contain t")
+  }
+  match ani.layers[0].ks.rotation.value {
+    @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
+    _ => fail("rotation should be treated as animated when keyframes contain t")
+  }
+}
