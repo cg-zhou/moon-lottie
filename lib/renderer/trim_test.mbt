@@ -48,3 +48,44 @@ test "trim_single_path/cubic" {
   // At t=0.5, y should be 75.0
   inspect(trimmed.v[1][1], content="75")
 }
+
+///|
+test "apply_trim_path_with_mode/simultaneously_vs_individually" {
+  let path1 = @model.BezierPath::new(
+    v=[[0.0, 0.0], [100.0, 0.0]],
+    i=[[0.0, 0.0], [-33.333333333333336, 0.0]],
+    o=[[33.333333333333336, 0.0], [0.0, 0.0]],
+    c=false,
+  )
+  let path2 = @model.BezierPath::new(
+    v=[[200.0, 0.0], [300.0, 0.0]],
+    i=[[0.0, 0.0], [-33.333333333333336, 0.0]],
+    o=[[33.333333333333336, 0.0], [0.0, 0.0]],
+    c=false,
+  )
+  let paths = [path1, path2]
+
+  // mode=1: trim across the concatenated path length [0, 200]
+  let sim = apply_trim_path_with_mode(paths, 25.0, 75.0, 0.0, 1)
+  if sim.length() != 2 {
+    fail("Simultaneous trim should keep 2 partial paths, got \{sim.length()}")
+  }
+  if (sim[0].v[0][0] - 50.0).abs() > 0.001 || (sim[0].v[1][0] - 100.0).abs() > 0.001 {
+    fail("Unexpected first simultaneous segment")
+  }
+  if (sim[1].v[0][0] - 200.0).abs() > 0.001 || (sim[1].v[1][0] - 250.0).abs() > 0.001 {
+    fail("Unexpected second simultaneous segment")
+  }
+
+  // mode=2: trim each path independently
+  let ind = apply_trim_path_with_mode(paths, 25.0, 75.0, 0.0, 2)
+  if ind.length() != 2 {
+    fail("Individual trim should keep 2 partial paths, got \{ind.length()}")
+  }
+  if (ind[0].v[0][0] - 25.0).abs() > 0.001 || (ind[0].v[1][0] - 75.0).abs() > 0.001 {
+    fail("Unexpected first individual segment")
+  }
+  if (ind[1].v[0][0] - 225.0).abs() > 0.001 || (ind[1].v[1][0] - 275.0).abs() > 0.001 {
+    fail("Unexpected second individual segment")
+  }
+}
