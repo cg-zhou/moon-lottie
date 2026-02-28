@@ -130,18 +130,20 @@ async function initAnimList() {
     try {
         const response = await fetch('list.json');
         if (!response.ok) throw new Error("List not found");
-        const files = await response.json();
+        const entries = await response.json();
         
         listEl.innerHTML = '';
-        files.forEach(file => {
+        entries.forEach(entry => {
+            const file = typeof entry === 'string' ? entry : entry.file;
+            const label = (typeof entry === 'string' ? entry : (entry.label || entry.file)).replace(/\.json$/i, '');
             const opt = document.createElement('option');
             opt.value = file;
-            opt.innerText = file;
+            opt.innerText = label;
             listEl.appendChild(opt);
         });
         
-        if (files.length > 0) {
-            loadRemoteAnimation(files[0]);
+        if (entries.length > 0) {
+            loadRemoteAnimation(typeof entries[0] === 'string' ? entries[0] : entries[0].file);
         }
     } catch (e) {
         console.warn("Falling back to manual sample due to list.json missing");
