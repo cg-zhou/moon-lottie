@@ -112,3 +112,40 @@ jobs:
           git add badges/
           git diff --staged --quiet || git commit -m "Update badges [skip ci]"
           git push origin badges
+
+      - name: Deploy Demo to demo branch
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Build WASM
+          moon build --target wasm-gc --release
+          
+          # Prepare dist directory
+          mkdir -p /tmp/demo_dist
+          cp demo/index.html /tmp/demo_dist/
+          cp demo/main.js /tmp/demo_dist/
+          cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
+          cp -r samples /tmp/demo_dist/
+          
+          # Generate list.json
+          cd /tmp/demo_dist/samples
+          ls *.json | jq -R . | jq -s . > ../list.json
+          cd -
+
+          # Switch to demo branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git fetch origin demo 2>/dev/null || true
+          if git rev-parse --verify origin/demo 2>/dev/null; then
+            git checkout -B demo origin/demo
+          else
+            git checkout --orphan demo
+            git rm -rf . 2>/dev/null || true
+          fi
+          
+          # Copy files back
+          cp -r /tmp/demo_dist/* .
+          
+          git add .
+          git diff --staged --quiet || git commit -m "Deploy demo [skip ci]"
+          git push origin demo
