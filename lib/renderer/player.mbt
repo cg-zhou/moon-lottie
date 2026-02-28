@@ -996,9 +996,47 @@ fn get_path_length(path : @model.BezierPath) -> Double {
       get_pt_at(path.v, next_j, 1) + get_pt_at(path.i, next_j, 1),
     )
     let p3 = @math.Vector2::new(get_pt_at(path.v, next_j, 0), get_pt_at(path.v, next_j, 1))
-    total_length += @math.get_cubic_bezier_length(p0, p1, p2, p3, 10)
+    total_length += @math.get_cubic_bezier_length(p0, p1, p2, p3, 50)
   }
   total_length
+}
+
+///|
+fn find_t_for_length_on_cubic(
+  p0 : @math.Vector2,
+  p1 : @math.Vector2,
+  p2 : @math.Vector2,
+  p3 : @math.Vector2,
+  target_length : Double,
+) -> Double {
+  if target_length <= 0.0 {
+    return 0.0
+  }
+  let intervals = 50
+  let mut acc = 0.0
+  let mut prev_t = 0.0
+  let mut prev_pt = p0
+  let mut prev_acc = 0.0
+  for i = 1; i <= intervals; i = i + 1 {
+    let t = i.to_double() / intervals.to_double()
+    let pt = @math.point_on_cubic_bezier(p0, p1, p2, p3, t)
+    let dx = pt.x - prev_pt.x
+    let dy = pt.y - prev_pt.y
+    acc += @math.sqrt(dx * dx + dy * dy)
+    if acc >= target_length {
+      let seg_len = acc - prev_acc
+      let local_ratio = if seg_len > 0.0 {
+        (target_length - prev_acc) / seg_len
+      } else {
+        0.0
+      }
+      return prev_t + (t - prev_t) * local_ratio
+    }
+    prev_t = t
+    prev_pt = pt
+    prev_acc = acc
+  }
+  1.0
 }
 
 ///|
@@ -1031,7 +1069,7 @@ pub fn trim_single_path(
       get_pt_at(v, next_j, 1) + get_pt_at(path.i, next_j, 1),
     )
     let p3 = @math.Vector2::new(get_pt_at(v, next_j, 0), get_pt_at(v, next_j, 1))
-    let len = @math.get_cubic_bezier_length(p0, p1, p2, p3, 10)
+    let len = @math.get_cubic_bezier_length(p0, p1, p2, p3, 50)
     seg_lengths.push(len)
     total_length += len
   }
@@ -1121,14 +1159,19 @@ fn extract_bezier_segment(
 
       // Calculate local t for start and end
       let t_start = if s_len > seg_start {
-        (s_len - seg_start) / seg_len
+        find_t_for_length_on_cubic(p0, p1, p2, p3, s_len - seg_start)
       } else {
         0.0
       }
       let t_end = if e_len < seg_end {
-        (e_len - seg_start) / seg_len
+        find_t_for_length_on_cubic(p0, p1, p2, p3, e_len - seg_start)
       } else {
         1.0
+      }
+
+      if t_end <= t_start {
+        current_acc += seg_len
+        continue
       }
 
       let t_start_relative = if t_end > 0.0 { t_start / t_end } else { 0.0 }
