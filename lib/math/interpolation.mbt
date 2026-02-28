@@ -60,7 +60,11 @@ pub fn solve_cubic_bezier_easing(
 
   let mut low = 0.0
   let mut high = 1.0
-  t = target_x
+  if sample_bezier(x1, x2, t) < target_x {
+    low = t
+  } else {
+    high = t
+  }
   for i = 0; i < 24; i = i + 1 {
     let x = sample_bezier(x1, x2, t)
     if (x - target_x).abs() < 0.000001 {

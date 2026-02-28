@@ -33,6 +33,9 @@ test "Bezier::point_on_cubic_bezier" {
 }
 
 ///|
+/// Cubic bezier with fixed endpoints (0,0) and (1,1),
+/// where p1 and p2 are control-point x values.
+///|
 fn cubic01(p1 : Double, p2 : Double, t : Double) -> Double {
   let t1 = 1.0 - t
   3.0 * t1 * t1 * t * p1 + 3.0 * t1 * t * t * p2 + t * t * t
