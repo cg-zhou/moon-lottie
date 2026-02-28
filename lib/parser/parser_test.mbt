@@ -169,3 +169,39 @@ test "parse_transform_skew_fields" {
     None => fail("skew_axis should be parsed")
   }
 }
+
+///|
+test "parse_animated_transform_trailing_time_marker_uses_previous_value" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":146,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0,0,0],\"e\":[100,0,0]},{\"t\":10}]},\"s\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[100,100,100],\"e\":[50,50,100]},{\"t\":10}]},\"r\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0],\"e\":[30]},{\"t\":10}]},\"o\":{\"k\":100}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse trailing time marker keyframes: \{e}")
+  }
+  match ani.layers[0].ks.position.value {
+    @model.PropertyValue::Animated(kfs) => {
+      if kfs.length() != 2 || kfs[1].start_value.length() < 1 ||
+        (kfs[1].start_value[0] - 100.0).abs() > 0.000001 {
+        fail("position trailing keyframe should inherit previous end value")
+      }
+    }
+    _ => fail("position should be animated")
+  }
+  match ani.layers[0].ks.scale.value {
+    @model.PropertyValue::Animated(kfs) => {
+      if kfs.length() != 2 || kfs[1].start_value.length() < 1 ||
+        (kfs[1].start_value[0] - 50.0).abs() > 0.000001 {
+        fail("scale trailing keyframe should inherit previous end value")
+      }
+    }
+    _ => fail("scale should be animated")
+  }
+  match ani.layers[0].ks.rotation.value {
+    @model.PropertyValue::Animated(kfs) => {
+      if kfs.length() != 2 || (kfs[1].start_value - 30.0).abs() > 0.000001 {
+        fail("rotation trailing keyframe should inherit previous end value")
+      }
+    }
+    _ => fail("rotation should be animated")
+  }
+}

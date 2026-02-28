@@ -196,6 +196,7 @@ fn parse_property_double(
           if a {
             // Animated
             let keyframes = []
+            let mut prev_value : Double? = None
             match k {
               Array(arr) =>
                 for kf_json in arr {
@@ -208,7 +209,11 @@ fn parse_property_double(
                       let s = match kf_obj.get("s") {
                         Some(Array([Number(n, ..)])) => n
                         Some(Number(n, ..)) => n
-                        _ => 0.0
+                        _ =>
+                          match prev_value {
+                            Some(v) => v
+                            None => 0.0
+                          }
                       }
                       let e = match kf_obj.get("e") {
                         Some(Array([Number(n, ..)])) => Some(n)
@@ -231,6 +236,10 @@ fn parse_property_double(
                           hold=hold,
                         ),
                       )
+                      prev_value = match e {
+                        Some(v) => Some(v)
+                        None => Some(s)
+                      }
                     }
                     _ => ()
                   }
@@ -276,6 +285,7 @@ fn parse_property_vec(
           if a {
             // Animated
             let keyframes = []
+            let mut prev_value : Array[Double]? = None
             match k {
               Array(arr) =>
                 for kf_json in arr {
@@ -296,7 +306,11 @@ fn parse_property_vec(
                           }
                           res
                         }
-                        _ => []
+                        _ =>
+                          match prev_value {
+                            Some(v) => v
+                            None => []
+                          }
                       }
                       let e = match kf_obj.get("e") {
                         Some(Array(arr)) => {
@@ -331,6 +345,10 @@ fn parse_property_vec(
                           hold=hold,
                         ),
                       )
+                      prev_value = match e {
+                        Some(v) => Some(v)
+                        None => Some(s)
+                      }
                     }
                     _ => ()
                   }
