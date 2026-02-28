@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
-const { default: pixelmatch } = require('pixelmatch');
+const pixelmatchModule = require('pixelmatch');
+const pixelmatch = pixelmatchModule.default || pixelmatchModule;
 
 function arg(name, fallback = undefined) {
   const idx = process.argv.indexOf(`--${name}`);
@@ -27,8 +28,14 @@ async function svgToRaw(svgString) {
 }
 
 async function compareSvgFiles(expectedPath, actualPath, diffPath) {
-  const expectedSvg = fs.readFileSync(expectedPath, 'utf8');
-  const actualSvg = fs.readFileSync(actualPath, 'utf8');
+  let expectedSvg;
+  let actualSvg;
+  try {
+    expectedSvg = fs.readFileSync(expectedPath, 'utf8');
+    actualSvg = fs.readFileSync(actualPath, 'utf8');
+  } catch (e) {
+    throw new Error(`Failed to read SVG files:\n- expected: ${expectedPath}\n- actual: ${actualPath}\n${e.message || e}`);
+  }
   const expectedRaw = await svgToRaw(expectedSvg);
   const actualRaw0 = await svgToRaw(actualSvg);
 
@@ -66,11 +73,15 @@ async function compareSvgFiles(expectedPath, actualPath, diffPath) {
 async function main() {
   const expectedDir = arg('expected-dir', path.join(__dirname, '../snapshots'));
   const actualDir = arg('actual-dir', path.join(__dirname, '../snapshots'));
-  const files = parseList(arg('files', '1-1 Super Mario_frame_25.svg,1-1 Super Mario_frame_50.svg,1-1 Super Mario_frame_75.svg'));
+  const files = parseList(arg('files', ''));
   const minSimilarity = Number(arg('min-similarity', '0.995'));
   const diffDir = arg('diff-dir', path.join(__dirname, '../snapshots_diff'));
 
   if (!fs.existsSync(diffDir)) fs.mkdirSync(diffDir, { recursive: true });
+
+  if (files.length === 0) {
+    throw new Error('No files to compare. Pass --files "file1.svg,file2.svg,..."');
+  }
 
   let allPassed = true;
   for (const file of files) {
