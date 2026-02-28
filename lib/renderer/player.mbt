@@ -361,11 +361,20 @@ fn[R : Renderer] Player::render_layer_content(
       let (r, g, b) = parse_hex_color(color)
       self.renderer.fill(r, g, b, 1.0)
     }
-    PreComp(ref_id, _w, _h) =>
+    PreComp(ref_id, w, h) =>
       match self.animation.assets {
         Some(assets) =>
           for asset in assets {
             if asset.id == ref_id {
+              self.renderer.save()
+              self.renderer.begin_path()
+              self.renderer.move_to(0.0, 0.0)
+              self.renderer.line_to(w.to_double(), 0.0)
+              self.renderer.line_to(w.to_double(), h.to_double())
+              self.renderer.line_to(0.0, h.to_double())
+              self.renderer.close_path()
+              self.renderer.set_fill_rule("nonzero")
+              self.renderer.clip()
               match asset.layers {
                 Some(layers) =>
                   for i = layers.length() - 1; i >= 0; i = i - 1 {
@@ -380,6 +389,7 @@ fn[R : Renderer] Player::render_layer_content(
                   }
                 None => ()
               }
+              self.renderer.restore()
               break
             }
           }

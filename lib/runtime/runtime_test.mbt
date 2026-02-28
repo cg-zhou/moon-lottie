@@ -77,3 +77,49 @@ test "evaluate_double_hold" {
   inspect(v75, content="10")
   inspect(v100, content="20")
 }
+
+///|
+test "evaluate_path_property_easing" {
+  let ot = @model.Bezier::new(
+    @model.BezierValue::new_single(0.1),
+    @model.BezierValue::new_single(1.0),
+  )
+  let it = @model.Bezier::new(
+    @model.BezierValue::new_single(0.9),
+    @model.BezierValue::new_single(1.0),
+  )
+  let p0 = @model.BezierPath::new(
+    v=[[0.0, 0.0], [10.0, 0.0]],
+    i=[[0.0, 0.0], [0.0, 0.0]],
+    o=[[0.0, 0.0], [0.0, 0.0]],
+    c=false,
+  )
+  let p1 = @model.BezierPath::new(
+    v=[[100.0, 0.0], [110.0, 0.0]],
+    i=[[0.0, 0.0], [0.0, 0.0]],
+    o=[[0.0, 0.0], [0.0, 0.0]],
+    c=false,
+  )
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=p0,
+    end_value=Some(p1),
+    in_tangent=Some(it),
+    out_tangent=Some(ot),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=p1)
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v = @runtime.evaluate_path_property(prop, 50.0)
+  if get_pt_at(v.v, 0, 0) <= 50.0 {
+    fail("Path easing should advance farther than linear interpolation at frame 50")
+  }
+}
+
+///|
+fn get_pt_at(v : Array[Array[Double]], i : Int, j : Int) -> Double {
+  if i >= 0 && i < v.length() && j >= 0 && j < v[i].length() {
+    v[i][j]
+  } else {
+    0.0
+  }
+}
