@@ -98,3 +98,50 @@ test "svg-exported layer renders top-level groups in reverse order" {
     _ => fail("Expected last fill to be red, got \{last_fill}")
   }
 }
+
+///| Verify layer transform is evaluated at composition frame, not local frame.
+///|
+///| A precomp layer with st=10 and animated position:
+///|   t=10 → [0, 0], t=30 → [100, 0]
+///| At composition frame 20, the correct position is [50, 0] (50% interpolation).
+///| Before the fix, it was evaluated at local_frame=10 (= 20 - st=10),
+///| which is exactly at the first keyframe (t=10), returning [0, 0].
+test "layer transform uses composition frame not local frame" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":50,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":200,"sh":200,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":200,"ip":10,"op":30,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":10,"s":[0,0]},{"t":30,"s":[100,0]}]}}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+
+  // At composition frame 20: layer st=10, so local_frame=10.
+  // Keyframes are at t=10 and t=30 in composition time.
+  // Progress = (20-10)/(30-10) = 0.5 → position x should be 50 (midpoint).
+  player.set_frame(20.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut found_translate_x : Double? = None
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.e != 0.0 || m.f != 0.0 {
+          found_translate_x = Some(m.e)
+        }
+      _ => ()
+    }
+  }
+  match found_translate_x {
+    Some(x) =>
+      // x should be ~50 (interpolated at 50%), not 0 (stuck at start)
+      if x < 1.0 {
+        fail(
+          "Layer transform was not interpolated correctly: x=\{x} (expected ~50). Transform is being evaluated at local_frame instead of comp_frame.",
+        )
+      }
+    None => fail("No non-zero ConcatTransform found in commands")
+  }
+}

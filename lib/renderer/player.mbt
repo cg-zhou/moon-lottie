@@ -95,8 +95,7 @@ fn[R : Renderer] Player::apply_parent_transform(
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let local_frame = comp_frame - layer.st
-      let matrix = @runtime.evaluate_transform(layer.ks, local_frame)
+      let matrix = @runtime.evaluate_transform(layer.ks, comp_frame)
       self.renderer.concat_transform(matrix)
       return
     }
@@ -134,13 +133,13 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  let matrix = @runtime.evaluate_transform(layer.ks, self.current_frame)
+  let matrix = @runtime.evaluate_transform(layer.ks, comp_frame)
   self.renderer.concat_transform(matrix)
 
   // 1.2 Apply Layer Opacity
   let opacity = @runtime.evaluate_double_property(
     layer.ks.opacity,
-    self.current_frame,
+    comp_frame,
   )
   self.renderer.set_opacity(opacity / 100.0)
 
