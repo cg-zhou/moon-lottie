@@ -105,7 +105,7 @@ const importObject = {
 async function init() {
   try {
     const wasmPath = '../_build/wasm-gc/debug/build/cmd/main/main.wasm';
-    const response = await fetch(wasmPath);
+    const response = await fetch(wasmPath, { cache: 'no-store' });
     if (!response.ok) throw new Error("WASM not found");
     
     const buffer = await response.arrayBuffer();
@@ -129,7 +129,7 @@ function loadSample() {
 function loadRemoteAnimation(filename) {
     const path = `../samples/${filename}`;
     
-    fetch(path).then(r => {
+    fetch(path, { cache: 'no-store' }).then(r => {
         currentFileName = filename;
         return r.blob();
     }).then(blob => {
