@@ -101,3 +101,17 @@ test "render_animation_to_svgs utility" {
   assert_eq(svgs.length(), 3)
   assert_true(svgs[0].contains("<svg"), "First frame should contain svg tag")
 }
+
+///|
+test "precomp rendering applies composition clipping" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"assets\":[{\"id\":\"comp_1\",\"w\":50,\"h\":50,\"layers\":[{\"ddd\":0,\"ind\":1,\"ty\":1,\"nm\":\"solid\",\"ks\":{\"a\":{\"a\":0,\"k\":[0,0,0]},\"p\":{\"a\":0,\"k\":[25,25,0]},\"s\":{\"a\":0,\"k\":[100,100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}},\"ip\":0,\"op\":10,\"st\":0,\"sc\":\"#ff0000\",\"sw\":100,\"sh\":100}]}],\"layers\":[{\"ddd\":0,\"ind\":1,\"ty\":0,\"nm\":\"precomp\",\"refId\":\"comp_1\",\"w\":50,\"h\":50,\"ks\":{\"a\":{\"a\":0,\"k\":[0,0,0]},\"p\":{\"a\":0,\"k\":[50,50,0]},\"s\":{\"a\":0,\"k\":[100,100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}},\"ip\":0,\"op\":10,\"st\":0}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { _ => fail("Parse failed") }
+  let svgs = render_animation_to_svgs(ani, 1)
+  assert_eq(svgs.length(), 1)
+  assert_true(
+    svgs[0].contains("<clipPath"),
+    "Precomp layer should be clipped to its composition bounds",
+  )
+}

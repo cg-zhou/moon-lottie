@@ -254,7 +254,30 @@ pub fn evaluate_path_property(
         None => return kf.start_value
       }
 
-      if t >= 1.0 {
+      let eased_t = match (kf.out_tangent, kf.in_tangent) {
+        (Some(ot), Some(it)) => {
+          let x1 = match ot.x {
+            Single(v) => v
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
+          }
+          let y1 = match ot.y {
+            Single(v) => v
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
+          }
+          let x2 = match it.x {
+            Single(v) => v
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
+          }
+          let y2 = match it.y {
+            Single(v) => v
+            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
+          }
+          @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
+        }
+        _ => t
+      }
+
+      if eased_t >= 1.0 {
         return next_val
       }
 
@@ -265,9 +288,9 @@ pub fn evaluate_path_property(
         return kf.start_value
       }
 
-      let res_v = @math.lerp_vec2_array(start_v, end_v, t)
-      let res_i = @math.lerp_vec2_array(kf.start_value.i, next_val.i, t)
-      let res_o = @math.lerp_vec2_array(kf.start_value.o, next_val.o, t)
+      let res_v = @math.lerp_vec2_array(start_v, end_v, eased_t)
+      let res_i = @math.lerp_vec2_array(kf.start_value.i, next_val.i, eased_t)
+      let res_o = @math.lerp_vec2_array(kf.start_value.o, next_val.o, eased_t)
       @model.BezierPath::new(v=res_v, i=res_i, o=res_o, c=kf.start_value.c)
     }
   }
