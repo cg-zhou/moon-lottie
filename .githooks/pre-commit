@@ -1,3 +1,17 @@
 #!/bin/sh
 
 moon check
+
+echo "Running non-SVG tests..."
+moon test -p cg-zhou/moon-lottie/lib/math \
+          -p cg-zhou/moon-lottie/lib/parser \
+          -p cg-zhou/moon-lottie/lib/renderer \
+          -p cg-zhou/moon-lottie/lib/runtime
+TEST_EXIT=$?
+
+if [ $TEST_EXIT -ne 0 ]; then
+  echo "Pre-commit check failed: non-SVG tests did not all pass."
+  exit 1
+fi
+
+echo "All non-SVG tests passed."
