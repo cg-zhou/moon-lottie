@@ -2,7 +2,10 @@
 
 ## Pre-commit Hook
 
-This pre-commit hook performs automatic checks before finalizing your commit.
+This pre-commit hook performs automatic checks before finalizing your commit:
+
+1. Runs `moon check` to verify the code compiles without errors.
+2. Runs all non-SVG comparison tests (lib packages). All tests must pass before the commit is allowed.
 
 ### Usage Instructions
 
