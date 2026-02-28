@@ -13,7 +13,8 @@ let known_keys : Array[String] = [
   "ty", "ks", "p", "a", "k", "s", "e", "o", "r", "sk", "sa", "x", "y", "z",
   "d", "st", "bm", "ind", "cl", "ln", "tg", "sr", "parent", "sh", "sw", "sc", "lc", "lj", "ml",
   "shapes", "it", "c", "g", "t", "hd", "v", "fc", "fill-rule", "gr", "tr", "p", "s", "r", "o",
-  "expressions", "markers", "metadata", "masks", "inv", "pt", "mode", "px", "py", "pz",
+  "expressions", "markers", "metadata", "masks", "inv", "pt", "mode", "px", "py", "pz", "i", "h",
+  "to", "ti", "n",
 ]
 
 ///|
@@ -125,6 +126,53 @@ fn get_int(json : Json, key : String) -> Int raise LottieError {
 }
 
 ///|
+fn parse_bezier_value(json : Json?) -> @model.BezierValue? {
+  match json {
+    Some(Number(n, ..)) => Some(@model.BezierValue::new_single(n))
+    Some(Array(arr)) => {
+      let values = []
+      for v in arr {
+        match v {
+          Number(n, ..) => values.push(n)
+          _ => ()
+        }
+      }
+      Some(@model.BezierValue::new_multi(values))
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_bezier_tangent(json : Json?) -> @model.Bezier? {
+  match json {
+    Some(Object(obj)) =>
+      match (parse_bezier_value(obj.get("x")), parse_bezier_value(obj.get("y"))) {
+        (Some(x), Some(y)) => Some(@model.Bezier::new(x, y))
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_number_array(json : Json?) -> Array[Double]? {
+  match json {
+    Some(Array(arr)) => {
+      let values = []
+      for v in arr {
+        match v {
+          Number(n, ..) => values.push(n)
+          _ => ()
+        }
+      }
+      Some(values)
+    }
+    _ => None
+  }
+}
+
+///|
 /// Parse a simple Property (non-animated for now)
 fn parse_property_double(
   json : Json?,
@@ -167,11 +215,20 @@ fn parse_property_double(
                         Some(Number(n, ..)) => Some(n)
                         _ => None
                       }
+                      let in_tangent = parse_bezier_tangent(kf_obj.get("i"))
+                      let out_tangent = parse_bezier_tangent(kf_obj.get("o"))
+                      let hold = match kf_obj.get("h") {
+                        Some(Number(n, ..)) => Some(n.to_int())
+                        _ => None
+                      }
                       keyframes.push(
                         @model.LottieKeyframe::new(
                           frame=t,
                           start_value=s,
                           end_value=e,
+                          in_tangent=in_tangent,
+                          out_tangent=out_tangent,
+                          hold=hold,
                         ),
                       )
                     }
@@ -254,11 +311,24 @@ fn parse_property_vec(
                         }
                         _ => None
                       }
+                      let in_tangent = parse_bezier_tangent(kf_obj.get("i"))
+                      let out_tangent = parse_bezier_tangent(kf_obj.get("o"))
+                      let value_in_tangent = parse_number_array(kf_obj.get("ti"))
+                      let value_out_tangent = parse_number_array(kf_obj.get("to"))
+                      let hold = match kf_obj.get("h") {
+                        Some(Number(n, ..)) => Some(n.to_int())
+                        _ => None
+                      }
                       keyframes.push(
                         @model.LottieKeyframe::new(
                           frame=t,
                           start_value=s,
                           end_value=e,
+                          in_tangent=in_tangent,
+                          out_tangent=out_tangent,
+                          value_in_tangent=value_in_tangent,
+                          value_out_tangent=value_out_tangent,
+                          hold=hold,
                         ),
                       )
                     }
@@ -577,11 +647,16 @@ fn parse_property_bezier(
                           } catch {
                             _ => None
                           }
+                          let hold = match kf_obj.get("h") {
+                            Some(Number(n, ..)) => Some(n.to_int())
+                            _ => None
+                          }
                           keyframes.push(
                             @model.LottieKeyframe::new(
                               frame=t,
                               start_value=s,
                               end_value=e,
+                              hold=hold,
                             ),
                           )
                         }
