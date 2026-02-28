@@ -1,6 +1,6 @@
 # Lottie 一致性测试基准 (Compliance & Snapshot Benchmark)
 
-本文件用于追踪 `moon-lottie` 与官方 `lottie-web` 的渲染对齐进度。测试采用 SVG 抽帧对比作为“金标准”。
+本文件用于追踪 `moon-lottie` 与官方 `lottie-web` 的渲染对齐进度。测试采用 SVG 抽帧对比作为“金标准”，并补充像素级帧对比（渲染结果对比，而非 SVG 文本对比）。
 
 ## 对齐等级定义 (Compliance Stages)
 
@@ -25,8 +25,24 @@
 ## 待建立的自动化工具
 
 - [ ] **SVG Hash 对比脚本**: 自动运行 `moon test` 并对比 `lib/renderer/__snapshot__` 中的 Hash 值。
-- [ ] **像素级 Diff 预览**: 生成 HTML 报告，左右对比渲染差异。
+- [x] **像素级帧 Diff 工具**: `test/snapshot_tool/compare_frames.js`，将 SVG 渲染为像素后按帧比较并输出 diff PNG。
 - [ ] **官方 Trace 提取服务**: 使用 Node.js 脚本批量导出官方渲染指令流。
+
+## 帧级渲染结果对比（SVG -> Pixel）
+
+在 `test/snapshot_tool` 目录下执行：
+
+```bash
+npm install --registry=https://registry.npmjs.org
+npm run compare:frames -- \
+  --expected-dir ../snapshots \
+  --actual-dir ../snapshots \
+  --files "1-1 Super Mario_frame_25.svg,1-1 Super Mario_frame_50.svg,1-1 Super Mario_frame_75.svg" \
+  --min-similarity 0.995
+```
+
+- 对比逻辑：使用 `sharp` 将 SVG 栅格化，再用 `pixelmatch` 做逐像素比较。
+- 输出：控制台打印 similarity 与 mismatched pixels，并在 `test/snapshots_diff/` 生成 diff PNG。
 
 ## 活跃瓶颈分析 (Hot Issues)
 
