@@ -88,6 +88,7 @@
 - [x] 不可直接迁移项说明（本批次）：Rust 渲染侧的结构化 tracing/span 不可直接搬运到 MoonBit；等价方案为 `Player` 内部字符串上下文缓冲（默认关闭，可开关）并由测试断言关键信息。
 - [x] renderer 稳健性迁移（Mario 可见性排查批次）：对齐 `lottie-rs` 渲染内容分组语义，避免“带 paint 的 sibling group”将路径泄漏到后续 group（`lib/renderer/player.mbt`）。
 - [x] 测试补充（本批次）：新增 `sibling groups with own fill should not leak paths to next group`，通过 `CommandRecorder` 断言第二次 Fill 仅消费本组路径（`lib/renderer/player_debug_test.mbt`，`moon test -p cg-zhou/moon-lottie/lib/renderer` 通过）。
+- [x] 回归工具增强（本批次）：新增 `test/snapshot_tool/compare_frames.js`，支持 SVG 栅格化后逐像素帧对比（`sharp + pixelmatch`），减少对 SVG 文本格式差异的敏感性。
 - [ ] 阻塞项：`test/regression` 基线当前存在与本轮无关的快照差异（frame=0 多样例 mismatch），需后续单独处理基线或渲染一致性。
 
 ## 4) 交付定义（DoD）
