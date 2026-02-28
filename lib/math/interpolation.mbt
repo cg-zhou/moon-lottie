@@ -17,6 +17,20 @@ pub fn lerp_array(
   res
 }
 
+///|
+pub fn lerp_vec2_array(
+  a : Array[Array[Double]],
+  b : Array[Array[Double]],
+  t : Double,
+) -> Array[Array[Double]] {
+  let len = if a.length() < b.length() { a.length() } else { b.length() }
+  let res = []
+  for i = 0; i < len; i = i + 1 {
+    res.push(lerp_array(a[i], b[i], t))
+  }
+  res
+}
+
 ///| Lottie Cubic Bezier Easing Solver
 
 ///| Lottie easing uses a cubic bezier where P0=(0,0), P3=(1,1)

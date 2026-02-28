@@ -8,6 +8,8 @@ pub fn lerp_array(Array[Double], Array[Double], Double) -> Array[Double]
 
 pub fn lerp_double(Double, Double, Double) -> Double
 
+pub fn lerp_vec2_array(Array[Array[Double]], Array[Array[Double]], Double) -> Array[Array[Double]]
+
 pub fn point_on_cubic_bezier(Vector2, Vector2, Vector2, Vector2, Double) -> Vector2
 
 pub fn solve_cubic_bezier_easing(Double, Double, Double, Double, Double) -> Double
@@ -53,4 +55,3 @@ pub fn Vector2::zero() -> Self
 // Type aliases
 
 // Traits
-

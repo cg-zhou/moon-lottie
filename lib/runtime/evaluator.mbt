@@ -265,27 +265,9 @@ pub fn evaluate_path_property(
         return kf.start_value
       }
 
-      let res_v = []
-      let res_i = []
-      let res_o = []
-      for i = 0; i < start_v.length(); i = i + 1 {
-        res_v.push([
-          start_v[i][0] + (end_v[i][0] - start_v[i][0]) * t,
-          start_v[i][1] + (end_v[i][1] - start_v[i][1]) * t,
-        ])
-        res_i.push([
-          kf.start_value.i[i][0] +
-          (next_val.i[i][0] - kf.start_value.i[i][0]) * t,
-          kf.start_value.i[i][1] +
-          (next_val.i[i][1] - kf.start_value.i[i][1]) * t,
-        ])
-        res_o.push([
-          kf.start_value.o[i][0] +
-          (next_val.o[i][0] - kf.start_value.o[i][0]) * t,
-          kf.start_value.o[i][1] +
-          (next_val.o[i][1] - kf.start_value.o[i][1]) * t,
-        ])
-      }
+      let res_v = @math.lerp_vec2_array(start_v, end_v, t)
+      let res_i = @math.lerp_vec2_array(kf.start_value.i, next_val.i, t)
+      let res_o = @math.lerp_vec2_array(kf.start_value.o, next_val.o, t)
       @model.BezierPath::new(v=res_v, i=res_i, o=res_o, c=kf.start_value.c)
     }
   }
