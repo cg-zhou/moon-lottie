@@ -8,6 +8,7 @@ pub struct Player[R] {
   mut debug_logs : Array[String]
   mut debug_layer : String
   mut debug_shape : String
+  mut debug_property : String
 }
 
 ///|
@@ -21,6 +22,7 @@ pub fn[R] Player::new(animation : @model.Animation, renderer : R) -> Player[R] {
     debug_logs: [],
     debug_layer: "",
     debug_shape: "",
+    debug_property: "",
   }
 }
 
@@ -43,7 +45,7 @@ pub fn[R] Player::get_debug_logs(self : Player[R]) -> Array[String] {
 fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
   if self.debug_enabled {
     self.debug_logs.push(
-      "frame=\{self.current_frame},layer=\{self.debug_layer},shape=\{self.debug_shape},stage=\{stage}",
+      "frame=\{self.current_frame},layer=\{self.debug_layer},shape=\{self.debug_shape},property=\{self.debug_property},stage=\{stage}",
     )
   }
 }
@@ -54,6 +56,7 @@ pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
     self.debug_logs = []
     self.debug_layer = ""
     self.debug_shape = ""
+    self.debug_property = ""
   }
   self.renderer.set_transform(@math.Matrix::identity())
   self.renderer.clear_rect(
@@ -119,6 +122,7 @@ fn[R : Renderer] Player::render_layer(
     None => "#\{layer.ind}"
   }
   self.debug_shape = ""
+  self.debug_property = "layer"
   self.debug_log("render_layer")
 
   self.renderer.save()
@@ -420,6 +424,7 @@ pub fn[R : Renderer] Player::render_shape(
     Some(name) => "\{name}:\{shape.ty}"
     None => shape.ty
   }
+  self.debug_property = shape.ty
   self.debug_log("render_shape")
   match shape.hd {
     Some(true) => return
