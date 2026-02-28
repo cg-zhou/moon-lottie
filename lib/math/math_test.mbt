@@ -31,3 +31,37 @@ test "Bezier::point_on_cubic_bezier" {
     fail("Bezier interpolation incorrect")
   }
 }
+
+///|
+fn cubic01(p1 : Double, p2 : Double, t : Double) -> Double {
+  let t1 = 1.0 - t
+  3.0 * t1 * t1 * t * p1 + 3.0 * t1 * t * t * p2 + t * t * t
+}
+
+///|
+test "Bezier::solve_cubic_bezier_easing precision" {
+  let x1 = 0.42
+  let y1 = 0.0
+  let x2 = 0.58
+  let y2 = 1.0
+  let ts = [0.1, 0.25, 0.5, 0.75, 0.9]
+  for t in ts {
+    let x = cubic01(x1, x2, t)
+    let expected = cubic01(y1, y2, t)
+    let got = @math.solve_cubic_bezier_easing(x1, y1, x2, y2, x)
+    if (got - expected).abs() > 0.0005 {
+      fail("solve_cubic_bezier_easing precision failed")
+    }
+  }
+}
+
+///|
+test "Bezier::solve_cubic_bezier_easing linear identity" {
+  let xs = [0.0, 0.1, 0.3, 0.5, 0.9, 1.0]
+  for x in xs {
+    let y = @math.solve_cubic_bezier_easing(0.0, 0.0, 1.0, 1.0, x)
+    if (x - y).abs() > 0.000001 {
+      fail("linear easing should be identity")
+    }
+  }
+}
