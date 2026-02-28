@@ -953,7 +953,9 @@ fn trim_paths_by_global_range(
       if local_s <= 0.0 && local_e >= 1.0 {
         result.push(path)
       } else {
-        let adjusted_local_e = if local_e >= 1.0 { 0.999999999999 } else { local_e }
+        // Avoid exact 1.0 because trim_single_path normalizes 1.0 to 0.0 internally.
+        let trim_end_max = 0.999999999999
+        let adjusted_local_e = if local_e >= 1.0 { trim_end_max } else { local_e }
         for p in trim_single_path(path, local_s, adjusted_local_e, 0.0) {
           result.push(p)
         }
