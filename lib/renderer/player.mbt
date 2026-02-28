@@ -626,11 +626,12 @@ pub fn[R : Renderer] Player::render_shape(
       let start = @runtime.evaluate_double_property(t.s, self.current_frame)
       let end = @runtime.evaluate_double_property(t.e, self.current_frame)
       let offset = @runtime.evaluate_double_property(t.o, self.current_frame)
-      self.current_paths = apply_trim_path(
+      self.current_paths = apply_trim_path_with_mode(
         self.current_paths,
         start,
         end,
         offset,
+        t.m,
       )
     }
     Polystar(sr) => self.current_paths.push(self.create_polystar_path(sr))
@@ -854,6 +855,138 @@ pub fn apply_trim_path(
     }
   }
   result
+}
+
+///|
+pub fn apply_trim_path_with_mode(
+  paths : Array[@model.BezierPath],
+  start : Double,
+  end : Double,
+  offset : Double,
+  mode : Int,
+) -> Array[@model.BezierPath] {
+  if mode == 1 {
+    apply_trim_path_simultaneously(paths, start, end, offset)
+  } else {
+    apply_trim_path(paths, start, end, offset)
+  }
+}
+
+///|
+fn apply_trim_path_simultaneously(
+  paths : Array[@model.BezierPath],
+  start : Double,
+  end : Double,
+  offset : Double,
+) -> Array[@model.BezierPath] {
+  let s_val = start / 100.0
+  let e_val = end / 100.0
+  let o_val = offset / 360.0
+  if s_val <= 0.0 && e_val >= 1.0 {
+    return paths
+  }
+  if e_val - s_val >= 1.0 {
+    return paths
+  }
+  let start_norm = {
+    let mut val = s_val + o_val
+    val = val - val.floor()
+    val
+  }
+  let end_norm = {
+    let mut val = e_val + o_val
+    val = val - val.floor()
+    val
+  }
+  if start_norm < end_norm {
+    trim_paths_by_global_range(paths, start_norm, end_norm)
+  } else {
+    let part1 = trim_paths_by_global_range(paths, start_norm, 1.0)
+    let part2 = trim_paths_by_global_range(paths, 0.0, end_norm)
+    let result = []
+    for p in part1 {
+      result.push(p)
+    }
+    for p in part2 {
+      result.push(p)
+    }
+    result
+  }
+}
+
+///|
+fn trim_paths_by_global_range(
+  paths : Array[@model.BezierPath],
+  s_norm : Double,
+  e_norm : Double,
+) -> Array[@model.BezierPath] {
+  let lengths = []
+  let mut total_length = 0.0
+  for path in paths {
+    let len = get_path_length(path)
+    lengths.push(len)
+    total_length += len
+  }
+  if total_length == 0.0 {
+    return paths
+  }
+  let s_len = s_norm * total_length
+  let e_len = e_norm * total_length
+  let result = []
+  let mut current_acc = 0.0
+  for i = 0; i < paths.length(); i = i + 1 {
+    let path = paths[i]
+    let path_len = lengths[i]
+    let path_start = current_acc
+    let path_end = current_acc + path_len
+    if path_len > 0.0 && path_end > s_len && path_start < e_len {
+      let local_s = if s_len > path_start {
+        (s_len - path_start) / path_len
+      } else {
+        0.0
+      }
+      let local_e = if e_len < path_end {
+        (e_len - path_start) / path_len
+      } else {
+        1.0
+      }
+      if local_s <= 0.0 && local_e >= 1.0 {
+        result.push(path)
+      } else {
+        let adjusted_local_e = if local_e >= 1.0 { 0.999999999999 } else { local_e }
+        for p in trim_single_path(path, local_s, adjusted_local_e, 0.0) {
+          result.push(p)
+        }
+      }
+    }
+    current_acc += path_len
+  }
+  result
+}
+
+///|
+fn get_path_length(path : @model.BezierPath) -> Double {
+  if path.v.length() < 2 {
+    return 0.0
+  }
+  let num_pts = path.v.length()
+  let num_segs = if path.c { num_pts } else { num_pts - 1 }
+  let mut total_length = 0.0
+  for j = 0; j < num_segs; j = j + 1 {
+    let next_j = (j + 1) % num_pts
+    let p0 = @math.Vector2::new(get_pt_at(path.v, j, 0), get_pt_at(path.v, j, 1))
+    let p1 = @math.Vector2::new(
+      get_pt_at(path.v, j, 0) + get_pt_at(path.o, j, 0),
+      get_pt_at(path.v, j, 1) + get_pt_at(path.o, j, 1),
+    )
+    let p2 = @math.Vector2::new(
+      get_pt_at(path.v, next_j, 0) + get_pt_at(path.i, next_j, 0),
+      get_pt_at(path.v, next_j, 1) + get_pt_at(path.i, next_j, 1),
+    )
+    let p3 = @math.Vector2::new(get_pt_at(path.v, next_j, 0), get_pt_at(path.v, next_j, 1))
+    total_length += @math.get_cubic_bezier_length(p0, p1, p2, p3, 10)
+  }
+  total_length
 }
 
 ///|
