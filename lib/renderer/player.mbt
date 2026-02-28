@@ -4,11 +4,24 @@ pub struct Player[R] {
   renderer : R
   mut current_frame : Double
   mut current_paths : Array[@model.BezierPath]
+  mut debug_enabled : Bool
+  mut debug_logs : Array[String]
+  mut debug_layer : String
+  mut debug_shape : String
 }
 
 ///|
 pub fn[R] Player::new(animation : @model.Animation, renderer : R) -> Player[R] {
-  { animation, renderer, current_frame: 0.0, current_paths: [] }
+  {
+    animation,
+    renderer,
+    current_frame: 0.0,
+    current_paths: [],
+    debug_enabled: false,
+    debug_logs: [],
+    debug_layer: "",
+    debug_shape: "",
+  }
 }
 
 ///|
@@ -17,7 +30,29 @@ pub fn[R] Player::set_frame(self : Player[R], frame : Double) -> Unit {
 }
 
 ///|
+pub fn[R] Player::set_debug(self : Player[R], enabled : Bool) -> Unit {
+  self.debug_enabled = enabled
+}
+
+///|
+pub fn[R] Player::get_debug_logs(self : Player[R]) -> Array[String] {
+  self.debug_logs
+}
+
+///|
+fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
+  if self.debug_enabled {
+    self.debug_logs.push(
+      "frame=\{self.current_frame},layer=\{self.debug_layer},shape=\{self.debug_shape},stage=\{stage}",
+    )
+  }
+}
+
+///|
 pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
+  self.debug_logs = []
+  self.debug_layer = ""
+  self.debug_shape = ""
   self.renderer.set_transform(@math.Matrix::identity())
   self.renderer.clear_rect(
     0.0,
@@ -77,6 +112,12 @@ fn[R : Renderer] Player::render_layer(
   let local_frame = comp_frame - layer.st
   let saved_frame = self.current_frame
   self.current_frame = local_frame
+  self.debug_layer = match layer.nm {
+    Some(name) => "\{name}#\{layer.ind}"
+    None => "#\{layer.ind}"
+  }
+  self.debug_shape = ""
+  self.debug_log("render_layer")
 
   self.renderer.save()
 
@@ -373,6 +414,11 @@ pub fn[R : Renderer] Player::render_shape(
   self : Player[R],
   shape : @model.Shape,
 ) -> Unit {
+  self.debug_shape = match shape.nm {
+    Some(name) => "\{name}:\{shape.ty}"
+    None => shape.ty
+  }
+  self.debug_log("render_shape")
   match shape.hd {
     Some(true) => return
     _ => ()
