@@ -1,20 +1,74 @@
 [
-  "1-1 Super Mario.json",
-  "1-2 3D Customization.json",
-  "1-3 Businessman flies up with rocket.json",
-  "1-4 Cat Fishing On Moon.json",
-  "1-5 Crypto.json",
-  "1-6 Designer.json",
-  "1-7 Keyboard Typing.json",
-  "2-1 adrock.json",
-  "2-2 bacon.json",
-  "2-3 banner.json",
-  "2-4 bm_ronda.json",
-  "2-5 bodymovin.json",
-  "2-6 dalek.json",
-  "3-1 lights(expr).json",
-  "3-2 monster(expr).json",
-  "3-3 navidad(expr).json",
-  "3-4 ripple(expr).json",
-  "3-5 starfish(expr).json"
+  {
+    "file": "1-1_Super_Mario.json",
+    "label": "1-1 Super Mario"
+  },
+  {
+    "file": "1-2_3D_Customization.json",
+    "label": "1-2 3D Customization"
+  },
+  {
+    "file": "1-3_Businessman_flies_up_with_rocket.json",
+    "label": "1-3 Businessman flies up with rocket"
+  },
+  {
+    "file": "1-4_Cat_Fishing_On_Moon.json",
+    "label": "1-4 Cat Fishing On Moon"
+  },
+  {
+    "file": "1-5_Crypto.json",
+    "label": "1-5 Crypto"
+  },
+  {
+    "file": "1-6_Designer.json",
+    "label": "1-6 Designer"
+  },
+  {
+    "file": "1-7_Keyboard_Typing.json",
+    "label": "1-7 Keyboard Typing"
+  },
+  {
+    "file": "2-1_adrock.json",
+    "label": "2-1 adrock"
+  },
+  {
+    "file": "2-2_bacon.json",
+    "label": "2-2 bacon"
+  },
+  {
+    "file": "2-3_banner.json",
+    "label": "2-3 banner"
+  },
+  {
+    "file": "2-4_bm_ronda.json",
+    "label": "2-4 bm_ronda"
+  },
+  {
+    "file": "2-5_bodymovin.json",
+    "label": "2-5 bodymovin"
+  },
+  {
+    "file": "2-6_dalek.json",
+    "label": "2-6 dalek"
+  },
+  {
+    "file": "3-1_lights(expr).json",
+    "label": "3-1 lights(expr)"
+  },
+  {
+    "file": "3-2_monster(expr).json",
+    "label": "3-2 monster(expr)"
+  },
+  {
+    "file": "3-3_navidad(expr).json",
+    "label": "3-3 navidad(expr)"
+  },
+  {
+    "file": "3-4_ripple(expr).json",
+    "label": "3-4 ripple(expr)"
+  },
+  {
+    "file": "3-5_starfish(expr).json",
+    "label": "3-5 starfish(expr)"
+  }
 ]
