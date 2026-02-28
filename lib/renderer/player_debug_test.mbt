@@ -155,6 +155,7 @@ test "shape properties use composition frame when layer has non-zero st" {
   }
   let recorder = CommandRecorder::new()
   let player = Player::new(ani, recorder)
+  let epsilon = 0.0001
 
   player.set_frame(20.0)
   player.render()
@@ -172,7 +173,7 @@ test "shape properties use composition frame when layer has non-zero st" {
   }
   match first_move_x {
     Some(x) => {
-      if x < 39.9999 || x > 40.0001 {
+      if x < 40.0 - epsilon || x > 40.0 + epsilon {
         fail(
           "Shape property was not evaluated at composition frame: MoveTo x=\{x}, expected 40.0",
         )
