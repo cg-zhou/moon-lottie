@@ -11,6 +11,8 @@ const fileInput = document.getElementById('file-input');
 const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
 
+const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
 let isPlaying = true;
 let currentFrame = 0;
 let lastTimestamp = 0;
@@ -104,7 +106,7 @@ const importObject = {
 
 async function init() {
   try {
-    const wasmPath = '../_build/wasm-gc/debug/build/cmd/main/main.wasm';
+    const wasmPath = isProd ? 'main.wasm' : '../_build/wasm-gc/debug/build/cmd/main/main.wasm';
     const response = await fetch(wasmPath, { cache: 'no-store' });
     if (!response.ok) throw new Error("WASM not found");
     
@@ -115,11 +117,36 @@ async function init() {
     statusDot.style.background = "#34c759"; // Green
     statusMsg.innerText = "已就绪，请上传 Lottie JSON";
     
-    loadSample();
+    // 动态加载动画列表
+    await initAnimList();
   } catch (err) {
     statusDot.style.background = "#ff3b30"; // Red
     statusMsg.innerText = "错误: " + err.message;
   }
+}
+
+async function initAnimList() {
+    const listEl = document.getElementById('anim-list');
+    try {
+        const response = await fetch('list.json');
+        if (!response.ok) throw new Error("List not found");
+        const files = await response.json();
+        
+        listEl.innerHTML = '';
+        files.forEach(file => {
+            const opt = document.createElement('option');
+            opt.value = file;
+            opt.innerText = file;
+            listEl.appendChild(opt);
+        });
+        
+        if (files.length > 0) {
+            loadRemoteAnimation(files[0]);
+        }
+    } catch (e) {
+        console.warn("Falling back to manual sample due to list.json missing");
+        loadSample();
+    }
 }
 
 function loadSample() {
@@ -127,7 +154,7 @@ function loadSample() {
 }
 
 function loadRemoteAnimation(filename) {
-    const path = `../samples/${filename}`;
+    const path = isProd ? `samples/${filename}` : `../samples/${filename}`;
     
     fetch(path, { cache: 'no-store' }).then(r => {
         currentFileName = filename;
