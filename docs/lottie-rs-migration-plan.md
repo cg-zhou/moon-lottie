@@ -66,10 +66,14 @@
 - [x] 已具备基础模块骨架：`lib/math`、`lib/model`、`lib/parser`、`lib/runtime`、`lib/renderer`。
 - [x] 已迁移并落地部分核心模型能力（如 `Color`、`BlendMode`、`MatteMode`、`FillRule`、`LineCap`、`LineJoin`）。
 - [x] 已具备 SVG 回归测试体系与样例集（`test/regression/`）。
-- [ ] 基础设施层的“渲染错误可定位性”仍不足（错误上下文、依赖链追踪、定位信息需加强）。
+- [x] 基础设施层已补齐一轮“渲染错误可定位性”能力（`frame/layer/shape/property` 基础上下文已可观测）。
 - [ ] 仍有特性缺口需补齐（如文档中提到的 Effects/表达式相关能力与部分渲染一致性问题）。
 
 本轮变更（2026-02-28）：
+- [x] 目录/符号对比与单批次边界确认（本批次）：
+  - 源：`zimond/lottie-rs/crates/renderer-bevy/src/render.rs`（渲染链路上下文）
+  - 目标：`lib/renderer/player.mbt`（`Player::debug_log` 上下文扩展）
+  - 测试点：`lib/renderer/player_debug_test.mbt`（调试开关 + 上下文字段断言）
 - [x] parser 未知字段覆盖率统计：新增 `report_unknown_keys_with_coverage` 与 `UnknownKeyReport`（`lib/parser/parser.mbt`）。
 - [x] 测试补充：`lib/parser/reporter_test.mbt` 增加未知字段路径与覆盖率计数断言（`moon test -p cg-zhou/moon-lottie/lib/parser` 通过）。
 - [x] parser 关键帧基础字段迁移：`parse_property_double/vec/bezier` 新增对 `i/o/h/to/ti` 的解析（`lib/parser/parser.mbt`）。
@@ -79,8 +83,12 @@
 - [x] math 测试补充：`lib/math/math_test.mbt` 覆盖 math 公共函数（每函数至少一条），`moon test -p cg-zhou/moon-lottie/lib/math` 通过。
 - [x] model 等价补齐（本批次）：迁移 `Rgba::new_u8` 等价能力为 `Color::new_u8`，并抽取 `GradientType::from_int` 供渐变构造复用（`lib/model/color.mbt`, `lib/model/shape.mbt`）。
 - [x] model 测试补充（本批次）：`lib/model/model_test.mbt` 新增构造器/工厂函数覆盖（`Property`/`Transform`/`Shape*`/`Layer`/`Mask`/`Animation`），`moon test -p cg-zhou/moon-lottie/lib/model` 通过。
-- [x] renderer 可观测性迁移：`Player` 新增可开关调试日志（默认关闭）并写入 `frame/layer/shape/stage` 上下文（`lib/renderer/player.mbt`）。
-- [x] 最小复现测试入口：新增 `player debug logs are toggleable with layer/shape/frame context`，覆盖关闭/开启调试开关与上下文断言（`lib/renderer/player_debug_test.mbt`，`moon test -p cg-zhou/moon-lottie/lib/renderer` 通过）。
+- [x] renderer 可观测性迁移（本批次增量）：`Player` 调试日志上下文扩展为 `frame/layer/shape/property/stage`（`lib/renderer/player.mbt`）。
+- [x] 最小复现测试入口（本批次增量）：`player debug logs are toggleable with layer/shape/property/frame context`，覆盖关闭/开启调试开关与属性上下文断言（`lib/renderer/player_debug_test.mbt`，`moon test -p cg-zhou/moon-lottie/lib/renderer` 通过）。
+- [x] 不可直接迁移项说明（本批次）：Rust 渲染侧的结构化 tracing/span 不可直接搬运到 MoonBit；等价方案为 `Player` 内部字符串上下文缓冲（默认关闭，可开关）并由测试断言关键信息。
+- [x] renderer 稳健性迁移（Mario 可见性排查批次）：对齐 `lottie-rs` 渲染内容分组语义，避免“带 paint 的 sibling group”将路径泄漏到后续 group（`lib/renderer/player.mbt`）。
+- [x] 测试补充（本批次）：新增 `sibling groups with own fill should not leak paths to next group`，通过 `CommandRecorder` 断言第二次 Fill 仅消费本组路径（`lib/renderer/player_debug_test.mbt`，`moon test -p cg-zhou/moon-lottie/lib/renderer` 通过）。
+- [x] 回归工具增强（本批次）：新增 `test/snapshot_tool/compare_frames.js`，支持 SVG 栅格化后逐像素帧对比（`sharp + pixelmatch`），减少对 SVG 文本格式差异的敏感性。
 - [ ] 阻塞项：`test/regression` 基线当前存在与本轮无关的快照差异（frame=0 多样例 mismatch），需后续单独处理基线或渲染一致性。
 
 ## 4) 交付定义（DoD）
