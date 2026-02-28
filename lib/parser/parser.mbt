@@ -64,7 +64,7 @@ pub struct UnknownKeyReport {
 /// Traverse Json to collect unknown keys and known/unknown coverage counters.
 pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
   let mut total_keys = 0
-  let mut known_key_count = 0
+  let mut known_keys_count = 0
   let unknown_paths = []
   fn traverse(j : Json, path : String) {
     match j {
@@ -72,7 +72,7 @@ pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
         for k, v in obj {
           total_keys = total_keys + 1
           if contains_key(known_keys, k) {
-            known_key_count = known_key_count + 1
+            known_keys_count = known_keys_count + 1
           } else {
             unknown_paths.push(if path == "" { k } else { path + "." + k })
           }
@@ -80,15 +80,14 @@ pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
         }
       Array(arr) =>
         for i, v in arr {
-          let p = if path == "" { "" } else { path }
-          traverse(v, "\{p}[\{i}]")
+          traverse(v, "\{path}[\{i}]")
         }
       _ => ()
     }
   }
 
   traverse(json, "")
-  { total_keys, known_keys: known_key_count, unknown_paths }
+  { total_keys, known_keys: known_keys_count, unknown_paths }
 }
 
 ///|
