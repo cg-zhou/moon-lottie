@@ -6,6 +6,9 @@
 
 按依赖关系建议顺序：`math -> model -> parser -> runtime -> renderer -> regression/tooling`。
 
+依赖图（执行顺序）：
+`lib/math` → `lib/model` → `lib/parser` → `lib/runtime` → `lib/renderer` → `test/regression`
+
 | 顺序 | 源仓库目录（lottie-rs） | 目标仓库目录（moon-lottie） | 说明 |
 | :-- | :-- | :-- | :-- |
 | 1 | `src/math/`（或等价模块） | `lib/math/` | 向量/矩阵/贝塞尔/插值等基础能力，作为后续模块前置依赖 |
@@ -18,9 +21,9 @@
 ## 2) 任务列表（可执行 Checklist）
 
 ### A. 基线与映射
-- [ ] 建立目录映射表：逐项记录 `lottie-rs` 源目录 -> `moon-lottie` 目标目录。
-- [ ] 产出符号级迁移清单：类型、函数、常量、错误类型。
-- [ ] 识别不可直接迁移项（语言特性/运行时差异）并登记替代方案。
+- [x] 建立目录映射表：逐项记录 `lottie-rs` 源目录 -> `moon-lottie` 目标目录。
+- [x] 产出符号级迁移清单：类型、函数、常量、错误类型。
+- [x] 识别不可直接迁移项（语言特性/运行时差异）并登记替代方案。
 
 ### B. 基础层（math/model）
 - [ ] 对齐 `lib/math/`：补齐向量、矩阵、贝塞尔、插值算法差异。
@@ -39,13 +42,24 @@
 
 ### E. 渲染层（renderer）
 - [ ] 对齐 `lib/renderer/` 的图层合成、蒙版/遮罩、混合模式行为。
-- [ ] 补齐渲染诊断信息（当前图层、shape 索引、属性来源）以便排障。
-- [ ] 为典型失败样例建立最小复现测试（优先 frame=0 + 关键帧）。
+- [x] 补齐渲染诊断信息（当前图层、shape 索引、属性来源）以便排障。
+- [x] 为典型失败样例建立最小复现测试（优先 frame=0 + 关键帧）。
 
 ### F. 回归与工具链
 - [ ] 将 `lottie-rs` 可复用测试样例映射到 `samples/` 与 `test/regression/`。
 - [ ] 生成/更新快照并记录差异原因（解析差异、插值差异、渲染差异）。
 - [ ] 在文档中持续更新任务状态与剩余阻塞项。
+
+### 本轮目录/符号差异摘要（zimond/lottie-rs -> moon-lottie）
+- 目录级：
+  - `crates/lottie/src/(model|timeline|lerp)` -> `lib/model` + `lib/runtime` + `lib/math`
+  - `crates/renderer-bevy/src/render.rs` -> `lib/renderer/player.mbt` + `lib/renderer/svg_renderer.mbt`
+  - `fixtures`/`assets` -> `samples` + `test/regression` + `test/snapshots`
+- 符号级（本轮关注）：
+  - `render.rs` 中按 layer/shape 的渲染链路上下文追踪能力，在 `Player` 侧补充为 `set_debug/get_debug_logs` 与 `debug_log`。
+- 不可直接迁移项与等价实现：
+  - Rust `Result<_, Error>` + 生态日志宏（`log::trace!`）无法直接迁移到 MoonBit。
+  - MoonBit 等价方案：在 `Player` 内维护默认关闭的调试开关与字符串日志缓冲（`debug_enabled/debug_logs`），测试中可直接断言上下文字符串。
 
 ## 3) 现阶段完成情况（基于仓库当前文档与代码状态）
 
@@ -61,6 +75,9 @@
 - [x] parser 关键帧基础字段迁移：`parse_property_double/vec/bezier` 新增对 `i/o/h/to/ti` 的解析（`lib/parser/parser.mbt`）。
 - [x] runtime hold 语义对齐：`evaluate_double_property` / `evaluate_vec_property` / `evaluate_path_property` 支持 `hold=1` 停帧语义（`lib/runtime/evaluator.mbt`）。
 - [x] 测试补充：新增 `parse_position_keyframe_infra_fields` 与 `evaluate_double_hold`，并将线性采样补齐到 0/25/50/75/100（`moon test -p cg-zhou/moon-lottie/lib/parser && moon test -p cg-zhou/moon-lottie/lib/runtime` 通过）。
+- [x] renderer 可观测性迁移：`Player` 新增可开关调试日志（默认关闭）并写入 `frame/layer/shape/stage` 上下文（`lib/renderer/player.mbt`）。
+- [x] 最小复现测试入口：新增 `player debug logs are toggleable with layer/shape/frame context`，覆盖关闭/开启调试开关与上下文断言（`lib/renderer/player_debug_test.mbt`，`moon test -p cg-zhou/moon-lottie/lib/renderer` 通过）。
+- [ ] 阻塞项：`test/regression` 基线当前存在与本轮无关的快照差异（frame=0 多样例 mismatch），需后续单独处理基线或渲染一致性。
 
 ## 4) 交付定义（DoD）
 
