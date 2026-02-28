@@ -53,6 +53,45 @@ pub fn report_unknown_keys(json : Json) -> Array[String] {
 }
 
 ///|
+/// Unknown-key reporting summary with coverage counters.
+pub struct UnknownKeyReport {
+  total_keys : Int
+  known_keys : Int
+  unknown_paths : Array[String]
+} derive(Show, Eq)
+
+///|
+/// Traverse Json to collect unknown keys and known/unknown coverage counters.
+pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
+  let mut total_keys = 0
+  let mut known_key_count = 0
+  let unknown_paths = []
+  fn traverse(j : Json, path : String) {
+    match j {
+      Object(obj) =>
+        for k, v in obj {
+          total_keys = total_keys + 1
+          if contains_key(known_keys, k) {
+            known_key_count = known_key_count + 1
+          } else {
+            unknown_paths.push(if path == "" { k } else { path + "." + k })
+          }
+          traverse(v, if path == "" { k } else { path + "." + k })
+        }
+      Array(arr) =>
+        for i, v in arr {
+          let p = if path == "" { "" } else { path }
+          traverse(v, "\{p}[\{i}]")
+        }
+      _ => ()
+    }
+  }
+
+  traverse(json, "")
+  { total_keys, known_keys: known_key_count, unknown_paths }
+}
+
+///|
 /// Helper to get string from Json
 fn get_string(json : Json, key : String) -> String raise LottieError {
   match json {
