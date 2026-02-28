@@ -38,7 +38,7 @@ jobs:
           cp demo/main.js /tmp/demo_dist/
           cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
           cp -r samples /tmp/demo_dist/
-          ls samples/*.json | xargs -n 1 basename | jq -R . | jq -s . > /tmp/demo_dist/list.json
+          find samples -maxdepth 1 -name "*.json" -exec basename {} \; | sort | jq -R . | jq -s . > /tmp/demo_dist/list.json
 
       - name: Deploy to demo branch
         run: |
