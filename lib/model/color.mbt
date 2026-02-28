@@ -15,6 +15,26 @@ pub fn Color::new(r : Double, g : Double, b : Double, a : Double) -> Color {
 }
 
 ///|
+/// Construct from 8-bit channels (0~255), aligned with lottie-rs Rgba::new_u8.
+pub fn Color::new_u8(r : Int, g : Int, b : Int, a : Int) -> Color {
+  let clamp = fn(v : Int) {
+    if v < 0 {
+      0
+    } else if v > 255 {
+      255
+    } else {
+      v
+    }
+  }
+  {
+    r: clamp(r).to_double() / 255.0,
+    g: clamp(g).to_double() / 255.0,
+    b: clamp(b).to_double() / 255.0,
+    a: clamp(a).to_double() / 255.0,
+  }
+}
+
+///|
 /// Construct from a Lottie float array [r, g, b] or [r, g, b, a] (0.0–1.0).
 pub fn Color::from_array(arr : Array[Double]) -> Color {
   let r = if arr.length() > 0 { arr[0] } else { 0.0 }
