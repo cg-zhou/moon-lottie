@@ -226,6 +226,11 @@ pub enum GradientType {
 }
 
 ///|
+pub fn GradientType::from_int(v : Int) -> GradientType {
+  if v == 1 { GradientType::Linear } else { GradientType::Radial }
+}
+
+///|
 pub struct GradientColors {
   p : Int // Number of colors
   k : LottieProperty[Array[Double]] // Stops and Colors
@@ -256,7 +261,7 @@ pub fn GradientFillShape::new(
   e~ : LottieProperty[Array[Double]],
   g~ : GradientColors,
 ) -> GradientFillShape {
-  let ty = if t == 1 { GradientType::Linear } else { GradientType::Radial }
+  let ty = GradientType::from_int(t)
   { t: ty, o, s, e, g }
 }
 
@@ -285,7 +290,7 @@ pub fn GradientStrokeShape::new(
   lj? : Int = 1,
   ml? : Double = 0.0,
 ) -> GradientStrokeShape {
-  let ty = if t == 1 { GradientType::Linear } else { GradientType::Radial }
+  let ty = GradientType::from_int(t)
   { t: ty, o, s, e, g, w, lc, lj, ml }
 }
 

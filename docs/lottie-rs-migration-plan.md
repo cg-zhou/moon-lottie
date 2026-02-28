@@ -75,6 +75,10 @@
 - [x] parser 关键帧基础字段迁移：`parse_property_double/vec/bezier` 新增对 `i/o/h/to/ti` 的解析（`lib/parser/parser.mbt`）。
 - [x] runtime hold 语义对齐：`evaluate_double_property` / `evaluate_vec_property` / `evaluate_path_property` 支持 `hold=1` 停帧语义（`lib/runtime/evaluator.mbt`）。
 - [x] 测试补充：新增 `parse_position_keyframe_infra_fields` 与 `evaluate_double_hold`，并将线性采样补齐到 0/25/50/75/100（`moon test -p cg-zhou/moon-lottie/lib/parser && moon test -p cg-zhou/moon-lottie/lib/runtime` 通过）。
+- [x] math 等价补齐：新增 `lerp_vec2_array` 并将 `evaluate_path_property` 的路径插值复用到 math 层，语义对齐 `lottie-rs` 的 `Vec<Bezier>::lerp`（`lib/math/interpolation.mbt`, `lib/runtime/evaluator.mbt`）。
+- [x] math 测试补充：`lib/math/math_test.mbt` 覆盖 math 公共函数（每函数至少一条），`moon test -p cg-zhou/moon-lottie/lib/math` 通过。
+- [x] model 等价补齐（本批次）：迁移 `Rgba::new_u8` 等价能力为 `Color::new_u8`，并抽取 `GradientType::from_int` 供渐变构造复用（`lib/model/color.mbt`, `lib/model/shape.mbt`）。
+- [x] model 测试补充（本批次）：`lib/model/model_test.mbt` 新增构造器/工厂函数覆盖（`Property`/`Transform`/`Shape*`/`Layer`/`Mask`/`Animation`），`moon test -p cg-zhou/moon-lottie/lib/model` 通过。
 - [x] renderer 可观测性迁移：`Player` 新增可开关调试日志（默认关闭）并写入 `frame/layer/shape/stage` 上下文（`lib/renderer/player.mbt`）。
 - [x] 最小复现测试入口：新增 `player debug logs are toggleable with layer/shape/frame context`，覆盖关闭/开启调试开关与上下文断言（`lib/renderer/player_debug_test.mbt`，`moon test -p cg-zhou/moon-lottie/lib/renderer` 通过）。
 - [ ] 阻塞项：`test/regression` 基线当前存在与本轮无关的快照差异（frame=0 多样例 mismatch），需后续单独处理基线或渲染一致性。
