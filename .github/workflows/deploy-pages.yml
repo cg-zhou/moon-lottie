@@ -37,13 +37,8 @@ jobs:
           cp demo/index.html /tmp/demo_dist/
           cp demo/main.js /tmp/demo_dist/
           cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
-          mkdir -p /tmp/demo_dist/samples
-          for src in samples/*.json; do
-            base="$(basename "$src")"
-            safe="${base// /_}"
-            cp "$src" "/tmp/demo_dist/samples/$safe"
-            jq -n --arg file "$safe" --arg label "${base%.json}" '{file:$file,label:$label}'
-          done | jq -s . > /tmp/demo_dist/list.json
+          cp -r samples /tmp/demo_dist/
+          find samples -maxdepth 1 -name "*.json" -exec basename {} \; | sort | jq -R . | jq -s . > /tmp/demo_dist/list.json
 
       - name: Deploy to demo branch
         run: |
