@@ -2,6 +2,8 @@
 
 A high-performance Lottie animation player for MoonBit, targeting Wasm and Native.
 
+🎬 **[Live Demo](https://cg-zhou.github.io/moon-lottie/)**
+
 ## Stats
 
 [![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/cg-zhou/moon-lottie/badges/badges/tests-total.json)](https://github.com/cg-zhou/moon-lottie/actions)
@@ -14,28 +16,27 @@ A high-performance Lottie animation player for MoonBit, targeting Wasm and Nativ
 - ✅ **Industrial Parser**: Robust Lottie JSON ingestion with L1 reporting.
 - ✅ **Deterministic Renderer**: SVG-based regression testing suite.
 - ✅ **Cross-platform**: Support for Web (Wasm) and Native targets.
+- ✅ **Rich Model**: `Color`, `BlendMode`, `MatteMode`, `FillRule`, `LineCap`, `LineJoin` — migrated from [lottie-rs](https://github.com/zimond/lottie-rs).
 
 ## Quick Start
 ```bash
 # Run tests
 moon test
 
-# Build Demo
+# Build and serve the demo locally
 moon build --target wasm-gc
 cd demo && npx serve .
 ```
 
-## Demo
-
-The demo is published at: https://cg-zhou.github.io/moon-lottie/
-
 ## Directory Structure
-- `lib/`: Core logic (Parser, Model, Renderer).
+- `lib/math/`: Vector, matrix, bezier, and interpolation utilities.
+- `lib/model/`: Lottie data model (animation, layer, shape, color, enums).
+- `lib/parser/`: Lottie JSON parser with unknown-key reporting.
+- `lib/runtime/`: Property evaluator (keyframe interpolation, easing).
+- `lib/renderer/`: SVG and Wasm canvas renderers.
 - `samples/`: Lottie JSON test fixtures.
-- `test/`:
-  - `snapshot_tool/`: Reference generator using lottie-web.
-  - `snapshots/`: Baseline SVG snapshots.
-- `demo/`: Web-based inspection tool.
+- `test/`: Regression snapshots and snapshot generation tool.
+- `demo/`: Web-based interactive inspection tool.
 
 ## License
 MIT
