@@ -116,10 +116,10 @@ jobs:
       - name: Deploy Demo to demo branch
         if: github.ref == 'refs/heads/main'
         run: |
-          # Build WASM
+          # Build WASM FIRST while we are in main branch
           moon build --target wasm-gc --release
           
-          # Prepare dist directory
+          # Prepare dist directory outside
           mkdir -p /tmp/demo_dist
           cp demo/index.html /tmp/demo_dist/
           cp demo/main.js /tmp/demo_dist/
@@ -127,9 +127,7 @@ jobs:
           cp -r samples /tmp/demo_dist/
           
           # Generate list.json
-          cd /tmp/demo_dist/samples
-          ls *.json | jq -R . | jq -s . > ../list.json
-          cd -
+          ls samples/*.json | xargs -n 1 basename | jq -R . | jq -s . > /tmp/demo_dist/list.json
 
           # Switch to demo branch
           git config user.name "github-actions[bot]"
@@ -140,10 +138,12 @@ jobs:
             git checkout -B demo origin/demo
           else
             git checkout --orphan demo
-            git rm -rf . 2>/dev/null || true
           fi
           
-          # Copy files back
+          # Clean the branch
+          git rm -rf . 2>/dev/null || true
+          
+          # Copy files back from temp
           cp -r /tmp/demo_dist/* .
           
           git add .
