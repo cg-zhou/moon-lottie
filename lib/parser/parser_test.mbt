@@ -135,3 +135,37 @@ test "parse_position_keyframe_infra_fields" {
     _ => fail("position should be animated")
   }
 }
+
+///|
+test "parse_transform_skew_fields" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100},\"sk\":{\"k\":15.5},\"sa\":{\"k\":45.0}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse transform skew fields: \{e}")
+  }
+
+  match ani.layers[0].ks.skew {
+    Some(skew) =>
+      match skew.value {
+        @model.PropertyValue::Static(value) =>
+          if (value - 15.5).abs() > 0.000001 {
+            fail("skew value mismatch")
+          }
+        _ => fail("skew should be static")
+      }
+    None => fail("skew should be parsed")
+  }
+
+  match ani.layers[0].ks.skew_axis {
+    Some(skew_axis) =>
+      match skew_axis.value {
+        @model.PropertyValue::Static(value) =>
+          if (value - 45.0).abs() > 0.000001 {
+            fail("skew_axis value mismatch")
+          }
+        _ => fail("skew_axis should be static")
+      }
+    None => fail("skew_axis should be parsed")
+  }
+}
