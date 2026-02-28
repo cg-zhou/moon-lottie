@@ -115,7 +115,6 @@ fn[R : Renderer] Player::render_layer(
 
   let local_frame = comp_frame - layer.st
   let saved_frame = self.current_frame
-  self.current_frame = local_frame
   self.debug_layer = match layer.nm {
     Some(name) => "\{name}#\{layer.ind}"
     None => "#\{layer.ind}"
@@ -238,7 +237,7 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 2. Render Layer Content
-  self.render_layer_content(layer)
+  self.render_layer_content(layer, local_frame)
 
   // 3. Restore mask states
   for _ in 0..<mask_restore_count {
@@ -330,6 +329,7 @@ fn get_pt_at(v : Array[Array[Double]], i : Int, j : Int) -> Double {
 fn[R : Renderer] Player::render_layer_content(
   self : Player[R],
   layer : @model.Layer,
+  precomp_frame : Double,
 ) -> Unit {
   let svg_layer_marker = "Shape Layer - SVG"
   match layer.data {
@@ -365,6 +365,8 @@ fn[R : Renderer] Player::render_layer_content(
         Some(assets) =>
           for asset in assets {
             if asset.id == ref_id {
+              let saved_frame = self.current_frame
+              self.current_frame = precomp_frame
               self.renderer.save()
               self.renderer.begin_path()
               self.renderer.move_to(0.0, 0.0)
@@ -389,6 +391,7 @@ fn[R : Renderer] Player::render_layer_content(
                 None => ()
               }
               self.renderer.restore()
+              self.current_frame = saved_frame
               break
             }
           }

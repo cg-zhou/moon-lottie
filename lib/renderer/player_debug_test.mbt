@@ -145,3 +145,40 @@ test "layer transform uses composition frame not local frame" {
     None => fail("No non-zero ConcatTransform found in commands")
   }
 }
+
+test "shape properties use composition frame when layer has non-zero st" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"nm":"shape-st-layer","ip":10,"op":30,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"k":[0,0]}},"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"a":1,"k":[{"t":10,"s":[0,0]},{"t":30,"s":[100,0]}]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  let epsilon = 0.0001
+
+  player.set_frame(20.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut first_move_x : Double? = None
+  for cmd in commands {
+    match cmd {
+      MoveTo(x, _) => {
+        first_move_x = Some(x)
+        break
+      }
+      _ => ()
+    }
+  }
+  match first_move_x {
+    Some(x) => {
+      if x < 40.0 - epsilon || x > 40.0 + epsilon {
+        fail(
+          "Shape property was not evaluated at composition frame: MoveTo x=\{x}, expected 40.0",
+        )
+      }
+    }
+    None => fail("Expected MoveTo command for rectangle path")
+  }
+}
