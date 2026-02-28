@@ -1,0 +1,57 @@
+name: Deploy Demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Update MoonBit dependencies
+        run: moon update
+
+      - name: Build Wasm
+        run: moon build --target wasm-gc
+
+      - name: Prepare demo for deployment
+        run: |
+          mkdir -p _site
+          cp -r demo/. _site/
+          cp _build/wasm-gc/debug/build/cmd/main/main.wasm _site/main.wasm
+          # Update wasm path reference for GitHub Pages deployment
+          sed -i "s|'../\_build/wasm-gc/debug/build/cmd/main/main.wasm'|'./main.wasm'|g" _site/main.js
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
