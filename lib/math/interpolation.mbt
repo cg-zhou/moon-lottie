@@ -23,6 +23,8 @@ pub fn lerp_vec2_array(
   b : Array[Array[Double]],
   t : Double,
 ) -> Array[Array[Double]] {
+  // Same tolerant zip semantics as lottie-rs Vec<Bezier>::lerp:
+  // interpolate pairwise items only up to the common outer/inner lengths.
   let len = if a.length() < b.length() { a.length() } else { b.length() }
   let res = []
   for i = 0; i < len; i = i + 1 {
