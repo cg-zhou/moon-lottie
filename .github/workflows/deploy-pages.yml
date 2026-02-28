@@ -1,4 +1,4 @@
-name: Deploy Demo to GitHub Pages
+name: Deploy Demo to demo Branch
 
 on:
   push:
@@ -6,20 +6,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: demo-deploy
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout code
@@ -34,27 +29,33 @@ jobs:
         run: moon update
 
       - name: Build Wasm
-        run: moon build --target wasm-gc
+        run: moon build --target wasm-gc --release
 
       - name: Prepare demo for deployment
         run: |
-          mkdir -p _site
-          cp -r demo/. _site/
-          cp _build/wasm-gc/debug/build/cmd/main/main.wasm _site/main.wasm
-          cp -r samples _site/samples
-          # Update wasm path reference for GitHub Pages deployment
-          sed -i "s|'../\_build/wasm-gc/debug/build/cmd/main/main.wasm'|'./main.wasm'|g" _site/main.js
-          # Update samples path reference for GitHub Pages deployment
-          sed -i 's|`../samples/${filename}`|`./samples/${filename}`|g' _site/main.js
+          mkdir -p /tmp/demo_dist
+          cp demo/index.html /tmp/demo_dist/
+          cp demo/main.js /tmp/demo_dist/
+          cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
+          cp -r samples /tmp/demo_dist/
+          ls samples/*.json | xargs -n 1 basename | jq -R . | jq -s . > /tmp/demo_dist/list.json
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Deploy to demo branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
+          git fetch origin demo 2>/dev/null || true
+          if git rev-parse --verify origin/demo 2>/dev/null; then
+            git checkout -B demo origin/demo
+          else
+            git checkout --orphan demo
+          fi
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git rm -rf . 2>/dev/null || true
+
+          cp -r /tmp/demo_dist/* .
+
+          git add .
+          git diff --staged --quiet || git commit -m "Deploy demo [skip ci]"
+          git push origin demo
