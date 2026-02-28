@@ -844,6 +844,14 @@ fn create_ellipse_path(
 }
 
 ///|
+/// Sampling count for cubic arc-length approximation in Trim Path extraction.
+/// 50 keeps frame drift low on complex curves while staying fast enough for tests/demo.
+let cubic_subdivision_intervals = 50
+
+///|
+let trim_t_epsilon = 0.000000001
+
+///|
 pub fn apply_trim_path(
   paths : Array[@model.BezierPath],
   start : Double,
@@ -996,12 +1004,21 @@ fn get_path_length(path : @model.BezierPath) -> Double {
       get_pt_at(path.v, next_j, 1) + get_pt_at(path.i, next_j, 1),
     )
     let p3 = @math.Vector2::new(get_pt_at(path.v, next_j, 0), get_pt_at(path.v, next_j, 1))
-    total_length += @math.get_cubic_bezier_length(p0, p1, p2, p3, 50)
+    total_length += @math.get_cubic_bezier_length(
+      p0,
+      p1,
+      p2,
+      p3,
+      cubic_subdivision_intervals,
+    )
   }
   total_length
 }
 
 ///|
+/// Find parametric `t` on a cubic where arc length from 0..t reaches
+/// `target_length`. Returns 0.0 for non-positive targets and 1.0 if the
+/// target length exceeds total sampled curve length.
 fn find_t_for_length_on_cubic(
   p0 : @math.Vector2,
   p1 : @math.Vector2,
@@ -1012,7 +1029,7 @@ fn find_t_for_length_on_cubic(
   if target_length <= 0.0 {
     return 0.0
   }
-  let intervals = 50
+  let intervals = cubic_subdivision_intervals
   let mut acc = 0.0
   let mut prev_t = 0.0
   let mut prev_pt = p0
@@ -1069,7 +1086,13 @@ pub fn trim_single_path(
       get_pt_at(v, next_j, 1) + get_pt_at(path.i, next_j, 1),
     )
     let p3 = @math.Vector2::new(get_pt_at(v, next_j, 0), get_pt_at(v, next_j, 1))
-    let len = @math.get_cubic_bezier_length(p0, p1, p2, p3, 50)
+    let len = @math.get_cubic_bezier_length(
+      p0,
+      p1,
+      p2,
+      p3,
+      cubic_subdivision_intervals,
+    )
     seg_lengths.push(len)
     total_length += len
   }
@@ -1169,8 +1192,8 @@ fn extract_bezier_segment(
         1.0
       }
 
-      if t_end <= t_start {
-        current_acc += seg_len
+      // Skip zero-length subsegments (matches lottie-web behavior for degenerate trims).
+      if t_end - t_start <= trim_t_epsilon {
         continue
       }
 
