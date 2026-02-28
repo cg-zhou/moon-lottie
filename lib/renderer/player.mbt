@@ -332,12 +332,13 @@ fn[R : Renderer] Player::render_layer_content(
   self : Player[R],
   layer : @model.Layer,
 ) -> Unit {
+  let svg_layer_marker = "Shape Layer - SVG"
   match layer.data {
     Shape(shapes) => {
       // Clear current paths for each layer's top level
       self.current_paths = []
       let render_in_reverse = match layer.nm {
-        Some(name) => name.contains("SVG")
+        Some(name) => name.contains(svg_layer_marker)
         None => false
       }
       if render_in_reverse {
