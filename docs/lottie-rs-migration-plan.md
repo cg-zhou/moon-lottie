@@ -30,7 +30,7 @@
 ### C. 解析层（parser）
 - [ ] 对齐 `lib/parser/` 的字段覆盖率与容错行为。
 - [ ] 强化错误定位信息（字段路径、图层名、帧上下文）。
-- [ ] 增加未知字段报告与覆盖率统计输出（用于定位渲染错误根因）。
+- [x] 增加未知字段报告与覆盖率统计输出（用于定位渲染错误根因）。
 
 ### D. 运行时层（runtime）
 - [ ] 对齐关键帧求值器与插值器语义（linear/bezier/spatial/hold）。
@@ -54,6 +54,10 @@
 - [x] 已具备 SVG 回归测试体系与样例集（`test/regression/`）。
 - [ ] 基础设施层的“渲染错误可定位性”仍不足（错误上下文、依赖链追踪、定位信息需加强）。
 - [ ] 仍有特性缺口需补齐（如文档中提到的 Effects/表达式相关能力与部分渲染一致性问题）。
+
+本轮变更（2026-02-28）：
+- [x] parser 未知字段覆盖率统计：新增 `report_unknown_keys_with_coverage` 与 `UnknownKeyReport`（`lib/parser/parser.mbt`）。
+- [x] 测试补充：`lib/parser/reporter_test.mbt` 增加未知字段路径与覆盖率计数断言（`moon test -p cg-zhou/moon-lottie/lib/parser` 通过）。
 
 ## 4) 交付定义（DoD）
 
