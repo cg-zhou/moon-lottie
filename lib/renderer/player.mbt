@@ -435,6 +435,7 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.save()
       let old_paths = self.current_paths
       self.current_paths = []
+      let group_has_paint_ops = shape_group_has_paint(items)
 
       // AE typically puts the group transform at the end of the shape list,
       // but it applies to all siblings. We find it and apply it first.
@@ -462,8 +463,10 @@ pub fn[R : Renderer] Player::render_shape(
       // Merge inner paths with outer paths
       let inner_paths = self.current_paths
       self.current_paths = old_paths
-      for p in inner_paths {
-        self.current_paths.push(p)
+      if not(group_has_paint_ops) {
+        for p in inner_paths {
+          self.current_paths.push(p)
+        }
       }
       self.renderer.restore()
     }
@@ -677,6 +680,21 @@ pub fn[R : Renderer] Player::render_shape(
       }
     }
   }
+}
+
+///|
+fn shape_group_has_paint(items : Array[@model.Shape]) -> Bool {
+  for item in items {
+    match item.data {
+      Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => return true
+      Group(nested) =>
+        if shape_group_has_paint(nested) {
+          return true
+        }
+      _ => ()
+    }
+  }
+  false
 }
 
 ///|
