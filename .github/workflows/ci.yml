@@ -95,6 +95,7 @@ jobs:
 
           # Save badge files
           cp -r badges /tmp/badges_output
+          rm -rf badges
 
           # Switch to badges branch (create if not exists)
           git fetch origin badges 2>/dev/null || true

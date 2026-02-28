@@ -41,8 +41,11 @@ jobs:
           mkdir -p _site
           cp -r demo/. _site/
           cp _build/wasm-gc/debug/build/cmd/main/main.wasm _site/main.wasm
+          cp -r samples _site/samples
           # Update wasm path reference for GitHub Pages deployment
           sed -i "s|'../\_build/wasm-gc/debug/build/cmd/main/main.wasm'|'./main.wasm'|g" _site/main.js
+          # Update samples path reference for GitHub Pages deployment
+          sed -i 's|`../samples/${filename}`|`./samples/${filename}`|g' _site/main.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
