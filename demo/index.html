@@ -334,6 +334,49 @@
             padding: 0;
         }
 
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+                overflow: auto;
+            }
+
+            aside {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            main {
+                min-height: 70vh;
+            }
+
+            .viewport-container {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .canvas-wrapper {
+                width: 100%;
+                height: auto;
+            }
+
+            .bottom-bar {
+                height: auto;
+                padding: 12px;
+                gap: 12px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .playback-controls {
+                justify-content: space-between;
+                gap: 12px;
+            }
+        }
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>

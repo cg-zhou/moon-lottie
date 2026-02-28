@@ -22,8 +22,8 @@ pub fn Transform::new(
   px? : LottieProperty[Double]? = None,
   py? : LottieProperty[Double]? = None,
   s? : Bool? = None,
-  skew? : LottieProperty[Double],
-  skew_axis? : LottieProperty[Double],
+  skew? : LottieProperty[Double]? = None,
+  skew_axis? : LottieProperty[Double]? = None,
 ) -> Transform {
   { anchor, position, px, py, s, scale, rotation, opacity, skew, skew_axis }
 }

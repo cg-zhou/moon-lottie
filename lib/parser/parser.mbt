@@ -529,6 +529,16 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
           let scale = parse_property_vec(obj.get("s"))
           let rotation = parse_property_double(obj.get("r"))
           let opacity = parse_property_double(obj.get("o"))
+          let skew = try {
+            Some(parse_property_double(obj.get("sk")))
+          } catch {
+            _ => None
+          }
+          let skew_axis = try {
+            Some(parse_property_double(obj.get("sa")))
+          } catch {
+            _ => None
+          }
           @model.Transform::new(
             anchor~,
             position~,
@@ -537,6 +547,8 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
             opacity~,
             px~,
             py~,
+            skew~,
+            skew_axis~,
             s=if s { Some(true) } else { None },
           )
         }
