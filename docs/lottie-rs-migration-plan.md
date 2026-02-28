@@ -35,7 +35,7 @@
 ### D. 运行时层（runtime）
 - [ ] 对齐关键帧求值器与插值器语义（linear/bezier/spatial/hold）。
 - [ ] 对齐变换链路（position/scale/rotation/opacity/anchor）求值细节。
-- [ ] 增加关键帧采样测试（0%、25%、50%、75%、100%）。
+- [x] 增加关键帧采样测试（0%、25%、50%、75%、100%）。
 
 ### E. 渲染层（renderer）
 - [ ] 对齐 `lib/renderer/` 的图层合成、蒙版/遮罩、混合模式行为。
@@ -58,6 +58,9 @@
 本轮变更（2026-02-28）：
 - [x] parser 未知字段覆盖率统计：新增 `report_unknown_keys_with_coverage` 与 `UnknownKeyReport`（`lib/parser/parser.mbt`）。
 - [x] 测试补充：`lib/parser/reporter_test.mbt` 增加未知字段路径与覆盖率计数断言（`moon test -p cg-zhou/moon-lottie/lib/parser` 通过）。
+- [x] parser 关键帧基础字段迁移：`parse_property_double/vec/bezier` 新增对 `i/o/h/to/ti` 的解析（`lib/parser/parser.mbt`）。
+- [x] runtime hold 语义对齐：`evaluate_double_property` / `evaluate_vec_property` / `evaluate_path_property` 支持 `hold=1` 停帧语义（`lib/runtime/evaluator.mbt`）。
+- [x] 测试补充：新增 `parse_position_keyframe_infra_fields` 与 `evaluate_double_hold`，并将线性采样补齐到 0/25/50/75/100（`moon test -p cg-zhou/moon-lottie/lib/parser && moon test -p cg-zhou/moon-lottie/lib/runtime` 通过）。
 
 ## 4) 交付定义（DoD）
 

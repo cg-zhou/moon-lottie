@@ -106,6 +106,9 @@ pub fn evaluate_double_property(
         return 0.0
       }
       let k1 = keyframes[idx]
+      if k1.hold == Some(1) {
+        return k1.start_value
+      }
       if t <= 0.0 || idx >= keyframes.length() - 1 {
         return k1.start_value
       }
@@ -158,6 +161,9 @@ pub fn evaluate_vec_property(
         return []
       }
       let k1 = keyframes[idx]
+      if k1.hold == Some(1) {
+        return k1.start_value
+      }
       if t <= 0.0 || idx >= keyframes.length() - 1 {
         return k1.start_value
       }
@@ -236,6 +242,9 @@ pub fn evaluate_path_property(
         return @model.BezierPath::new(v=[], i=[], o=[], c=false)
       }
       let kf = keyframes[idx]
+      if kf.hold == Some(1) {
+        return kf.start_value
+      }
       if t <= 0.0 {
         return kf.start_value
       }
