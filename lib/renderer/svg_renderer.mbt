@@ -479,6 +479,11 @@ pub impl Renderer for SvgRenderer with clip(self : SvgRenderer) -> Unit {
   self.defs_buffer.write_string(
     "<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"\{self.current_fill_rule}\" /></clipPath>",
   )
+  if self.state_stack.length() > 0 {
+    let last_idx = self.state_stack.length() - 1
+    let (m, fr, gc) = self.state_stack[last_idx]
+    self.state_stack[last_idx] = (m, fr, gc + 1)
+  }
   self.buffer.write_string("<g clip-path=\"url(#\{id})\">")
   self.group_depth = self.group_depth + 1
 }
