@@ -71,3 +71,30 @@ test "sibling groups with own fill should not leak paths to next group" {
   assert_eq(fill_count, 2)
   assert_eq(second_fill_path_move_count, Some(1))
 }
+
+test "svg-exported layer renders top-level groups in reverse order" {
+  let json_str = "{\"v\":\"5.5.2\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"nm\":\"shape-order-test\",\"ddd\":0,\"assets\":[],\"layers\":[{\"ty\":4,\"ind\":1,\"nm\":\"Shape Layer - SVG\",\"ip\":0,\"op\":10,\"st\":0,\"ks\":{\"p\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100},\"a\":{\"a\":0,\"k\":[0,0]}},\"shapes\":[{\"ty\":\"gr\",\"nm\":\"foreground-red\",\"it\":[{\"ty\":\"rc\",\"s\":{\"a\":0,\"k\":[20,20]},\"p\":{\"a\":0,\"k\":[10,10]},\"r\":{\"a\":0,\"k\":0}},{\"ty\":\"fl\",\"c\":{\"a\":0,\"k\":[1,0,0]},\"o\":{\"a\":0,\"k\":100}},{\"ty\":\"tr\",\"p\":{\"a\":0,\"k\":[0,0]},\"a\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}}]},{\"ty\":\"gr\",\"nm\":\"background-blue\",\"it\":[{\"ty\":\"rc\",\"s\":{\"a\":0,\"k\":[100,100]},\"p\":{\"a\":0,\"k\":[0,0]},\"r\":{\"a\":0,\"k\":0}},{\"ty\":\"fl\",\"c\":{\"a\":0,\"k\":[0,0,1]},\"o\":{\"a\":0,\"k\":100}},{\"ty\":\"tr\",\"p\":{\"a\":0,\"k\":[0,0]},\"a\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}}]}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut last_fill : DrawCommand? = None
+  for command in commands {
+    match command {
+      Fill(_, _, _, _) => last_fill = Some(command)
+      _ => ()
+    }
+  }
+  match last_fill {
+    Some(Fill(r, g, b, _)) => {
+      assert_eq(r, 255)
+      assert_eq(g, 0)
+      assert_eq(b, 0)
+    }
+    _ => fail("Expected last fill to be red, got \{last_fill}")
+  }
+}
