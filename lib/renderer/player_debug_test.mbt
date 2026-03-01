@@ -206,3 +206,34 @@ test "image layers use resolved asset source instead of asset id" {
   }
   assert_eq(image_src, Some("data:image/png;base64,AAAA"))
 }
+
+test "fill color accepts byte-range channels without rescaling" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":100,"h":100,"layers":[{"ty":4,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[255,128,0]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut fill : DrawCommand? = None
+  for cmd in commands {
+    match cmd {
+      Fill(_, _, _, _) => {
+        fill = Some(cmd)
+        break
+      }
+      _ => ()
+    }
+  }
+  match fill {
+    Some(Fill(r, g, b, _)) => {
+      assert_eq(r, 255)
+      assert_eq(g, 128)
+      assert_eq(b, 0)
+    }
+    _ => fail("Expected Fill command")
+  }
+}
