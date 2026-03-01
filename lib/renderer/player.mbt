@@ -95,7 +95,8 @@ fn[R : Renderer] Player::apply_parent_transform(
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let matrix = @runtime.evaluate_transform(layer.ks, comp_frame)
+      let parent_frame = comp_frame - layer.st
+      let matrix = @runtime.evaluate_transform(layer.ks, parent_frame)
       self.renderer.concat_transform(matrix)
       return
     }
@@ -113,8 +114,9 @@ fn[R : Renderer] Player::render_layer(
     return
   }
 
-  let local_frame = comp_frame - layer.st
+  let layer_frame = comp_frame - layer.st
   let saved_frame = self.current_frame
+  self.current_frame = layer_frame
   self.debug_layer = match layer.nm {
     Some(name) => "\{name}#\{layer.ind}"
     None => "#\{layer.ind}"
@@ -132,13 +134,13 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  let matrix = @runtime.evaluate_transform(layer.ks, comp_frame)
+  let matrix = @runtime.evaluate_transform(layer.ks, layer_frame)
   self.renderer.concat_transform(matrix)
 
   // 1.2 Apply Layer Opacity
   let opacity = @runtime.evaluate_double_property(
     layer.ks.opacity,
-    comp_frame,
+    layer_frame,
   )
   self.renderer.set_opacity(opacity / 100.0)
 
@@ -237,7 +239,7 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 2. Render Layer Content
-  self.render_layer_content(layer, local_frame)
+  self.render_layer_content(layer, layer_frame)
 
   // 3. Restore mask states
   for _ in 0..<mask_restore_count {
