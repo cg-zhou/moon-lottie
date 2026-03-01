@@ -330,6 +330,7 @@ fn color_channel_to_u8(v : Double) -> Int {
   // Align with lottie-rs `Rgba::from(Value)`:
   // - [0, 1] normalized values
   // - [0, 255] byte-range values
+  // - 1.0 is treated as normalized upper-bound (=> 255), matching lottie-rs
   let c = if v > 1.0 && v <= 255.0 { v } else { v * 255.0 }
   let i = c.to_int()
   if i < 0 {

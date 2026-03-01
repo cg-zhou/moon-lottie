@@ -186,8 +186,8 @@ async function preloadAssets(json) {
                 const img = new Image();
                 img.onload = () => {
                     // Keep both keys for compatibility:
-                    // - legacy path by asset id
-                    // - resolved source path used by renderer runtime
+                    // - asset.id: backward compatibility with old runtimes
+                    // - resolved src: current runtime path (lottie-rs-aligned)
                     imageAssets.set(asset.id, img);
                     imageAssets.set(resolveAssetSrc(asset), img);
                     resolve();
