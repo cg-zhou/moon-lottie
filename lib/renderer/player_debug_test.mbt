@@ -182,3 +182,27 @@ test "shape properties use composition frame when layer has non-zero st" {
     None => fail("Expected MoveTo command for rectangle path")
   }
 }
+
+test "image layers use resolved asset source instead of asset id" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":100,"h":100,"assets":[{"id":"img_0","w":10,"h":20,"u":"data:image/png;base64,","p":"AAAA"}],"layers":[{"ty":2,"ind":1,"refId":"img_0","ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut image_src : String? = None
+  for cmd in commands {
+    match cmd {
+      DrawImage(src, _, _) => {
+        image_src = Some(src)
+        break
+      }
+      _ => ()
+    }
+  }
+  assert_eq(image_src, Some("data:image/png;base64,AAAA"))
+}

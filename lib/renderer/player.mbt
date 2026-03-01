@@ -410,7 +410,16 @@ fn[R : Renderer] Player::render_layer_content(
                 Some(v) => v
                 None => 0
               }
-              self.renderer.draw_image(asset.id, w.to_double(), h.to_double())
+              let p = match asset.p {
+                Some(v) => v
+                None => ""
+              }
+              let u = match asset.u {
+                Some(v) => v
+                None => ""
+              }
+              let src = if p == "" { asset.id } else { u + p }
+              self.renderer.draw_image(src, w.to_double(), h.to_double())
               break
             }
           }
