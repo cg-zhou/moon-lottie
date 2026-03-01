@@ -134,13 +134,15 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  let matrix = @runtime.evaluate_transform(layer.ks, layer_frame)
+  // Layer transform keyframe times are in the parent composition's frame space
+  // (comp_frame), not the layer's local timeline (layer_frame).
+  let matrix = @runtime.evaluate_transform(layer.ks, comp_frame)
   self.renderer.concat_transform(matrix)
 
   // 1.2 Apply Layer Opacity
   let opacity = @runtime.evaluate_double_property(
     layer.ks.opacity,
-    layer_frame,
+    comp_frame,
   )
   self.renderer.set_opacity(opacity / 100.0)
 
