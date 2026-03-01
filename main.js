@@ -43,6 +43,7 @@ function moonStringJS(moonStr) {
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
 const fillRuleStack = [];
+const offscreenStack = [];
 
 const importObject = {
   demo: {
@@ -104,7 +105,32 @@ const importObject = {
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
         ctx.fillText(moonStringJS(text), 0, 0); ctx.restore();
     },
-    setGlobalCompositeOperation: (mode) => { ctx.globalCompositeOperation = moonStringJS(mode); }
+    setGlobalCompositeOperation: (mode) => { ctx.globalCompositeOperation = moonStringJS(mode); },
+    beginLayer: () => {
+        // Create an offscreen canvas for isolated compositing (track matte support).
+        // We copy the current accumulated transform so drawing coordinates are unchanged.
+        const offscreen = document.createElement('canvas');
+        offscreen.width = canvas.width;
+        offscreen.height = canvas.height;
+        const offCtx = offscreen.getContext('2d');
+        const t = ctx.getTransform();
+        offCtx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
+        offscreenStack.push({ savedCtx: ctx, offscreen, savedOpacity: ctx.globalAlpha });
+        ctx = offCtx;
+        ctx.globalAlpha = 1.0;
+    },
+    endLayer: (mode) => {
+        if (offscreenStack.length === 0) return;
+        const { savedCtx, offscreen, savedOpacity } = offscreenStack.pop();
+        // Composite the offscreen layer onto the main canvas using identity transform.
+        savedCtx.save();
+        savedCtx.setTransform(1, 0, 0, 1, 0, 0);
+        savedCtx.globalCompositeOperation = moonStringJS(mode);
+        savedCtx.globalAlpha = savedOpacity;
+        savedCtx.drawImage(offscreen, 0, 0);
+        savedCtx.restore();
+        ctx = savedCtx;
+    }
   },
   expressions: {
     evaluate_double: (code_ptr, time, val) => {
