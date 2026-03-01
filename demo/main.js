@@ -22,14 +22,20 @@ let currentJsonStr = "";
 let currentFileName = "";
 let currentFileSize = 0;
 let imageAssets = new Map();
+let imageLayerRefsByFrame = new Map();
+let frameImageDrawCursor = 0;
 
 // Helper to convert MoonBit string (WasmGC array) to JS string
 function moonStringJS(moonStr) {
     if (typeof moonStr === 'string') return moonStr;
-    if (!moonStr || typeof moonStr.get !== 'function') return "";
+    if (!moonStr) return "";
+    const len = typeof moonStr.length === 'function' ? moonStr.length() : moonStr.length;
+    if (typeof len !== 'number') return "";
     let res = "";
-    for (let i = 0; i < moonStr.length; i++) {
-        res += String.fromCharCode(moonStr.get(i));
+    for (let i = 0; i < len; i++) {
+        const code = typeof moonStr.get === 'function' ? moonStr.get(i) : moonStr[i];
+        if (typeof code !== 'number') return "";
+        res += String.fromCharCode(code);
     }
     return res;
 }
@@ -80,7 +86,16 @@ const importObject = {
     setTransform: (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
-        const img = imageAssets.get(moonStringJS(id));
+        const key = moonStringJS(id);
+        let img = imageAssets.get(key);
+        if (!img) {
+            const refs = imageLayerRefsByFrame.get(Math.floor(currentFrame)) || [];
+            if (refs.length > 0) {
+                const idx = frameImageDrawCursor < refs.length ? frameImageDrawCursor : refs.length - 1;
+                img = imageAssets.get(refs[idx]);
+                frameImageDrawCursor += 1;
+            }
+        }
         if (img) ctx.drawImage(img, 0, 0, w, h);
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
@@ -201,13 +216,42 @@ async function preloadAssets(json) {
     await Promise.all(promises);
 }
 
+function rebuildImageLayerTimeline(json) {
+    imageLayerRefsByFrame = new Map();
+    if (!json.layers) return;
+    json.layers.forEach(layer => {
+        if (!layer || layer.ty !== 2 || !layer.refId) return;
+        const ip = Math.floor(Number(layer.ip ?? 0));
+        const op = Math.floor(Number(layer.op ?? ip + 1));
+        for (let f = ip; f < op; f++) {
+            let refs = imageLayerRefsByFrame.get(f);
+            if (!refs) {
+                refs = [];
+                imageLayerRefsByFrame.set(f, refs);
+            }
+            refs.push(layer.refId);
+        }
+    });
+}
+
 async function startPlayer(jsonStr) {
     let animationData;
     try { animationData = JSON.parse(jsonStr); } catch (e) { alert("无效的 JSON 文件"); return; }
 
     statusMsg.innerText = "初始化渲染引擎...";
     await preloadAssets(animationData);
-    currentJsonStr = jsonStr;
+    rebuildImageLayerTimeline(animationData);
+    // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
+    // The actual image data has already been preloaded into imageAssets by JS.
+    const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
+    if (wasmAnimationData.assets) {
+        wasmAnimationData.assets.forEach(asset => {
+            if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
+                asset.p = '';
+            }
+        });
+    }
+    currentJsonStr = JSON.stringify(wasmAnimationData);
     
     const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps, get_version } = window.moonLottie;
     
@@ -231,19 +275,28 @@ async function startPlayer(jsonStr) {
     
     if (officialPlayer) {
         officialPlayer.destroy();
+        officialPlayer = null;
     }
     
-    officialPlayer = lottie.loadAnimation({
-        container: container,
-        renderer: 'canvas',
-        loop: false,
-        autoplay: false,
-        animationData: animationData,
-        rendererSettings: {
-            preserveAspectRatio: 'xMidYMid meet',
-            clearCanvas: true
+    const compareEnabled = document.getElementById('compare-toggle').checked;
+    if (compareEnabled && window.lottie && typeof window.lottie.loadAnimation === 'function') {
+        try {
+            officialPlayer = window.lottie.loadAnimation({
+                container: container,
+                renderer: 'canvas',
+                loop: false,
+                autoplay: false,
+                animationData: animationData,
+                rendererSettings: {
+                    preserveAspectRatio: 'xMidYMid meet',
+                    clearCanvas: true
+                }
+            });
+        } catch (e) {
+            console.warn("Official renderer init failed:", e);
+            officialPlayer = null;
         }
-    });
+    }
 
     // Update File & Metadata
     document.getElementById('info-filename').innerText = currentFileName || "未知";
@@ -284,6 +337,7 @@ function renderLoop(timestamp) {
         // 基于真实时间计算应该前进的帧数
         // delta_frames = delta_time(s) * fps * speed
         const frameDelta = deltaTime * fps * speed;
+        frameImageDrawCursor = 0;
         
         currentFrame = window.moonLottie.update_player_with_speed(player, currentFrame, frameDelta);
         
@@ -319,6 +373,7 @@ function updatePlayPauseButton() {
 seekBar.oninput = () => {
     if (!player) return;
     currentFrame = parseFloat(seekBar.value);
+    frameImageDrawCursor = 0;
     window.moonLottie.update_player_with_speed(player, currentFrame, 0);
     updateUI();
 };
