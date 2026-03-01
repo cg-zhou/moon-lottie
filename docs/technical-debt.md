@@ -27,7 +27,7 @@
 - [x] **路径合并逻辑 (MergePaths Logic)**: 实现了基础的 `Merge/Add` 模式支持，并为 `Subtract/Intersect/Exclude` 提供了基于 `evenodd` 的渲染回退。
 - [x] **SVG 渲染器状态栈 (Renderer State Stack)**: 已修复嵌套透明度与剪解路径导致的 SVG 标签不匹配问题，实现 `gc` (Group Counter) 计数。
 - [ ] **表达式支持 (Expressions/JS Engine)**: Wasm 端拟采用 JS FFI 转发 eval，Native 端暂不支持（考虑 Baking 方案）。
-- [ ] **图像加载与渲染 (Image Layer)**: 虽模型已支持 `Image` 层且 JS 端已实现预加载，但 Wasm -> JS 的 `draw_image` 映射尚未闭环。
+- [x] **图像加载与渲染 (Image Layer)**: 对齐 `lottie-rs` 媒体源解析语义（`u + p` / data URL），并在 Demo 端同时按 `asset.id` 与解析后的 `src` 建立索引，打通 Wasm -> JS 的 `draw_image` 闭环。
 - [x] **多模式遮罩 (Masks Modes)**: 已实现 `Add`, `Subtract`, `Intersect` 模式，通过 SvgRenderer 的 State Stack 方案适配复杂遮罩逻辑。- [ ] **特效控制器与变量系统 (Effects/Variables)**: `ripple.json` 与 `lights.json` 等依赖 `ef` 字段进行驱动。需在 `Layer` 模型中增加特效解析，并将 Effects 注册到 `Evaluator` 上下文中。
 - [ ] **表达式执行上下文 (Expression Context)**: 表达式如 `layer('A').effect('B')('C')` 需要全局寻址能力。需在 `Player` 层级维护图层与特效的索引表。
 - [x] **SVG 抽帧回测系统 (SVG Regressions)**: 建立了 `SvgRenderer` 指令后端，并成功跑通了官方 `starfish.json` (24KB) 的 300 帧全量路径渲染测试。
