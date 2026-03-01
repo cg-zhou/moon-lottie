@@ -95,8 +95,8 @@ fn[R : Renderer] Player::apply_parent_transform(
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let parent_frame = comp_frame - layer.st
-      let matrix = @runtime.evaluate_transform(layer.ks, parent_frame)
+      let parent_layer_frame = comp_frame - layer.st
+      let matrix = @runtime.evaluate_transform(layer.ks, parent_layer_frame)
       self.renderer.concat_transform(matrix)
       return
     }
