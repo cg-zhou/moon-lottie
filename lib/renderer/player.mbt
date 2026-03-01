@@ -370,22 +370,23 @@ fn[R : Renderer] Player::render_layer_content(
   layer : @model.Layer,
   precomp_frame : Double,
 ) -> Unit {
-  let svg_layer_marker = "Shape Layer - SVG"
   match layer.data {
     Shape(shapes) => {
       // Clear current paths for each layer's top level
       self.current_paths = []
-      let render_in_reverse = match layer.nm {
-        Some(name) => name.contains(svg_layer_marker)
-        None => false
-      }
-      if render_in_reverse {
-        for i = shapes.length() - 1; i >= 0; i = i - 1 {
-          self.render_shape(shapes[i])
+      // Two-pass rendering:
+      // Pass 1 (forward): non-group items (paths, fills, modifiers) – preserves paint dependency order
+      // Pass 2 (reverse): group items – correct z-ordering (shapes[0] is on top, shapes[last] is at bottom)
+      for shape in shapes {
+        match shape.data {
+          Group(_) => ()
+          _ => self.render_shape(shape)
         }
-      } else {
-        for shape in shapes {
-          self.render_shape(shape)
+      }
+      for i = shapes.length() - 1; i >= 0; i = i - 1 {
+        match shapes[i].data {
+          Group(_) => self.render_shape(shapes[i])
+          _ => ()
         }
       }
     }
@@ -508,10 +509,19 @@ pub fn[R : Renderer] Player::render_shape(
           _ => ()
         }
       }
+      // Two-pass rendering:
+      // Pass 1 (forward): non-group items (paths, fills, modifiers) – preserves paint dependency order
+      // Pass 2 (reverse): nested groups – correct z-ordering (index 0 is on top, index last is at bottom)
       for item in items {
         match item.data {
-          Transform(_) => () // Skip, already applied
+          Transform(_) | Group(_) => ()
           _ => self.render_shape(item)
+        }
+      }
+      for i = items.length() - 1; i >= 0; i = i - 1 {
+        match items[i].data {
+          Group(_) => self.render_shape(items[i])
+          _ => ()
         }
       }
 
