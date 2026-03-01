@@ -136,6 +136,14 @@ fn canvas_set_global_composite_operation(mode : String) = "canvas" "setGlobalCom
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_begin_layer() = "canvas" "beginLayer"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_end_layer(mode : String) = "canvas" "endLayer"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 fn canvas_set_fill_rule(rule : String) = "canvas" "setFillRule"
 
 ///|
@@ -473,4 +481,23 @@ pub impl Renderer for CanvasRenderer with set_opacity(
 ) {
   let _ = self
   canvas_set_opacity(opacity)
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with begin_layer(
+  self : CanvasRenderer,
+) {
+  let _ = self
+  canvas_begin_layer()
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with end_layer(
+  self : CanvasRenderer,
+  mode : String,
+) {
+  let _ = self
+  canvas_end_layer(mode)
 }

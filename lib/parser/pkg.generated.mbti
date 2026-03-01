@@ -10,6 +10,10 @@ pub fn parse_animation(Json) -> @model.Animation raise LottieError
 
 pub fn parse_shape(Json) -> @model.Shape raise LottieError
 
+pub fn report_unknown_keys(Json) -> Array[String]
+
+pub fn report_unknown_keys_with_coverage(Json) -> UnknownKeyReport
+
 // Errors
 pub suberror LottieError {
   InvalidJson(String)
@@ -19,6 +23,13 @@ pub suberror LottieError {
 pub impl Show for LottieError
 
 // Types and methods
+pub struct UnknownKeyReport {
+  total_keys : Int
+  known_keys : Int
+  unknown_paths : Array[String]
+}
+pub impl Eq for UnknownKeyReport
+pub impl Show for UnknownKeyReport
 
 // Type aliases
 

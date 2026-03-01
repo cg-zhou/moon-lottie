@@ -146,7 +146,29 @@ fn[R : Renderer] Player::render_layer(
   )
   self.renderer.set_opacity(opacity / 100.0)
 
-  // 1.5 Apply Layer Masks
+  // 1.5 Find matte source (before rendering so we know if begin_layer is needed)
+  let mut matte_source : @model.Layer? = None
+  match layer.tt {
+    Some(1) | Some(2) | Some(3) | Some(4) => {
+      for i = 0; i < scope.length(); i = i + 1 {
+        if scope[i].ind == layer.ind && i > 0 {
+          matte_source = Some(scope[i - 1])
+          break
+        }
+      }
+    }
+    _ => ()
+  }
+
+  // 1.6 Begin isolated compositing layer for track matte
+  // This ensures the layer content and matte are composited together without
+  // affecting previously-rendered layers on the main canvas.
+  match matte_source {
+    Some(_) => self.renderer.begin_layer()
+    None => ()
+  }
+
+  // 2. Apply Layer Masks
   let mut mask_restore_count = 0
   match layer.masks {
     Some(masks) => {
@@ -240,41 +262,28 @@ fn[R : Renderer] Player::render_layer(
     None => ()
   }
 
-  // 2. Render Layer Content
+  // 3. Render Layer Content
   self.render_layer_content(layer, layer_frame)
 
-  // 3. Restore mask states
+  // 4. Restore mask states
   for _ in 0..<mask_restore_count {
     self.renderer.restore()
   }
 
-  // 4. Apply Track Matte
-  match layer.tt {
-    Some(1) | Some(2) | Some(3) | Some(4) => {
-      let mut matte_source : @model.Layer? = None
-      for i = 0; i < scope.length(); i = i + 1 {
-        if scope[i].ind == layer.ind && i > 0 {
-          matte_source = Some(scope[i - 1])
-          break
-        }
+  // 5. Apply Track Matte inside the isolated layer, then end isolation
+  match matte_source {
+    Some(m_layer) => {
+      let mode = match layer.tt {
+        Some(1) | Some(3) => "destination-in"
+        Some(2) | Some(4) => "destination-out"
+        _ => "destination-in"
       }
-      match matte_source {
-        Some(m_layer) => {
-          let mode = match layer.tt {
-            Some(1) => "destination-in"
-            Some(2) => "destination-out"
-            Some(3) => "destination-in" // Luma requires more, fallback to Alpha
-            Some(4) => "destination-out"
-            _ => "source-over"
-          }
-          self.renderer.set_blend_mode(mode)
-          self.render_layer(m_layer, scope)
-          self.renderer.set_blend_mode("source-over")
-        }
-        None => ()
-      }
+      self.renderer.set_blend_mode(mode)
+      self.render_layer(m_layer, scope)
+      self.renderer.set_blend_mode("source-over")
+      self.renderer.end_layer("source-over")
     }
-    _ => ()
+    None => ()
   }
   self.renderer.restore()
   self.current_frame = saved_frame

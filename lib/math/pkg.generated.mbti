@@ -55,3 +55,4 @@ pub fn Vector2::zero() -> Self
 // Type aliases
 
 // Traits
+
