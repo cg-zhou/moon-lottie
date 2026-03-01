@@ -326,6 +326,45 @@ fn get_pt_at(v : Array[Array[Double]], i : Int, j : Int) -> Double {
 }
 
 ///|
+fn color_channel_to_u8(v : Double) -> Int {
+  // Align with lottie-rs `Rgba::from(Value)`:
+  // - [0, 1] normalized values
+  // - [0, 255] byte-range values
+  // - 1.0 is treated as normalized upper-bound (=> 255), matching lottie-rs
+  let c = if v > 1.0 && v <= 255.0 { v } else { v * 255.0 }
+  let i = c.to_int()
+  if i < 0 {
+    0
+  } else if i > 255 {
+    255
+  } else {
+    i
+  }
+}
+
+///|
+fn color_rgb_from_vec(v : Array[Double]) -> (Int, Int, Int) {
+  (
+    color_channel_to_u8(get_vec_at(v, 0, 0.0)),
+    color_channel_to_u8(get_vec_at(v, 1, 0.0)),
+    color_channel_to_u8(get_vec_at(v, 2, 0.0)),
+  )
+}
+
+///|
+fn resolve_image_asset_src(asset : @model.Asset) -> String {
+  let p = match asset.p {
+    Some(v) => v
+    None => ""
+  }
+  let u = match asset.u {
+    Some(v) => v
+    None => ""
+  }
+  if p == "" { asset.id } else { u + p }
+}
+
+///|
 fn[R : Renderer] Player::render_layer_content(
   self : Player[R],
   layer : @model.Layer,
@@ -410,7 +449,8 @@ fn[R : Renderer] Player::render_layer_content(
                 Some(v) => v
                 None => 0
               }
-              self.renderer.draw_image(asset.id, w.to_double(), h.to_double())
+              let src = resolve_image_asset_src(asset)
+              self.renderer.draw_image(src, w.to_double(), h.to_double())
               break
             }
           }
@@ -422,15 +462,7 @@ fn[R : Renderer] Player::render_layer_content(
         self.current_frame,
       )
       if doc.t != "" {
-        let (r, g, b) = if doc.fc.length() >= 3 {
-          (
-            (get_vec_at(doc.fc, 0, 0.0) * 255.0).to_int(),
-            (get_vec_at(doc.fc, 1, 0.0) * 255.0).to_int(),
-            (get_vec_at(doc.fc, 2, 0.0) * 255.0).to_int(),
-          )
-        } else {
-          (0, 0, 0)
-        }
+        let (r, g, b) = color_rgb_from_vec(doc.fc)
         self.renderer.draw_text(doc.t, doc.f, doc.s, r, g, b, 1.0, doc.j)
       }
     }
@@ -519,9 +551,7 @@ pub fn[R : Renderer] Player::render_shape(
     Fill(f) => {
       let color_vec = @runtime.evaluate_vec_property(f.c, self.current_frame)
       let opacity = @runtime.evaluate_double_property(f.o, self.current_frame)
-      let r = (get_vec_at(color_vec, 0, 0.0) * 255.0).to_int()
-      let g = (get_vec_at(color_vec, 1, 0.0) * 255.0).to_int()
-      let b = (get_vec_at(color_vec, 2, 0.0) * 255.0).to_int()
+      let (r, g, b) = color_rgb_from_vec(color_vec)
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -532,9 +562,7 @@ pub fn[R : Renderer] Player::render_shape(
       let color_vec = @runtime.evaluate_vec_property(s.c, self.current_frame)
       let opacity = @runtime.evaluate_double_property(s.o, self.current_frame)
       let width = @runtime.evaluate_double_property(s.w, self.current_frame)
-      let r = (get_vec_at(color_vec, 0, 0.0) * 255.0).to_int()
-      let g = (get_vec_at(color_vec, 1, 0.0) * 255.0).to_int()
-      let b = (get_vec_at(color_vec, 2, 0.0) * 255.0).to_int()
+      let (r, g, b) = color_rgb_from_vec(color_vec)
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)

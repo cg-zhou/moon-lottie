@@ -171,6 +171,12 @@ function loadRemoteAnimation(filename) {
     });
 }
 
+function resolveAssetSrc(asset) {
+    const p = asset.p || '';
+    const u = asset.u || '';
+    return p === '' ? asset.id : (u + p);
+}
+
 async function preloadAssets(json) {
     if (!json.assets) return;
     statusMsg.innerText = "正在加载资源文件...";
@@ -178,9 +184,16 @@ async function preloadAssets(json) {
         if (asset.p) {
             return new Promise((resolve) => {
                 const img = new Image();
-                img.onload = () => { imageAssets.set(asset.id, img); resolve(); };
+                img.onload = () => {
+                    // Keep both keys for compatibility:
+                    // - asset.id: backward compatibility with old runtimes
+                    // - resolved src: current runtime path (lottie-rs-aligned)
+                    imageAssets.set(asset.id, img);
+                    imageAssets.set(resolveAssetSrc(asset), img);
+                    resolve();
+                };
                 img.onerror = resolve;
-                img.src = asset.p.startsWith('data:') ? asset.p : (asset.u || '') + asset.p;
+                img.src = resolveAssetSrc(asset);
             });
         }
         return Promise.resolve();
