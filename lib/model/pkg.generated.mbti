@@ -52,11 +52,60 @@ pub enum BezierValue {
 pub fn BezierValue::new_multi(Array[Double]) -> Self
 pub fn BezierValue::new_single(Double) -> Self
 
+pub enum BlendMode {
+  Normal
+  Multiply
+  Screen
+  Overlay
+  Darken
+  Lighten
+  ColorDodge
+  ColorBurn
+  HardLight
+  SoftLight
+  Difference
+  Exclusion
+  Hue
+  Saturation
+  Color
+  Luminosity
+  Add
+  HardMix
+}
+pub fn BlendMode::from_int(Int) -> Self
+pub fn BlendMode::to_int(Self) -> Int
+
+pub struct Color {
+  r : Double
+  g : Double
+  b : Double
+  a : Double
+}
+pub fn Color::black() -> Self
+pub fn Color::from_array(Array[Double]) -> Self
+pub fn Color::lerp(Self, Self, Double) -> Self
+pub fn Color::new(Double, Double, Double, Double) -> Self
+pub fn Color::new_u8(Int, Int, Int, Int) -> Self
+pub fn Color::to_array(Self) -> Array[Double]
+pub fn Color::to_hex_string(Self) -> String
+pub fn Color::transparent() -> Self
+pub fn Color::white() -> Self
+pub impl Eq for Color
+pub impl Show for Color
+
 pub struct EllipseShape {
   p : LottieProperty[Array[Double]]
   s : LottieProperty[Array[Double]]
 }
 pub fn EllipseShape::new(p~ : LottieProperty[Array[Double]], s~ : LottieProperty[Array[Double]]) -> Self
+
+pub enum FillRule {
+  NonZeroFill
+  EvenOddFill
+}
+pub fn FillRule::from_int(Int) -> Self
+pub fn FillRule::to_int(Self) -> Int
+pub fn FillRule::to_svg_string(Self) -> String
 
 pub struct FillShape {
   c : LottieProperty[Array[Double]]
@@ -96,6 +145,7 @@ pub enum GradientType {
   Linear
   Radial
 }
+pub fn GradientType::from_int(Int) -> Self
 
 pub struct Layer {
   ddd : Int?
@@ -128,6 +178,22 @@ pub(all) enum LayerData {
 pub fn LayerData::new_null() -> Self
 pub fn LayerData::new_shape(Array[Shape]) -> Self
 pub fn LayerData::new_solid(String, Int, Int) -> Self
+
+pub enum LineCap {
+  Butt
+  Round
+  Square
+}
+pub fn LineCap::from_int(Int) -> Self
+pub fn LineCap::to_int(Self) -> Int
+
+pub enum LineJoin {
+  Miter
+  Round
+  Bevel
+}
+pub fn LineJoin::from_int(Int) -> Self
+pub fn LineJoin::to_int(Self) -> Int
 
 pub struct LottieKeyframe[T] {
   frame : Int
@@ -175,6 +241,16 @@ pub(all) enum MaskMode {
 }
 pub impl Eq for MaskMode
 pub impl Show for MaskMode
+
+pub enum MatteMode {
+  Normal
+  Alpha
+  InvertedAlpha
+  Luma
+  InvertedLuma
+}
+pub fn MatteMode::from_int(Int) -> Self
+pub fn MatteMode::to_int(Self) -> Int
 
 pub enum MergeMode {
   Merge
@@ -308,7 +384,7 @@ pub struct Transform {
   skew : LottieProperty[Double]?
   skew_axis : LottieProperty[Double]?
 }
-pub fn Transform::new(anchor~ : LottieProperty[Array[Double]], position~ : LottieProperty[Array[Double]], scale~ : LottieProperty[Array[Double]], rotation~ : LottieProperty[Double], opacity~ : LottieProperty[Double], px? : LottieProperty[Double]?, py? : LottieProperty[Double]?, s? : Bool?, skew? : LottieProperty[Double], skew_axis? : LottieProperty[Double]) -> Self
+pub fn Transform::new(anchor~ : LottieProperty[Array[Double]], position~ : LottieProperty[Array[Double]], scale~ : LottieProperty[Array[Double]], rotation~ : LottieProperty[Double], opacity~ : LottieProperty[Double], px? : LottieProperty[Double]?, py? : LottieProperty[Double]?, s? : Bool?, skew? : LottieProperty[Double]?, skew_axis? : LottieProperty[Double]?) -> Self
 pub fn Transform::new_default() -> Self
 
 pub struct TrimPath {

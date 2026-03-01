@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cg-zhou/moon-lottie/lib/nocturnejs"
+
+// Values
+pub fn exec_js(String) -> Double
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

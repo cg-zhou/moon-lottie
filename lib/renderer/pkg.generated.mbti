@@ -9,6 +9,8 @@ import {
 // Values
 pub fn apply_trim_path(Array[@model.BezierPath], Double, Double, Double) -> Array[@model.BezierPath]
 
+pub fn apply_trim_path_with_mode(Array[@model.BezierPath], Double, Double, Double, Int) -> Array[@model.BezierPath]
+
 pub fn create_canvas_player(@model.Animation) -> Player[CanvasRenderer]
 
 pub fn render_animation_to_svgs(@model.Animation, Int) -> Array[String]
@@ -54,6 +56,8 @@ pub enum DrawCommand {
   SetBlendMode(String)
   SetFillRule(String)
   SetOpacity(Double)
+  BeginLayer
+  EndLayer(String)
 }
 pub impl Eq for DrawCommand
 pub impl Show for DrawCommand
@@ -63,10 +67,17 @@ pub struct Player[R] {
   renderer : R
   mut current_frame : Double
   mut current_paths : Array[@model.BezierPath]
+  mut debug_enabled : Bool
+  mut debug_logs : Array[String]
+  mut debug_layer : String
+  mut debug_shape : String
+  mut debug_property : String
 }
+pub fn[R] Player::get_debug_logs(Self[R]) -> Array[String]
 pub fn[R] Player::new(@model.Animation, R) -> Self[R]
 pub fn[R : Renderer] Player::render(Self[R]) -> Unit
 pub fn[R : Renderer] Player::render_shape(Self[R], @model.Shape) -> Unit
+pub fn[R] Player::set_debug(Self[R], Bool) -> Unit
 pub fn[R] Player::set_frame(Self[R], Double) -> Unit
 
 pub struct SvgRenderer {
@@ -112,5 +123,7 @@ pub trait Renderer {
   set_blend_mode(Self, String) -> Unit
   set_fill_rule(Self, String) -> Unit
   set_opacity(Self, Double) -> Unit
+  begin_layer(Self) -> Unit
+  end_layer(Self, String) -> Unit
 }
 

@@ -112,6 +112,10 @@ pub trait Renderer {
   set_blend_mode(self : Self, mode : String) -> Unit
   set_fill_rule(self : Self, rule : String) -> Unit
   set_opacity(self : Self, opacity : Double) -> Unit
+
+  // Isolated compositing layer for track matte / blend mode isolation
+  begin_layer(self : Self) -> Unit
+  end_layer(self : Self, mode : String) -> Unit
 }
 
 ///| DrawCommand representing a single drawing operation.
@@ -172,6 +176,8 @@ pub enum DrawCommand {
   SetBlendMode(String)
   SetFillRule(String)
   SetOpacity(Double)
+  BeginLayer
+  EndLayer(String)
 } derive(Show, Eq)
 
 ///|
@@ -423,4 +429,19 @@ pub impl Renderer for CommandRecorder with set_opacity(
   opacity : Double,
 ) {
   self.commands.push(SetOpacity(opacity))
+}
+
+///|
+pub impl Renderer for CommandRecorder with begin_layer(
+  self : CommandRecorder,
+) {
+  self.commands.push(BeginLayer)
+}
+
+///|
+pub impl Renderer for CommandRecorder with end_layer(
+  self : CommandRecorder,
+  mode : String,
+) {
+  self.commands.push(EndLayer(mode))
 }

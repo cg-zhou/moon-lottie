@@ -236,6 +236,22 @@ pub impl Renderer for SvgRenderer with set_blend_mode(
 }
 
 ///|
+pub impl Renderer for SvgRenderer with begin_layer(
+  self : SvgRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
+pub impl Renderer for SvgRenderer with end_layer(
+  self : SvgRenderer,
+  mode : String,
+) -> Unit {
+  let _ = self
+  let _ = mode
+}
+
+///|
 pub impl Renderer for SvgRenderer with clear_rect(
   self : SvgRenderer,
   x : Double,
