@@ -169,13 +169,13 @@ async function init() {
 async function initAnimList() {
     const listEl = document.getElementById('anim-list');
     try {
-        const response = await fetch('list.json');
+        const response = await fetch('sample_index.json');
         
         let entries = [];
         if (response.ok) {
             entries = await response.json();
         } else {
-            console.warn("list.json not found, using default fallback");
+            console.warn("sample_index.json not found, using default fallback");
             entries = [{ file: '1-1 Super Mario.json', label: '1-1 Super Mario' }];
         }
         
