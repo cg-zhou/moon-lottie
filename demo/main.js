@@ -1,7 +1,7 @@
 // MoonLottie UI 2.0 - 现代化播放驱动
 
 const canvas = document.getElementById('lottie-canvas');
-const ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d');
 const statusDot = document.getElementById('status-dot');
 const statusMsg = document.getElementById('status-msg');
 const frameInfoEl = document.getElementById('frame-info');
