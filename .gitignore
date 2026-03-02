@@ -9,3 +9,4 @@ _build/
 *.mi
 
 node_modules
+3rd_repos
