@@ -1,74 +1,74 @@
 [
   {
     "file": "1_1_Super_Mario.json",
-    "label": "1-1 Super Mario"
+    "label": "1_1_Super_Mario"
   },
   {
     "file": "1_2_3D_Customization.json",
-    "label": "1-2 3D Customization"
+    "label": "1_2_3D_Customization"
   },
   {
     "file": "1_3_Businessman_flies_up_with_rocket.json",
-    "label": "1-3 Businessman flies up with rocket"
+    "label": "1_3_Businessman_flies_up_with_rocket"
   },
   {
     "file": "1_4_Cat_Fishing_On_Moon.json",
-    "label": "1-4 Cat Fishing On Moon"
+    "label": "1_4_Cat_Fishing_On_Moon"
   },
   {
     "file": "1_5_Crypto.json",
-    "label": "1-5 Crypto"
+    "label": "1_5_Crypto"
   },
   {
     "file": "1_6_Designer.json",
-    "label": "1-6 Designer"
+    "label": "1_6_Designer"
   },
   {
     "file": "1_7_Keyboard_Typing.json",
-    "label": "1-7 Keyboard Typing"
+    "label": "1_7_Keyboard_Typing"
   },
   {
     "file": "2_1_adrock.json",
-    "label": "2-1 adrock"
+    "label": "2_1_adrock"
   },
   {
     "file": "2_2_bacon.json",
-    "label": "2-2 bacon"
+    "label": "2_2_bacon"
   },
   {
     "file": "2_3_banner.json",
-    "label": "2-3 banner"
+    "label": "2_3_banner"
   },
   {
     "file": "2_4_bm_ronda.json",
-    "label": "2-4 bm_ronda"
+    "label": "2_4_bm_ronda"
   },
   {
     "file": "2_5_bodymovin.json",
-    "label": "2-5 bodymovin"
+    "label": "2_5_bodymovin"
   },
   {
     "file": "2_6_dalek.json",
-    "label": "2-6 dalek"
+    "label": "2_6_dalek"
   },
   {
     "file": "3_1_lights(expr).json",
-    "label": "3-1 lights(expr)"
+    "label": "3_1_lights(expr)"
   },
   {
     "file": "3_2_monster(expr).json",
-    "label": "3-2 monster(expr)"
+    "label": "3_2_monster(expr)"
   },
   {
     "file": "3_3_navidad(expr).json",
-    "label": "3-3 navidad(expr)"
+    "label": "3_3_navidad(expr)"
   },
   {
     "file": "3_4_ripple(expr).json",
-    "label": "3-4 ripple(expr)"
+    "label": "3_4_ripple(expr)"
   },
   {
     "file": "3_5_starfish(expr).json",
-    "label": "3-5 starfish(expr)"
+    "label": "3_5_starfish(expr)"
   }
 ]

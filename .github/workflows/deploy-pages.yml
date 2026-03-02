@@ -34,11 +34,9 @@ jobs:
       - name: Prepare demo for deployment
         run: |
           mkdir -p /tmp/demo_dist
-          # Generate animation list
-          node scripts/gen_list.js
           cp demo/index.html /tmp/demo_dist/
           cp demo/main.js /tmp/demo_dist/
-          cp demo/list.json /tmp/demo_dist/
+          cp demo/sample_index.json /tmp/demo_dist/
           cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
           # Copy samples
           cp -r samples /tmp/demo_dist/
@@ -48,7 +46,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Use stash to handle any local changes (like generated list.json) before checkout
+          # Use stash to handle any local changes (like generated sample_index.json) before checkout
           git stash || true
           
           git fetch origin demo 2>/dev/null || true

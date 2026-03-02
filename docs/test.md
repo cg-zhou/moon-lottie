@@ -28,22 +28,6 @@
 - [x] **像素级帧 Diff 工具**: `test/snapshot_tool/compare_frames.js`，将 SVG 渲染为像素后按帧比较并输出 diff PNG。
 - [ ] **官方 Trace 提取服务**: 使用 Node.js 脚本批量导出官方渲染指令流。
 
-## 帧级渲染结果对比（SVG -> Pixel）
-
-在 `test/snapshot_tool` 目录下执行：
-
-```bash
-npm install --registry=https://registry.npmjs.org
-npm run compare:frames -- \
-  --expected-dir ../snapshots \
-  --actual-dir ../snapshots \
-  --files "1-1 Super Mario_frame_25.svg,1-1 Super Mario_frame_50.svg,1-1 Super Mario_frame_75.svg" \
-  --min-similarity 0.995
-```
-
-- 对比逻辑：使用 `sharp` 将 SVG 栅格化，再用 `pixelmatch` 做逐像素比较。
-- 输出：控制台打印 similarity 与 mismatched pixels，并在 `test/snapshots_diff/` 生成 diff PNG。
-
 ## 活跃瓶颈分析 (Hot Issues)
 
 1. **Effects 变量池**: Parser 尚未支持 `ef` 数组，导致依赖 Effect 控制器的动画全部失效（如 `ripple`, `lights`）。

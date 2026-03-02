@@ -3,7 +3,7 @@ const path = require('path');
 
 const samplesDir = path.join(__dirname, '../samples');
 const outputDir = path.join(__dirname, '../demo');
-const outputFile = path.join(outputDir, 'list.json');
+const outputFile = path.join(outputDir, 'sample_index.json');
 
 // Ensure output directory exists
 if (!fs.existsSync(outputDir)) {
