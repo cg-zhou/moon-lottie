@@ -48,6 +48,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Use stash to handle any local changes (like generated list.json) before checkout
+          git stash || true
+          
           git fetch origin demo 2>/dev/null || true
           if git rev-parse --verify origin/demo 2>/dev/null; then
             git checkout -B demo origin/demo
