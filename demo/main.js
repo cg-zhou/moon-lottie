@@ -170,13 +170,20 @@ async function initAnimList() {
     const listEl = document.getElementById('anim-list');
     try {
         const response = await fetch('list.json');
-        if (!response.ok) throw new Error("List not found");
-        const entries = await response.json();
+        
+        let entries = [];
+        if (response.ok) {
+            entries = await response.json();
+        } else {
+            console.warn("list.json not found, using default fallback");
+            entries = [{ file: '1-1 Super Mario.json', label: '1-1 Super Mario' }];
+        }
         
         listEl.innerHTML = '';
         entries.forEach(entry => {
-            const file = typeof entry === 'string' ? entry : entry.file;
-            const label = (typeof entry === 'string' ? entry : (entry.label || entry.file)).replace(/\.json$/i, '');
+            const file = typeof entry === 'object' ? entry.file : entry;
+            const label = (typeof entry === 'object' ? (entry.label || entry.file) : entry).replace(/\.json$/i, '');
+            
             const opt = document.createElement('option');
             opt.value = file;
             opt.innerText = label;
@@ -184,10 +191,12 @@ async function initAnimList() {
         });
         
         if (entries.length > 0) {
-            loadRemoteAnimation(typeof entries[0] === 'string' ? entries[0] : entries[0].file);
+            const firstFile = typeof entries[0] === 'object' ? entries[0].file : entries[0];
+            loadRemoteAnimation(firstFile);
         }
     } catch (e) {
-        console.warn("Falling back to manual sample due to list.json missing");
+        console.error("Failed to initialize animation list:", e);
+        // Minimal fallback to ensure something is loaded
         loadSample();
     }
 }
@@ -197,9 +206,12 @@ function loadSample() {
 }
 
 function loadRemoteAnimation(filename) {
-    const path = isProd ? `samples/${filename}` : `../samples/${filename}`;
+    // Encode filename to handle spaces and special characters correctly in URLs
+    const encodedName = encodeURIComponent(filename);
+    const path = isProd ? `samples/${encodedName}` : `../samples/${encodedName}`;
     
     fetch(path, { cache: 'no-store' }).then(r => {
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         currentFileName = filename;
         return r.blob();
     }).then(blob => {
@@ -208,7 +220,7 @@ function loadRemoteAnimation(filename) {
     }).then(text => {
         startPlayer(text);
     }).catch(e => {
-        console.warn(`${filename} not found at ${path}`);
+        console.warn(`Failed to load ${filename} from ${path}:`, e.message);
     });
 }
 

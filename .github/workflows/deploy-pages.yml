@@ -34,17 +34,14 @@ jobs:
       - name: Prepare demo for deployment
         run: |
           mkdir -p /tmp/demo_dist
+          # Generate animation list
+          node scripts/gen_list.js
           cp demo/index.html /tmp/demo_dist/
           cp demo/main.js /tmp/demo_dist/
+          cp demo/list.json /tmp/demo_dist/
           cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
-          mkdir -p /tmp/demo_dist/samples
-          # Handle filenames with spaces for web compatibility
-          for src in samples/*.json; do
-            base="$(basename "$src")"
-            safe="${base// /_}"
-            cp "$src" "/tmp/demo_dist/samples/$safe"
-            jq -n --arg file "$safe" --arg label "${base%.json}" '{file:$file, label:$label}'
-          done | jq -s . > /tmp/demo_dist/list.json
+          # Copy samples
+          cp -r samples /tmp/demo_dist/
 
       - name: Deploy to demo branch
         run: |
