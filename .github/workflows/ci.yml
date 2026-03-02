@@ -81,9 +81,7 @@ jobs:
             COVERAGE="N/A"
           fi
 
-          printf '{"schemaVersion":1,"label":"tests","message":"%s total","color":"blue"}\n' "${TOTAL:-0}" > badges/tests-total.json
           printf '{"schemaVersion":1,"label":"passed","message":"%s / %s","color":"%s"}\n' "${PASSED:-0}" "${TOTAL:-0}" "${TEST_COLOR}" > badges/tests-passed.json
-          printf '{"schemaVersion":1,"label":"coverage","message":"%s","color":"%s"}\n' "${COVERAGE}" "${TEST_COLOR}" > badges/coverage.json
           printf '{"schemaVersion":1,"label":"total lines","message":"%s","color":"blue"}\n' "${LINES_TOTAL:-0}" > badges/lines-total.json
           printf '{"schemaVersion":1,"label":"source lines","message":"%s","color":"blue"}\n' "${LINES_SOURCE:-0}" > badges/lines-source.json
 
