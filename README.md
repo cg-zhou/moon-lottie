@@ -2,7 +2,7 @@
 
 A high-performance Lottie animation player for MoonBit, targeting Wasm and Native.
 
-🎬 **[Live Demo](https://cg-zhou.github.io/moon-lottie/)**
+🎬 **[Live Demo](https://lottie.cg-zhou.top)**
 
 ## Stats
 
