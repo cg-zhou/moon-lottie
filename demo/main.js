@@ -202,7 +202,7 @@ async function initAnimList() {
 }
 
 function loadSample() {
-    loadRemoteAnimation('1-1 Super Mario.json');
+    loadRemoteAnimation('1_1_Super_Mario.json');
 }
 
 function loadRemoteAnimation(filename) {
