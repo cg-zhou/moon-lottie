@@ -1,6 +1,8 @@
 # MoonBit Lottie
 
-A high-performance Lottie animation player for MoonBit, targeting Wasm and Native.
+[English](./README.md) | [简体中文](./README_zh.md)
+
+A Lottie animation player implemented in MoonBit.
 
 🎬 **[Live Demo](https://lottie.cg-zhou.top)**
 
@@ -11,10 +13,11 @@ A high-performance Lottie animation player for MoonBit, targeting Wasm and Nativ
 [![Source Lines](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/cg-zhou/moon-lottie/badges/badges/lines-source.json)](https://github.com/cg-zhou/moon-lottie/actions)
 
 ## Features
-- ✅ **Industrial Parser**: Robust Lottie JSON ingestion with L1 reporting.
-- ✅ **Deterministic Renderer**: SVG-based regression testing suite.
-- ✅ **Cross-platform**: Support for Web (Wasm) and Native targets.
-- ✅ **Rich Model**: `Color`, `BlendMode`, `MatteMode`, `FillRule`, `LineCap`, `LineJoin` — migrated from [lottie-rs](https://github.com/zimond/lottie-rs).
+- ✅ **Core Feature Support**: Supports common shapes (Rect, Ellipse, Path), Fill, Stroke, Gradient, and Trim Path.
+- ✅ **Layer & Composition**: Full support for layer transforms, nested pre-compositions, Masks, and Matte.
+- ✅ **Developer Friendly**: Automatically identifies and reports unsupported Lottie fields for easier debugging.
+- ✅ **Flexible Rendering**: Provides SVG string output and direct Canvas rendering for Wasm platforms.
+- **TODO**: More features are under active development.
 
 ## Quick Start
 ```bash
@@ -25,16 +28,6 @@ moon test
 moon build --target wasm-gc
 cd demo && npx serve .
 ```
-
-## Directory Structure
-- `lib/math/`: Vector, matrix, bezier, and interpolation utilities.
-- `lib/model/`: Lottie data model (animation, layer, shape, color, enums).
-- `lib/parser/`: Lottie JSON parser with unknown-key reporting.
-- `lib/runtime/`: Property evaluator (keyframe interpolation, easing).
-- `lib/renderer/`: SVG and Wasm canvas renderers.
-- `samples/`: Lottie JSON test fixtures.
-- `test/`: Regression snapshots and snapshot generation tool.
-- `demo/`: Web-based interactive inspection tool.
 
 ## License
 MIT
