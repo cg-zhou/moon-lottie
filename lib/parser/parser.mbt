@@ -187,7 +187,7 @@ struct ShapeJson {
 struct LayerJson {
   index : Int?
   layer_type : Int
-  transform : Json?
+  transform : TransformJson?
   in_point : Double?
   out_point : Double?
   start_time : Double?
@@ -204,7 +204,7 @@ struct LayerJson {
   solid_width : Int?
   solid_height : Int?
   shapes : Array[Json]?
-  text_data : Json?
+  text_data : TextDataJson?
 } derive(
   FromJson(
     fields(
@@ -415,16 +415,26 @@ pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
 ///|
 fn parse_bezier_value(json : Json?) -> @model.BezierValue? {
   match json {
-    Some(Number(n, ..)) => Some(@model.BezierValue::new_single(n))
-    Some(Array(arr)) => {
-      let values = []
-      for v in arr {
-        match v {
-          Number(n, ..) => values.push(n)
-          _ => ()
+    Some(j) => {
+      let single : Double? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match single {
+        Some(v) => Some(@model.BezierValue::new_single(v))
+        None => {
+          let multi : Array[Double]? = try {
+            Some(@json.from_json(j))
+          } catch {
+            _ => None
+          }
+          match multi {
+            Some(values) => Some(@model.BezierValue::new_multi(values))
+            None => None
+          }
         }
       }
-      Some(@model.BezierValue::new_multi(values))
     }
     _ => None
   }
@@ -448,8 +458,27 @@ fn parse_bezier_tangent(json : Json?) -> @model.Bezier? {
 
 fn property_animated_flag(flag : Json?) -> Bool {
   match flag {
-    Some(Number(n, ..)) => n == 1.0
-    Some(True) => true
+    Some(j) => {
+      let number_flag : Double? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match number_flag {
+        Some(n) => n == 1.0
+        None => {
+          let bool_flag : Bool? = try {
+            Some(@json.from_json(j))
+          } catch {
+            _ => None
+          }
+          match bool_flag {
+            Some(v) => v
+            None => false
+          }
+        }
+      }
+    }
     _ => false
   }
 }
@@ -493,7 +522,27 @@ fn keyframe_time_or_zero(time : Double?) -> Int {
 
 fn keyframe_hold_or_none(hold : Json?) -> Int? {
   match hold {
-    Some(Number(n, ..)) => Some(n.to_int())
+    Some(j) => {
+      let int_hold : Int? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match int_hold {
+        Some(v) => Some(v)
+        None => {
+          let num_hold : Double? = try {
+            Some(@json.from_json(j))
+          } catch {
+            _ => None
+          }
+          match num_hold {
+            Some(n) => Some(n.to_int())
+            None => None
+          }
+        }
+      }
+    }
     _ => None
   }
 }
@@ -504,12 +553,14 @@ fn parse_property_double(
   json : Json?,
 ) -> @model.LottieProperty[Double] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(_) => {
-          let prop : PropertyJson = (@json.from_json(j)) catch {
-            _ => raise UnexpectedType("property", "Object")
-          }
+    Some(j) => {
+      let prop : PropertyJson? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match prop {
+        Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
           let x = prop.expression
           let k = match prop.value {
@@ -569,16 +620,20 @@ fn parse_property_double(
             }
             @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
-            match k {
-              Number(n, ..) =>
-                @model.LottieProperty::new_static(n, expression=x)
+            let value : Double = (@json.from_json(k)) catch {
               _ => raise UnexpectedType("k", "Number")
             }
+            @model.LottieProperty::new_static(value, expression=x)
           }
         }
-        Number(n, ..) => @model.LottieProperty::new_static(n)
-        _ => raise UnexpectedType("property", "Object or Number")
+        None => {
+          let value : Double = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property", "Object or Number")
+          }
+          @model.LottieProperty::new_static(value)
+        }
       }
+    }
     None => raise InvalidJson("Property json is missing")
   }
 }
@@ -588,12 +643,14 @@ fn parse_property_vec(
   json : Json?,
 ) -> @model.LottieProperty[Array[Double]] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(_) => {
-          let prop : PropertyJson = (@json.from_json(j)) catch {
-            _ => raise UnexpectedType("property", "Object")
-          }
+    Some(j) => {
+      let prop : PropertyJson? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match prop {
+        Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
           let x = prop.expression
           let k = match prop.value {
@@ -671,35 +728,30 @@ fn parse_property_vec(
             }
             @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
-            match k {
-              Array(arr) => {
-                let vals = []
-                for v in arr {
-                  match v {
-                    Number(n, ..) => vals.push(n)
-                    _ => ()
-                  }
+            let vals : Array[Double]? = try {
+              Some(@json.from_json(k))
+            } catch {
+              _ => None
+            }
+            match vals {
+              Some(vs) => @model.LottieProperty::new_static(vs, expression=x)
+              None => {
+                let n : Double = (@json.from_json(k)) catch {
+                  _ => raise UnexpectedType("k", "Array or Number")
                 }
-                @model.LottieProperty::new_static(vals, expression=x)
-              }
-              Number(n, ..) =>
                 @model.LottieProperty::new_static([n], expression=x)
-              _ => raise UnexpectedType("k", "Array or Number")
+              }
             }
           }
         }
-        Array(arr) => {
-          let vals = []
-          for v in arr {
-            match v {
-              Number(n, ..) => vals.push(n)
-              _ => ()
-            }
+        None => {
+          let vals : Array[Double] = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property", "Object or Array")
           }
           @model.LottieProperty::new_static(vals)
         }
-        _ => raise UnexpectedType("property", "Object or Array")
       }
+    }
     None => raise InvalidJson("Property json is missing")
   }
 }
@@ -771,9 +823,7 @@ fn parse_text_document_property(
             } else {
               raise MissingKey("k array is empty")
             }
-          Object(_) =>
-            @model.LottieProperty::new_static(parse_text_document(k))
-          _ => raise UnexpectedType("k", "Array or Object")
+          _ => @model.LottieProperty::new_static(parse_text_document(k))
         }
       }
     }
@@ -782,13 +832,12 @@ fn parse_text_document_property(
 }
 
 ///|
-fn parse_text_data(json : Json?) -> @model.TextData raise LottieError {
-  match json {
-    Some(j) => {
-      let decoded : TextDataJson = (@json.from_json(j)) catch {
-        _ => raise UnexpectedType("text data", "Object")
-      }
-      let d = parse_text_document_property(decoded.document)
+fn parse_text_data_from_decoded(
+  decoded : TextDataJson?,
+) -> @model.TextData raise LottieError {
+  match decoded {
+    Some(d_json) => {
+      let d = parse_text_document_property(d_json.document)
       { text: d }
     }
     None => raise UnexpectedType("text data", "Object")
@@ -797,12 +846,11 @@ fn parse_text_data(json : Json?) -> @model.TextData raise LottieError {
 
 ///|
 /// Parse Transform
-fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
-  match json {
-    Some(j) => {
-      let decoded : TransformJson = (@json.from_json(j)) catch {
-        _ => raise UnexpectedType("transform", "Object")
-      }
+fn parse_transform_from_decoded(
+  decoded : TransformJson?,
+) -> @model.Transform raise LottieError {
+  match decoded {
+    Some(decoded) => {
       let split = match decoded.position {
         Some(position_json) => {
           let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
@@ -862,6 +910,20 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
 }
 
 ///|
+/// Parse Transform
+fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
+  match json {
+    Some(j) => {
+      let decoded : TransformJson = (@json.from_json(j)) catch {
+        _ => raise UnexpectedType("transform", "Object")
+      }
+      parse_transform_from_decoded(Some(decoded))
+    }
+    None => raise InvalidJson("Transform json is missing")
+  }
+}
+
+///|
 /// Parse BezierPath data (the 'v', 'i', 'o', 'c' structure)
 fn parse_bezier_path(json : Json) -> @model.BezierPath raise LottieError {
   let decoded : BezierPathJson = (@json.from_json(json)) catch {
@@ -885,12 +947,14 @@ fn parse_property_bezier(
   json : Json?,
 ) -> @model.LottieProperty[@model.BezierPath] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(_) => {
-          let prop : PropertyJson = (@json.from_json(j)) catch {
-            _ => raise UnexpectedType("property_bezier", "Object")
-          }
+    Some(j) => {
+      let prop : PropertyJson? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match prop {
+        Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
           match prop.value {
             Some(k) =>
@@ -944,8 +1008,9 @@ fn parse_property_bezier(
             None => @model.LottieProperty::new_static(parse_bezier_path(j))
           }
         }
-        _ => raise UnexpectedType("property_bezier", "Object")
+        None => @model.LottieProperty::new_static(parse_bezier_path(j))
       }
+    }
     None => raise InvalidJson("Property bezier json is missing")
   }
 }
@@ -1177,7 +1242,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
   }
   let index = decoded.index.unwrap_or(0)
   let layer_type = decoded.layer_type
-  let transform = parse_transform(decoded.transform)
+  let transform = parse_transform_from_decoded(decoded.transform)
   let in_point = decoded.in_point.unwrap_or(0.0)
   let out_point = decoded.out_point.unwrap_or(1000.0)
   let start_time = decoded.start_time.unwrap_or(0.0)
@@ -1220,7 +1285,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
       }
       @model.LayerData::Shape(shapes)
     }
-    5 => @model.LayerData::Text(parse_text_data(decoded.text_data))
+    5 => @model.LayerData::Text(parse_text_data_from_decoded(decoded.text_data))
     _ => @model.LayerData::Null
   }
   @model.Layer::new(
