@@ -101,7 +101,7 @@ test "parse_ripple_json" {
     e => fail("Failed to parse ripple.json: \{e}")
   }
 
-  inspect(ani.v, content="5.0.0")
+  inspect(ani.version, content="5.0.0")
   match ani.assets {
     Some(assets) => inspect(assets.length(), content="2")
     None => fail("Assets should exist")

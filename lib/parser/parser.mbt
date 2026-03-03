@@ -1150,12 +1150,12 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
 ///|
 /// Parse the top-level Animation object
 pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
-  let v = get_string(json, "v")
-  let fr = get_double(json, "fr")
-  let ip = get_double(json, "ip")
-  let op = get_double(json, "op")
-  let w = get_int(json, "w")
-  let h = get_int(json, "h")
+  let version = get_string(json, "v")
+  let frame_rate = get_double(json, "fr")
+  let in_point = get_double(json, "ip")
+  let out_point = get_double(json, "op")
+  let width = get_int(json, "w")
+  let height = get_int(json, "h")
 
   let layers = []
   let assets = []
@@ -1186,14 +1186,14 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
   }
 
   @model.Animation::new(
-    v~,
-    fr~,
-    ip~,
-    op~,
-    w~,
-    h~,
-    nm=Some(get_string(json, "nm")) catch { _ => None },
-    ddd=Some(get_int(json, "ddd")) catch { _ => None },
+    version~,
+    frame_rate~,
+    in_point~,
+    out_point~,
+    width~,
+    height~,
+    name=Some(get_string(json, "nm")) catch { _ => None },
+    three_d=Some(get_int(json, "ddd")) catch { _ => None },
     assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
   )

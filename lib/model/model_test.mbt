@@ -366,12 +366,12 @@ test "Shape and transform/layer/mask/animation constructors" {
     data=@model.LayerData::new_shape([shape]),
   )
   let anim = @model.Animation::new(
-    v="5.7.0",
-    fr=30.0,
-    ip=0.0,
-    op=60.0,
-    w=512,
-    h=512,
+    version="5.7.0",
+    frame_rate=30.0,
+    in_point=0.0,
+    out_point=60.0,
+    width=512,
+    height=512,
     layers=[layer],
   )
   if anim.layers.length() != 1 {

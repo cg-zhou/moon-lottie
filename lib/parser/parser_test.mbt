@@ -7,23 +7,23 @@ test "parse_animation_basic" {
   }
 
   // Guardrails: Full field assertion for root animation
-  if ani.v != "5.5.0" {
-    fail("v mismatch: expected 5.5.0")
+  if ani.version != "5.5.0" {
+    fail("version mismatch: expected 5.5.0")
   }
-  if ani.fr != 60.0 {
-    fail("fr mismatch: expected 60.0")
+  if ani.frame_rate != 60.0 {
+    fail("frame_rate mismatch: expected 60.0")
   }
-  if ani.ip != 0.0 {
-    fail("ip mismatch: expected 0.0")
+  if ani.in_point != 0.0 {
+    fail("in_point mismatch: expected 0.0")
   }
-  if ani.op != 100.0 {
-    fail("op mismatch: expected 100.0")
+  if ani.out_point != 100.0 {
+    fail("out_point mismatch: expected 100.0")
   }
-  if ani.w != 500 {
-    fail("w mismatch: expected 500")
+  if ani.width != 500 {
+    fail("width mismatch: expected 500")
   }
-  if ani.h != 500 {
-    fail("h mismatch: expected 500")
+  if ani.height != 500 {
+    fail("height mismatch: expected 500")
   }
   if ani.layers.length() != 0 {
     fail("layers length mismatch: expected 0")

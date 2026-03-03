@@ -52,29 +52,29 @@ pub fn update_player_with_speed(
 pub fn get_frame_count(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> Double {
-  player.animation.op - player.animation.ip
+  player.animation.out_point - player.animation.in_point
 }
 
 ///|
 pub fn get_width(player : @renderer.Player[@renderer.CanvasRenderer]) -> Int {
-  player.animation.w
+  player.animation.width
 }
 
 ///|
 pub fn get_height(player : @renderer.Player[@renderer.CanvasRenderer]) -> Int {
-  player.animation.h
+  player.animation.height
 }
 
 ///|
 pub fn get_fps(player : @renderer.Player[@renderer.CanvasRenderer]) -> Double {
-  player.animation.fr
+  player.animation.frame_rate
 }
 
 ///|
 pub fn get_version(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> String {
-  player.animation.v
+  player.animation.version
 }
 
 ///|
@@ -91,5 +91,5 @@ pub fn update_player(
 pub fn get_in_point(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> Double {
-  player.animation.ip
+  player.animation.in_point
 }
