@@ -7,6 +7,17 @@ pub suberror LottieError {
 } derive(Show)
 
 ///|
+/// Pilot derive-based decoding for animation root required fields.
+struct AnimationRootJson {
+  v : String
+  fr : Double
+  ip : Double
+  op : Double
+  w : Int
+  h : Int
+} derive(FromJson)
+
+///|
 /// Global tracker for unknown keys (for L1 Reporting)
 let known_keys : Array[String] = [
   "v", "fr", "ip", "op", "w", "h", "nm", "ddd", "assets", "layers", "fonts", "chars",
@@ -1150,12 +1161,15 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
 ///|
 /// Parse the top-level Animation object
 pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
-  let version = get_string(json, "v")
-  let frame_rate = get_double(json, "fr")
-  let in_point = get_double(json, "ip")
-  let out_point = get_double(json, "op")
-  let width = get_int(json, "w")
-  let height = get_int(json, "h")
+  let root : AnimationRootJson = (@json.from_json(json)) catch {
+    e => raise InvalidJson("Animation root decode failed: \{e}")
+  }
+  let version = root.v
+  let frame_rate = root.fr
+  let in_point = root.ip
+  let out_point = root.op
+  let width = root.w
+  let height = root.h
 
   let layers = []
   let assets = []

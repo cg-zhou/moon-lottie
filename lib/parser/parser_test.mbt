@@ -31,6 +31,17 @@ test "parse_animation_basic" {
 }
 
 ///|
+test "parse_animation_missing_required_field_fails" {
+  let json_str = "{\"v\":\"5.5.0\",\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"
+  let json = @json.parse(json_str)
+  try @parser.parse_animation(json) catch {
+    _ => ()
+  } noraise {
+    _ => fail("Expected parse_animation to fail when required field fr is missing")
+  }
+}
+
+///|
 test "parse_shape_layer" {
   // ... (existing test code)
 }
