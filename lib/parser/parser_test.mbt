@@ -313,3 +313,38 @@ test "parse_animated_transform_without_a_flag" {
     _ => fail("rotation should be treated as animated when keyframes contain t")
   }
 }
+
+///|
+test "parse_precomp_asset_layers_with_typed_decode" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":10.0,\"w\":100,\"h\":100,\"assets\":[{\"id\":\"comp_1\",\"layers\":[{\"ty\":3,\"ind\":11,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}],\"layers\":[]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse precomp asset layers: \{e}")
+  }
+  match ani.assets {
+    Some(assets) => {
+      if assets.length() != 1 {
+        fail("assets length mismatch")
+      }
+      match assets[0].layers {
+        Some(_) => ()
+        None => fail("precomp asset layers should be parsed")
+      }
+    }
+    None => fail("assets should be parsed")
+  }
+}
+
+///|
+test "parse_layer_parent_and_matte_with_typed_decode" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":10.0,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":2,\"parent\":1,\"tt\":2,\"td\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse layer parent/matte: \{e}")
+  }
+  inspect(ani.layers[0].parent, content="Some(1)")
+  inspect(ani.layers[0].matte_type, content="Some(2)")
+  inspect(ani.layers[0].matte_inherit, content="Some(1)")
+}
