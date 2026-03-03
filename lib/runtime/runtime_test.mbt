@@ -116,6 +116,78 @@ test "evaluate_path_property_easing" {
 }
 
 ///|
+test "evaluate_vec_property_multidimensional_easing_components" {
+  let ot = @model.Bezier::new(
+    @model.BezierValue::new_multi([0.0, 0.1]),
+    @model.BezierValue::new_multi([0.0, 1.0]),
+  )
+  let it = @model.Bezier::new(
+    @model.BezierValue::new_multi([1.0, 0.9]),
+    @model.BezierValue::new_multi([1.0, 1.0]),
+  )
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=[0.0, 0.0],
+    in_tangent=Some(it),
+    out_tangent=Some(ot),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=[100.0, 100.0])
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v = @runtime.evaluate_vec_property(prop, 50.0)
+  if v.length() != 2 {
+    fail("Unexpected vector length")
+  }
+  if (v[0] - 50.0).abs() > 0.001 {
+    fail("First component should follow linear easing component")
+  }
+  if v[1] <= 50.0 {
+    fail("Second component should follow its own easing curve")
+  }
+}
+
+///|
+test "evaluate_path_property_multidimensional_easing_components" {
+  let ot = @model.Bezier::new(
+    @model.BezierValue::new_multi([0.0, 0.1]),
+    @model.BezierValue::new_multi([0.0, 1.0]),
+  )
+  let it = @model.Bezier::new(
+    @model.BezierValue::new_multi([1.0, 0.9]),
+    @model.BezierValue::new_multi([1.0, 1.0]),
+  )
+  let p0 = @model.BezierPath::new(
+    vertices=[[0.0, 0.0]],
+    in_tangents=[[0.0, 0.0]],
+    out_tangents=[[0.0, 0.0]],
+    closed=false,
+  )
+  let p1 = @model.BezierPath::new(
+    vertices=[[100.0, 100.0]],
+    in_tangents=[[0.0, 0.0]],
+    out_tangents=[[0.0, 0.0]],
+    closed=false,
+  )
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=p0,
+    end_value=Some(p1),
+    in_tangent=Some(it),
+    out_tangent=Some(ot),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=p1)
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v = @runtime.evaluate_path_property(prop, 50.0)
+  let vx = get_pt_at(v.vertices, 0, 0)
+  let vy = get_pt_at(v.vertices, 0, 1)
+  if (vx - 50.0).abs() > 0.001 {
+    fail("Path x component should follow linear easing component")
+  }
+  if vy <= 50.0 {
+    fail("Path y component should follow its own easing curve")
+  }
+}
+
+///|
 fn get_pt_at(v : Array[Array[Double]], i : Int, j : Int) -> Double {
   if i >= 0 && i < v.length() && j >= 0 && j < v[i].length() {
     v[i][j]

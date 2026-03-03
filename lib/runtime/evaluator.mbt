@@ -63,6 +63,113 @@ fn[T] find_keyframe(
 }
 
 ///|
+fn bezier_component(value : @model.BezierValue, index : Int) -> Double {
+  match value {
+    Single(v) => v
+    Multi(arr) =>
+      if index >= 0 && index < arr.length() {
+        arr[index]
+      } else if arr.length() > 0 {
+        arr[0]
+      } else {
+        0.0
+      }
+  }
+}
+
+///|
+fn bezier_value_length(value : @model.BezierValue) -> Int {
+  match value {
+    Single(_) => 1
+    Multi(arr) => arr.length()
+  }
+}
+
+///|
+fn easing_component_index(
+  out_tangent : @model.Bezier,
+  in_tangent : @model.Bezier,
+  component : Int,
+) -> Int {
+  let out_len = if bezier_value_length(out_tangent.x) > bezier_value_length(out_tangent.y) {
+    bezier_value_length(out_tangent.x)
+  } else {
+    bezier_value_length(out_tangent.y)
+  }
+  let in_len = if bezier_value_length(in_tangent.x) > bezier_value_length(in_tangent.y) {
+    bezier_value_length(in_tangent.x)
+  } else {
+    bezier_value_length(in_tangent.y)
+  }
+  let dims = if out_len > in_len { out_len } else { in_len }
+  if dims <= 1 {
+    0
+  } else if component >= dims {
+    dims - 1
+  } else {
+    component
+  }
+}
+
+///|
+fn solve_eased_t_for_component(
+  out_tangent : @model.Bezier,
+  in_tangent : @model.Bezier,
+  t : Double,
+  component : Int,
+) -> Double {
+  let idx = easing_component_index(out_tangent, in_tangent, component)
+  let x1 = bezier_component(out_tangent.x, idx)
+  let y1 = bezier_component(out_tangent.y, idx)
+  let x2 = bezier_component(in_tangent.x, idx)
+  let y2 = bezier_component(in_tangent.y, idx)
+  @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
+}
+
+///|
+fn lerp_array_with_component_easing(
+  a : Array[Double],
+  b : Array[Double],
+  out_tangent : @model.Bezier,
+  in_tangent : @model.Bezier,
+  t : Double,
+) -> Array[Double] {
+  let len = if a.length() < b.length() { a.length() } else { b.length() }
+  let res = []
+  for i = 0; i < len; i = i + 1 {
+    let eased_t = solve_eased_t_for_component(out_tangent, in_tangent, t, i)
+    res.push(a[i] + (b[i] - a[i]) * eased_t)
+  }
+  res
+}
+
+///|
+fn lerp_vec2_array_with_component_easing(
+  a : Array[Array[Double]],
+  b : Array[Array[Double]],
+  out_tangent : @model.Bezier,
+  in_tangent : @model.Bezier,
+  t : Double,
+) -> Array[Array[Double]] {
+  let len = if a.length() < b.length() { a.length() } else { b.length() }
+  let res = []
+  for i = 0; i < len; i = i + 1 {
+    let inner_len = if a[i].length() < b[i].length() {
+      a[i].length()
+    } else {
+      b[i].length()
+    }
+    let inner = []
+    for j = 0; j < inner_len; j = j + 1 {
+      let eased_t = solve_eased_t_for_component(out_tangent, in_tangent, t, j)
+      inner.push(a[i][j] + (b[i][j] - a[i][j]) * eased_t)
+    }
+    res.push(inner)
+  }
+  res
+}
+
+///|
 pub fn evaluate_text_document_property(
   prop : @model.LottieProperty[@model.TextDocument],
   frame : Double,
@@ -117,25 +224,7 @@ pub fn evaluate_double_property(
 
       // Easing solve
       let eased_t = match (k1.out_tangent, k1.in_tangent) {
-        (Some(ot), Some(it)) => {
-          let x1 = match ot.x {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let y1 = match ot.y {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let x2 = match it.x {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let y2 = match it.y {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
-        }
+        (Some(ot), Some(it)) => solve_eased_t_for_component(ot, it, t, 0)
         _ => t
       }
 
@@ -170,44 +259,20 @@ pub fn evaluate_vec_property(
 
       let k2 = keyframes[idx + 1]
 
-      // For simplicity, we use the first component of the tangents for multidimensional easing
-      // Lottie can have multidimensional easing but it's often synchronized.
-      let eased_t = match (k1.out_tangent, k1.in_tangent) {
-        (Some(ot), Some(it)) => {
-          let x1 = match ot.x {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let y1 = match ot.y {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let x2 = match it.x {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let y2 = match it.y {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
-        }
-        _ => t
-      }
-
       let next_val = match k1.end_value {
         Some(v) => v
         None => k2.start_value
       }
 
-      match (k1.value_out_tangent, k1.value_in_tangent) {
-        (Some(to), Some(ti)) =>
+      match (k1.out_tangent, k1.in_tangent, k1.value_out_tangent, k1.value_in_tangent) {
+        (Some(ot), Some(it), Some(to), Some(ti)) =>
           if k1.start_value.length() >= 2 &&
             next_val.length() >= 2 &&
             to.length() >= 2 &&
             ti.length() >= 2 {
             let res = []
             for i = 0; i < k1.start_value.length(); i = i + 1 {
+              let eased_t = solve_eased_t_for_component(ot, it, t, i)
               let p0 = k1.start_value[i]
               let p3 = next_val[i]
               // Check if tangents have the component. If not, fallback to p0/p3.
@@ -221,9 +286,11 @@ pub fn evaluate_vec_property(
             }
             res
           } else {
-            @math.lerp_array(k1.start_value, next_val, eased_t)
+            lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
           }
-        _ => @math.lerp_array(k1.start_value, next_val, eased_t)
+        (Some(ot), Some(it), _, _) =>
+          lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
+        _ => @math.lerp_array(k1.start_value, next_val, t)
       }
     }
   }
@@ -255,25 +322,7 @@ pub fn evaluate_path_property(
       }
 
       let eased_t = match (kf.out_tangent, kf.in_tangent) {
-        (Some(ot), Some(it)) => {
-          let x1 = match ot.x {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let y1 = match ot.y {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let x2 = match it.x {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          let y2 = match it.y {
-            Single(v) => v
-            Multi(arr) => if arr.length() > 0 { arr[0] } else { 0.0 }
-          }
-          @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
-        }
+        (Some(ot), Some(it)) => solve_eased_t_for_component(ot, it, t, 0)
         _ => t
       }
 
@@ -288,9 +337,30 @@ pub fn evaluate_path_property(
         return kf.start_value
       }
 
-      let res_v = @math.lerp_vec2_array(start_v, end_v, eased_t)
-      let res_i = @math.lerp_vec2_array(kf.start_value.in_tangents, next_val.in_tangents, eased_t)
-      let res_o = @math.lerp_vec2_array(kf.start_value.out_tangents, next_val.out_tangents, eased_t)
+      let (res_v, res_i, res_o) = match (kf.out_tangent, kf.in_tangent) {
+        (Some(ot), Some(it)) => (
+          lerp_vec2_array_with_component_easing(start_v, end_v, ot, it, t),
+          lerp_vec2_array_with_component_easing(
+            kf.start_value.in_tangents,
+            next_val.in_tangents,
+            ot,
+            it,
+            t,
+          ),
+          lerp_vec2_array_with_component_easing(
+            kf.start_value.out_tangents,
+            next_val.out_tangents,
+            ot,
+            it,
+            t,
+          ),
+        )
+        _ => (
+          @math.lerp_vec2_array(start_v, end_v, eased_t),
+          @math.lerp_vec2_array(kf.start_value.in_tangents, next_val.in_tangents, eased_t),
+          @math.lerp_vec2_array(kf.start_value.out_tangents, next_val.out_tangents, eased_t),
+        )
+      }
       @model.BezierPath::new(vertices=res_v, in_tangents=res_i, out_tangents=res_o, closed=kf.start_value.closed)
     }
   }
