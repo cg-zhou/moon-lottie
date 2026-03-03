@@ -15,6 +15,10 @@ struct AnimationRootJson {
   out_point : Double
   width : Int
   height : Int
+  name : String?
+  three_d : Int?
+  assets : Array[Json]?
+  layers : Array[Json]
 } derive(
   FromJson(
     fields(
@@ -24,6 +28,8 @@ struct AnimationRootJson {
       out_point(rename="op"),
       width(rename="w"),
       height(rename="h"),
+      name(rename="nm"),
+      three_d(rename="ddd"),
     ),
   ),
 )
@@ -67,6 +73,24 @@ struct AssetImageJson {
       folder(rename="u"),
       width(rename="w"),
       height(rename="h"),
+    ),
+  ),
+)
+
+///|
+struct MaskJson {
+  inverted : Bool?
+  path : Json?
+  opacity : Json?
+  mode : String?
+  name : String?
+} derive(
+  FromJson(
+    fields(
+      inverted(rename="inv"),
+      path(rename="pt"),
+      opacity(rename="o"),
+      name(rename="nm"),
     ),
   ),
 )
@@ -1044,33 +1068,24 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
 ///|
 /// Parse a single Mask object
 fn parse_mask(json : Json) -> @model.Mask raise LottieError {
-  match json {
-    Object(obj) => {
-      let inverted = match obj.get("inv") {
-        Some(True) => true
-        _ => false
-      }
-      let path = parse_property_bezier(obj.get("pt"))
-      let opacity = parse_property_double(obj.get("o")) catch {
-        _ => @model.LottieProperty::new_static(100.0)
-      }
-      let mode = match obj.get("mode") {
-        Some(String("a")) => @model.MaskMode::Add
-        Some(String("s")) => @model.MaskMode::Subtract
-        Some(String("i")) => @model.MaskMode::Intersect
-        Some(String("l")) => @model.MaskMode::Lighten
-        Some(String("d")) => @model.MaskMode::Darken
-        Some(String("f")) => @model.MaskMode::Difference
-        _ => @model.MaskMode::None
-      }
-      let name = match obj.get("nm") {
-        Some(String(s)) => Some(s)
-        _ => None
-      }
-      @model.Mask::new(inverted~, path~, opacity~, mode~, name~)
-    }
+  let decoded : MaskJson = (@json.from_json(json)) catch {
     _ => raise UnexpectedType("mask", "Object")
   }
+  let inverted = decoded.inverted.unwrap_or(false)
+  let path = parse_property_bezier(decoded.path)
+  let opacity = parse_property_double(decoded.opacity) catch {
+    _ => @model.LottieProperty::new_static(100.0)
+  }
+  let mode = match decoded.mode {
+    Some("a") => @model.MaskMode::Add
+    Some("s") => @model.MaskMode::Subtract
+    Some("i") => @model.MaskMode::Intersect
+    Some("l") => @model.MaskMode::Lighten
+    Some("d") => @model.MaskMode::Darken
+    Some("f") => @model.MaskMode::Difference
+    _ => @model.MaskMode::None
+  }
+  @model.Mask::new(inverted~, path~, opacity~, mode~, name=decoded.name)
 }
 
 ///|
@@ -1204,30 +1219,19 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
 
   let layers = []
   let assets = []
-  match json {
-    Object(obj) => {
-      // Parse Assets
-      match obj.get("assets") {
-        Some(Array(arr)) =>
-          for a_json in arr {
-            assets.push(parse_asset(a_json)) catch {
-              _ => ()
-            }
-          }
-        _ => ()
+  match root.assets {
+    Some(arr) =>
+      for a_json in arr {
+        assets.push(parse_asset(a_json)) catch {
+          _ => ()
+        }
       }
-      // Parse Layers
-      match obj.get("layers") {
-        Some(Array(arr)) =>
-          for l_json in arr {
-            layers.push(parse_layer(l_json)) catch {
-              _ => ()
-            }
-          }
-        _ => ()
-      }
+    None => ()
+  }
+  for l_json in root.layers {
+    layers.push(parse_layer(l_json)) catch {
+      _ => ()
     }
-    _ => ()
   }
 
   @model.Animation::new(
@@ -1237,8 +1241,8 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     out_point~,
     width~,
     height~,
-    name=Some(get_string(json, "nm")) catch { _ => None },
-    three_d=Some(get_int(json, "ddd")) catch { _ => None },
+    name=root.name,
+    three_d=root.three_d,
     assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
   )

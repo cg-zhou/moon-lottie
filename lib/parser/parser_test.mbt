@@ -61,6 +61,18 @@ test "parse_animation_basic" {
 }
 
 ///|
+test "parse_animation_root_optional_fields_via_from_json" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"nm\":\"demo\",\"ddd\":1,\"layers\":[]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation optional root fields: \{e}")
+  }
+  inspect(ani.name, content="Some(\"demo\")")
+  inspect(ani.three_d, content="Some(1)")
+}
+
+///|
 test "parse_animation_missing_required_field_fails" {
   let cases = [
     ("v", "{\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
@@ -83,6 +95,23 @@ test "parse_animation_missing_required_field_fails" {
           "Expected parse_animation to fail when required field \{missing_key} is missing",
         )
     }
+  }
+}
+
+///|
+test "parse_mask_mode_from_typed_json_decode" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]],\"c\":true}},\"o\":{\"k\":100},\"mode\":\"s\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with mask mode: \{e}")
+  }
+  match ani.layers[0].masks {
+    Some(masks) =>
+      if masks[0].mode != @model.MaskMode::Subtract {
+        fail("mask mode should be Subtract")
+      }
+    None => fail("masks should be parsed")
   }
 }
 
