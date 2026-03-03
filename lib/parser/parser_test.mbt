@@ -1,4 +1,34 @@
 ///|
+struct JsonTest3 {
+  x : Int
+  y : Int
+} derive(
+  FromJson(fields(x(rename="renamedX"))),
+  ToJson(fields(x(rename="renamedX"))),
+  Eq,
+  Show,
+)
+
+///|
+enum JsonTest4 {
+  A(x~ : Int)
+  B(x~ : Int, y~ : Int)
+} derive(FromJson, ToJson, Eq, Show)
+
+///|
+test "derive rename mapping json args" {
+  let input = JsonTest3::{ x: 123, y: 456 }
+  let expected : Json = { "renamedX": 123, "y": 456 }
+  assert_eq(input.to_json(), expected)
+  assert_eq(@json.from_json(expected), input)
+
+  let input = JsonTest4::A(x=123)
+  let expected : Json = ["A", { "x": 123 }]
+  assert_eq(input.to_json(), expected)
+  assert_eq(@json.from_json(expected), input)
+}
+
+///|
 test "parse_animation_basic" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"
   let json = @json.parse(json_str)
