@@ -232,86 +232,86 @@ test "Shape and transform/layer/mask/animation constructors" {
     opacity=opacity,
     px=Some(static_double(10.0)),
     py=Some(static_double(20.0)),
-    s=Some(true),
+    split=Some(true),
     skew=Some(static_double(0.0)),
     skew_axis=Some(static_double(0.0)),
   )
   let default_transform = @model.Transform::new_default()
-  if transform.s != Some(true) || default_transform.s != None {
+  if transform.split != Some(true) || default_transform.split != None {
     fail("Transform constructors failed")
   }
 
   let path = @model.BezierPath::new_rect(10.0, 10.0, 20.0, 30.0)
   let path2 = @model.BezierPath::new(
-    v=[[0.0, 0.0], [1.0, 0.0]],
-    i=[[0.0, 0.0], [0.0, 0.0]],
-    o=[[0.0, 0.0], [0.0, 0.0]],
-    c=false,
+    vertices=[[0.0, 0.0], [1.0, 0.0]],
+    in_tangents=[[0.0, 0.0], [0.0, 0.0]],
+    out_tangents=[[0.0, 0.0], [0.0, 0.0]],
+    closed=false,
   )
-  if path.v.length() != 4 || path2.c != false {
+  if path.vertices.length() != 4 || path2.closed != false {
     fail("BezierPath constructors failed")
   }
 
-  let path_shape = @model.PathShape::new(ks=@model.LottieProperty::new_static(path))
+  let path_shape = @model.PathShape::new(path=@model.LottieProperty::new_static(path))
   let rect_shape = @model.RectShape::new(
-    p=static_vec2(1.0, 2.0),
-    s=static_vec2(3.0, 4.0),
-    r=static_double(5.0),
+    position=static_vec2(1.0, 2.0),
+    size=static_vec2(3.0, 4.0),
+    roundness=static_double(5.0),
   )
   let ellipse_shape = @model.EllipseShape::new(
-    p=static_vec2(1.0, 2.0),
-    s=static_vec2(3.0, 4.0),
+    position=static_vec2(1.0, 2.0),
+    size=static_vec2(3.0, 4.0),
   )
   let fill_shape = @model.FillShape::new(
-    c=@model.LottieProperty::new_static([1.0, 0.0, 0.0, 1.0]),
-    o=static_double(100.0),
+    color=@model.LottieProperty::new_static([1.0, 0.0, 0.0, 1.0]),
+    opacity=static_double(100.0),
   )
   let stroke_shape = @model.StrokeShape::new(
-    c=@model.LottieProperty::new_static([0.0, 0.0, 1.0, 1.0]),
-    o=static_double(100.0),
-    w=static_double(2.0),
+    color=@model.LottieProperty::new_static([0.0, 0.0, 1.0, 1.0]),
+    opacity=static_double(100.0),
+    width=static_double(2.0),
   )
   let gradient_colors = @model.GradientColors::new(
-    p=2,
-    k=@model.LottieProperty::new_static([0.0, 1.0, 0.0, 0.0, 1.0, 0.0]),
+    color_count=2,
+    color_stops=@model.LottieProperty::new_static([0.0, 1.0, 0.0, 0.0, 1.0, 0.0]),
   )
   let gradient_fill = @model.GradientFillShape::new(
-    t=1,
-    o=static_double(100.0),
-    s=static_vec2(0.0, 0.0),
-    e=static_vec2(100.0, 0.0),
-    g=gradient_colors,
+    gradient_type=1,
+    opacity=static_double(100.0),
+    start_point=static_vec2(0.0, 0.0),
+    end_point=static_vec2(100.0, 0.0),
+    gradient_colors=gradient_colors,
   )
   let gradient_stroke = @model.GradientStrokeShape::new(
-    t=2,
-    o=static_double(100.0),
-    s=static_vec2(0.0, 0.0),
-    e=static_vec2(100.0, 0.0),
-    g=gradient_colors,
-    w=static_double(1.0),
+    gradient_type=2,
+    opacity=static_double(100.0),
+    start_point=static_vec2(0.0, 0.0),
+    end_point=static_vec2(100.0, 0.0),
+    gradient_colors=gradient_colors,
+    width=static_double(1.0),
   )
   let trim = @model.TrimPath::new(
-    s=static_double(0.0),
-    e=static_double(100.0),
-    o=static_double(0.0),
+    start=static_double(0.0),
+    end=static_double(100.0),
+    offset=static_double(0.0),
   )
   let polystar = @model.PolystarShape::new(
-    pt=static_double(5.0),
-    p=static_vec2(0.0, 0.0),
-    r=static_double(0.0),
-    ir=static_double(10.0),
-    ir_round=static_double(0.0),
-    or=static_double(20.0),
-    or_round=static_double(0.0),
-    sy=1,
+    points=static_double(5.0),
+    position=static_vec2(0.0, 0.0),
+    rotation=static_double(0.0),
+    inner_radius=static_double(10.0),
+    inner_roundness=static_double(0.0),
+    outer_radius=static_double(20.0),
+    outer_roundness=static_double(0.0),
+    star_type=1,
   )
   let repeater = @model.Repeater::new(
-    c=static_double(3.0),
-    o=static_double(0.0),
-    tr=default_transform,
+    copies=static_double(3.0),
+    offset=static_double(0.0),
+    transform=default_transform,
   )
   let merge = @model.MergePaths::new(3)
-  let rounding = @model.Rounding::new(r=static_double(4.0))
+  let rounding = @model.Rounding::new(radius=static_double(4.0))
 
   let _group_data = @model.ShapeData::new_group([])
   let _rect_data = @model.ShapeData::new_rect(rect_shape)
@@ -329,13 +329,13 @@ test "Shape and transform/layer/mask/animation constructors" {
   let _rounding_data = @model.ShapeData::new_rounding(rounding)
 
   let shape = @model.Shape::new(
-    ty="gr",
+    shape_type="gr",
     data=@model.ShapeData::new_group([]),
-    nm=Some("g"),
-    d=Some(1),
-    hd=Some(false),
+    name=Some("g"),
+    direction=Some(1),
+    hidden=Some(false),
   )
-  if shape.ty != "gr" {
+  if shape.shape_type != "gr" {
     fail("Shape::new failed")
   }
 
@@ -349,19 +349,19 @@ test "Shape and transform/layer/mask/animation constructors" {
   }
 
   let mask = @model.Mask::new(
-    inv=false,
-    pt=@model.LottieProperty::new_static(path2),
-    o=static_double(100.0),
+    inverted=false,
+    path=@model.LottieProperty::new_static(path2),
+    opacity=static_double(100.0),
     mode=@model.MaskMode::Add,
-    nm=Some("m"),
+    name=Some("m"),
   )
   let layer = @model.Layer::new(
-    ind=1,
-    ty=4,
-    ks=default_transform,
-    ip=0.0,
-    op=60.0,
-    st=0.0,
+    index=1,
+    layer_type=4,
+    transform=default_transform,
+    in_point=0.0,
+    out_point=60.0,
+    start_time=0.0,
     masks=Some([mask]),
     data=@model.LayerData::new_shape([shape]),
   )

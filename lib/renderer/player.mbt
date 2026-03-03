@@ -71,11 +71,11 @@ pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
   for i = layers.length() - 1; i >= 0; i = i - 1 {
     let layer = layers[i]
     // Skip if hidden
-    if layer.hd == Some(true) {
+    if layer.hidden == Some(true) {
       continue
     }
     // Skip if this is a matte source (it will be rendered by the matted layer)
-    if layer.td == Some(1) {
+    if layer.matte_inherit == Some(1) {
       continue
     }
     self.render_layer(layer, layers)
@@ -90,13 +90,13 @@ fn[R : Renderer] Player::apply_parent_transform(
   comp_frame : Double,
 ) -> Unit {
   for layer in scope {
-    if layer.ind == parent_ind {
+    if layer.index == parent_ind {
       match layer.parent {
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let parent_layer_frame = comp_frame - layer.st
-      let matrix = @runtime.evaluate_transform(layer.ks, parent_layer_frame)
+      let parent_layer_frame = comp_frame - layer.start_time
+      let matrix = @runtime.evaluate_transform(layer.transform, parent_layer_frame)
       self.renderer.concat_transform(matrix)
       return
     }
@@ -110,16 +110,16 @@ fn[R : Renderer] Player::render_layer(
   scope : Array[@model.Layer],
 ) -> Unit {
   let comp_frame = self.current_frame
-  if comp_frame < layer.ip || comp_frame >= layer.op {
+  if comp_frame < layer.in_point || comp_frame >= layer.out_point {
     return
   }
 
-  let layer_frame = comp_frame - layer.st
+  let layer_frame = comp_frame - layer.start_time
   let saved_frame = self.current_frame
   self.current_frame = layer_frame
-  self.debug_layer = match layer.nm {
-    Some(name) => "\{name}#\{layer.ind}"
-    None => "#\{layer.ind}"
+  self.debug_layer = match layer.name {
+    Some(name) => "\{name}#\{layer.index}"
+    None => "#\{layer.index}"
   }
   self.debug_shape = ""
   self.debug_property = "layer"
@@ -136,22 +136,22 @@ fn[R : Renderer] Player::render_layer(
   // 1. Apply Layer Transform
   // Layer transform keyframe times are in the parent composition's frame space
   // (comp_frame), not the layer's local timeline (layer_frame).
-  let matrix = @runtime.evaluate_transform(layer.ks, comp_frame)
+  let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
   self.renderer.concat_transform(matrix)
 
   // 1.2 Apply Layer Opacity
   let opacity = @runtime.evaluate_double_property(
-    layer.ks.opacity,
+    layer.transform.opacity,
     comp_frame,
   )
   self.renderer.set_opacity(opacity / 100.0)
 
   // 1.5 Find matte source (before rendering so we know if begin_layer is needed)
   let mut matte_source : @model.Layer? = None
-  match layer.tt {
+  match layer.matte_type {
     Some(1) | Some(2) | Some(3) | Some(4) => {
       for i = 0; i < scope.length(); i = i + 1 {
-        if scope[i].ind == layer.ind && i > 0 {
+        if scope[i].index == layer.index && i > 0 {
           matte_source = Some(scope[i - 1])
           break
         }
@@ -177,14 +177,14 @@ fn[R : Renderer] Player::render_layer(
         let mask = masks[i]
 
         // Group contiguous Add masks
-        if mask.mode == @model.MaskMode::Add && not(mask.inv) {
+        if mask.mode == @model.MaskMode::Add && not(mask.inverted) {
           self.renderer.begin_path()
           self.renderer.set_fill_rule("nonzero")
           while i < masks.length() {
             let m = masks[i]
-            if m.mode == @model.MaskMode::Add && not(m.inv) {
+            if m.mode == @model.MaskMode::Add && not(m.inverted) {
               let path_val = @runtime.evaluate_path_property(
-                m.pt,
+                m.path,
                 self.current_frame,
               )
               self.draw_lottie_path(path_val)
@@ -200,8 +200,8 @@ fn[R : Renderer] Player::render_layer(
         // Handle Subtract or Inverted Add/Subtract
         match mask.mode {
           @model.MaskMode::Subtract | @model.MaskMode::Add => {
-            let is_inv = (mask.mode == @model.MaskMode::Add && mask.inv) ||
-              (mask.mode == @model.MaskMode::Subtract && not(mask.inv))
+            let is_inv = (mask.mode == @model.MaskMode::Add && mask.inverted) ||
+              (mask.mode == @model.MaskMode::Subtract && not(mask.inverted))
 
             if is_inv {
               // Difference: Save current state, then clip with a hole
@@ -215,7 +215,7 @@ fn[R : Renderer] Player::render_layer(
               self.renderer.close_path()
 
               let path_val = @runtime.evaluate_path_property(
-                mask.pt,
+                mask.path,
                 self.current_frame,
               )
               self.draw_lottie_path(path_val)
@@ -226,7 +226,7 @@ fn[R : Renderer] Player::render_layer(
               // Inverted Subtract is same as Add
               self.renderer.begin_path()
               let path_val = @runtime.evaluate_path_property(
-                mask.pt,
+                mask.path,
                 self.current_frame,
               )
               self.draw_lottie_path(path_val)
@@ -237,11 +237,11 @@ fn[R : Renderer] Player::render_layer(
           @model.MaskMode::Intersect => {
             self.renderer.begin_path()
             let path_val = @runtime.evaluate_path_property(
-              mask.pt,
+              mask.path,
               self.current_frame,
             )
             self.draw_lottie_path(path_val)
-            if mask.inv {
+            if mask.inverted {
               // Inverted Intersect involves complex logic, simplified:
               self.renderer.move_to(-10000.0, -10000.0)
               self.renderer.line_to(10000.0, -10000.0)
@@ -273,7 +273,7 @@ fn[R : Renderer] Player::render_layer(
   // 5. Apply Track Matte inside the isolated layer, then end isolation
   match matte_source {
     Some(m_layer) => {
-      let mode = match layer.tt {
+      let mode = match layer.matte_type {
         Some(1) | Some(3) => "destination-in"
         Some(2) | Some(4) => "destination-out"
         _ => "destination-in"
@@ -366,11 +366,11 @@ fn color_rgb_from_vec(v : Array[Double]) -> (Int, Int, Int) {
 
 ///|
 fn resolve_image_asset_src(asset : @model.Asset) -> String {
-  let p = match asset.p {
+  let p = match asset.path {
     Some(v) => v
     None => ""
   }
-  let u = match asset.u {
+  let u = match asset.folder {
     Some(v) => v
     None => ""
   }
@@ -433,10 +433,10 @@ fn[R : Renderer] Player::render_layer_content(
                 Some(layers) =>
                   for i = layers.length() - 1; i >= 0; i = i - 1 {
                     let child_layer = layers[i]
-                    if child_layer.hd == Some(true) {
+                    if child_layer.hidden == Some(true) {
                       continue
                     }
-                    if child_layer.td == Some(1) {
+                    if child_layer.matte_inherit == Some(1) {
                       continue
                     }
                     self.render_layer(child_layer, layers)
@@ -455,11 +455,11 @@ fn[R : Renderer] Player::render_layer_content(
         Some(assets) =>
           for asset in assets {
             if asset.id == ref_id {
-              let w = match asset.w {
+              let w = match asset.width {
                 Some(v) => v
                 None => 0
               }
-              let h = match asset.h {
+              let h = match asset.height {
                 Some(v) => v
                 None => 0
               }
@@ -475,9 +475,9 @@ fn[R : Renderer] Player::render_layer_content(
         data.text,
         self.current_frame,
       )
-      if doc.t != "" {
-        let (r, g, b) = color_rgb_from_vec(doc.fc)
-        self.renderer.draw_text(doc.t, doc.f, doc.s, r, g, b, 1.0, doc.j)
+      if doc.text != "" {
+        let (r, g, b) = color_rgb_from_vec(doc.fill_color)
+        self.renderer.draw_text(doc.text, doc.font, doc.size, r, g, b, 1.0, doc.justify)
       }
     }
     Null => ()
@@ -489,13 +489,13 @@ pub fn[R : Renderer] Player::render_shape(
   self : Player[R],
   shape : @model.Shape,
 ) -> Unit {
-  self.debug_shape = match shape.nm {
-    Some(name) => "\{name}:\{shape.ty}"
-    None => shape.ty
+  self.debug_shape = match shape.name {
+    Some(name) => "\{name}:\{shape.shape_type}"
+    None => shape.shape_type
   }
-  self.debug_property = shape.ty
+  self.debug_property = shape.shape_type
   self.debug_log("render_shape")
-  match shape.hd {
+  match shape.hidden {
     Some(true) => return
     _ => ()
   }
@@ -549,9 +549,9 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.restore()
     }
     Rect(r) => {
-      let p = @runtime.evaluate_vec_property(r.p, self.current_frame)
-      let s = @runtime.evaluate_vec_property(r.s, self.current_frame)
-      let corner_r = @runtime.evaluate_double_property(r.r, self.current_frame)
+      let p = @runtime.evaluate_vec_property(r.position, self.current_frame)
+      let s = @runtime.evaluate_vec_property(r.size, self.current_frame)
+      let corner_r = @runtime.evaluate_double_property(r.roundness, self.current_frame)
       let x = get_vec_at(p, 0, 0.0)
       let y = get_vec_at(p, 1, 0.0)
       let w = get_vec_at(s, 0, 0.0)
@@ -559,8 +559,8 @@ pub fn[R : Renderer] Player::render_shape(
       self.current_paths.push(create_rect_path(x, y, w, h, corner_r))
     }
     Ellipse(e) => {
-      let p = @runtime.evaluate_vec_property(e.p, self.current_frame)
-      let s = @runtime.evaluate_vec_property(e.s, self.current_frame)
+      let p = @runtime.evaluate_vec_property(e.position, self.current_frame)
+      let s = @runtime.evaluate_vec_property(e.size, self.current_frame)
       let cx = get_vec_at(p, 0, 0.0)
       let cy = get_vec_at(p, 1, 0.0)
       let rx = get_vec_at(s, 0, 0.0) / 2.0
@@ -568,12 +568,12 @@ pub fn[R : Renderer] Player::render_shape(
       self.current_paths.push(create_ellipse_path(cx, cy, rx, ry))
     }
     Path(p) => {
-      let path = @runtime.evaluate_path_property(p.ks, self.current_frame)
+      let path = @runtime.evaluate_path_property(p.path, self.current_frame)
       self.current_paths.push(path)
     }
     Fill(f) => {
-      let color_vec = @runtime.evaluate_vec_property(f.c, self.current_frame)
-      let opacity = @runtime.evaluate_double_property(f.o, self.current_frame)
+      let color_vec = @runtime.evaluate_vec_property(f.color, self.current_frame)
+      let opacity = @runtime.evaluate_double_property(f.opacity, self.current_frame)
       let (r, g, b) = color_rgb_from_vec(color_vec)
       self.renderer.begin_path()
       for p in self.current_paths {
@@ -582,34 +582,34 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.fill(r, g, b, opacity / 100.0)
     }
     Stroke(s) => {
-      let color_vec = @runtime.evaluate_vec_property(s.c, self.current_frame)
-      let opacity = @runtime.evaluate_double_property(s.o, self.current_frame)
-      let width = @runtime.evaluate_double_property(s.w, self.current_frame)
+      let color_vec = @runtime.evaluate_vec_property(s.color, self.current_frame)
+      let opacity = @runtime.evaluate_double_property(s.opacity, self.current_frame)
+      let width = @runtime.evaluate_double_property(s.width, self.current_frame)
       let (r, g, b) = color_rgb_from_vec(color_vec)
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
       }
-      self.renderer.set_stroke_style(s.lc, s.lj, s.ml)
+      self.renderer.set_stroke_style(s.line_cap, s.line_join, s.miter_limit)
       self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
     GradientFill(f) => {
-      let start_p = @runtime.evaluate_vec_property(f.s, self.current_frame)
-      let end_p = @runtime.evaluate_vec_property(f.e, self.current_frame)
-      let stops = @runtime.evaluate_vec_property(f.g.k, self.current_frame)
-      let opacity = @runtime.evaluate_double_property(f.o, self.current_frame)
+      let start_p = @runtime.evaluate_vec_property(f.start_point, self.current_frame)
+      let end_p = @runtime.evaluate_vec_property(f.end_point, self.current_frame)
+      let stops = @runtime.evaluate_vec_property(f.gradient_colors.color_stops, self.current_frame)
+      let opacity = @runtime.evaluate_double_property(f.opacity, self.current_frame)
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
       }
-      match f.t {
+      match f.gradient_type {
         Linear =>
           self.renderer.fill_linear_gradient(
             get_vec_at(start_p, 0, 0.0),
             get_vec_at(start_p, 1, 0.0),
             get_vec_at(end_p, 0, 0.0),
             get_vec_at(end_p, 1, 0.0),
-            f.g.p,
+            f.gradient_colors.color_count,
             stops,
             opacity / 100.0,
           )
@@ -628,7 +628,7 @@ pub fn[R : Renderer] Player::render_shape(
             x0,
             y0,
             0.0,
-            f.g.p,
+            f.gradient_colors.color_count,
             stops,
             opacity / 100.0,
           )
@@ -636,24 +636,24 @@ pub fn[R : Renderer] Player::render_shape(
       }
     }
     GradientStroke(s) => {
-      let start_p = @runtime.evaluate_vec_property(s.s, self.current_frame)
-      let end_p = @runtime.evaluate_vec_property(s.e, self.current_frame)
-      let stops = @runtime.evaluate_vec_property(s.g.k, self.current_frame)
-      let opacity = @runtime.evaluate_double_property(s.o, self.current_frame)
-      let width = @runtime.evaluate_double_property(s.w, self.current_frame)
+      let start_p = @runtime.evaluate_vec_property(s.start_point, self.current_frame)
+      let end_p = @runtime.evaluate_vec_property(s.end_point, self.current_frame)
+      let stops = @runtime.evaluate_vec_property(s.gradient_colors.color_stops, self.current_frame)
+      let opacity = @runtime.evaluate_double_property(s.opacity, self.current_frame)
+      let width = @runtime.evaluate_double_property(s.width, self.current_frame)
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
       }
-      self.renderer.set_stroke_style(s.lc, s.lj, s.ml)
-      match s.t {
+      self.renderer.set_stroke_style(s.line_cap, s.line_join, s.miter_limit)
+      match s.gradient_type {
         Linear =>
           self.renderer.stroke_linear_gradient(
             get_vec_at(start_p, 0, 0.0),
             get_vec_at(start_p, 1, 0.0),
             get_vec_at(end_p, 0, 0.0),
             get_vec_at(end_p, 1, 0.0),
-            s.g.p,
+            s.gradient_colors.color_count,
             stops,
             opacity / 100.0,
             width,
@@ -673,7 +673,7 @@ pub fn[R : Renderer] Player::render_shape(
             x0,
             y0,
             0.0,
-            s.g.p,
+            s.gradient_colors.color_count,
             stops,
             opacity / 100.0,
             width,
@@ -686,22 +686,22 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.concat_transform(matrix)
     }
     TrimPath(t) => {
-      let start = @runtime.evaluate_double_property(t.s, self.current_frame)
-      let end = @runtime.evaluate_double_property(t.e, self.current_frame)
-      let offset = @runtime.evaluate_double_property(t.o, self.current_frame)
+      let start = @runtime.evaluate_double_property(t.start, self.current_frame)
+      let end = @runtime.evaluate_double_property(t.end, self.current_frame)
+      let offset = @runtime.evaluate_double_property(t.offset, self.current_frame)
       self.current_paths = apply_trim_path_with_mode(
         self.current_paths,
         start,
         end,
         offset,
-        t.m,
+        t.multiple,
       )
     }
     Polystar(sr) => self.current_paths.push(self.create_polystar_path(sr))
     Repeater(rep) => {
-      let copies = @runtime.evaluate_double_property(rep.c, self.current_frame).to_int()
-      let offset = @runtime.evaluate_double_property(rep.o, self.current_frame)
-      let tr_matrix = @runtime.evaluate_transform(rep.tr, self.current_frame)
+      let copies = @runtime.evaluate_double_property(rep.copies, self.current_frame).to_int()
+      let offset = @runtime.evaluate_double_property(rep.offset, self.current_frame)
+      let tr_matrix = @runtime.evaluate_transform(rep.transform, self.current_frame)
 
       let original_paths = self.current_paths
       let new_paths = []
@@ -709,9 +709,9 @@ pub fn[R : Renderer] Player::render_shape(
       // Lottie Repeater: n-th copy transform is (tr_matrix ^ (n + offset))
       // Composite: 1 = Above (new copies on top), 2 = Below
 
-      let start_idx = if rep.m == 1 { 0 } else { copies - 1 }
-      let end_idx = if rep.m == 1 { copies } else { -1 }
-      let step = if rep.m == 1 { 1 } else { -1 }
+      let start_idx = if rep.composite == 1 { 0 } else { copies - 1 }
+      let end_idx = if rep.composite == 1 { copies } else { -1 }
+      let step = if rep.composite == 1 { 1 } else { -1 }
 
       let mut i = start_idx
       while (if step == 1 { i < end_idx } else { i > end_idx }) {
@@ -734,7 +734,7 @@ pub fn[R : Renderer] Player::render_shape(
       // Lottie MergePaths: 1=Merge, 2=Add, 3=Subtract, 4=Intersect, 5=Exclude
       // For SVG, we use fill-rule="evenodd" to approximate boolean operations
       // since we don't have a path boolean engine in MoonBit yet.
-      match merge.mm {
+      match merge.merge_mode {
         @model.MergeMode::Merge | @model.MergeMode::Add =>
           self.renderer.set_fill_rule("nonzero")
         @model.MergeMode::Subtract
@@ -743,7 +743,7 @@ pub fn[R : Renderer] Player::render_shape(
       }
     Rounding(rounding) => {
       let radius = @runtime.evaluate_double_property(
-        rounding.r,
+        rounding.radius,
         self.current_frame,
       )
       if radius > 0.0 {
@@ -790,29 +790,34 @@ fn transform_path(
   m : @math.Matrix,
 ) -> @model.BezierPath {
   let v = []
-  for i, _ in path.v {
-    let (nx, ny) = m.transform_point(get_pt_at(path.v, i, 0), get_pt_at(path.v, i, 1))
+  for i, _ in path.vertices {
+    let (nx, ny) = m.transform_point(get_pt_at(path.vertices, i, 0), get_pt_at(path.vertices, i, 1))
     v.push([nx, ny])
   }
   // Tangents are relative, but they still get scaled/rotated (not translated)
   let i_tangents = []
-  for idx, _ in path.i {
+  for idx, _ in path.in_tangents {
     // To transform a vector (relative point), we ignore translation (e, f)
-    let px = get_pt_at(path.i, idx, 0)
-    let py = get_pt_at(path.i, idx, 1)
+    let px = get_pt_at(path.in_tangents, idx, 0)
+    let py = get_pt_at(path.in_tangents, idx, 1)
     let nx = px * m.a + py * m.c
     let ny = px * m.b + py * m.d
     i_tangents.push([nx, ny])
   }
   let o_tangents = []
-  for idx, _ in path.o {
-    let px = get_pt_at(path.o, idx, 0)
-    let py = get_pt_at(path.o, idx, 1)
+  for idx, _ in path.out_tangents {
+    let px = get_pt_at(path.out_tangents, idx, 0)
+    let py = get_pt_at(path.out_tangents, idx, 1)
     let nx = px * m.a + py * m.c
     let ny = px * m.b + py * m.d
     o_tangents.push([nx, ny])
   }
-  @model.BezierPath::new(v~, i=i_tangents, o=o_tangents, c=path.c)
+  @model.BezierPath::new(
+    vertices=v,
+    in_tangents=i_tangents,
+    out_tangents=o_tangents,
+    closed=path.closed,
+  )
 }
 
 ///|
@@ -820,10 +825,10 @@ fn[R : Renderer] Player::draw_lottie_path(
   self : Player[R],
   path : @model.BezierPath,
 ) -> Unit {
-  let v = path.v
+  let v = path.vertices
   if v.length() > 0 {
-    let i = path.i
-    let o = path.o
+    let i = path.in_tangents
+    let o = path.out_tangents
     self.renderer.move_to(get_pt_at(v, 0, 0), get_pt_at(v, 0, 1))
     for n = 1; n < v.length(); n = n + 1 {
       let cp1x = get_pt_at(v, n - 1, 0) + get_pt_at(o, n - 1, 0)
@@ -839,7 +844,7 @@ fn[R : Renderer] Player::draw_lottie_path(
         get_pt_at(v, n, 1),
       )
     }
-    if path.c {
+    if path.closed {
       let n = v.length()
       let cp1x = get_pt_at(v, n - 1, 0) + get_pt_at(o, n - 1, 0)
       let cp1y = get_pt_at(v, n - 1, 1) + get_pt_at(o, n - 1, 1)
@@ -889,10 +894,10 @@ fn create_ellipse_path(
   let ox = rx * kappa
   let oy = ry * kappa
   @model.BezierPath::new(
-    v=[[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]],
-    i=[[-ox, 0.0], [0.0, -oy], [ox, 0.0], [0.0, oy]],
-    o=[[ox, 0.0], [0.0, oy], [-ox, 0.0], [0.0, -oy]],
-    c=true,
+    vertices=[[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]],
+    in_tangents=[[-ox, 0.0], [0.0, -oy], [ox, 0.0], [0.0, oy]],
+    out_tangents=[[ox, 0.0], [0.0, oy], [-ox, 0.0], [0.0, -oy]],
+    closed=true,
   )
 }
 
@@ -1039,24 +1044,24 @@ fn trim_paths_by_global_range(
 
 ///|
 fn get_path_length(path : @model.BezierPath) -> Double {
-  if path.v.length() < 2 {
+  if path.vertices.length() < 2 {
     return 0.0
   }
-  let num_pts = path.v.length()
-  let num_segs = if path.c { num_pts } else { num_pts - 1 }
+  let num_pts = path.vertices.length()
+  let num_segs = if path.closed { num_pts } else { num_pts - 1 }
   let mut total_length = 0.0
   for j = 0; j < num_segs; j = j + 1 {
     let next_j = (j + 1) % num_pts
-    let p0 = @math.Vector2::new(get_pt_at(path.v, j, 0), get_pt_at(path.v, j, 1))
+    let p0 = @math.Vector2::new(get_pt_at(path.vertices, j, 0), get_pt_at(path.vertices, j, 1))
     let p1 = @math.Vector2::new(
-      get_pt_at(path.v, j, 0) + get_pt_at(path.o, j, 0),
-      get_pt_at(path.v, j, 1) + get_pt_at(path.o, j, 1),
+      get_pt_at(path.vertices, j, 0) + get_pt_at(path.out_tangents, j, 0),
+      get_pt_at(path.vertices, j, 1) + get_pt_at(path.out_tangents, j, 1),
     )
     let p2 = @math.Vector2::new(
-      get_pt_at(path.v, next_j, 0) + get_pt_at(path.i, next_j, 0),
-      get_pt_at(path.v, next_j, 1) + get_pt_at(path.i, next_j, 1),
+      get_pt_at(path.vertices, next_j, 0) + get_pt_at(path.in_tangents, next_j, 0),
+      get_pt_at(path.vertices, next_j, 1) + get_pt_at(path.in_tangents, next_j, 1),
     )
-    let p3 = @math.Vector2::new(get_pt_at(path.v, next_j, 0), get_pt_at(path.v, next_j, 1))
+    let p3 = @math.Vector2::new(get_pt_at(path.vertices, next_j, 0), get_pt_at(path.vertices, next_j, 1))
     total_length += @math.get_cubic_bezier_length(
       p0,
       p1,
@@ -1116,7 +1121,7 @@ pub fn trim_single_path(
   e : Double,
   o : Double,
 ) -> Array[@model.BezierPath] {
-  let v = path.v
+  let v = path.vertices
   if v.length() < 2 {
     return [path]
   }
@@ -1125,18 +1130,18 @@ pub fn trim_single_path(
   let seg_lengths = []
   let mut total_length = 0.0
   let num_pts = v.length()
-  let num_segs = if path.c { num_pts } else { num_pts - 1 }
+  let num_segs = if path.closed { num_pts } else { num_pts - 1 }
 
   for j = 0; j < num_segs; j = j + 1 {
     let next_j = (j + 1) % num_pts
     let p0 = @math.Vector2::new(get_pt_at(v, j, 0), get_pt_at(v, j, 1))
     let p1 = @math.Vector2::new(
-      get_pt_at(v, j, 0) + get_pt_at(path.o, j, 0),
-      get_pt_at(v, j, 1) + get_pt_at(path.o, j, 1),
+      get_pt_at(v, j, 0) + get_pt_at(path.out_tangents, j, 0),
+      get_pt_at(v, j, 1) + get_pt_at(path.out_tangents, j, 1),
     )
     let p2 = @math.Vector2::new(
-      get_pt_at(v, next_j, 0) + get_pt_at(path.i, next_j, 0),
-      get_pt_at(v, next_j, 1) + get_pt_at(path.i, next_j, 1),
+      get_pt_at(v, next_j, 0) + get_pt_at(path.in_tangents, next_j, 0),
+      get_pt_at(v, next_j, 1) + get_pt_at(path.in_tangents, next_j, 1),
     )
     let p3 = @math.Vector2::new(get_pt_at(v, next_j, 0), get_pt_at(v, next_j, 1))
     let len = @math.get_cubic_bezier_length(
@@ -1205,8 +1210,8 @@ fn extract_bezier_segment(
   let new_o = []
 
   let mut current_acc = 0.0
-  let num_pts = path.v.length()
-  let num_segs = if path.c { num_pts } else { num_pts - 1 }
+  let num_pts = path.vertices.length()
+  let num_segs = if path.closed { num_pts } else { num_pts - 1 }
 
   for j = 0; j < num_segs; j = j + 1 {
     let seg_len = seg_lengths[j]
@@ -1217,20 +1222,20 @@ fn extract_bezier_segment(
     if seg_end > s_len && seg_start < e_len {
       let next_j = (j + 1) % num_pts
       let p0 = @math.Vector2::new(
-        get_pt_at(path.v, j, 0),
-        get_pt_at(path.v, j, 1),
+        get_pt_at(path.vertices, j, 0),
+        get_pt_at(path.vertices, j, 1),
       )
       let p1 = @math.Vector2::new(
-        get_pt_at(path.v, j, 0) + get_pt_at(path.o, j, 0),
-        get_pt_at(path.v, j, 1) + get_pt_at(path.o, j, 1),
+        get_pt_at(path.vertices, j, 0) + get_pt_at(path.out_tangents, j, 0),
+        get_pt_at(path.vertices, j, 1) + get_pt_at(path.out_tangents, j, 1),
       )
       let p2 = @math.Vector2::new(
-        get_pt_at(path.v, next_j, 0) + get_pt_at(path.i, next_j, 0),
-        get_pt_at(path.v, next_j, 1) + get_pt_at(path.i, next_j, 1),
+        get_pt_at(path.vertices, next_j, 0) + get_pt_at(path.in_tangents, next_j, 0),
+        get_pt_at(path.vertices, next_j, 1) + get_pt_at(path.in_tangents, next_j, 1),
       )
       let p3 = @math.Vector2::new(
-        get_pt_at(path.v, next_j, 0),
-        get_pt_at(path.v, next_j, 1),
+        get_pt_at(path.vertices, next_j, 0),
+        get_pt_at(path.vertices, next_j, 1),
       )
 
       // Calculate local t for start and end
@@ -1280,13 +1285,13 @@ fn extract_bezier_segment(
   }
 
   if new_v.length() == 0 {
-    return @model.BezierPath::new(v=[], i=[], o=[], c=false)
+    return @model.BezierPath::new(vertices=[], in_tangents=[], out_tangents=[], closed=false)
   }
 
   // Last vertex has no out tangent (or it's the end of open path)
   new_o.push([0.0, 0.0])
 
-  @model.BezierPath::new(v=new_v, i=new_i, o=new_o, c=false)
+  @model.BezierPath::new(vertices=new_v, in_tangents=new_i, out_tangents=new_o, closed=false)
 }
 
 ///|
@@ -1294,12 +1299,12 @@ fn[R] Player::create_polystar_path(
   self : Player[R],
   sr : @model.PolystarShape,
 ) -> @model.BezierPath {
-  let pt = @runtime.evaluate_double_property(sr.pt, self.current_frame)
-  let p = @runtime.evaluate_vec_property(sr.p, self.current_frame)
-  let r = @runtime.evaluate_double_property(sr.r, self.current_frame)
-  let or = @runtime.evaluate_double_property(sr.or, self.current_frame)
+  let pt = @runtime.evaluate_double_property(sr.points, self.current_frame)
+  let p = @runtime.evaluate_vec_property(sr.position, self.current_frame)
+  let r = @runtime.evaluate_double_property(sr.rotation, self.current_frame)
+  let or = @runtime.evaluate_double_property(sr.outer_radius, self.current_frame)
   let or_round = @runtime.evaluate_double_property(
-    sr.or_round,
+    sr.outer_roundness,
     self.current_frame,
   )
 
@@ -1310,7 +1315,7 @@ fn[R] Player::create_polystar_path(
   let ins = []
   let outs = []
 
-  if sr.sy == 2 { // Polygon
+  if sr.star_type == 2 { // Polygon
     let angle_step = 2.0 * @std_math.PI / pt
     let start_angle = (r - 90.0) * @std_math.PI / 180.0
 
@@ -1333,9 +1338,9 @@ fn[R] Player::create_polystar_path(
       }
     }
   } else { // Star
-    let ir = @runtime.evaluate_double_property(sr.ir, self.current_frame)
+    let ir = @runtime.evaluate_double_property(sr.inner_radius, self.current_frame)
     let ir_round = @runtime.evaluate_double_property(
-      sr.ir_round,
+      sr.inner_roundness,
       self.current_frame,
     )
     let angle_step = @std_math.PI / pt
@@ -1369,5 +1374,10 @@ fn[R] Player::create_polystar_path(
     }
   }
 
-  @model.BezierPath::new(v=vertices, i=ins, o=outs, c=true)
+  @model.BezierPath::new(
+    vertices=vertices,
+    in_tangents=ins,
+    out_tangents=outs,
+    closed=true,
+  )
 }

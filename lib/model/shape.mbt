@@ -90,80 +90,80 @@ pub fn ShapeData::new_rounding(rounding : Rounding) -> ShapeData {
 
 ///|
 pub struct Shape {
-  nm : String?
-  ty : String
-  d : Int?
-  hd : Bool?
+  name : String?
+  shape_type : String
+  direction : Int?
+  hidden : Bool?
   data : ShapeData
 }
 
 ///|
 pub fn Shape::new(
-  ty~ : String,
+  shape_type~ : String,
   data~ : ShapeData,
-  nm? : String? = None,
-  d? : Int? = None,
-  hd? : Bool? = None,
+  name? : String? = None,
+  direction? : Int? = None,
+  hidden? : Bool? = None,
 ) -> Shape {
-  { nm, ty, d, hd, data }
+  { name, shape_type, direction, hidden, data }
 }
 
 ///|
 pub struct RectShape {
-  p : LottieProperty[Array[Double]] // Position
-  s : LottieProperty[Array[Double]] // Size
-  r : LottieProperty[Double] // Roundness
+  position : LottieProperty[Array[Double]]
+  size : LottieProperty[Array[Double]]
+  roundness : LottieProperty[Double]
 }
 
 ///|
 pub fn RectShape::new(
-  p~ : LottieProperty[Array[Double]],
-  s~ : LottieProperty[Array[Double]],
-  r~ : LottieProperty[Double],
+  position~ : LottieProperty[Array[Double]],
+  size~ : LottieProperty[Array[Double]],
+  roundness~ : LottieProperty[Double],
 ) -> RectShape {
-  { p, s, r }
+  { position, size, roundness }
 }
 
 ///|
 pub struct EllipseShape {
-  p : LottieProperty[Array[Double]] // Position
-  s : LottieProperty[Array[Double]] // Size
+  position : LottieProperty[Array[Double]]
+  size : LottieProperty[Array[Double]]
 }
 
 ///|
 pub fn EllipseShape::new(
-  p~ : LottieProperty[Array[Double]],
-  s~ : LottieProperty[Array[Double]],
+  position~ : LottieProperty[Array[Double]],
+  size~ : LottieProperty[Array[Double]],
 ) -> EllipseShape {
-  { p, s }
+  { position, size }
 }
 
 ///|
 pub struct PathShape {
-  ks : LottieProperty[BezierPath]
+  path : LottieProperty[BezierPath]
 }
 
 ///|
-pub fn PathShape::new(ks~ : LottieProperty[BezierPath]) -> PathShape {
-  { ks, }
+pub fn PathShape::new(path~ : LottieProperty[BezierPath]) -> PathShape {
+  { path, }
 }
 
 ///|
 pub struct BezierPath {
-  v : Array[Array[Double]] // Vertices
-  i : Array[Array[Double]] // In tangents
-  o : Array[Array[Double]] // Out tangents
-  c : Bool // Closed
+  vertices : Array[Array[Double]]
+  in_tangents : Array[Array[Double]]
+  out_tangents : Array[Array[Double]]
+  closed : Bool
 }
 
 ///|
 pub fn BezierPath::new(
-  v~ : Array[Array[Double]],
-  i~ : Array[Array[Double]],
-  o~ : Array[Array[Double]],
-  c~ : Bool,
+  vertices~ : Array[Array[Double]],
+  in_tangents~ : Array[Array[Double]],
+  out_tangents~ : Array[Array[Double]],
+  closed~ : Bool,
 ) -> BezierPath {
-  { v, i, o, c }
+  { vertices, in_tangents, out_tangents, closed }
 }
 
 ///|
@@ -176,47 +176,47 @@ pub fn BezierPath::new_rect(
   let hw = w / 2.0
   let hh = h / 2.0
   BezierPath::new(
-    v=[[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh]],
-    i=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
-    o=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
-    c=true,
+    vertices=[[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh]],
+    in_tangents=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    out_tangents=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    closed=true,
   )
 }
 
 ///|
 pub struct FillShape {
-  c : LottieProperty[Array[Double]] // Color
-  o : LottieProperty[Double] // Opacity
+  color : LottieProperty[Array[Double]]
+  opacity : LottieProperty[Double]
 }
 
 ///|
 pub fn FillShape::new(
-  c~ : LottieProperty[Array[Double]],
-  o~ : LottieProperty[Double],
+  color~ : LottieProperty[Array[Double]],
+  opacity~ : LottieProperty[Double],
 ) -> FillShape {
-  { c, o }
+  { color, opacity }
 }
 
 ///|
 pub struct StrokeShape {
-  c : LottieProperty[Array[Double]] // Color
-  o : LottieProperty[Double] // Opacity
-  w : LottieProperty[Double] // Width
-  lc : Int // Line Cap
-  lj : Int // Line Join
-  ml : Double // Miter Limit
+  color : LottieProperty[Array[Double]]
+  opacity : LottieProperty[Double]
+  width : LottieProperty[Double]
+  line_cap : Int
+  line_join : Int
+  miter_limit : Double
 }
 
 ///|
 pub fn StrokeShape::new(
-  c~ : LottieProperty[Array[Double]],
-  o~ : LottieProperty[Double],
-  w~ : LottieProperty[Double],
-  lc? : Int = 1,
-  lj? : Int = 1,
-  ml? : Double = 0.0,
+  color~ : LottieProperty[Array[Double]],
+  opacity~ : LottieProperty[Double],
+  width~ : LottieProperty[Double],
+  line_cap? : Int = 1,
+  line_join? : Int = 1,
+  miter_limit? : Double = 0.0,
 ) -> StrokeShape {
-  { c, o, w, lc, lj, ml }
+  { color, opacity, width, line_cap, line_join, miter_limit }
 }
 
 ///|
@@ -232,128 +232,147 @@ pub fn GradientType::from_int(v : Int) -> GradientType {
 
 ///|
 pub struct GradientColors {
-  p : Int // Number of colors
-  k : LottieProperty[Array[Double]] // Stops and Colors
+  color_count : Int
+  color_stops : LottieProperty[Array[Double]]
 }
 
 ///|
 pub fn GradientColors::new(
-  p~ : Int,
-  k~ : LottieProperty[Array[Double]],
+  color_count~ : Int,
+  color_stops~ : LottieProperty[Array[Double]],
 ) -> GradientColors {
-  { p, k }
+  { color_count, color_stops }
 }
 
 ///|
 pub struct GradientFillShape {
-  t : GradientType
-  o : LottieProperty[Double]
-  s : LottieProperty[Array[Double]] // Start point
-  e : LottieProperty[Array[Double]] // End point
-  g : GradientColors
+  gradient_type : GradientType
+  opacity : LottieProperty[Double]
+  start_point : LottieProperty[Array[Double]]
+  end_point : LottieProperty[Array[Double]]
+  gradient_colors : GradientColors
 }
 
 ///|
 pub fn GradientFillShape::new(
-  t~ : Int,
-  o~ : LottieProperty[Double],
-  s~ : LottieProperty[Array[Double]],
-  e~ : LottieProperty[Array[Double]],
-  g~ : GradientColors,
+  gradient_type~ : Int,
+  opacity~ : LottieProperty[Double],
+  start_point~ : LottieProperty[Array[Double]],
+  end_point~ : LottieProperty[Array[Double]],
+  gradient_colors~ : GradientColors,
 ) -> GradientFillShape {
-  let ty = GradientType::from_int(t)
-  { t: ty, o, s, e, g }
+  let ty = GradientType::from_int(gradient_type)
+  { gradient_type: ty, opacity, start_point, end_point, gradient_colors }
 }
 
 ///|
 pub struct GradientStrokeShape {
-  t : GradientType
-  o : LottieProperty[Double]
-  s : LottieProperty[Array[Double]] // Start point
-  e : LottieProperty[Array[Double]] // End point
-  g : GradientColors
-  w : LottieProperty[Double] // Stroke width
-  lc : Int // Line Cap
-  lj : Int // Line Join
-  ml : Double // Miter Limit
+  gradient_type : GradientType
+  opacity : LottieProperty[Double]
+  start_point : LottieProperty[Array[Double]]
+  end_point : LottieProperty[Array[Double]]
+  gradient_colors : GradientColors
+  width : LottieProperty[Double]
+  line_cap : Int
+  line_join : Int
+  miter_limit : Double
 }
 
 ///|
 pub fn GradientStrokeShape::new(
-  t~ : Int,
-  o~ : LottieProperty[Double],
-  s~ : LottieProperty[Array[Double]],
-  e~ : LottieProperty[Array[Double]],
-  g~ : GradientColors,
-  w~ : LottieProperty[Double],
-  lc? : Int = 1,
-  lj? : Int = 1,
-  ml? : Double = 0.0,
+  gradient_type~ : Int,
+  opacity~ : LottieProperty[Double],
+  start_point~ : LottieProperty[Array[Double]],
+  end_point~ : LottieProperty[Array[Double]],
+  gradient_colors~ : GradientColors,
+  width~ : LottieProperty[Double],
+  line_cap? : Int = 1,
+  line_join? : Int = 1,
+  miter_limit? : Double = 0.0,
 ) -> GradientStrokeShape {
-  let ty = GradientType::from_int(t)
-  { t: ty, o, s, e, g, w, lc, lj, ml }
+  let ty = GradientType::from_int(gradient_type)
+  {
+    gradient_type: ty,
+    opacity,
+    start_point,
+    end_point,
+    gradient_colors,
+    width,
+    line_cap,
+    line_join,
+    miter_limit,
+  }
 }
 
 ///|
 pub struct TrimPath {
-  s : LottieProperty[Double] // Start
-  e : LottieProperty[Double] // End
-  o : LottieProperty[Double] // Offset
-  m : Int // Trim Multiple Shapes: 1=Simultaneously, 2=Individually
+  start : LottieProperty[Double]
+  end : LottieProperty[Double]
+  offset : LottieProperty[Double]
+  multiple : Int
 }
 
 ///|
 pub fn TrimPath::new(
-  s~ : LottieProperty[Double],
-  e~ : LottieProperty[Double],
-  o~ : LottieProperty[Double],
-  m? : Int = 1,
+  start~ : LottieProperty[Double],
+  end~ : LottieProperty[Double],
+  offset~ : LottieProperty[Double],
+  multiple? : Int = 1,
 ) -> TrimPath {
-  { s, e, o, m }
+  { start, end, offset, multiple }
 }
 
 ///|
 pub struct PolystarShape {
-  pt : LottieProperty[Double] // Points
-  p : LottieProperty[Array[Double]] // Position
-  r : LottieProperty[Double] // Rotation
-  ir : LottieProperty[Double] // Inner Radius
-  ir_round : LottieProperty[Double] // Inner Roundness
-  or : LottieProperty[Double] // Outer Radius
-  or_round : LottieProperty[Double] // Outer Roundness
-  sy : Int // Star Type: 1=Star, 2=Polygon
+  points : LottieProperty[Double]
+  position : LottieProperty[Array[Double]]
+  rotation : LottieProperty[Double]
+  inner_radius : LottieProperty[Double]
+  inner_roundness : LottieProperty[Double]
+  outer_radius : LottieProperty[Double]
+  outer_roundness : LottieProperty[Double]
+  star_type : Int
 }
 
 ///|
 pub fn PolystarShape::new(
-  pt~ : LottieProperty[Double],
-  p~ : LottieProperty[Array[Double]],
-  r~ : LottieProperty[Double],
-  ir~ : LottieProperty[Double],
-  ir_round~ : LottieProperty[Double],
-  or~ : LottieProperty[Double],
-  or_round~ : LottieProperty[Double],
-  sy~ : Int,
+  points~ : LottieProperty[Double],
+  position~ : LottieProperty[Array[Double]],
+  rotation~ : LottieProperty[Double],
+  inner_radius~ : LottieProperty[Double],
+  inner_roundness~ : LottieProperty[Double],
+  outer_radius~ : LottieProperty[Double],
+  outer_roundness~ : LottieProperty[Double],
+  star_type~ : Int,
 ) -> PolystarShape {
-  { pt, p, r, ir, ir_round, or, or_round, sy }
+  {
+    points,
+    position,
+    rotation,
+    inner_radius,
+    inner_roundness,
+    outer_radius,
+    outer_roundness,
+    star_type,
+  }
 }
 
 ///|
 pub struct Repeater {
-  c : LottieProperty[Double] // Copies
-  o : LottieProperty[Double] // Offset
-  m : Int // Composite: 1=Above, 2=Below
-  tr : Transform // Transform
+  copies : LottieProperty[Double]
+  offset : LottieProperty[Double]
+  composite : Int
+  transform : Transform
 }
 
 ///|
 pub fn Repeater::new(
-  c~ : LottieProperty[Double],
-  o~ : LottieProperty[Double],
-  m? : Int = 1,
-  tr~ : Transform,
+  copies~ : LottieProperty[Double],
+  offset~ : LottieProperty[Double],
+  composite? : Int = 1,
+  transform~ : Transform,
 ) -> Repeater {
-  { c, o, m, tr }
+  { copies, offset, composite, transform }
 }
 
 ///|
@@ -367,12 +386,12 @@ pub enum MergeMode {
 
 ///|
 pub struct MergePaths {
-  mm : MergeMode
+  merge_mode : MergeMode
 }
 
 ///|
-pub fn MergePaths::new(mm : Int) -> MergePaths {
-  let mode = match mm {
+pub fn MergePaths::new(merge_mode : Int) -> MergePaths {
+  let mode = match merge_mode {
     1 => MergeMode::Merge
     2 => MergeMode::Add
     3 => MergeMode::Subtract
@@ -380,15 +399,15 @@ pub fn MergePaths::new(mm : Int) -> MergePaths {
     5 => MergeMode::Exclude
     _ => MergeMode::Merge
   }
-  { mm: mode }
+  { merge_mode: mode }
 }
 
 ///|
 pub struct Rounding {
-  r : LottieProperty[Double]
+  radius : LottieProperty[Double]
 }
 
 ///|
-pub fn Rounding::new(r~ : LottieProperty[Double]) -> Rounding {
-  { r, }
+pub fn Rounding::new(radius~ : LottieProperty[Double]) -> Rounding {
+  { radius, }
 }

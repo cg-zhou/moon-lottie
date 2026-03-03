@@ -46,15 +46,15 @@ pub fn Animation::new(
 pub(all) struct Asset {
   id : String
   layers : Array[Layer]?
-  p : String? // path/image data
-  u : String? // image folder
-  w : Int? // width
-  h : Int? // height
+  path : String?
+  folder : String?
+  width : Int?
+  height : Int?
 }
 
 ///|
 pub struct Marker {
-  tm : Double // Time
-  dur : Double // Duration
-  dr : Double? // Marker type?
+  time : Double
+  duration : Double
+  marker_type : Double?
 }

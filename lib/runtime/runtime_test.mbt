@@ -89,16 +89,16 @@ test "evaluate_path_property_easing" {
     @model.BezierValue::new_single(1.0),
   )
   let p0 = @model.BezierPath::new(
-    v=[[0.0, 0.0], [10.0, 0.0]],
-    i=[[0.0, 0.0], [0.0, 0.0]],
-    o=[[0.0, 0.0], [0.0, 0.0]],
-    c=false,
+    vertices=[[0.0, 0.0], [10.0, 0.0]],
+    in_tangents=[[0.0, 0.0], [0.0, 0.0]],
+    out_tangents=[[0.0, 0.0], [0.0, 0.0]],
+    closed=false,
   )
   let p1 = @model.BezierPath::new(
-    v=[[100.0, 0.0], [110.0, 0.0]],
-    i=[[0.0, 0.0], [0.0, 0.0]],
-    o=[[0.0, 0.0], [0.0, 0.0]],
-    c=false,
+    vertices=[[100.0, 0.0], [110.0, 0.0]],
+    in_tangents=[[0.0, 0.0], [0.0, 0.0]],
+    out_tangents=[[0.0, 0.0], [0.0, 0.0]],
+    closed=false,
   )
   let k1 = @model.LottieKeyframe::new(
     frame=0,
@@ -110,7 +110,7 @@ test "evaluate_path_property_easing" {
   let k2 = @model.LottieKeyframe::new(frame=100, start_value=p1)
   let prop = @model.LottieProperty::new_animated([k1, k2])
   let v = @runtime.evaluate_path_property(prop, 50.0)
-  if get_pt_at(v.v, 0, 0) <= 50.0 {
+  if get_pt_at(v.vertices, 0, 0) <= 50.0 {
     fail("Path easing should advance farther than linear interpolation at frame 50")
   }
 }
