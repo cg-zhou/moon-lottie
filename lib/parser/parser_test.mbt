@@ -202,6 +202,14 @@ test "parse_repeater_shape_with_typed_tr" {
         @model.PropertyValue::Static(v) => inspect(v, content="3")
         _ => fail("repeater copies should be static")
       }
+      match rp.offset.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="1")
+        _ => fail("repeater offset should be static")
+      }
+      match rp.transform.position.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="[10, 20]")
+        _ => fail("repeater transform position should be static")
+      }
     }
     _ => fail("shape should be repeater")
   }

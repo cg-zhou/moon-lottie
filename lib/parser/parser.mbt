@@ -1320,7 +1320,10 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       let copies = parse_property_double(decoded.copies)
       let offset = parse_property_double(decoded.offset)
       let composite = decoded.composite.unwrap_or(1)
-      let transform = parse_transform_from_decoded(decoded.transform)
+      let transform = match decoded.transform {
+        Some(t) => parse_transform_from_decoded(Some(t))
+        None => raise MissingKey("tr in rp")
+      }
       @model.ShapeData::new_repeater(
         @model.Repeater::new(copies~, offset~, composite~, transform~),
       )
