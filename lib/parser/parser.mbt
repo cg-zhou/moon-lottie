@@ -15,6 +15,10 @@ struct AnimationRootJson {
   out_point : Double
   width : Int
   height : Int
+  name : String?
+  three_d : Int?
+  assets : Array[Json]?
+  layers : Array[Json]
 } derive(
   FromJson(
     fields(
@@ -24,6 +28,8 @@ struct AnimationRootJson {
       out_point(rename="op"),
       width(rename="w"),
       height(rename="h"),
+      name(rename="nm"),
+      three_d(rename="ddd"),
     ),
   ),
 )
@@ -53,9 +59,183 @@ struct TextDocumentJson {
   ),
 )
 
+struct MaskJson {
+  inverted : Bool?
+  path : Json?
+  opacity : Json?
+  mode : String?
+  name : String?
+} derive(
+  FromJson(
+    fields(
+      inverted(rename="inv"),
+      path(rename="pt"),
+      opacity(rename="o"),
+      name(rename="nm"),
+    ),
+  ),
+)
+
 ///|
-struct AssetImageJson {
+struct PropertyJson {
+  animated_flag : Json?
+  expression : String?
+  value : Json?
+} derive(
+  FromJson(
+    fields(
+      animated_flag(rename="a"),
+      expression(rename="x"),
+      value(rename="k"),
+    ),
+  ),
+)
+
+struct TransformJson {
+  anchor : Json?
+  position : Json?
+  scale : Json?
+  rotation : Json?
+  opacity : Json?
+  position_x : Json?
+  position_y : Json?
+  skew : Json?
+  skew_axis : Json?
+} derive(
+  FromJson(
+    fields(
+      anchor(rename="a"),
+      position(rename="p"),
+      scale(rename="s"),
+      rotation(rename="r"),
+      opacity(rename="o"),
+      position_x(rename="x"),
+      position_y(rename="y"),
+      skew(rename="sk"),
+      skew_axis(rename="sa"),
+    ),
+  ),
+)
+
+///|
+struct SplitPositionJson {
+  split : Json?
+} derive(FromJson(fields(split(rename="s"))))
+
+///|
+struct ShapeJson {
+  shape_type : String
+  name : String?
+  hidden : Bool?
+  items : Array[Json]?
+  path : Json?
+  position : Json?
+  size_or_start : Json?
+  end_or_bezier : Json?
+  rotation_or_roundness : Json?
+  color_or_copies : Json?
+  opacity_or_offset : Json?
+  width : Json?
+  line_cap : Int?
+  line_join : Int?
+  miter_limit : Double?
+  gradient_type : Int?
+  gradient : Json?
+  trim_or_composite : Int?
+  points : Json?
+  inner_radius : Json?
+  inner_roundness : Json?
+  outer_radius : Json?
+  outer_roundness : Json?
+  star_type : Int?
+  transform : Json?
+  merge_mode : Int?
+} derive(
+  FromJson(
+    fields(
+      shape_type(rename="ty"),
+      name(rename="nm"),
+      hidden(rename="hd"),
+      items(rename="it"),
+      path(rename="ks"),
+      position(rename="p"),
+      size_or_start(rename="s"),
+      end_or_bezier(rename="e"),
+      rotation_or_roundness(rename="r"),
+      color_or_copies(rename="c"),
+      opacity_or_offset(rename="o"),
+      width(rename="w"),
+      line_cap(rename="lc"),
+      line_join(rename="lj"),
+      miter_limit(rename="ml"),
+      gradient_type(rename="t"),
+      gradient(rename="g"),
+      trim_or_composite(rename="m"),
+      points(rename="pt"),
+      inner_radius(rename="ir"),
+      inner_roundness(rename="is"),
+      outer_radius(rename="or"),
+      outer_roundness(rename="os"),
+      star_type(rename="sy"),
+      transform(rename="tr"),
+      merge_mode(rename="mm"),
+    ),
+  ),
+)
+
+///|
+struct LayerJson {
+  index : Int?
+  layer_type : Int
+  transform : Json?
+  in_point : Double?
+  out_point : Double?
+  start_time : Double?
+  name : String?
+  hidden : Bool?
+  parent : Int?
+  masks : Array[Json]?
+  matte_type : Int?
+  matte_inherit : Int?
+  ref_id : String?
+  width : Int?
+  height : Int?
+  solid_color : String?
+  solid_width : Int?
+  solid_height : Int?
+  shapes : Array[Json]?
+  text_data : Json?
+} derive(
+  FromJson(
+    fields(
+      index(rename="ind"),
+      layer_type(rename="ty"),
+      transform(rename="ks"),
+      in_point(rename="ip"),
+      out_point(rename="op"),
+      start_time(rename="st"),
+      name(rename="nm"),
+      hidden(rename="hd"),
+      parent(rename="parent"),
+      masks(rename="masksProperties"),
+      matte_type(rename="tt"),
+      matte_inherit(rename="td"),
+      ref_id(rename="refId"),
+      width(rename="w"),
+      height(rename="h"),
+      solid_color(rename="sc"),
+      solid_width(rename="sw"),
+      solid_height(rename="sh"),
+      shapes(rename="shapes"),
+      text_data(rename="t"),
+    ),
+  ),
+)
+
+///|
+struct AssetJson {
   id : String
+  layers : Array[Json]?
   path : String?
   folder : String?
   width : Int?
@@ -67,6 +247,41 @@ struct AssetImageJson {
       folder(rename="u"),
       width(rename="w"),
       height(rename="h"),
+    ),
+  ),
+)
+
+///|
+struct TextDataJson {
+  document : Json?
+} derive(FromJson(fields(document(rename="d"))))
+
+///|
+struct GradientJson {
+  color_count : Int?
+  color_stops : Json?
+} derive(
+  FromJson(
+    fields(
+      color_count(rename="p"),
+      color_stops(rename="k"),
+    ),
+  ),
+)
+
+///|
+struct BezierPathJson {
+  vertices : Array[Array[Double]]?
+  in_tangents : Array[Array[Double]]?
+  out_tangents : Array[Array[Double]]?
+  closed : Json?
+} derive(
+  FromJson(
+    fields(
+      vertices(rename="v"),
+      in_tangents(rename="i"),
+      out_tangents(rename="o"),
+      closed(rename="c"),
     ),
   ),
 )
@@ -157,40 +372,6 @@ pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
 }
 
 ///|
-/// Helper to get string from Json
-fn get_string(json : Json, key : String) -> String raise LottieError {
-  match json {
-    Object(obj) =>
-      match obj.get(key) {
-        Some(String(s)) => s
-        Some(_) => raise UnexpectedType(key, "String")
-        None => raise MissingKey(key)
-      }
-    _ => raise InvalidJson("Expected Object when looking for key: " + key)
-  }
-}
-
-///|
-/// Helper to get double from Json
-fn get_double(json : Json, key : String) -> Double raise LottieError {
-  match json {
-    Object(obj) =>
-      match obj.get(key) {
-        Some(Number(n, ..)) => n
-        Some(_) => raise UnexpectedType(key, "Number")
-        None => raise MissingKey(key)
-      }
-    _ => raise InvalidJson("Expected Object when looking for key: " + key)
-  }
-}
-
-///|
-/// Helper to get int from Json
-fn get_int(json : Json, key : String) -> Int raise LottieError {
-  get_double(json, key).to_int()
-}
-
-///|
 fn parse_bezier_value(json : Json?) -> @model.BezierValue? {
   match json {
     Some(Number(n, ..)) => Some(@model.BezierValue::new_single(n))
@@ -220,7 +401,14 @@ fn parse_bezier_tangent(json : Json?) -> @model.Bezier? {
   }
 }
 
-///|
+fn property_animated_flag(flag : Json?) -> Bool {
+  match flag {
+    Some(Number(n, ..)) => n == 1.0
+    Some(True) => true
+    _ => false
+  }
+}
+
 fn parse_number_array(json : Json?) -> Array[Double]? {
   match json {
     Some(Array(arr)) => {
@@ -238,6 +426,12 @@ fn parse_number_array(json : Json?) -> Array[Double]? {
 }
 
 ///|
+fn parse_gradient_or_default(json : Json) -> GradientJson {
+  // Keep parser tolerant: malformed gradient metadata falls back to raw `g.k` parsing path below.
+  (@json.from_json(json)) catch { _ => { color_count: None, color_stops: None } }
+}
+
+///|
 /// Parse a simple Property (non-animated for now)
 fn parse_property_double(
   json : Json?,
@@ -245,17 +439,14 @@ fn parse_property_double(
   match json {
     Some(j) =>
       match j {
-        Object(obj) => {
-          let a_flag = match obj.get("a") {
-            Some(Number(n, ..)) => n == 1.0
-            _ => false
+        Object(_) => {
+          let prop : PropertyJson = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property", "Object")
           }
-          let x = match obj.get("x") {
-            Some(String(s)) => Some(s)
-            _ => None
-          }
-          let k = match obj.get("k") {
-            Some(k) => k
+          let a_flag = property_animated_flag(prop.animated_flag)
+          let x = prop.expression
+          let k = match prop.value {
+            Some(v) => v
             None => raise MissingKey("k in property")
           }
           let animated_from_k = match k {
@@ -350,17 +541,14 @@ fn parse_property_vec(
   match json {
     Some(j) =>
       match j {
-        Object(obj) => {
-          let a_flag = match obj.get("a") {
-            Some(Number(n, ..)) => n == 1.0
-            _ => false
+        Object(_) => {
+          let prop : PropertyJson = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property", "Object")
           }
-          let x = match obj.get("x") {
-            Some(String(s)) => Some(s)
-            _ => None
-          }
-          let k = match obj.get("k") {
-            Some(k) => k
+          let a_flag = property_animated_flag(prop.animated_flag)
+          let x = prop.expression
+          let k = match prop.value {
+            Some(v) => v
             None => raise MissingKey("k in property")
           }
           let animated_from_k = match k {
@@ -568,11 +756,14 @@ fn parse_text_document_property(
 ///|
 fn parse_text_data(json : Json?) -> @model.TextData raise LottieError {
   match json {
-    Some(Object(obj)) => {
-      let d = parse_text_document_property(obj.get("d"))
+    Some(j) => {
+      let decoded : TextDataJson = (@json.from_json(j)) catch {
+        _ => raise UnexpectedType("text data", "Object")
+      }
+      let d = parse_text_document_property(decoded.document)
       { text: d }
     }
-    _ => raise UnexpectedType("text data", "Object")
+    None => raise UnexpectedType("text data", "Object")
   }
 }
 
@@ -580,61 +771,64 @@ fn parse_text_data(json : Json?) -> @model.TextData raise LottieError {
 /// Parse Transform
 fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(obj) => {
-          let split = match obj.get("p") {
-            Some(Object(p_obj)) =>
-              match p_obj.get("s") {
-                Some(True) => true
-                _ => false
-              }
-            _ => false
-          }
-          let anchor = parse_property_vec(obj.get("a"))
-          let position = parse_property_vec(obj.get("p"))
-          let px = if split {
-            Some(parse_property_double(obj.get("x"))) catch {
-              _ => None
-            }
-          } else {
-            None
-          }
-          let py = if split {
-            Some(parse_property_double(obj.get("y"))) catch {
-              _ => None
-            }
-          } else {
-            None
-          }
-          let scale = parse_property_vec(obj.get("s"))
-          let rotation = parse_property_double(obj.get("r"))
-          let opacity = parse_property_double(obj.get("o"))
-          let skew = try {
-            Some(parse_property_double(obj.get("sk")))
-          } catch {
-            _ => None
-          }
-          let skew_axis = try {
-            Some(parse_property_double(obj.get("sa")))
-          } catch {
-            _ => None
-          }
-          @model.Transform::new(
-            anchor~,
-            position~,
-            scale~,
-            rotation~,
-            opacity~,
-             px~,
-             py~,
-             skew~,
-             skew_axis~,
-            split=if split { Some(true) } else { None },
-          )
-        }
+    Some(j) => {
+      let decoded : TransformJson = (@json.from_json(j)) catch {
         _ => raise UnexpectedType("transform", "Object")
       }
+      let split = match decoded.position {
+        Some(position_json) => {
+          let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
+            _ => { split: None }
+          }
+          match split_json.split {
+            Some(True) => true
+            _ => false
+          }
+        }
+        None => false
+      }
+      let anchor = parse_property_vec(decoded.anchor)
+      let position = parse_property_vec(decoded.position)
+      let px = if split {
+        Some(parse_property_double(decoded.position_x)) catch {
+          _ => None
+        }
+      } else {
+        None
+      }
+      let py = if split {
+        Some(parse_property_double(decoded.position_y)) catch {
+          _ => None
+        }
+      } else {
+        None
+      }
+      let scale = parse_property_vec(decoded.scale)
+      let rotation = parse_property_double(decoded.rotation)
+      let opacity = parse_property_double(decoded.opacity)
+      let skew = try {
+        Some(parse_property_double(decoded.skew))
+      } catch {
+        _ => None
+      }
+      let skew_axis = try {
+        Some(parse_property_double(decoded.skew_axis))
+      } catch {
+        _ => None
+      }
+      @model.Transform::new(
+        anchor~,
+        position~,
+        scale~,
+        rotation~,
+        opacity~,
+         px~,
+         py~,
+         skew~,
+         skew_axis~,
+        split=if split { Some(true) } else { None },
+      )
+    }
     None => raise InvalidJson("Transform json is missing")
   }
 }
@@ -642,57 +836,19 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
 ///|
 /// Parse BezierPath data (the 'v', 'i', 'o', 'c' structure)
 fn parse_bezier_path(json : Json) -> @model.BezierPath raise LottieError {
-  match json {
-    Object(obj) => {
-      let vertices = match obj.get("v") {
-        Some(Array(arr)) => {
-          let res = []
-          for p in arr {
-            match p {
-              Array([Number(x, ..), Number(y, ..)]) => res.push([x, y])
-              _ => ()
-            }
-          }
-          res
-        }
-        _ => []
-      }
-      let in_tangents = match obj.get("i") {
-        Some(Array(arr)) => {
-          let res = []
-          for p in arr {
-            match p {
-              Array([Number(x, ..), Number(y, ..)]) => res.push([x, y])
-              _ => ()
-            }
-          }
-          res
-        }
-        _ => []
-      }
-      let out_tangents = match obj.get("o") {
-        Some(Array(arr)) => {
-          let res = []
-          for p in arr {
-            match p {
-              Array([Number(x, ..), Number(y, ..)]) => res.push([x, y])
-              _ => ()
-            }
-          }
-          res
-        }
-        _ => []
-      }
-      let closed = match obj.get("c") {
-        Some(True) => true
-        Some(False) => false
-        Some(Number(n, ..)) => n == 1.0
-        _ => false
-      }
-      @model.BezierPath::new(vertices~, in_tangents~, out_tangents~, closed~)
-    }
+  let decoded : BezierPathJson = (@json.from_json(json)) catch {
     _ => raise UnexpectedType("bezier_path", "Object")
   }
+  let closed = match decoded.closed {
+    Some(True) => true
+    Some(False) => false
+    Some(Number(n, ..)) => n == 1.0
+    _ => false
+  }
+  let vertices = decoded.vertices.unwrap_or([])
+  let in_tangents = decoded.in_tangents.unwrap_or([])
+  let out_tangents = decoded.out_tangents.unwrap_or([])
+  @model.BezierPath::new(vertices~, in_tangents~, out_tangents~, closed~)
 }
 
 ///|
@@ -703,12 +859,12 @@ fn parse_property_bezier(
   match json {
     Some(j) =>
       match j {
-        Object(obj) => {
-          let a_flag = match obj.get("a") {
-            Some(Number(n, ..)) => n == 1.0
-            _ => false
+        Object(_) => {
+          let prop : PropertyJson = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property_bezier", "Object")
           }
-          match obj.get("k") {
+          let a_flag = property_animated_flag(prop.animated_flag)
+          match prop.value {
             Some(k) =>
               if a_flag || (
                 match k {
@@ -728,7 +884,6 @@ fn parse_property_bezier(
                   _ => false
                 }
               ) {
-                // Animated
                 let keyframes = []
                 match k {
                   Array(arr) =>
@@ -779,9 +934,7 @@ fn parse_property_bezier(
               } else {
                 @model.LottieProperty::new_static(parse_bezier_path(k))
               }
-            None =>
-              // Case 2: Simple path { "v": ... } without being wrapped in property
-              @model.LottieProperty::new_static(parse_bezier_path(j))
+            None => @model.LottieProperty::new_static(parse_bezier_path(j))
           }
         }
         _ => raise UnexpectedType("property_bezier", "Object")
@@ -795,395 +948,289 @@ fn parse_property_bezier(
 ///|
 /// Parse a shape from Json
 pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
-  match json {
-    Object(obj) => {
-      let shape_type = match obj.get("ty") {
-        Some(String(s)) => s
-        _ => raise MissingKey("ty in shape")
-      }
-      let name = match obj.get("nm") {
-        Some(String(s)) => Some(s)
-        _ => None
-      }
-      let hidden = match obj.get("hd") {
-        Some(True) => Some(true)
-        Some(False) => Some(false)
-        _ => None
-      }
-      let data : @model.ShapeData = match shape_type {
-        "gr" => {
-          let items = []
-          match obj.get("it") {
-            Some(Array(arr)) =>
-              for i in arr {
-                items.push(parse_shape(i)) catch {
-                  _ => ()
-                }
-              }
-            _ => ()
-          }
-          @model.ShapeData::new_group(items)
-        }
-        "rc" => {
-          let position = parse_property_vec(obj.get("p"))
-          let size = parse_property_vec(obj.get("s"))
-          let roundness = parse_property_double(obj.get("r")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          @model.ShapeData::new_rect(@model.RectShape::new(position~, size~, roundness~))
-        }
-        "el" => {
-          let position = parse_property_vec(obj.get("p"))
-          let size = parse_property_vec(obj.get("s"))
-          @model.ShapeData::new_ellipse(@model.EllipseShape::new(position~, size~))
-        }
-        "sh" => {
-          let path = parse_property_bezier(obj.get("ks"))
-          @model.ShapeData::new_path(@model.PathShape::new(path~))
-        }
-        "fl" => {
-          let color = parse_property_vec(obj.get("c"))
-          let opacity = parse_property_double(obj.get("o")) catch {
-            _ => @model.LottieProperty::new_static(100.0)
-          }
-          @model.ShapeData::new_fill(@model.FillShape::new(color~, opacity~))
-        }
-        "st" => {
-          let color = parse_property_vec(obj.get("c"))
-          let opacity = parse_property_double(obj.get("o")) catch {
-            _ => @model.LottieProperty::new_static(100.0)
-          }
-          let width = parse_property_double(obj.get("w")) catch {
-            _ => @model.LottieProperty::new_static(1.0)
-          }
-          let line_cap = match obj.get("lc") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          let line_join = match obj.get("lj") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          let miter_limit = match obj.get("ml") {
-            Some(Number(n, ..)) => n
-            _ => 4.0
-          }
-          @model.ShapeData::new_stroke(
-            @model.StrokeShape::new(color~, opacity~, width~, line_cap~, line_join~, miter_limit~),
-          )
-        }
-        "gf" => {
-          let gradient_type = match obj.get("t") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          let start_point = parse_property_vec(obj.get("s"))
-          let end_point = parse_property_vec(obj.get("e"))
-          let opacity = parse_property_double(obj.get("o")) catch {
-            _ => @model.LottieProperty::new_static(100.0)
-          }
-          let g_json = match obj.get("g") {
-            Some(j) => j
-            _ => raise MissingKey("g in gf")
-          }
-          let (g_p, g_k) = match g_json {
-            Object(g_obj) => {
-              let color_count = match g_obj.get("p") {
-                Some(Number(n, ..)) => n.to_int()
-                _ => 0
-              }
-              let color_stops = match g_obj.get("k") {
-                Some(k_json) => parse_property_vec(Some(k_json))
-                _ => parse_property_vec(Some(g_json))
-              }
-              (color_count, color_stops)
-            }
-            _ => (0, parse_property_vec(Some(g_json)))
-          }
-          let g_colors = @model.GradientColors::new(color_count=g_p, color_stops=g_k)
-          @model.ShapeData::new_gradient_fill(
-            @model.GradientFillShape::new(
-              gradient_type~,
-              opacity~,
-              start_point~,
-              end_point~,
-              gradient_colors=g_colors,
-            ),
-          )
-        }
-        "gs" => {
-          let gradient_type = match obj.get("t") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          let start_point = parse_property_vec(obj.get("s"))
-          let end_point = parse_property_vec(obj.get("e"))
-          let opacity = parse_property_double(obj.get("o")) catch {
-            _ => @model.LottieProperty::new_static(100.0)
-          }
-          let width = parse_property_double(obj.get("w")) catch {
-            _ => @model.LottieProperty::new_static(1.0)
-          }
-          let line_cap = match obj.get("lc") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          let line_join = match obj.get("lj") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          let miter_limit = match obj.get("ml") {
-            Some(Number(n, ..)) => n
-            _ => 4.0
-          }
-          let g_json = match obj.get("g") {
-            Some(j) => j
-            _ => raise MissingKey("g in gs")
-          }
-          let (g_p, g_k) = match g_json {
-            Object(g_obj) => {
-              let color_count = match g_obj.get("p") {
-                Some(Number(n, ..)) => n.to_int()
-                _ => 0
-              }
-              let color_stops = match g_obj.get("k") {
-                Some(k_json) => parse_property_vec(Some(k_json))
-                _ => parse_property_vec(Some(g_json))
-              }
-              (color_count, color_stops)
-            }
-            _ => (0, parse_property_vec(Some(g_json)))
-          }
-          let g_colors = @model.GradientColors::new(color_count=g_p, color_stops=g_k)
-          @model.ShapeData::new_gradient_stroke(
-            @model.GradientStrokeShape::new(
-              gradient_type~,
-              opacity~,
-              start_point~,
-              end_point~,
-              gradient_colors=g_colors,
-              width~,
-              line_cap~,
-              line_join~,
-              miter_limit~,
-            ),
-          )
-        }
-        "tr" => @model.ShapeData::new_transform(parse_transform(Some(json)))
-        "tm" => {
-          let start = parse_property_double(obj.get("s")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          let end = parse_property_double(obj.get("e")) catch {
-            _ => @model.LottieProperty::new_static(100.0)
-          }
-          let offset = parse_property_double(obj.get("o")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          let multiple = get_int(json, "m") catch { _ => 1 }
-          @model.ShapeData::new_trim_path(@model.TrimPath::new(start~, end~, offset~, multiple~))
-        }
-        "sr" => {
-          let points = parse_property_double(obj.get("pt"))
-          let position = parse_property_vec(obj.get("p"))
-          let rotation = parse_property_double(obj.get("r"))
-          let inner_radius = parse_property_double(obj.get("ir")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          let inner_roundness = parse_property_double(obj.get("is")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          let outer_radius = parse_property_double(obj.get("or"))
-          let outer_roundness = parse_property_double(obj.get("os")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          let star_type = match obj.get("sy") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 1
-          }
-          @model.ShapeData::new_polystar(
-            @model.PolystarShape::new(
-              points~,
-              position~,
-              rotation~,
-              inner_radius~,
-              inner_roundness~,
-              outer_radius~,
-              outer_roundness~,
-              star_type~,
-            ),
-          )
-        }
-        "rp" => {
-          let copies = parse_property_double(obj.get("c"))
-          let offset = parse_property_double(obj.get("o"))
-          let composite = get_int(json, "m") catch { _ => 1 }
-          let transform = parse_transform(obj.get("tr"))
-          @model.ShapeData::new_repeater(
-            @model.Repeater::new(copies~, offset~, composite~, transform~),
-          )
-        }
-        "mm" => {
-          let mm = get_int(json, "mm") catch { _ => 1 }
-          @model.ShapeData::new_merge_paths(@model.MergePaths::new(mm))
-        }
-        "rd" => {
-          let radius = parse_property_double(obj.get("r")) catch {
-            _ => @model.LottieProperty::new_static(0.0)
-          }
-          @model.ShapeData::new_rounding(@model.Rounding::new(radius~))
-        }
-        _ => raise InvalidJson("Unknown shape type: " + shape_type)
-      }
-      @model.Shape::new(shape_type~, data~, name~, hidden~)
-    }
+  let decoded : ShapeJson = (@json.from_json(json)) catch {
     _ => raise UnexpectedType("shape", "Object")
   }
+  let shape_type = decoded.shape_type
+  let data : @model.ShapeData = match shape_type {
+    "gr" => {
+      let items = []
+      match decoded.items {
+        Some(arr) =>
+          for i in arr {
+            items.push(parse_shape(i)) catch {
+              _ => ()
+            }
+          }
+        None => ()
+      }
+      @model.ShapeData::new_group(items)
+    }
+    "rc" => {
+      let position = parse_property_vec(decoded.position)
+      let size = parse_property_vec(decoded.size_or_start)
+      let roundness = parse_property_double(decoded.rotation_or_roundness) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      @model.ShapeData::new_rect(@model.RectShape::new(position~, size~, roundness~))
+    }
+    "el" => {
+      let position = parse_property_vec(decoded.position)
+      let size = parse_property_vec(decoded.size_or_start)
+      @model.ShapeData::new_ellipse(@model.EllipseShape::new(position~, size~))
+    }
+    "sh" => {
+      let path = parse_property_bezier(decoded.path)
+      @model.ShapeData::new_path(@model.PathShape::new(path~))
+    }
+    "fl" => {
+      let color = parse_property_vec(decoded.color_or_copies)
+      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
+      @model.ShapeData::new_fill(@model.FillShape::new(color~, opacity~))
+    }
+    "st" => {
+      let color = parse_property_vec(decoded.color_or_copies)
+      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
+      let width = parse_property_double(decoded.width) catch {
+        _ => @model.LottieProperty::new_static(1.0)
+      }
+      let line_cap = decoded.line_cap.unwrap_or(1)
+      let line_join = decoded.line_join.unwrap_or(1)
+      let miter_limit = decoded.miter_limit.unwrap_or(4.0)
+      @model.ShapeData::new_stroke(
+        @model.StrokeShape::new(color~, opacity~, width~, line_cap~, line_join~, miter_limit~),
+      )
+    }
+    "gf" => {
+      let gradient_type = decoded.gradient_type.unwrap_or(1)
+      let start_point = parse_property_vec(decoded.size_or_start)
+      let end_point = parse_property_vec(decoded.end_or_bezier)
+      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
+      let g_json = match decoded.gradient {
+        Some(j) => j
+        None => raise MissingKey("g in gf")
+      }
+      let gradient = parse_gradient_or_default(g_json)
+      let g_p = gradient.color_count.unwrap_or(0)
+      let g_k = match gradient.color_stops {
+        Some(k_json) => parse_property_vec(Some(k_json))
+        None => parse_property_vec(Some(g_json))
+      }
+      let g_colors = @model.GradientColors::new(color_count=g_p, color_stops=g_k)
+      @model.ShapeData::new_gradient_fill(
+        @model.GradientFillShape::new(
+          gradient_type~,
+          opacity~,
+          start_point~,
+          end_point~,
+          gradient_colors=g_colors,
+        ),
+      )
+    }
+    "gs" => {
+      let gradient_type = decoded.gradient_type.unwrap_or(1)
+      let start_point = parse_property_vec(decoded.size_or_start)
+      let end_point = parse_property_vec(decoded.end_or_bezier)
+      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
+      let width = parse_property_double(decoded.width) catch {
+        _ => @model.LottieProperty::new_static(1.0)
+      }
+      let line_cap = decoded.line_cap.unwrap_or(1)
+      let line_join = decoded.line_join.unwrap_or(1)
+      let miter_limit = decoded.miter_limit.unwrap_or(4.0)
+      let g_json = match decoded.gradient {
+        Some(j) => j
+        None => raise MissingKey("g in gs")
+      }
+      let gradient = parse_gradient_or_default(g_json)
+      let g_p = gradient.color_count.unwrap_or(0)
+      let g_k = match gradient.color_stops {
+        Some(k_json) => parse_property_vec(Some(k_json))
+        None => parse_property_vec(Some(g_json))
+      }
+      let g_colors = @model.GradientColors::new(color_count=g_p, color_stops=g_k)
+      @model.ShapeData::new_gradient_stroke(
+        @model.GradientStrokeShape::new(
+          gradient_type~,
+          opacity~,
+          start_point~,
+          end_point~,
+          gradient_colors=g_colors,
+          width~,
+          line_cap~,
+          line_join~,
+          miter_limit~,
+        ),
+      )
+    }
+    "tr" => @model.ShapeData::new_transform(parse_transform(Some(json)))
+    "tm" => {
+      let start = parse_property_double(decoded.size_or_start) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      let end = parse_property_double(decoded.end_or_bezier) catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
+      let offset = parse_property_double(decoded.opacity_or_offset) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      let multiple = decoded.trim_or_composite.unwrap_or(1)
+      @model.ShapeData::new_trim_path(@model.TrimPath::new(start~, end~, offset~, multiple~))
+    }
+    "sr" => {
+      let points = parse_property_double(decoded.points)
+      let position = parse_property_vec(decoded.position)
+      let rotation = parse_property_double(decoded.rotation_or_roundness)
+      let inner_radius = parse_property_double(decoded.inner_radius) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      let inner_roundness = parse_property_double(decoded.inner_roundness) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      let outer_radius = parse_property_double(decoded.outer_radius)
+      let outer_roundness = parse_property_double(decoded.outer_roundness) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      let star_type = decoded.star_type.unwrap_or(1)
+      @model.ShapeData::new_polystar(
+        @model.PolystarShape::new(
+          points~,
+          position~,
+          rotation~,
+          inner_radius~,
+          inner_roundness~,
+          outer_radius~,
+          outer_roundness~,
+          star_type~,
+        ),
+      )
+    }
+    "rp" => {
+      let copies = parse_property_double(decoded.color_or_copies)
+      let offset = parse_property_double(decoded.opacity_or_offset)
+      let composite = decoded.trim_or_composite.unwrap_or(1)
+      let transform = parse_transform(decoded.transform)
+      @model.ShapeData::new_repeater(
+        @model.Repeater::new(copies~, offset~, composite~, transform~),
+      )
+    }
+    "mm" => {
+      let mm = decoded.merge_mode.unwrap_or(1)
+      @model.ShapeData::new_merge_paths(@model.MergePaths::new(mm))
+    }
+    "rd" => {
+      let radius = parse_property_double(decoded.rotation_or_roundness) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      @model.ShapeData::new_rounding(@model.Rounding::new(radius~))
+    }
+    _ => raise InvalidJson("Unknown shape type: " + shape_type)
+  }
+  let name = decoded.name
+  let hidden = decoded.hidden
+  @model.Shape::new(shape_type~, data~, name~, hidden~)
 }
 
 ///|
 /// Parse a single Mask object
 fn parse_mask(json : Json) -> @model.Mask raise LottieError {
-  match json {
-    Object(obj) => {
-      let inverted = match obj.get("inv") {
-        Some(True) => true
-        _ => false
-      }
-      let path = parse_property_bezier(obj.get("pt"))
-      let opacity = parse_property_double(obj.get("o")) catch {
-        _ => @model.LottieProperty::new_static(100.0)
-      }
-      let mode = match obj.get("mode") {
-        Some(String("a")) => @model.MaskMode::Add
-        Some(String("s")) => @model.MaskMode::Subtract
-        Some(String("i")) => @model.MaskMode::Intersect
-        Some(String("l")) => @model.MaskMode::Lighten
-        Some(String("d")) => @model.MaskMode::Darken
-        Some(String("f")) => @model.MaskMode::Difference
-        _ => @model.MaskMode::None
-      }
-      let name = match obj.get("nm") {
-        Some(String(s)) => Some(s)
-        _ => None
-      }
-      @model.Mask::new(inverted~, path~, opacity~, mode~, name~)
-    }
+  let decoded : MaskJson = (@json.from_json(json)) catch {
     _ => raise UnexpectedType("mask", "Object")
   }
+  let inverted = decoded.inverted.unwrap_or(false)
+  let path = parse_property_bezier(decoded.path)
+  let opacity = parse_property_double(decoded.opacity) catch {
+    _ => @model.LottieProperty::new_static(100.0)
+  }
+  let mode = match decoded.mode {
+    Some("a") => @model.MaskMode::Add
+    Some("s") => @model.MaskMode::Subtract
+    Some("i") => @model.MaskMode::Intersect
+    Some("l") => @model.MaskMode::Lighten
+    Some("d") => @model.MaskMode::Darken
+    Some("f") => @model.MaskMode::Difference
+    _ => @model.MaskMode::None
+  }
+  @model.Mask::new(inverted~, path~, opacity~, mode~, name=decoded.name)
 }
 
 ///|
 /// Parse Layer
 fn parse_layer(json : Json) -> @model.Layer raise LottieError {
-  match json {
-    Object(obj) => {
-      let index = match obj.get("ind") {
-        Some(Number(n, ..)) => n.to_int()
-        _ => 0
+  let decoded : LayerJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("layer", "Object")
+  }
+  let index = decoded.index.unwrap_or(0)
+  let layer_type = decoded.layer_type
+  let transform = parse_transform(decoded.transform)
+  let in_point = decoded.in_point.unwrap_or(0.0)
+  let out_point = decoded.out_point.unwrap_or(1000.0)
+  let start_time = decoded.start_time.unwrap_or(0.0)
+  let name = decoded.name
+  let hidden = decoded.hidden
+  let parent = decoded.parent
+  let masks = match decoded.masks {
+    Some(arr) => {
+      let res = []
+      for m_json in arr {
+        res.push(parse_mask(m_json)) catch {
+          _ => ()
+        }
       }
-      let layer_type = match obj.get("ty") {
-        Some(Number(n, ..)) => n.to_int()
-        _ => raise MissingKey("ty in layer")
-      }
-      let transform = parse_transform(obj.get("ks"))
-      let in_point = match obj.get("ip") {
-        Some(Number(n, ..)) => n
-        _ => 0.0
-      }
-      let out_point = match obj.get("op") {
-        Some(Number(n, ..)) => n
-        _ => 1000.0
-      }
-      let start_time = match obj.get("st") {
-        Some(Number(n, ..)) => n
-        _ => 0.0
-      }
-      let name = match obj.get("nm") {
-        Some(String(s)) => Some(s)
-        _ => None
-      }
-      let hidden = match obj.get("hd") {
-        Some(True) => Some(true)
-        Some(False) => Some(false)
-        _ => None
-      }
-      let parent = Some(get_int(json, "parent")) catch { _ => None }
-      let masks = match obj.get("masksProperties") {
-        Some(Array(arr)) => {
-          let res = []
-          for m_json in arr {
-            res.push(parse_mask(m_json)) catch {
+      Some(res)
+    }
+    None => None
+  }
+  let matte_type = decoded.matte_type
+  let matte_inherit = decoded.matte_inherit
+  let data : @model.LayerData = match layer_type {
+    0 => @model.LayerData::PreComp(decoded.ref_id.unwrap_or(""), decoded.width.unwrap_or(0), decoded.height.unwrap_or(0))
+    1 => @model.LayerData::Solid(
+      decoded.solid_color.unwrap_or("#000000"),
+      decoded.solid_width.unwrap_or(0),
+      decoded.solid_height.unwrap_or(0),
+    )
+    2 => @model.LayerData::Image(decoded.ref_id.unwrap_or(""))
+    3 => @model.LayerData::Null
+    4 => {
+      let shapes = []
+      match decoded.shapes {
+        Some(arr) =>
+          for s_json in arr {
+            shapes.push(parse_shape(s_json)) catch {
               _ => ()
             }
           }
-          Some(res)
-        }
-        _ => None
+        None => ()
       }
-      let matte_type = Some(get_int(json, "tt")) catch { _ => None }
-      let matte_inherit = Some(get_int(json, "td")) catch { _ => None }
-      let data : @model.LayerData = match layer_type {
-        0 => {
-          let ref_id = get_string(json, "refId") catch { _ => "" }
-          let width = get_int(json, "w") catch { _ => 0 }
-          let height = get_int(json, "h") catch { _ => 0 }
-          @model.LayerData::PreComp(ref_id, width, height)
-        }
-        1 => {
-          let sc = match obj.get("sc") {
-            Some(String(s)) => s
-            _ => "#000000"
-          }
-          let sw = match obj.get("sw") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 0
-          }
-          let sh = match obj.get("sh") {
-            Some(Number(n, ..)) => n.to_int()
-            _ => 0
-          }
-          @model.LayerData::Solid(sc, sw, sh)
-        }
-        2 => {
-          let ref_id = get_string(json, "refId") catch { _ => "" }
-          @model.LayerData::Image(ref_id)
-        }
-        3 => @model.LayerData::Null
-        4 => {
-          let shapes = []
-          match obj.get("shapes") {
-            Some(Array(arr)) =>
-              for s_json in arr {
-                shapes.push(parse_shape(s_json)) catch {
-                  _ => ()
-                }
-              }
-            _ => ()
-          }
-          @model.LayerData::Shape(shapes)
-        }
-        5 => @model.LayerData::Text(parse_text_data(obj.get("t")))
-        _ => @model.LayerData::Null
-      }
-      @model.Layer::new(
-        index~,
-        layer_type~,
-        transform~,
-        in_point~,
-        out_point~,
-        start_time~,
-        name~,
-        data~,
-        hidden~,
-        parent~,
-        masks~,
-        matte_type~,
-        matte_inherit~,
-      )
+      @model.LayerData::Shape(shapes)
     }
-    _ => raise UnexpectedType("layer", "Object")
+    5 => @model.LayerData::Text(parse_text_data(decoded.text_data))
+    _ => @model.LayerData::Null
   }
+  @model.Layer::new(
+    index~,
+    layer_type~,
+    transform~,
+    in_point~,
+    out_point~,
+    start_time~,
+    name~,
+    data~,
+    hidden~,
+    parent~,
+    masks~,
+    matte_type~,
+    matte_inherit~,
+  )
 }
 
 ///|
@@ -1204,30 +1251,19 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
 
   let layers = []
   let assets = []
-  match json {
-    Object(obj) => {
-      // Parse Assets
-      match obj.get("assets") {
-        Some(Array(arr)) =>
-          for a_json in arr {
-            assets.push(parse_asset(a_json)) catch {
-              _ => ()
-            }
-          }
-        _ => ()
+  match root.assets {
+    Some(arr) =>
+      for a_json in arr {
+        assets.push(parse_asset(a_json)) catch {
+          _ => ()
+        }
       }
-      // Parse Layers
-      match obj.get("layers") {
-        Some(Array(arr)) =>
-          for l_json in arr {
-            layers.push(parse_layer(l_json)) catch {
-              _ => ()
-            }
-          }
-        _ => ()
-      }
+    None => ()
+  }
+  for l_json in root.layers {
+    layers.push(parse_layer(l_json)) catch {
+      _ => ()
     }
-    _ => ()
   }
 
   @model.Animation::new(
@@ -1237,8 +1273,8 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     out_point~,
     width~,
     height~,
-    name=Some(get_string(json, "nm")) catch { _ => None },
-    three_d=Some(get_int(json, "ddd")) catch { _ => None },
+    name=root.name,
+    three_d=root.three_d,
     assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
   )
@@ -1247,37 +1283,35 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
 ///|
 /// Parse a single asset object (Image or PreComp)
 fn parse_asset(json : Json) -> @model.Asset raise LottieError {
-  match json {
-    Object(obj) => {
-      let id = get_string(json, "id")
-      if obj.get("layers") != None {
-        // PreComp
-        let layers = []
-        match obj.get("layers") {
-          Some(Array(arr)) =>
-            for l_json in arr {
-              layers.push(parse_layer(l_json)) catch {
-                _ => ()
-              }
-            }
+  let decoded : AssetJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("asset", "Object")
+  }
+  match decoded.layers {
+    Some(arr) => {
+      let layers = []
+      for l_json in arr {
+        layers.push(parse_layer(l_json)) catch {
           _ => ()
         }
-        { id, layers: Some(layers), path: None, folder: None, width: None, height: None }
-      } else {
-        // Image asset
-        let image_asset : AssetImageJson = (@json.from_json(json)) catch {
-          _ => raise InvalidJson("Invalid image asset")
-        }
-        {
-          id: image_asset.id,
-          layers: None,
-          path: image_asset.path,
-          folder: image_asset.folder,
-          width: image_asset.width,
-          height: image_asset.height,
-        }
+      }
+      {
+        id: decoded.id,
+        layers: Some(layers),
+        path: None,
+        folder: None,
+        width: None,
+        height: None,
       }
     }
-    _ => raise UnexpectedType("asset", "Object")
+    None => {
+      {
+        id: decoded.id,
+        layers: None,
+        path: decoded.path,
+        folder: decoded.folder,
+        width: decoded.width,
+        height: decoded.height,
+      }
+    }
   }
 }

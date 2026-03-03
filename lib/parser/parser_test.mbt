@@ -61,6 +61,18 @@ test "parse_animation_basic" {
 }
 
 ///|
+test "parse_animation_with_optional_root_fields" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"nm\":\"demo\",\"ddd\":1,\"layers\":[]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation optional root fields: \{e}")
+  }
+  inspect(ani.name, content="Some(\"demo\")")
+  inspect(ani.three_d, content="Some(1)")
+}
+
+///|
 test "parse_animation_missing_required_field_fails" {
   let cases = [
     ("v", "{\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
@@ -83,6 +95,23 @@ test "parse_animation_missing_required_field_fails" {
           "Expected parse_animation to fail when required field \{missing_key} is missing",
         )
     }
+  }
+}
+
+///|
+test "parse_mask_with_subtract_mode" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]],\"c\":true}},\"o\":{\"k\":100},\"mode\":\"s\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with mask mode: \{e}")
+  }
+  match ani.layers[0].masks {
+    Some(masks) =>
+      if masks[0].mode != @model.MaskMode::Subtract {
+        fail("mask mode should be Subtract")
+      }
+    None => fail("masks should be parsed")
   }
 }
 
@@ -283,4 +312,39 @@ test "parse_animated_transform_without_a_flag" {
     @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
     _ => fail("rotation should be treated as animated when keyframes contain t")
   }
+}
+
+///|
+test "parse_precomp_asset_layers" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":10.0,\"w\":100,\"h\":100,\"assets\":[{\"id\":\"comp_1\",\"layers\":[{\"ty\":3,\"ind\":11,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}],\"layers\":[]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse precomp asset layers: \{e}")
+  }
+  match ani.assets {
+    Some(assets) => {
+      if assets.length() != 1 {
+        fail("assets length mismatch")
+      }
+      match assets[0].layers {
+        Some(_) => ()
+        None => fail("precomp asset layers should be parsed")
+      }
+    }
+    None => fail("assets should be parsed")
+  }
+}
+
+///|
+test "parse_layer_parent_and_matte" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":10.0,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":2,\"parent\":1,\"tt\":2,\"td\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse layer parent/matte: \{e}")
+  }
+  inspect(ani.layers[0].parent, content="Some(1)")
+  inspect(ani.layers[0].matte_type, content="Some(2)")
+  inspect(ani.layers[0].matte_inherit, content="Some(1)")
 }
