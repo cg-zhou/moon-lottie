@@ -188,6 +188,26 @@ test "parse_merge_paths_and_rounding" {
 }
 
 ///|
+test "parse_repeater_shape_with_typed_tr" {
+  let json_str =
+    "{\"ty\":\"rp\",\"c\":{\"k\":3},\"o\":{\"k\":1},\"m\":2,\"tr\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[10,20]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}"
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse repeater shape: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::Repeater(rp) => {
+      inspect(rp.composite, content="2")
+      match rp.copies.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="3")
+        _ => fail("repeater copies should be static")
+      }
+    }
+    _ => fail("shape should be repeater")
+  }
+}
+
+///|
 test "parse_animated_text_document_property" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"a\":1,\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"A\"}},{\"t\":10,\"s\":{\"s\":24,\"f\":\"Arial\",\"t\":\"B\"}}]}}}]}"

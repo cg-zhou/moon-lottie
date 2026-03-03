@@ -127,61 +127,168 @@ struct ShapeJson {
   shape_type : String
   name : String?
   hidden : Bool?
-  items : Array[Json]?
-  path : Json?
-  position : Json?
-  size_or_start : Json?
-  end_or_bezier : Json?
-  rotation_or_roundness : Json?
-  color_or_copies : Json?
-  opacity_or_offset : Json?
-  width : Json?
-  line_cap : Int?
-  line_join : Int?
-  miter_limit : Double?
-  gradient_type : Int?
-  gradient : Json?
-  trim_or_composite : Int?
-  points : Json?
-  inner_radius : Json?
-  inner_roundness : Json?
-  outer_radius : Json?
-  outer_roundness : Json?
-  star_type : Int?
-  transform : Json?
-  merge_mode : Int?
 } derive(
   FromJson(
     fields(
       shape_type(rename="ty"),
       name(rename="nm"),
       hidden(rename="hd"),
-      items(rename="it"),
-      path(rename="ks"),
-      position(rename="p"),
-      size_or_start(rename="s"),
-      end_or_bezier(rename="e"),
-      rotation_or_roundness(rename="r"),
-      color_or_copies(rename="c"),
-      opacity_or_offset(rename="o"),
+    ),
+  ),
+)
+
+///|
+struct ShapeGroupJson {
+  items : Array[Json]?
+} derive(FromJson(fields(items(rename="it"))))
+
+///|
+struct ShapeRectJson {
+  position : Json?
+  size : Json?
+  roundness : Json?
+} derive(FromJson(fields(position(rename="p"), size(rename="s"), roundness(rename="r"))))
+
+///|
+struct ShapeEllipseJson {
+  position : Json?
+  size : Json?
+} derive(FromJson(fields(position(rename="p"), size(rename="s"))))
+
+///|
+struct ShapePathJson {
+  path : Json?
+} derive(FromJson(fields(path(rename="ks"))))
+
+///|
+struct ShapeFillJson {
+  color : Json?
+  opacity : Json?
+} derive(FromJson(fields(color(rename="c"), opacity(rename="o"))))
+
+///|
+struct ShapeStrokeJson {
+  color : Json?
+  opacity : Json?
+  width : Json?
+  line_cap : Int?
+  line_join : Int?
+  miter_limit : Double?
+} derive(
+  FromJson(
+    fields(
+      color(rename="c"),
+      opacity(rename="o"),
       width(rename="w"),
       line_cap(rename="lc"),
       line_join(rename="lj"),
       miter_limit(rename="ml"),
+    ),
+  ),
+)
+
+///|
+struct ShapeGradientFillJson {
+  gradient_type : Int?
+  start_point : Json?
+  end_point : Json?
+  opacity : Json?
+  gradient : Json?
+} derive(
+  FromJson(
+    fields(
       gradient_type(rename="t"),
+      start_point(rename="s"),
+      end_point(rename="e"),
+      opacity(rename="o"),
       gradient(rename="g"),
-      trim_or_composite(rename="m"),
+    ),
+  ),
+)
+
+///|
+struct ShapeGradientStrokeJson {
+  gradient_type : Int?
+  start_point : Json?
+  end_point : Json?
+  opacity : Json?
+  width : Json?
+  line_cap : Int?
+  line_join : Int?
+  miter_limit : Double?
+  gradient : Json?
+} derive(
+  FromJson(
+    fields(
+      gradient_type(rename="t"),
+      start_point(rename="s"),
+      end_point(rename="e"),
+      opacity(rename="o"),
+      width(rename="w"),
+      line_cap(rename="lc"),
+      line_join(rename="lj"),
+      miter_limit(rename="ml"),
+      gradient(rename="g"),
+    ),
+  ),
+)
+
+///|
+struct ShapeTrimPathJson {
+  start : Json?
+  end : Json?
+  offset : Json?
+  multiple : Int?
+} derive(
+  FromJson(fields(start(rename="s"), end(rename="e"), offset(rename="o"), multiple(rename="m"))),
+)
+
+///|
+struct ShapePolystarJson {
+  points : Json?
+  position : Json?
+  rotation : Json?
+  inner_radius : Json?
+  inner_roundness : Json?
+  outer_radius : Json?
+  outer_roundness : Json?
+  star_type : Int?
+} derive(
+  FromJson(
+    fields(
       points(rename="pt"),
+      position(rename="p"),
+      rotation(rename="r"),
       inner_radius(rename="ir"),
       inner_roundness(rename="is"),
       outer_radius(rename="or"),
       outer_roundness(rename="os"),
       star_type(rename="sy"),
-      transform(rename="tr"),
-      merge_mode(rename="mm"),
     ),
   ),
 )
+
+///|
+struct ShapeRepeaterJson {
+  copies : Json?
+  offset : Json?
+  composite : Int?
+  transform : TransformJson?
+} derive(
+  FromJson(
+    fields(copies(rename="c"), offset(rename="o"), composite(rename="m"), transform(rename="tr")),
+  ),
+)
+
+///|
+struct ShapeMergePathsJson {
+  merge_mode : Int?
+} derive(FromJson(fields(merge_mode(rename="mm"))))
+
+///|
+struct ShapeRoundingJson {
+  radius : Json?
+} derive(FromJson(fields(radius(rename="r"))))
 
 ///|
 struct LayerJson {
@@ -910,20 +1017,6 @@ fn parse_transform_from_decoded(
 }
 
 ///|
-/// Parse Transform
-fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
-  match json {
-    Some(j) => {
-      let decoded : TransformJson = (@json.from_json(j)) catch {
-        _ => raise UnexpectedType("transform", "Object")
-      }
-      parse_transform_from_decoded(Some(decoded))
-    }
-    None => raise InvalidJson("Transform json is missing")
-  }
-}
-
-///|
 /// Parse BezierPath data (the 'v', 'i', 'o', 'c' structure)
 fn parse_bezier_path(json : Json) -> @model.BezierPath raise LottieError {
   let decoded : BezierPathJson = (@json.from_json(json)) catch {
@@ -1020,12 +1113,15 @@ fn parse_property_bezier(
 ///|
 /// Parse a shape from Json
 pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
-  let decoded : ShapeJson = (@json.from_json(json)) catch {
+  let common : ShapeJson = (@json.from_json(json)) catch {
     _ => raise UnexpectedType("shape", "Object")
   }
-  let shape_type = decoded.shape_type
+  let shape_type = common.shape_type
   let data : @model.ShapeData = match shape_type {
     "gr" => {
+      let decoded : ShapeGroupJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape gr", "Object")
+      }
       let items = []
       match decoded.items {
         Some(arr) =>
@@ -1039,32 +1135,47 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       @model.ShapeData::new_group(items)
     }
     "rc" => {
+      let decoded : ShapeRectJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape rc", "Object")
+      }
       let position = parse_property_vec(decoded.position)
-      let size = parse_property_vec(decoded.size_or_start)
-      let roundness = parse_property_double(decoded.rotation_or_roundness) catch {
+      let size = parse_property_vec(decoded.size)
+      let roundness = parse_property_double(decoded.roundness) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
       @model.ShapeData::new_rect(@model.RectShape::new(position~, size~, roundness~))
     }
     "el" => {
+      let decoded : ShapeEllipseJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape el", "Object")
+      }
       let position = parse_property_vec(decoded.position)
-      let size = parse_property_vec(decoded.size_or_start)
+      let size = parse_property_vec(decoded.size)
       @model.ShapeData::new_ellipse(@model.EllipseShape::new(position~, size~))
     }
     "sh" => {
+      let decoded : ShapePathJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape sh", "Object")
+      }
       let path = parse_property_bezier(decoded.path)
       @model.ShapeData::new_path(@model.PathShape::new(path~))
     }
     "fl" => {
-      let color = parse_property_vec(decoded.color_or_copies)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let decoded : ShapeFillJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape fl", "Object")
+      }
+      let color = parse_property_vec(decoded.color)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       @model.ShapeData::new_fill(@model.FillShape::new(color~, opacity~))
     }
     "st" => {
-      let color = parse_property_vec(decoded.color_or_copies)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let decoded : ShapeStrokeJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape st", "Object")
+      }
+      let color = parse_property_vec(decoded.color)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       let width = parse_property_double(decoded.width) catch {
@@ -1078,10 +1189,13 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       )
     }
     "gf" => {
+      let decoded : ShapeGradientFillJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape gf", "Object")
+      }
       let gradient_type = decoded.gradient_type.unwrap_or(1)
-      let start_point = parse_property_vec(decoded.size_or_start)
-      let end_point = parse_property_vec(decoded.end_or_bezier)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let start_point = parse_property_vec(decoded.start_point)
+      let end_point = parse_property_vec(decoded.end_point)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       let g_json = match decoded.gradient {
@@ -1106,10 +1220,13 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       )
     }
     "gs" => {
+      let decoded : ShapeGradientStrokeJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape gs", "Object")
+      }
       let gradient_type = decoded.gradient_type.unwrap_or(1)
-      let start_point = parse_property_vec(decoded.size_or_start)
-      let end_point = parse_property_vec(decoded.end_or_bezier)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let start_point = parse_property_vec(decoded.start_point)
+      let end_point = parse_property_vec(decoded.end_point)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       let width = parse_property_double(decoded.width) catch {
@@ -1143,24 +1260,35 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
         ),
       )
     }
-    "tr" => @model.ShapeData::new_transform(parse_transform(Some(json)))
+    "tr" => {
+      let decoded : TransformJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape tr", "Object")
+      }
+      @model.ShapeData::new_transform(parse_transform_from_decoded(Some(decoded)))
+    }
     "tm" => {
-      let start = parse_property_double(decoded.size_or_start) catch {
+      let decoded : ShapeTrimPathJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape tm", "Object")
+      }
+      let start = parse_property_double(decoded.start) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
-      let end = parse_property_double(decoded.end_or_bezier) catch {
+      let end = parse_property_double(decoded.end) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
-      let offset = parse_property_double(decoded.opacity_or_offset) catch {
+      let offset = parse_property_double(decoded.offset) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
-      let multiple = decoded.trim_or_composite.unwrap_or(1)
+      let multiple = decoded.multiple.unwrap_or(1)
       @model.ShapeData::new_trim_path(@model.TrimPath::new(start~, end~, offset~, multiple~))
     }
     "sr" => {
+      let decoded : ShapePolystarJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape sr", "Object")
+      }
       let points = parse_property_double(decoded.points)
       let position = parse_property_vec(decoded.position)
-      let rotation = parse_property_double(decoded.rotation_or_roundness)
+      let rotation = parse_property_double(decoded.rotation)
       let inner_radius = parse_property_double(decoded.inner_radius) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
@@ -1186,28 +1314,37 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       )
     }
     "rp" => {
-      let copies = parse_property_double(decoded.color_or_copies)
-      let offset = parse_property_double(decoded.opacity_or_offset)
-      let composite = decoded.trim_or_composite.unwrap_or(1)
-      let transform = parse_transform(decoded.transform)
+      let decoded : ShapeRepeaterJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape rp", "Object")
+      }
+      let copies = parse_property_double(decoded.copies)
+      let offset = parse_property_double(decoded.offset)
+      let composite = decoded.composite.unwrap_or(1)
+      let transform = parse_transform_from_decoded(decoded.transform)
       @model.ShapeData::new_repeater(
         @model.Repeater::new(copies~, offset~, composite~, transform~),
       )
     }
     "mm" => {
+      let decoded : ShapeMergePathsJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape mm", "Object")
+      }
       let mm = decoded.merge_mode.unwrap_or(1)
       @model.ShapeData::new_merge_paths(@model.MergePaths::new(mm))
     }
     "rd" => {
-      let radius = parse_property_double(decoded.rotation_or_roundness) catch {
+      let decoded : ShapeRoundingJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape rd", "Object")
+      }
+      let radius = parse_property_double(decoded.radius) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
       @model.ShapeData::new_rounding(@model.Rounding::new(radius~))
     }
     _ => raise InvalidJson("Unknown shape type: " + shape_type)
   }
-  let name = decoded.name
-  let hidden = decoded.hidden
+  let name = common.name
+  let hidden = common.hidden
   @model.Shape::new(shape_type~, data~, name~, hidden~)
 }
 
