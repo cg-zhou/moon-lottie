@@ -78,16 +78,51 @@ fn bezier_component(value : @model.BezierValue, index : Int) -> Double {
 }
 
 ///|
+fn bezier_value_length(value : @model.BezierValue) -> Int {
+  match value {
+    Single(_) => 1
+    Multi(arr) => arr.length()
+  }
+}
+
+///|
+fn easing_component_index(
+  out_tangent : @model.Bezier,
+  in_tangent : @model.Bezier,
+  component : Int,
+) -> Int {
+  let out_len = if bezier_value_length(out_tangent.x) > bezier_value_length(out_tangent.y) {
+    bezier_value_length(out_tangent.x)
+  } else {
+    bezier_value_length(out_tangent.y)
+  }
+  let in_len = if bezier_value_length(in_tangent.x) > bezier_value_length(in_tangent.y) {
+    bezier_value_length(in_tangent.x)
+  } else {
+    bezier_value_length(in_tangent.y)
+  }
+  let dims = if out_len > in_len { out_len } else { in_len }
+  if dims <= 1 {
+    0
+  } else if component >= dims {
+    dims - 1
+  } else {
+    component
+  }
+}
+
+///|
 fn solve_eased_t_for_component(
   out_tangent : @model.Bezier,
   in_tangent : @model.Bezier,
   t : Double,
   component : Int,
 ) -> Double {
-  let x1 = bezier_component(out_tangent.x, component)
-  let y1 = bezier_component(out_tangent.y, component)
-  let x2 = bezier_component(in_tangent.x, component)
-  let y2 = bezier_component(in_tangent.y, component)
+  let idx = easing_component_index(out_tangent, in_tangent, component)
+  let x1 = bezier_component(out_tangent.x, idx)
+  let y1 = bezier_component(out_tangent.y, idx)
+  let x2 = bezier_component(in_tangent.x, idx)
+  let y2 = bezier_component(in_tangent.y, idx)
   @math.solve_cubic_bezier_easing(x1, y1, x2, y2, t)
 }
 
