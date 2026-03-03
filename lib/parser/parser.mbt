@@ -7,6 +7,28 @@ pub suberror LottieError {
 } derive(Show)
 
 ///|
+/// Pilot derive-based decoding for animation root required fields.
+struct AnimationRootJson {
+  version : String
+  frame_rate : Double
+  in_point : Double
+  out_point : Double
+  width : Int
+  height : Int
+} derive(
+  FromJson(
+    fields(
+      version(rename="v"),
+      frame_rate(rename="fr"),
+      in_point(rename="ip"),
+      out_point(rename="op"),
+      width(rename="w"),
+      height(rename="h"),
+    ),
+  ),
+)
+
+///|
 /// Global tracker for unknown keys (for L1 Reporting)
 let known_keys : Array[String] = [
   "v", "fr", "ip", "op", "w", "h", "nm", "ddd", "assets", "layers", "fonts", "chars",
@@ -1150,12 +1172,18 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
 ///|
 /// Parse the top-level Animation object
 pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
-  let v = get_string(json, "v")
-  let fr = get_double(json, "fr")
-  let ip = get_double(json, "ip")
-  let op = get_double(json, "op")
-  let w = get_int(json, "w")
-  let h = get_int(json, "h")
+  let root : AnimationRootJson = (@json.from_json(json)) catch {
+    e =>
+      raise InvalidJson(
+        "Animation root decode failed (required: v, fr, ip, op, w, h): \{e}",
+      )
+  }
+  let version = root.version
+  let frame_rate = root.frame_rate
+  let in_point = root.in_point
+  let out_point = root.out_point
+  let width = root.width
+  let height = root.height
 
   let layers = []
   let assets = []
@@ -1186,14 +1214,14 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
   }
 
   @model.Animation::new(
-    v~,
-    fr~,
-    ip~,
-    op~,
-    w~,
-    h~,
-    nm=Some(get_string(json, "nm")) catch { _ => None },
-    ddd=Some(get_int(json, "ddd")) catch { _ => None },
+    version~,
+    frame_rate~,
+    in_point~,
+    out_point~,
+    width~,
+    height~,
+    name=Some(get_string(json, "nm")) catch { _ => None },
+    three_d=Some(get_int(json, "ddd")) catch { _ => None },
     assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
   )

@@ -1,13 +1,13 @@
 ///|
 pub struct Animation {
-  v : String // Version
-  fr : Double // Frame rate
-  ip : Double // In point
-  op : Double // Out point
-  w : Int // Width
-  h : Int // Height
-  nm : String? // Name
-  ddd : Int? // 3D
+  version : String // JSON: v
+  frame_rate : Double // JSON: fr
+  in_point : Double // JSON: ip
+  out_point : Double // JSON: op
+  width : Int // JSON: w
+  height : Int // JSON: h
+  name : String? // JSON: nm
+  three_d : Int? // JSON: ddd
   assets : Array[Asset]?
   layers : Array[Layer]
   markers : Array[Marker]?
@@ -15,19 +15,31 @@ pub struct Animation {
 
 ///|
 pub fn Animation::new(
-  v~ : String,
-  fr~ : Double,
-  ip~ : Double,
-  op~ : Double,
-  w~ : Int,
-  h~ : Int,
-  nm? : String? = None,
-  ddd? : Int? = None,
+  version~ : String,
+  frame_rate~ : Double,
+  in_point~ : Double,
+  out_point~ : Double,
+  width~ : Int,
+  height~ : Int,
+  name? : String? = None,
+  three_d? : Int? = None,
   assets? : Array[Asset]? = None,
   layers~ : Array[Layer],
   markers? : Array[Marker]? = None,
 ) -> Animation {
-  { v, fr, ip, op, w, h, nm, ddd, assets, layers, markers }
+  {
+    version,
+    frame_rate,
+    in_point,
+    out_point,
+    width,
+    height,
+    name,
+    three_d,
+    assets,
+    layers,
+    markers,
+  }
 }
 
 ///|

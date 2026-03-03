@@ -62,8 +62,8 @@ pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
   self.renderer.clear_rect(
     0.0,
     0.0,
-    self.animation.w.to_double(),
-    self.animation.h.to_double(),
+    self.animation.width.to_double(),
+    self.animation.height.to_double(),
   )
 
   // Lottie renders layers from bottom to top (reverse order in the array)

@@ -511,7 +511,7 @@ pub fn render_animation_to_svgs(
   num_frames : Int,
 ) -> Array[String] {
   let svgs = []
-  let duration = ani.op - ani.ip
+  let duration = ani.out_point - ani.in_point
   let step = if num_frames > 1 {
     duration / (num_frames - 1).to_double()
   } else {
@@ -519,8 +519,8 @@ pub fn render_animation_to_svgs(
   }
 
   for i = 0; i < num_frames; i = i + 1 {
-    let frame = ani.ip + i.to_double() * step
-    let renderer = SvgRenderer::new(ani.w.to_double(), ani.h.to_double())
+    let frame = ani.in_point + i.to_double() * step
+    let renderer = SvgRenderer::new(ani.width.to_double(), ani.height.to_double())
     let player = Player::new(ani, renderer)
     player.set_frame(frame)
     player.render()

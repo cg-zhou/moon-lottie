@@ -1,4 +1,34 @@
 ///|
+struct JsonTest3 {
+  x : Int
+  y : Int
+} derive(
+  FromJson(fields(x(rename="renamedX"))),
+  ToJson(fields(x(rename="renamedX"))),
+  Eq,
+  Show,
+)
+
+///|
+enum JsonTest4 {
+  A(x~ : Int)
+  B(x~ : Int, y~ : Int)
+} derive(FromJson, ToJson, Eq, Show)
+
+///|
+test "derive rename mapping json args" {
+  let input = JsonTest3::{ x: 123, y: 456 }
+  let expected : Json = { "renamedX": 123, "y": 456 }
+  assert_eq(input.to_json(), expected)
+  assert_eq(@json.from_json(expected), input)
+
+  let input = JsonTest4::A(x=123)
+  let expected : Json = ["A", { "x": 123 }]
+  assert_eq(input.to_json(), expected)
+  assert_eq(@json.from_json(expected), input)
+}
+
+///|
 test "parse_animation_basic" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"
   let json = @json.parse(json_str)
@@ -7,26 +37,52 @@ test "parse_animation_basic" {
   }
 
   // Guardrails: Full field assertion for root animation
-  if ani.v != "5.5.0" {
-    fail("v mismatch: expected 5.5.0")
+  if ani.version != "5.5.0" {
+    fail("version mismatch: expected 5.5.0")
   }
-  if ani.fr != 60.0 {
-    fail("fr mismatch: expected 60.0")
+  if ani.frame_rate != 60.0 {
+    fail("frame_rate mismatch: expected 60.0")
   }
-  if ani.ip != 0.0 {
-    fail("ip mismatch: expected 0.0")
+  if ani.in_point != 0.0 {
+    fail("in_point mismatch: expected 0.0")
   }
-  if ani.op != 100.0 {
-    fail("op mismatch: expected 100.0")
+  if ani.out_point != 100.0 {
+    fail("out_point mismatch: expected 100.0")
   }
-  if ani.w != 500 {
-    fail("w mismatch: expected 500")
+  if ani.width != 500 {
+    fail("width mismatch: expected 500")
   }
-  if ani.h != 500 {
-    fail("h mismatch: expected 500")
+  if ani.height != 500 {
+    fail("height mismatch: expected 500")
   }
   if ani.layers.length() != 0 {
     fail("layers length mismatch: expected 0")
+  }
+}
+
+///|
+test "parse_animation_missing_required_field_fails" {
+  let cases = [
+    ("v", "{\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("fr", "{\"v\":\"5.5.0\",\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("ip", "{\"v\":\"5.5.0\",\"fr\":60.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("op", "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("w", "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"h\":500,\"layers\":[]}"),
+    ("h", "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"layers\":[]}"),
+  ]
+  for case in cases {
+    let (missing_key, json_str) = case
+    let json = @json.parse(json_str)
+    try @parser.parse_animation(json) catch {
+      e => {
+        let _ = e
+      }
+    } noraise {
+      _ =>
+        fail(
+          "Expected parse_animation to fail when required field \{missing_key} is missing",
+        )
+    }
   }
 }
 
