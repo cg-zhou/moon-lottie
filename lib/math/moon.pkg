@@ -1,3 +1,4 @@
 import {
+  "cg-zhou/bezier-easing" @bezier,
   "moonbitlang/core/math" @std_math,
 }

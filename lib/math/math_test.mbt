@@ -151,3 +151,11 @@ test "Bezier::solve_cubic_bezier_easing linear identity" {
     }
   }
 }
+
+///|
+test "Bezier::solve_cubic_bezier_easing clamps invalid control x" {
+  let y = @math.solve_cubic_bezier_easing(-0.2, 0.1, 1.2, 0.9, 0.5)
+  if y < 0.0 || y > 1.0 {
+    fail("easing output should remain within [0, 1]")
+  }
+}

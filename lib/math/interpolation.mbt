@@ -55,58 +55,8 @@ pub fn solve_cubic_bezier_easing(
     return 1.0
   }
 
-  // Same strategy as lottie-rs easing solve (invert X first, then sample Y),
-  // implemented dependency-free with Newton iteration + bisection fallback.
-  let mut t = target_x
-  for i = 0; i < 8; i = i + 1 {
-    let x = sample_bezier(x1, x2, t) - target_x
-    if x.abs() < 0.000001 {
-      return sample_bezier(y1, y2, t)
-    }
-    let d = sample_bezier_derivative(x1, x2, t)
-    if d.abs() < 0.000001 {
-      break
-    }
-    let next_t = t - x / d
-    if next_t < 0.0 || next_t > 1.0 {
-      break
-    }
-    t = next_t
-  }
-
-  let mut low = 0.0
-  let mut high = 1.0
-  if sample_bezier(x1, x2, t) < target_x {
-    low = t
-  } else {
-    high = t
-  }
-  for i = 0; i < 24; i = i + 1 {
-    let x = sample_bezier(x1, x2, t)
-    if (x - target_x).abs() < 0.000001 {
-      break
-    }
-    if x < target_x {
-      low = t
-    } else {
-      high = t
-    }
-    t = (low + high) / 2.0
-  }
-
-  sample_bezier(y1, y2, t)
-}
-
-///|
-fn sample_bezier(p1 : Double, p2 : Double, t : Double) -> Double {
-  let t1 = 1.0 - t
-  // B(t) = 3(1-t)^2*t*P1 + 3(1-t)*t^2*P2 + t^3
-  3.0 * t1 * t1 * t * p1 + 3.0 * t1 * t * t * p2 + t * t * t
-}
-
-///|
-fn sample_bezier_derivative(p1 : Double, p2 : Double, t : Double) -> Double {
-  let t1 = 1.0 - t
-  // B'(t) = 3(1-t)^2*P1 + 6(1-t)t(P2-P1) + 3t^2(1-P2)
-  3.0 * t1 * t1 * p1 + 6.0 * t1 * t * (p2 - p1) + 3.0 * t * t * (1.0 - p2)
+  let safe_x1 = if x1 < 0.0 { 0.0 } else if x1 > 1.0 { 1.0 } else { x1 }
+  let safe_x2 = if x2 < 0.0 { 0.0 } else if x2 > 1.0 { 1.0 } else { x2 }
+  let easing = @bezier.bezier(safe_x1, y1, safe_x2, y2)
+  easing(target_x)
 }

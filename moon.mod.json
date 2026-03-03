@@ -5,6 +5,9 @@
   "readme": "README.mbt.md",
   "repository": "https://github.com/cg-zhou/moon-lottie",
   "license": "Apache-2.0",
+  "deps": {
+    "cg-zhou/bezier-easing": "0.2.0"
+  },
   "keywords": [],
   "description": "MoonBit 原生高性能 Lottie 动画引擎 | High-performance Lottie animation engine in native MoonBit"
 }
