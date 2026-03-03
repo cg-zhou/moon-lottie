@@ -286,6 +286,47 @@ struct BezierPathJson {
   ),
 )
 
+struct BezierTangentJson {
+  x : Json?
+  y : Json?
+} derive(FromJson)
+
+struct PropertyKeyframeJson {
+  time : Double?
+  start_value : Json?
+  end_value : Json?
+  in_tangent : Json?
+  out_tangent : Json?
+  hold : Json?
+  value_in_tangent : Array[Double]?
+  value_out_tangent : Array[Double]?
+} derive(
+  FromJson(
+    fields(
+      time(rename="t"),
+      start_value(rename="s"),
+      end_value(rename="e"),
+      in_tangent(rename="i"),
+      out_tangent(rename="o"),
+      hold(rename="h"),
+      value_in_tangent(rename="ti"),
+      value_out_tangent(rename="to"),
+    ),
+  ),
+)
+
+struct TextPropertyJson {
+  animated_flag : Json?
+  value : Json?
+} derive(
+  FromJson(
+    fields(
+      animated_flag(rename="a"),
+      value(rename="k"),
+    ),
+  ),
+)
+
 ///|
 /// Global tracker for unknown keys (for L1 Reporting)
 let known_keys : Array[String] = [
@@ -392,11 +433,15 @@ fn parse_bezier_value(json : Json?) -> @model.BezierValue? {
 ///|
 fn parse_bezier_tangent(json : Json?) -> @model.Bezier? {
   match json {
-    Some(Object(obj)) =>
-      match (parse_bezier_value(obj.get("x")), parse_bezier_value(obj.get("y"))) {
+    Some(j) => {
+      let tangent : BezierTangentJson = (@json.from_json(j)) catch {
+        _ => return None
+      }
+      match (parse_bezier_value(tangent.x), parse_bezier_value(tangent.y)) {
         (Some(x), Some(y)) => Some(@model.Bezier::new(x, y))
         _ => None
       }
+    }
     _ => None
   }
 }
@@ -409,26 +454,48 @@ fn property_animated_flag(flag : Json?) -> Bool {
   }
 }
 
-fn parse_number_array(json : Json?) -> Array[Double]? {
-  match json {
-    Some(Array(arr)) => {
-      let values = []
-      for v in arr {
-        match v {
-          Number(n, ..) => values.push(n)
-          _ => ()
-        }
-      }
-      Some(values)
-    }
-    _ => None
-  }
-}
-
-///|
 fn parse_gradient_or_default(json : Json) -> GradientJson {
   // Keep parser tolerant: malformed gradient metadata falls back to raw `g.k` parsing path below.
   (@json.from_json(json)) catch { _ => { color_count: None, color_stops: None } }
+}
+
+fn is_animated_keyframe_array(k : Json) -> Bool {
+  match k {
+    Array(arr) =>
+      if arr.length() > 0 {
+        let first = arr[0]
+        let keyframe : PropertyKeyframeJson? = try {
+          Some(@json.from_json(first))
+        } catch {
+          _ => None
+        }
+        match keyframe {
+          Some(kf) =>
+            match kf.time {
+              Some(_) => true
+              None => false
+            }
+          None => false
+        }
+      } else {
+        false
+      }
+    _ => false
+  }
+}
+
+fn keyframe_time_or_default(time : Double?) -> Int {
+  match time {
+    Some(t) => t.to_int()
+    None => 0
+  }
+}
+
+fn keyframe_hold_or_none(hold : Json?) -> Int? {
+  match hold {
+    Some(Number(n, ..)) => Some(n.to_int())
+    _ => None
+  }
 }
 
 ///|
@@ -449,22 +516,7 @@ fn parse_property_double(
             Some(v) => v
             None => raise MissingKey("k in property")
           }
-          let animated_from_k = match k {
-            Array(arr) =>
-              if arr.length() > 0 {
-                match arr[0] {
-                  Object(first) =>
-                    match first.get("t") {
-                      Some(_) => true
-                      _ => false
-                    }
-                  _ => false
-                }
-              } else {
-                false
-              }
-            _ => false
-          }
+          let animated_from_k = is_animated_keyframe_array(k)
           if a_flag || animated_from_k {
             // Animated
             let keyframes = []
@@ -472,48 +524,45 @@ fn parse_property_double(
             match k {
               Array(arr) =>
                 for kf_json in arr {
-                  match kf_json {
-                    Object(kf_obj) => {
-                      let t = match kf_obj.get("t") {
-                        Some(Number(n, ..)) => n.to_int()
-                        _ => 0
+                  let keyframe : PropertyKeyframeJson? = try {
+                    Some(@json.from_json(kf_json))
+                  } catch {
+                    _ => None
+                  }
+                  let keyframe = match keyframe {
+                    Some(v) => v
+                    None => continue
+                  }
+                  let t = keyframe_time_or_default(keyframe.time)
+                  let s = match keyframe.start_value {
+                    Some(Array([Number(n, ..)])) => n
+                    Some(Number(n, ..)) => n
+                    _ =>
+                      match prev_value {
+                        Some(v) => v
+                        None => 0.0
                       }
-                      let s = match kf_obj.get("s") {
-                        Some(Array([Number(n, ..)])) => n
-                        Some(Number(n, ..)) => n
-                        _ =>
-                          match prev_value {
-                            Some(v) => v
-                            None => 0.0
-                          }
-                      }
-                      let e = match kf_obj.get("e") {
-                        Some(Array([Number(n, ..)])) => Some(n)
-                        Some(Number(n, ..)) => Some(n)
-                        _ => None
-                      }
-                      let in_tangent = parse_bezier_tangent(kf_obj.get("i"))
-                      let out_tangent = parse_bezier_tangent(kf_obj.get("o"))
-                      let hold = match kf_obj.get("h") {
-                        Some(Number(n, ..)) => Some(n.to_int())
-                        _ => None
-                      }
-                      keyframes.push(
-                        @model.LottieKeyframe::new(
-                          frame=t,
-                          start_value=s,
-                          end_value=e,
-                          in_tangent=in_tangent,
-                          out_tangent=out_tangent,
-                          hold=hold,
-                        ),
-                      )
-                      prev_value = match e {
-                        Some(v) => Some(v)
-                        None => Some(s)
-                      }
-                    }
-                    _ => ()
+                  }
+                  let e = match keyframe.end_value {
+                    Some(Array([Number(n, ..)])) => Some(n)
+                    Some(Number(n, ..)) => Some(n)
+                    _ => None
+                  }
+                  let in_tangent = parse_bezier_tangent(keyframe.in_tangent)
+                  let out_tangent = parse_bezier_tangent(keyframe.out_tangent)
+                  keyframes.push(
+                    @model.LottieKeyframe::new(
+                      frame=t,
+                      start_value=s,
+                      end_value=e,
+                      in_tangent=in_tangent,
+                      out_tangent=out_tangent,
+                      hold=keyframe_hold_or_none(keyframe.hold),
+                    ),
+                  )
+                  prev_value = match e {
+                    Some(v) => Some(v)
+                    None => Some(s)
                   }
                 }
               _ => ()
@@ -551,22 +600,7 @@ fn parse_property_vec(
             Some(v) => v
             None => raise MissingKey("k in property")
           }
-          let animated_from_k = match k {
-            Array(arr) =>
-              if arr.length() > 0 {
-                match arr[0] {
-                  Object(first) =>
-                    match first.get("t") {
-                      Some(_) => true
-                      _ => false
-                    }
-                  _ => false
-                }
-              } else {
-                false
-              }
-            _ => false
-          }
+          let animated_from_k = is_animated_keyframe_array(k)
           if a_flag || animated_from_k {
             // Animated
             let keyframes = []
@@ -574,68 +608,63 @@ fn parse_property_vec(
             match k {
               Array(arr) =>
                 for kf_json in arr {
-                  match kf_json {
-                    Object(kf_obj) => {
-                      let t = match kf_obj.get("t") {
-                        Some(Number(n, ..)) => n.to_int()
-                        _ => 0
-                      }
-                      let s = match kf_obj.get("s") {
-                        Some(Array(arr)) => {
-                          let res = []
-                          for v in arr {
-                            match v {
-                              Number(n, ..) => res.push(n)
-                              _ => ()
-                            }
-                          }
-                          res
+                  let keyframe : PropertyKeyframeJson? = try {
+                    Some(@json.from_json(kf_json))
+                  } catch {
+                    _ => None
+                  }
+                  let keyframe = match keyframe {
+                    Some(v) => v
+                    None => continue
+                  }
+                  let t = keyframe_time_or_default(keyframe.time)
+                  let s = match keyframe.start_value {
+                    Some(Array(arr)) => {
+                      let res = []
+                      for v in arr {
+                        match v {
+                          Number(n, ..) => res.push(n)
+                          _ => ()
                         }
-                        _ =>
-                          match prev_value {
-                            Some(v) => v
-                            None => []
-                          }
                       }
-                      let e = match kf_obj.get("e") {
-                        Some(Array(arr)) => {
-                          let res = []
-                          for v in arr {
-                            match v {
-                              Number(n, ..) => res.push(n)
-                              _ => ()
-                            }
-                          }
-                          Some(res)
-                        }
-                        _ => None
-                      }
-                      let in_tangent = parse_bezier_tangent(kf_obj.get("i"))
-                      let out_tangent = parse_bezier_tangent(kf_obj.get("o"))
-                      let value_in_tangent = parse_number_array(kf_obj.get("ti"))
-                      let value_out_tangent = parse_number_array(kf_obj.get("to"))
-                      let hold = match kf_obj.get("h") {
-                        Some(Number(n, ..)) => Some(n.to_int())
-                        _ => None
-                      }
-                      keyframes.push(
-                        @model.LottieKeyframe::new(
-                          frame=t,
-                          start_value=s,
-                          end_value=e,
-                          in_tangent=in_tangent,
-                          out_tangent=out_tangent,
-                          value_in_tangent=value_in_tangent,
-                          value_out_tangent=value_out_tangent,
-                          hold=hold,
-                        ),
-                      )
-                      prev_value = match e {
-                        Some(v) => Some(v)
-                        None => Some(s)
-                      }
+                      res
                     }
-                    _ => ()
+                    _ =>
+                      match prev_value {
+                        Some(v) => v
+                        None => []
+                      }
+                  }
+                  let e = match keyframe.end_value {
+                    Some(Array(arr)) => {
+                      let res = []
+                      for v in arr {
+                        match v {
+                          Number(n, ..) => res.push(n)
+                          _ => ()
+                        }
+                      }
+                      Some(res)
+                    }
+                    _ => None
+                  }
+                  let in_tangent = parse_bezier_tangent(keyframe.in_tangent)
+                  let out_tangent = parse_bezier_tangent(keyframe.out_tangent)
+                  keyframes.push(
+                    @model.LottieKeyframe::new(
+                      frame=t,
+                      start_value=s,
+                      end_value=e,
+                      in_tangent=in_tangent,
+                      out_tangent=out_tangent,
+                      value_in_tangent=keyframe.value_in_tangent,
+                      value_out_tangent=keyframe.value_out_tangent,
+                      hold=keyframe_hold_or_none(keyframe.hold),
+                    ),
+                  )
+                  prev_value = match e {
+                    Some(v) => Some(v)
+                    None => Some(s)
                   }
                 }
               _ => ()
@@ -697,58 +726,57 @@ fn parse_text_document_property(
   json : Json?,
 ) -> @model.LottieProperty[@model.TextDocument] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(obj) => {
-          let a = match obj.get("a") {
-            Some(Number(n, ..)) => n == 1.0
-            _ => false
-          }
-          let k = match obj.get("k") {
-            Some(k) => k
-            None => raise MissingKey("k in text property")
-          }
-          if a {
-            let keyframes = []
-            match k {
-              Array(arr) =>
-                for kf_json in arr {
-                  match kf_json {
-                    Object(kf_obj) => {
-                      let t = match kf_obj.get("t") {
-                        Some(Number(n, ..)) => n.to_int()
-                        _ => 0
-                      }
-                      let s = match kf_obj.get("s") {
-                        Some(json) => parse_text_document(json)
-                        _ => raise MissingKey("s in text keyframe")
-                      }
-                      keyframes.push(
-                        @model.LottieKeyframe::new(frame=t, start_value=s),
-                      )
-                    }
-                    _ => ()
-                  }
-                }
-              _ => ()
-            }
-            @model.LottieProperty::new_animated(keyframes)
-          } else {
-            match k {
-              Array(arr) =>
-                if arr.length() > 0 {
-                  @model.LottieProperty::new_static(parse_text_document(arr[0]))
-                } else {
-                  raise MissingKey("k array is empty")
-                }
-              Object(_) =>
-                @model.LottieProperty::new_static(parse_text_document(k))
-              _ => raise UnexpectedType("k", "Array or Object")
-            }
-          }
-        }
+    Some(j) => {
+      let prop : TextPropertyJson = (@json.from_json(j)) catch {
         _ => raise UnexpectedType("text property", "Object")
       }
+      let a = property_animated_flag(prop.animated_flag)
+      let k = match prop.value {
+        Some(v) => v
+        None => raise MissingKey("k in text property")
+      }
+      if a {
+        let keyframes = []
+        match k {
+          Array(arr) =>
+            for kf_json in arr {
+              let keyframe : PropertyKeyframeJson? = try {
+                Some(@json.from_json(kf_json))
+              } catch {
+                _ => None
+              }
+              let keyframe = match keyframe {
+                Some(v) => v
+                None => continue
+              }
+              let s = match keyframe.start_value {
+                Some(v) => parse_text_document(v)
+                None => raise MissingKey("s in text keyframe")
+              }
+              keyframes.push(
+                @model.LottieKeyframe::new(
+                  frame=keyframe_time_or_default(keyframe.time),
+                  start_value=s,
+                ),
+              )
+            }
+          _ => ()
+        }
+        @model.LottieProperty::new_animated(keyframes)
+      } else {
+        match k {
+          Array(arr) =>
+            if arr.length() > 0 {
+              @model.LottieProperty::new_static(parse_text_document(arr[0]))
+            } else {
+              raise MissingKey("k array is empty")
+            }
+          Object(_) =>
+            @model.LottieProperty::new_static(parse_text_document(k))
+          _ => raise UnexpectedType("k", "Array or Object")
+        }
+      }
+    }
     None => raise InvalidJson("Text property missing")
   }
 }
@@ -866,67 +894,46 @@ fn parse_property_bezier(
           let a_flag = property_animated_flag(prop.animated_flag)
           match prop.value {
             Some(k) =>
-              if a_flag || (
-                match k {
-                  Array(arr) =>
-                    if arr.length() > 0 {
-                      match arr[0] {
-                        Object(first) =>
-                          match first.get("t") {
-                            Some(_) => true
-                            _ => false
-                          }
-                        _ => false
-                      }
-                    } else {
-                      false
-                    }
-                  _ => false
-                }
-              ) {
+              if a_flag || is_animated_keyframe_array(k) {
                 let keyframes = []
                 match k {
                   Array(arr) =>
                     for kf_json in arr {
-                      match kf_json {
-                        Object(kf_obj) => {
-                          let t = match kf_obj.get("t") {
-                            Some(Number(n, ..)) => n.to_int()
-                            _ => 0
-                          }
-                          let s = try {
-                            match kf_obj.get("s") {
-                              Some(Array([val])) => parse_bezier_path(val)
-                              Some(val) => parse_bezier_path(val)
-                              None => raise MissingKey("s in keyframe")
-                            }
-                          } catch {
-                            _ => continue
-                          }
-                          let e = try {
-                            match kf_obj.get("e") {
-                              Some(Array([val])) => Some(parse_bezier_path(val))
-                              Some(val) => Some(parse_bezier_path(val))
-                              _ => None
-                            }
-                          } catch {
-                            _ => None
-                          }
-                          let hold = match kf_obj.get("h") {
-                            Some(Number(n, ..)) => Some(n.to_int())
-                            _ => None
-                          }
-                          keyframes.push(
-                            @model.LottieKeyframe::new(
-                              frame=t,
-                              start_value=s,
-                              end_value=e,
-                              hold=hold,
-                            ),
-                          )
-                        }
-                        _ => ()
+                      let keyframe : PropertyKeyframeJson? = try {
+                        Some(@json.from_json(kf_json))
+                      } catch {
+                        _ => None
                       }
+                      let keyframe = match keyframe {
+                        Some(v) => v
+                        None => continue
+                      }
+                      let s = try {
+                        match keyframe.start_value {
+                          Some(Array([val])) => parse_bezier_path(val)
+                          Some(val) => parse_bezier_path(val)
+                          None => raise MissingKey("s in keyframe")
+                        }
+                      } catch {
+                        _ => continue
+                      }
+                      let e = try {
+                        match keyframe.end_value {
+                          Some(Array([val])) => Some(parse_bezier_path(val))
+                          Some(val) => Some(parse_bezier_path(val))
+                          _ => None
+                        }
+                      } catch {
+                        _ => None
+                      }
+                      keyframes.push(
+                        @model.LottieKeyframe::new(
+                          frame=keyframe_time_or_default(keyframe.time),
+                          start_value=s,
+                          end_value=e,
+                          hold=keyframe_hold_or_none(keyframe.hold),
+                        ),
+                      )
                     }
                   _ => ()
                 }

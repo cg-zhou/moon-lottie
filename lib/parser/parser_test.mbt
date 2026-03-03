@@ -188,6 +188,28 @@ test "parse_merge_paths_and_rounding" {
 }
 
 ///|
+test "parse_animated_text_document_property" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"a\":1,\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"A\"}},{\"t\":10,\"s\":{\"s\":24,\"f\":\"Arial\",\"t\":\"B\"}}]}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animated text property: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Text(text_data) =>
+      match text_data.text.value {
+        @model.PropertyValue::Animated(keyframes) => {
+          inspect(keyframes.length(), content="2")
+          inspect(keyframes[0].start_value.text, content="A")
+          inspect(keyframes[1].start_value.text, content="B")
+        }
+        _ => fail("text document property should be animated")
+      }
+    _ => fail("layer should be text layer")
+  }
+}
+
+///|
 test "parse_position_keyframe_infra_fields" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":100,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":1,\"nm\":\"null\",\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0,0,0],\"e\":[100,50,0],\"i\":{\"x\":[0.42],\"y\":[0]},\"o\":{\"x\":[0.58],\"y\":[1]},\"to\":[10,0,0],\"ti\":[-10,0,0],\"h\":1},{\"t\":100,\"s\":[100,50,0]}]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}"
