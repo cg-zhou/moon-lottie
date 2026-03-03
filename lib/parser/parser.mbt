@@ -127,67 +127,174 @@ struct ShapeJson {
   shape_type : String
   name : String?
   hidden : Bool?
-  items : Array[Json]?
-  path : Json?
-  position : Json?
-  size_or_start : Json?
-  end_or_bezier : Json?
-  rotation_or_roundness : Json?
-  color_or_copies : Json?
-  opacity_or_offset : Json?
-  width : Json?
-  line_cap : Int?
-  line_join : Int?
-  miter_limit : Double?
-  gradient_type : Int?
-  gradient : Json?
-  trim_or_composite : Int?
-  points : Json?
-  inner_radius : Json?
-  inner_roundness : Json?
-  outer_radius : Json?
-  outer_roundness : Json?
-  star_type : Int?
-  transform : Json?
-  merge_mode : Int?
 } derive(
   FromJson(
     fields(
       shape_type(rename="ty"),
       name(rename="nm"),
       hidden(rename="hd"),
-      items(rename="it"),
-      path(rename="ks"),
-      position(rename="p"),
-      size_or_start(rename="s"),
-      end_or_bezier(rename="e"),
-      rotation_or_roundness(rename="r"),
-      color_or_copies(rename="c"),
-      opacity_or_offset(rename="o"),
-      width(rename="w"),
-      line_cap(rename="lc"),
-      line_join(rename="lj"),
-      miter_limit(rename="ml"),
-      gradient_type(rename="t"),
-      gradient(rename="g"),
-      trim_or_composite(rename="m"),
-      points(rename="pt"),
-      inner_radius(rename="ir"),
-      inner_roundness(rename="is"),
-      outer_radius(rename="or"),
-      outer_roundness(rename="os"),
-      star_type(rename="sy"),
-      transform(rename="tr"),
-      merge_mode(rename="mm"),
     ),
   ),
 )
 
 ///|
+struct ShapeGroupJson {
+  items : Array[Json]?
+} derive(FromJson(fields(items(rename="it"))))
+
+///|
+struct ShapeRectJson {
+  position : Json?
+  size : Json?
+  roundness : Json?
+} derive(FromJson(fields(position(rename="p"), size(rename="s"), roundness(rename="r"))))
+
+///|
+struct ShapeEllipseJson {
+  position : Json?
+  size : Json?
+} derive(FromJson(fields(position(rename="p"), size(rename="s"))))
+
+///|
+struct ShapePathJson {
+  path : Json?
+} derive(FromJson(fields(path(rename="ks"))))
+
+///|
+struct ShapeFillJson {
+  color : Json?
+  opacity : Json?
+} derive(FromJson(fields(color(rename="c"), opacity(rename="o"))))
+
+///|
+struct ShapeStrokeJson {
+  color : Json?
+  opacity : Json?
+  width : Json?
+  line_cap : Int?
+  line_join : Int?
+  miter_limit : Double?
+} derive(
+  FromJson(
+    fields(
+      color(rename="c"),
+      opacity(rename="o"),
+      width(rename="w"),
+      line_cap(rename="lc"),
+      line_join(rename="lj"),
+      miter_limit(rename="ml"),
+    ),
+  ),
+)
+
+///|
+struct ShapeGradientFillJson {
+  gradient_type : Int?
+  start_point : Json?
+  end_point : Json?
+  opacity : Json?
+  gradient : Json?
+} derive(
+  FromJson(
+    fields(
+      gradient_type(rename="t"),
+      start_point(rename="s"),
+      end_point(rename="e"),
+      opacity(rename="o"),
+      gradient(rename="g"),
+    ),
+  ),
+)
+
+///|
+struct ShapeGradientStrokeJson {
+  gradient_type : Int?
+  start_point : Json?
+  end_point : Json?
+  opacity : Json?
+  width : Json?
+  line_cap : Int?
+  line_join : Int?
+  miter_limit : Double?
+  gradient : Json?
+} derive(
+  FromJson(
+    fields(
+      gradient_type(rename="t"),
+      start_point(rename="s"),
+      end_point(rename="e"),
+      opacity(rename="o"),
+      width(rename="w"),
+      line_cap(rename="lc"),
+      line_join(rename="lj"),
+      miter_limit(rename="ml"),
+      gradient(rename="g"),
+    ),
+  ),
+)
+
+///|
+struct ShapeTrimPathJson {
+  start : Json?
+  end : Json?
+  offset : Json?
+  multiple : Int?
+} derive(
+  FromJson(fields(start(rename="s"), end(rename="e"), offset(rename="o"), multiple(rename="m"))),
+)
+
+///|
+struct ShapePolystarJson {
+  points : Json?
+  position : Json?
+  rotation : Json?
+  inner_radius : Json?
+  inner_roundness : Json?
+  outer_radius : Json?
+  outer_roundness : Json?
+  star_type : Int?
+} derive(
+  FromJson(
+    fields(
+      points(rename="pt"),
+      position(rename="p"),
+      rotation(rename="r"),
+      inner_radius(rename="ir"),
+      inner_roundness(rename="is"),
+      outer_radius(rename="or"),
+      outer_roundness(rename="os"),
+      star_type(rename="sy"),
+    ),
+  ),
+)
+
+///|
+struct ShapeRepeaterJson {
+  copies : Json?
+  offset : Json?
+  composite : Int?
+  transform : TransformJson?
+} derive(
+  FromJson(
+    fields(copies(rename="c"), offset(rename="o"), composite(rename="m"), transform(rename="tr")),
+  ),
+)
+
+///|
+struct ShapeMergePathsJson {
+  merge_mode : Int?
+} derive(FromJson(fields(merge_mode(rename="mm"))))
+
+///|
+struct ShapeRoundingJson {
+  radius : Json?
+} derive(FromJson(fields(radius(rename="r"))))
+
+///|
 struct LayerJson {
   index : Int?
   layer_type : Int
-  transform : Json?
+  transform : TransformJson?
   in_point : Double?
   out_point : Double?
   start_time : Double?
@@ -204,7 +311,7 @@ struct LayerJson {
   solid_width : Int?
   solid_height : Int?
   shapes : Array[Json]?
-  text_data : Json?
+  text_data : TextDataJson?
 } derive(
   FromJson(
     fields(
@@ -282,6 +389,47 @@ struct BezierPathJson {
       in_tangents(rename="i"),
       out_tangents(rename="o"),
       closed(rename="c"),
+    ),
+  ),
+)
+
+struct BezierTangentJson {
+  x : Json?
+  y : Json?
+} derive(FromJson)
+
+struct PropertyKeyframeJson {
+  time : Double?
+  start_value : Json?
+  end_value : Json?
+  in_tangent : Json?
+  out_tangent : Json?
+  hold : Json?
+  value_in_tangent : Array[Double]?
+  value_out_tangent : Array[Double]?
+} derive(
+  FromJson(
+    fields(
+      time(rename="t"),
+      start_value(rename="s"),
+      end_value(rename="e"),
+      in_tangent(rename="i"),
+      out_tangent(rename="o"),
+      hold(rename="h"),
+      value_in_tangent(rename="ti"),
+      value_out_tangent(rename="to"),
+    ),
+  ),
+)
+
+struct TextPropertyJson {
+  animated_flag : Json?
+  value : Json?
+} derive(
+  FromJson(
+    fields(
+      animated_flag(rename="a"),
+      value(rename="k"),
     ),
   ),
 )
@@ -374,16 +522,26 @@ pub fn report_unknown_keys_with_coverage(json : Json) -> UnknownKeyReport {
 ///|
 fn parse_bezier_value(json : Json?) -> @model.BezierValue? {
   match json {
-    Some(Number(n, ..)) => Some(@model.BezierValue::new_single(n))
-    Some(Array(arr)) => {
-      let values = []
-      for v in arr {
-        match v {
-          Number(n, ..) => values.push(n)
-          _ => ()
+    Some(j) => {
+      let single : Double? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match single {
+        Some(v) => Some(@model.BezierValue::new_single(v))
+        None => {
+          let multi : Array[Double]? = try {
+            Some(@json.from_json(j))
+          } catch {
+            _ => None
+          }
+          match multi {
+            Some(values) => Some(@model.BezierValue::new_multi(values))
+            None => None
+          }
         }
       }
-      Some(@model.BezierValue::new_multi(values))
     }
     _ => None
   }
@@ -392,43 +550,108 @@ fn parse_bezier_value(json : Json?) -> @model.BezierValue? {
 ///|
 fn parse_bezier_tangent(json : Json?) -> @model.Bezier? {
   match json {
-    Some(Object(obj)) =>
-      match (parse_bezier_value(obj.get("x")), parse_bezier_value(obj.get("y"))) {
+    Some(j) => {
+      let tangent : BezierTangentJson = (@json.from_json(j)) catch {
+        _ => return None
+      }
+      match (parse_bezier_value(tangent.x), parse_bezier_value(tangent.y)) {
         (Some(x), Some(y)) => Some(@model.Bezier::new(x, y))
         _ => None
       }
+    }
     _ => None
   }
 }
 
 fn property_animated_flag(flag : Json?) -> Bool {
   match flag {
-    Some(Number(n, ..)) => n == 1.0
-    Some(True) => true
+    Some(j) => {
+      let number_flag : Double? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match number_flag {
+        Some(n) => n == 1.0
+        None => {
+          let bool_flag : Bool? = try {
+            Some(@json.from_json(j))
+          } catch {
+            _ => None
+          }
+          match bool_flag {
+            Some(v) => v
+            None => false
+          }
+        }
+      }
+    }
     _ => false
   }
 }
 
-fn parse_number_array(json : Json?) -> Array[Double]? {
-  match json {
-    Some(Array(arr)) => {
-      let values = []
-      for v in arr {
-        match v {
-          Number(n, ..) => values.push(n)
-          _ => ()
-        }
-      }
-      Some(values)
-    }
-    _ => None
-  }
-}
-
-///|
 fn parse_gradient_or_default(json : Json) -> GradientJson {
   // Keep parser tolerant: malformed gradient metadata falls back to raw `g.k` parsing path below.
   (@json.from_json(json)) catch { _ => { color_count: None, color_stops: None } }
+}
+
+fn is_animated_keyframe_array(k : Json) -> Bool {
+  match k {
+    Array(arr) =>
+      if arr.length() > 0 {
+        let first = arr[0]
+        let keyframe : PropertyKeyframeJson? = try {
+          Some(@json.from_json(first))
+        } catch {
+          _ => None
+        }
+        match keyframe {
+          Some(kf) =>
+            match kf.time {
+              Some(_) => true
+              None => false
+            }
+          None => false
+        }
+      } else {
+        false
+      }
+    _ => false
+  }
+}
+
+fn keyframe_time_or_zero(time : Double?) -> Int {
+  match time {
+    Some(t) => t.to_int()
+    None => 0
+  }
+}
+
+fn keyframe_hold_or_none(hold : Json?) -> Int? {
+  match hold {
+    Some(j) => {
+      let int_hold : Int? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match int_hold {
+        Some(v) => Some(v)
+        None => {
+          let num_hold : Double? = try {
+            Some(@json.from_json(j))
+          } catch {
+            _ => None
+          }
+          match num_hold {
+            Some(n) => Some(n.to_int())
+            None => None
+          }
+        }
+      }
+    }
+    _ => None
+  }
 }
 
 ///|
@@ -437,34 +660,21 @@ fn parse_property_double(
   json : Json?,
 ) -> @model.LottieProperty[Double] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(_) => {
-          let prop : PropertyJson = (@json.from_json(j)) catch {
-            _ => raise UnexpectedType("property", "Object")
-          }
+    Some(j) => {
+      let prop : PropertyJson? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match prop {
+        Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
           let x = prop.expression
           let k = match prop.value {
             Some(v) => v
             None => raise MissingKey("k in property")
           }
-          let animated_from_k = match k {
-            Array(arr) =>
-              if arr.length() > 0 {
-                match arr[0] {
-                  Object(first) =>
-                    match first.get("t") {
-                      Some(_) => true
-                      _ => false
-                    }
-                  _ => false
-                }
-              } else {
-                false
-              }
-            _ => false
-          }
+          let animated_from_k = is_animated_keyframe_array(k)
           if a_flag || animated_from_k {
             // Animated
             let keyframes = []
@@ -472,64 +682,65 @@ fn parse_property_double(
             match k {
               Array(arr) =>
                 for kf_json in arr {
-                  match kf_json {
-                    Object(kf_obj) => {
-                      let t = match kf_obj.get("t") {
-                        Some(Number(n, ..)) => n.to_int()
-                        _ => 0
+                  let keyframe : PropertyKeyframeJson? = try {
+                    Some(@json.from_json(kf_json))
+                  } catch {
+                    _ => None
+                  }
+                  let keyframe = match keyframe {
+                    Some(v) => v
+                    None => continue
+                  }
+                  let t = keyframe_time_or_zero(keyframe.time)
+                  let s = match keyframe.start_value {
+                    Some(Array([Number(n, ..)])) => n
+                    Some(Number(n, ..)) => n
+                    _ =>
+                      match prev_value {
+                        Some(v) => v
+                        None => 0.0
                       }
-                      let s = match kf_obj.get("s") {
-                        Some(Array([Number(n, ..)])) => n
-                        Some(Number(n, ..)) => n
-                        _ =>
-                          match prev_value {
-                            Some(v) => v
-                            None => 0.0
-                          }
-                      }
-                      let e = match kf_obj.get("e") {
-                        Some(Array([Number(n, ..)])) => Some(n)
-                        Some(Number(n, ..)) => Some(n)
-                        _ => None
-                      }
-                      let in_tangent = parse_bezier_tangent(kf_obj.get("i"))
-                      let out_tangent = parse_bezier_tangent(kf_obj.get("o"))
-                      let hold = match kf_obj.get("h") {
-                        Some(Number(n, ..)) => Some(n.to_int())
-                        _ => None
-                      }
-                      keyframes.push(
-                        @model.LottieKeyframe::new(
-                          frame=t,
-                          start_value=s,
-                          end_value=e,
-                          in_tangent=in_tangent,
-                          out_tangent=out_tangent,
-                          hold=hold,
-                        ),
-                      )
-                      prev_value = match e {
-                        Some(v) => Some(v)
-                        None => Some(s)
-                      }
-                    }
-                    _ => ()
+                  }
+                  let e = match keyframe.end_value {
+                    Some(Array([Number(n, ..)])) => Some(n)
+                    Some(Number(n, ..)) => Some(n)
+                    _ => None
+                  }
+                  let in_tangent = parse_bezier_tangent(keyframe.in_tangent)
+                  let out_tangent = parse_bezier_tangent(keyframe.out_tangent)
+                  keyframes.push(
+                    @model.LottieKeyframe::new(
+                      frame=t,
+                      start_value=s,
+                      end_value=e,
+                      in_tangent=in_tangent,
+                      out_tangent=out_tangent,
+                      hold=keyframe_hold_or_none(keyframe.hold),
+                    ),
+                  )
+                  prev_value = match e {
+                    Some(v) => Some(v)
+                    None => Some(s)
                   }
                 }
               _ => ()
             }
             @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
-            match k {
-              Number(n, ..) =>
-                @model.LottieProperty::new_static(n, expression=x)
+            let value : Double = (@json.from_json(k)) catch {
               _ => raise UnexpectedType("k", "Number")
             }
+            @model.LottieProperty::new_static(value, expression=x)
           }
         }
-        Number(n, ..) => @model.LottieProperty::new_static(n)
-        _ => raise UnexpectedType("property", "Object or Number")
+        None => {
+          let value : Double = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property", "Object or Number")
+          }
+          @model.LottieProperty::new_static(value)
+        }
       }
+    }
     None => raise InvalidJson("Property json is missing")
   }
 }
@@ -539,34 +750,21 @@ fn parse_property_vec(
   json : Json?,
 ) -> @model.LottieProperty[Array[Double]] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(_) => {
-          let prop : PropertyJson = (@json.from_json(j)) catch {
-            _ => raise UnexpectedType("property", "Object")
-          }
+    Some(j) => {
+      let prop : PropertyJson? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match prop {
+        Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
           let x = prop.expression
           let k = match prop.value {
             Some(v) => v
             None => raise MissingKey("k in property")
           }
-          let animated_from_k = match k {
-            Array(arr) =>
-              if arr.length() > 0 {
-                match arr[0] {
-                  Object(first) =>
-                    match first.get("t") {
-                      Some(_) => true
-                      _ => false
-                    }
-                  _ => false
-                }
-              } else {
-                false
-              }
-            _ => false
-          }
+          let animated_from_k = is_animated_keyframe_array(k)
           if a_flag || animated_from_k {
             // Animated
             let keyframes = []
@@ -574,103 +772,93 @@ fn parse_property_vec(
             match k {
               Array(arr) =>
                 for kf_json in arr {
-                  match kf_json {
-                    Object(kf_obj) => {
-                      let t = match kf_obj.get("t") {
-                        Some(Number(n, ..)) => n.to_int()
-                        _ => 0
-                      }
-                      let s = match kf_obj.get("s") {
-                        Some(Array(arr)) => {
-                          let res = []
-                          for v in arr {
-                            match v {
-                              Number(n, ..) => res.push(n)
-                              _ => ()
-                            }
-                          }
-                          res
+                  let keyframe : PropertyKeyframeJson? = try {
+                    Some(@json.from_json(kf_json))
+                  } catch {
+                    _ => None
+                  }
+                  let keyframe = match keyframe {
+                    Some(v) => v
+                    None => continue
+                  }
+                  let t = keyframe_time_or_zero(keyframe.time)
+                  let s = match keyframe.start_value {
+                    Some(Array(arr)) => {
+                      let res = []
+                      for v in arr {
+                        match v {
+                          Number(n, ..) => res.push(n)
+                          _ => ()
                         }
-                        _ =>
-                          match prev_value {
-                            Some(v) => v
-                            None => []
-                          }
                       }
-                      let e = match kf_obj.get("e") {
-                        Some(Array(arr)) => {
-                          let res = []
-                          for v in arr {
-                            match v {
-                              Number(n, ..) => res.push(n)
-                              _ => ()
-                            }
-                          }
-                          Some(res)
-                        }
-                        _ => None
-                      }
-                      let in_tangent = parse_bezier_tangent(kf_obj.get("i"))
-                      let out_tangent = parse_bezier_tangent(kf_obj.get("o"))
-                      let value_in_tangent = parse_number_array(kf_obj.get("ti"))
-                      let value_out_tangent = parse_number_array(kf_obj.get("to"))
-                      let hold = match kf_obj.get("h") {
-                        Some(Number(n, ..)) => Some(n.to_int())
-                        _ => None
-                      }
-                      keyframes.push(
-                        @model.LottieKeyframe::new(
-                          frame=t,
-                          start_value=s,
-                          end_value=e,
-                          in_tangent=in_tangent,
-                          out_tangent=out_tangent,
-                          value_in_tangent=value_in_tangent,
-                          value_out_tangent=value_out_tangent,
-                          hold=hold,
-                        ),
-                      )
-                      prev_value = match e {
-                        Some(v) => Some(v)
-                        None => Some(s)
-                      }
+                      res
                     }
-                    _ => ()
+                    _ =>
+                      match prev_value {
+                        Some(v) => v
+                        None => []
+                      }
+                  }
+                  let e = match keyframe.end_value {
+                    Some(Array(arr)) => {
+                      let res = []
+                      for v in arr {
+                        match v {
+                          Number(n, ..) => res.push(n)
+                          _ => ()
+                        }
+                      }
+                      Some(res)
+                    }
+                    _ => None
+                  }
+                  let in_tangent = parse_bezier_tangent(keyframe.in_tangent)
+                  let out_tangent = parse_bezier_tangent(keyframe.out_tangent)
+                  keyframes.push(
+                    @model.LottieKeyframe::new(
+                      frame=t,
+                      start_value=s,
+                      end_value=e,
+                      in_tangent=in_tangent,
+                      out_tangent=out_tangent,
+                      value_in_tangent=keyframe.value_in_tangent,
+                      value_out_tangent=keyframe.value_out_tangent,
+                      hold=keyframe_hold_or_none(keyframe.hold),
+                    ),
+                  )
+                  prev_value = match e {
+                    Some(v) => Some(v)
+                    None => Some(s)
                   }
                 }
               _ => ()
             }
             @model.LottieProperty::new_animated(keyframes, expression=x)
           } else {
-            match k {
-              Array(arr) => {
-                let vals = []
-                for v in arr {
-                  match v {
-                    Number(n, ..) => vals.push(n)
-                    _ => ()
-                  }
+            let vals : Array[Double]? = try {
+              Some(@json.from_json(k))
+            } catch {
+              _ => None
+            }
+            match vals {
+              Some(vs) => @model.LottieProperty::new_static(vs, expression=x)
+              None => {
+                let n : Double = (@json.from_json(k)) catch {
+                  _ => raise UnexpectedType("k", "Array or Number")
                 }
-                @model.LottieProperty::new_static(vals, expression=x)
-              }
-              Number(n, ..) =>
                 @model.LottieProperty::new_static([n], expression=x)
-              _ => raise UnexpectedType("k", "Array or Number")
+              }
             }
           }
         }
-        Array(arr) => {
-          let vals = []
-          for v in arr {
-            match v {
-              Number(n, ..) => vals.push(n)
-              _ => ()
-            }
+        None => {
+          let vals : Array[Double] = (@json.from_json(j)) catch {
+            _ => raise UnexpectedType("property", "Object or Array")
           }
           @model.LottieProperty::new_static(vals)
         }
-        _ => raise UnexpectedType("property", "Object or Array")
       }
+    }
     None => raise InvalidJson("Property json is missing")
   }
 }
@@ -697,85 +885,80 @@ fn parse_text_document_property(
   json : Json?,
 ) -> @model.LottieProperty[@model.TextDocument] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(obj) => {
-          let a = match obj.get("a") {
-            Some(Number(n, ..)) => n == 1.0
-            _ => false
-          }
-          let k = match obj.get("k") {
-            Some(k) => k
-            None => raise MissingKey("k in text property")
-          }
-          if a {
-            let keyframes = []
-            match k {
-              Array(arr) =>
-                for kf_json in arr {
-                  match kf_json {
-                    Object(kf_obj) => {
-                      let t = match kf_obj.get("t") {
-                        Some(Number(n, ..)) => n.to_int()
-                        _ => 0
-                      }
-                      let s = match kf_obj.get("s") {
-                        Some(json) => parse_text_document(json)
-                        _ => raise MissingKey("s in text keyframe")
-                      }
-                      keyframes.push(
-                        @model.LottieKeyframe::new(frame=t, start_value=s),
-                      )
-                    }
-                    _ => ()
-                  }
-                }
-              _ => ()
-            }
-            @model.LottieProperty::new_animated(keyframes)
-          } else {
-            match k {
-              Array(arr) =>
-                if arr.length() > 0 {
-                  @model.LottieProperty::new_static(parse_text_document(arr[0]))
-                } else {
-                  raise MissingKey("k array is empty")
-                }
-              Object(_) =>
-                @model.LottieProperty::new_static(parse_text_document(k))
-              _ => raise UnexpectedType("k", "Array or Object")
-            }
-          }
-        }
+    Some(j) => {
+      let prop : TextPropertyJson = (@json.from_json(j)) catch {
         _ => raise UnexpectedType("text property", "Object")
       }
+      let a = property_animated_flag(prop.animated_flag)
+      let k = match prop.value {
+        Some(v) => v
+        None => raise MissingKey("k in text property")
+      }
+      if a {
+        let keyframes = []
+        match k {
+          Array(arr) =>
+            for kf_json in arr {
+              let keyframe : PropertyKeyframeJson? = try {
+                Some(@json.from_json(kf_json))
+              } catch {
+                _ => None
+              }
+              let keyframe = match keyframe {
+                Some(v) => v
+                None => continue
+              }
+              let s = match keyframe.start_value {
+                Some(v) => parse_text_document(v)
+                None => raise MissingKey("s in text keyframe")
+              }
+              keyframes.push(
+                @model.LottieKeyframe::new(
+                  frame=keyframe_time_or_zero(keyframe.time),
+                  start_value=s,
+                ),
+              )
+            }
+          _ => ()
+        }
+        @model.LottieProperty::new_animated(keyframes)
+      } else {
+        match k {
+          Array(arr) =>
+            if arr.length() > 0 {
+              @model.LottieProperty::new_static(parse_text_document(arr[0]))
+            } else {
+              raise MissingKey("k array is empty")
+            }
+          _ => @model.LottieProperty::new_static(parse_text_document(k))
+        }
+      }
+    }
     None => raise InvalidJson("Text property missing")
   }
 }
 
 ///|
-fn parse_text_data(json : Json?) -> @model.TextData raise LottieError {
-  match json {
-    Some(j) => {
-      let decoded : TextDataJson = (@json.from_json(j)) catch {
-        _ => raise UnexpectedType("text data", "Object")
-      }
-      let d = parse_text_document_property(decoded.document)
+fn parse_text_data_from_decoded(
+  decoded : TextDataJson?,
+) -> @model.TextData raise LottieError {
+  match decoded {
+    Some(d_json) => {
+      let d = parse_text_document_property(d_json.document)
       { text: d }
     }
-    None => raise UnexpectedType("text data", "Object")
+    None => raise InvalidJson("Text data is missing")
   }
 }
 
 ///|
 /// Parse Transform
-fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
-  match json {
-    Some(j) => {
-      let decoded : TransformJson = (@json.from_json(j)) catch {
-        _ => raise UnexpectedType("transform", "Object")
-      }
-      let split = match decoded.position {
+fn parse_transform_from_decoded(
+  decoded : TransformJson?,
+) -> @model.Transform raise LottieError {
+  match decoded {
+    Some(transform_json) => {
+      let split = match transform_json.position {
         Some(position_json) => {
           let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
             _ => { split: None }
@@ -787,32 +970,32 @@ fn parse_transform(json : Json?) -> @model.Transform raise LottieError {
         }
         None => false
       }
-      let anchor = parse_property_vec(decoded.anchor)
-      let position = parse_property_vec(decoded.position)
+      let anchor = parse_property_vec(transform_json.anchor)
+      let position = parse_property_vec(transform_json.position)
       let px = if split {
-        Some(parse_property_double(decoded.position_x)) catch {
+        Some(parse_property_double(transform_json.position_x)) catch {
           _ => None
         }
       } else {
         None
       }
       let py = if split {
-        Some(parse_property_double(decoded.position_y)) catch {
+        Some(parse_property_double(transform_json.position_y)) catch {
           _ => None
         }
       } else {
         None
       }
-      let scale = parse_property_vec(decoded.scale)
-      let rotation = parse_property_double(decoded.rotation)
-      let opacity = parse_property_double(decoded.opacity)
+      let scale = parse_property_vec(transform_json.scale)
+      let rotation = parse_property_double(transform_json.rotation)
+      let opacity = parse_property_double(transform_json.opacity)
       let skew = try {
-        Some(parse_property_double(decoded.skew))
+        Some(parse_property_double(transform_json.skew))
       } catch {
         _ => None
       }
       let skew_axis = try {
-        Some(parse_property_double(decoded.skew_axis))
+        Some(parse_property_double(transform_json.skew_axis))
       } catch {
         _ => None
       }
@@ -857,76 +1040,57 @@ fn parse_property_bezier(
   json : Json?,
 ) -> @model.LottieProperty[@model.BezierPath] raise LottieError {
   match json {
-    Some(j) =>
-      match j {
-        Object(_) => {
-          let prop : PropertyJson = (@json.from_json(j)) catch {
-            _ => raise UnexpectedType("property_bezier", "Object")
-          }
+    Some(j) => {
+      let prop : PropertyJson? = try {
+        Some(@json.from_json(j))
+      } catch {
+        _ => None
+      }
+      match prop {
+        Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
           match prop.value {
             Some(k) =>
-              if a_flag || (
-                match k {
-                  Array(arr) =>
-                    if arr.length() > 0 {
-                      match arr[0] {
-                        Object(first) =>
-                          match first.get("t") {
-                            Some(_) => true
-                            _ => false
-                          }
-                        _ => false
-                      }
-                    } else {
-                      false
-                    }
-                  _ => false
-                }
-              ) {
+              if a_flag || is_animated_keyframe_array(k) {
                 let keyframes = []
                 match k {
                   Array(arr) =>
                     for kf_json in arr {
-                      match kf_json {
-                        Object(kf_obj) => {
-                          let t = match kf_obj.get("t") {
-                            Some(Number(n, ..)) => n.to_int()
-                            _ => 0
-                          }
-                          let s = try {
-                            match kf_obj.get("s") {
-                              Some(Array([val])) => parse_bezier_path(val)
-                              Some(val) => parse_bezier_path(val)
-                              None => raise MissingKey("s in keyframe")
-                            }
-                          } catch {
-                            _ => continue
-                          }
-                          let e = try {
-                            match kf_obj.get("e") {
-                              Some(Array([val])) => Some(parse_bezier_path(val))
-                              Some(val) => Some(parse_bezier_path(val))
-                              _ => None
-                            }
-                          } catch {
-                            _ => None
-                          }
-                          let hold = match kf_obj.get("h") {
-                            Some(Number(n, ..)) => Some(n.to_int())
-                            _ => None
-                          }
-                          keyframes.push(
-                            @model.LottieKeyframe::new(
-                              frame=t,
-                              start_value=s,
-                              end_value=e,
-                              hold=hold,
-                            ),
-                          )
-                        }
-                        _ => ()
+                      let keyframe : PropertyKeyframeJson? = try {
+                        Some(@json.from_json(kf_json))
+                      } catch {
+                        _ => None
                       }
+                      let keyframe = match keyframe {
+                        Some(v) => v
+                        None => continue
+                      }
+                      let s = try {
+                        match keyframe.start_value {
+                          Some(Array([val])) => parse_bezier_path(val)
+                          Some(val) => parse_bezier_path(val)
+                          None => raise MissingKey("s in keyframe")
+                        }
+                      } catch {
+                        _ => continue
+                      }
+                      let e = try {
+                        match keyframe.end_value {
+                          Some(Array([val])) => Some(parse_bezier_path(val))
+                          Some(val) => Some(parse_bezier_path(val))
+                          _ => None
+                        }
+                      } catch {
+                        _ => None
+                      }
+                      keyframes.push(
+                        @model.LottieKeyframe::new(
+                          frame=keyframe_time_or_zero(keyframe.time),
+                          start_value=s,
+                          end_value=e,
+                          hold=keyframe_hold_or_none(keyframe.hold),
+                        ),
+                      )
                     }
                   _ => ()
                 }
@@ -937,8 +1101,9 @@ fn parse_property_bezier(
             None => @model.LottieProperty::new_static(parse_bezier_path(j))
           }
         }
-        _ => raise UnexpectedType("property_bezier", "Object")
+        None => @model.LottieProperty::new_static(parse_bezier_path(j))
       }
+    }
     None => raise InvalidJson("Property bezier json is missing")
   }
 }
@@ -948,12 +1113,15 @@ fn parse_property_bezier(
 ///|
 /// Parse a shape from Json
 pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
-  let decoded : ShapeJson = (@json.from_json(json)) catch {
+  let common : ShapeJson = (@json.from_json(json)) catch {
     _ => raise UnexpectedType("shape", "Object")
   }
-  let shape_type = decoded.shape_type
+  let shape_type = common.shape_type
   let data : @model.ShapeData = match shape_type {
     "gr" => {
+      let decoded : ShapeGroupJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape gr", "Object")
+      }
       let items = []
       match decoded.items {
         Some(arr) =>
@@ -967,32 +1135,47 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       @model.ShapeData::new_group(items)
     }
     "rc" => {
+      let decoded : ShapeRectJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape rc", "Object")
+      }
       let position = parse_property_vec(decoded.position)
-      let size = parse_property_vec(decoded.size_or_start)
-      let roundness = parse_property_double(decoded.rotation_or_roundness) catch {
+      let size = parse_property_vec(decoded.size)
+      let roundness = parse_property_double(decoded.roundness) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
       @model.ShapeData::new_rect(@model.RectShape::new(position~, size~, roundness~))
     }
     "el" => {
+      let decoded : ShapeEllipseJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape el", "Object")
+      }
       let position = parse_property_vec(decoded.position)
-      let size = parse_property_vec(decoded.size_or_start)
+      let size = parse_property_vec(decoded.size)
       @model.ShapeData::new_ellipse(@model.EllipseShape::new(position~, size~))
     }
     "sh" => {
+      let decoded : ShapePathJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape sh", "Object")
+      }
       let path = parse_property_bezier(decoded.path)
       @model.ShapeData::new_path(@model.PathShape::new(path~))
     }
     "fl" => {
-      let color = parse_property_vec(decoded.color_or_copies)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let decoded : ShapeFillJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape fl", "Object")
+      }
+      let color = parse_property_vec(decoded.color)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       @model.ShapeData::new_fill(@model.FillShape::new(color~, opacity~))
     }
     "st" => {
-      let color = parse_property_vec(decoded.color_or_copies)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let decoded : ShapeStrokeJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape st", "Object")
+      }
+      let color = parse_property_vec(decoded.color)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       let width = parse_property_double(decoded.width) catch {
@@ -1006,10 +1189,13 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       )
     }
     "gf" => {
+      let decoded : ShapeGradientFillJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape gf", "Object")
+      }
       let gradient_type = decoded.gradient_type.unwrap_or(1)
-      let start_point = parse_property_vec(decoded.size_or_start)
-      let end_point = parse_property_vec(decoded.end_or_bezier)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let start_point = parse_property_vec(decoded.start_point)
+      let end_point = parse_property_vec(decoded.end_point)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       let g_json = match decoded.gradient {
@@ -1034,10 +1220,13 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       )
     }
     "gs" => {
+      let decoded : ShapeGradientStrokeJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape gs", "Object")
+      }
       let gradient_type = decoded.gradient_type.unwrap_or(1)
-      let start_point = parse_property_vec(decoded.size_or_start)
-      let end_point = parse_property_vec(decoded.end_or_bezier)
-      let opacity = parse_property_double(decoded.opacity_or_offset) catch {
+      let start_point = parse_property_vec(decoded.start_point)
+      let end_point = parse_property_vec(decoded.end_point)
+      let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
       let width = parse_property_double(decoded.width) catch {
@@ -1071,24 +1260,35 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
         ),
       )
     }
-    "tr" => @model.ShapeData::new_transform(parse_transform(Some(json)))
+    "tr" => {
+      let decoded : TransformJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape tr", "Object")
+      }
+      @model.ShapeData::new_transform(parse_transform_from_decoded(Some(decoded)))
+    }
     "tm" => {
-      let start = parse_property_double(decoded.size_or_start) catch {
+      let decoded : ShapeTrimPathJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape tm", "Object")
+      }
+      let start = parse_property_double(decoded.start) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
-      let end = parse_property_double(decoded.end_or_bezier) catch {
+      let end = parse_property_double(decoded.end) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
-      let offset = parse_property_double(decoded.opacity_or_offset) catch {
+      let offset = parse_property_double(decoded.offset) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
-      let multiple = decoded.trim_or_composite.unwrap_or(1)
+      let multiple = decoded.multiple.unwrap_or(1)
       @model.ShapeData::new_trim_path(@model.TrimPath::new(start~, end~, offset~, multiple~))
     }
     "sr" => {
+      let decoded : ShapePolystarJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape sr", "Object")
+      }
       let points = parse_property_double(decoded.points)
       let position = parse_property_vec(decoded.position)
-      let rotation = parse_property_double(decoded.rotation_or_roundness)
+      let rotation = parse_property_double(decoded.rotation)
       let inner_radius = parse_property_double(decoded.inner_radius) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
@@ -1114,28 +1314,40 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       )
     }
     "rp" => {
-      let copies = parse_property_double(decoded.color_or_copies)
-      let offset = parse_property_double(decoded.opacity_or_offset)
-      let composite = decoded.trim_or_composite.unwrap_or(1)
-      let transform = parse_transform(decoded.transform)
+      let decoded : ShapeRepeaterJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape rp", "Object")
+      }
+      let copies = parse_property_double(decoded.copies)
+      let offset = parse_property_double(decoded.offset)
+      let composite = decoded.composite.unwrap_or(1)
+      let transform = match decoded.transform {
+        Some(t) => parse_transform_from_decoded(Some(t))
+        None => raise MissingKey("tr in rp")
+      }
       @model.ShapeData::new_repeater(
         @model.Repeater::new(copies~, offset~, composite~, transform~),
       )
     }
     "mm" => {
+      let decoded : ShapeMergePathsJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape mm", "Object")
+      }
       let mm = decoded.merge_mode.unwrap_or(1)
       @model.ShapeData::new_merge_paths(@model.MergePaths::new(mm))
     }
     "rd" => {
-      let radius = parse_property_double(decoded.rotation_or_roundness) catch {
+      let decoded : ShapeRoundingJson = (@json.from_json(json)) catch {
+        _ => raise UnexpectedType("shape rd", "Object")
+      }
+      let radius = parse_property_double(decoded.radius) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
       @model.ShapeData::new_rounding(@model.Rounding::new(radius~))
     }
     _ => raise InvalidJson("Unknown shape type: " + shape_type)
   }
-  let name = decoded.name
-  let hidden = decoded.hidden
+  let name = common.name
+  let hidden = common.hidden
   @model.Shape::new(shape_type~, data~, name~, hidden~)
 }
 
@@ -1170,7 +1382,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
   }
   let index = decoded.index.unwrap_or(0)
   let layer_type = decoded.layer_type
-  let transform = parse_transform(decoded.transform)
+  let transform = parse_transform_from_decoded(decoded.transform)
   let in_point = decoded.in_point.unwrap_or(0.0)
   let out_point = decoded.out_point.unwrap_or(1000.0)
   let start_time = decoded.start_time.unwrap_or(0.0)
@@ -1213,7 +1425,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
       }
       @model.LayerData::Shape(shapes)
     }
-    5 => @model.LayerData::Text(parse_text_data(decoded.text_data))
+    5 => @model.LayerData::Text(parse_text_data_from_decoded(decoded.text_data))
     _ => @model.LayerData::Null
   }
   @model.Layer::new(
