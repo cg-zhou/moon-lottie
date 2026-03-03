@@ -44,7 +44,9 @@ test "parse_animation_missing_required_field_fails" {
     let (missing_key, json_str) = case
     let json = @json.parse(json_str)
     try @parser.parse_animation(json) catch {
-      _ => ()
+      e => {
+        let _ = e
+      }
     } noraise {
       _ =>
         fail(
