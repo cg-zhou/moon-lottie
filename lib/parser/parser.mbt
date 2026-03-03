@@ -1162,7 +1162,10 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
 /// Parse the top-level Animation object
 pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
   let root : AnimationRootJson = (@json.from_json(json)) catch {
-    e => raise InvalidJson("Animation root decode failed: \{e}")
+    e =>
+      raise InvalidJson(
+        "Animation root decode failed (required: v, fr, ip, op, w, h): \{e}",
+      )
   }
   let version = root.v
   let frame_rate = root.fr

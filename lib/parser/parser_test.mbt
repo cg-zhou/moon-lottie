@@ -32,12 +32,25 @@ test "parse_animation_basic" {
 
 ///|
 test "parse_animation_missing_required_field_fails" {
-  let json_str = "{\"v\":\"5.5.0\",\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"
-  let json = @json.parse(json_str)
-  try @parser.parse_animation(json) catch {
-    _ => ()
-  } noraise {
-    _ => fail("Expected parse_animation to fail when required field fr is missing")
+  let cases = [
+    ("v", "{\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("fr", "{\"v\":\"5.5.0\",\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("ip", "{\"v\":\"5.5.0\",\"fr\":60.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("op", "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"w\":500,\"h\":500,\"layers\":[]}"),
+    ("w", "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"h\":500,\"layers\":[]}"),
+    ("h", "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"layers\":[]}"),
+  ]
+  for case in cases {
+    let (missing_key, json_str) = case
+    let json = @json.parse(json_str)
+    try @parser.parse_animation(json) catch {
+      _ => ()
+    } noraise {
+      _ =>
+        fail(
+          "Expected parse_animation to fail when required field \{missing_key} is missing",
+        )
+    }
   }
 }
 
