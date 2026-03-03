@@ -840,7 +840,7 @@ fn parse_text_data_from_decoded(
       let d = parse_text_document_property(d_json.document)
       { text: d }
     }
-    None => raise UnexpectedType("text data", "Object")
+    None => raise InvalidJson("Text data is missing")
   }
 }
 
@@ -850,8 +850,8 @@ fn parse_transform_from_decoded(
   decoded : TransformJson?,
 ) -> @model.Transform raise LottieError {
   match decoded {
-    Some(decoded) => {
-      let split = match decoded.position {
+    Some(transform_json) => {
+      let split = match transform_json.position {
         Some(position_json) => {
           let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
             _ => { split: None }
@@ -863,32 +863,32 @@ fn parse_transform_from_decoded(
         }
         None => false
       }
-      let anchor = parse_property_vec(decoded.anchor)
-      let position = parse_property_vec(decoded.position)
+      let anchor = parse_property_vec(transform_json.anchor)
+      let position = parse_property_vec(transform_json.position)
       let px = if split {
-        Some(parse_property_double(decoded.position_x)) catch {
+        Some(parse_property_double(transform_json.position_x)) catch {
           _ => None
         }
       } else {
         None
       }
       let py = if split {
-        Some(parse_property_double(decoded.position_y)) catch {
+        Some(parse_property_double(transform_json.position_y)) catch {
           _ => None
         }
       } else {
         None
       }
-      let scale = parse_property_vec(decoded.scale)
-      let rotation = parse_property_double(decoded.rotation)
-      let opacity = parse_property_double(decoded.opacity)
+      let scale = parse_property_vec(transform_json.scale)
+      let rotation = parse_property_double(transform_json.rotation)
+      let opacity = parse_property_double(transform_json.opacity)
       let skew = try {
-        Some(parse_property_double(decoded.skew))
+        Some(parse_property_double(transform_json.skew))
       } catch {
         _ => None
       }
       let skew_axis = try {
-        Some(parse_property_double(decoded.skew_axis))
+        Some(parse_property_double(transform_json.skew_axis))
       } catch {
         _ => None
       }
