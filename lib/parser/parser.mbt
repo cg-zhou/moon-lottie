@@ -484,7 +484,7 @@ fn is_animated_keyframe_array(k : Json) -> Bool {
   }
 }
 
-fn keyframe_time_or_default(time : Double?) -> Int {
+fn keyframe_time_or_zero(time : Double?) -> Int {
   match time {
     Some(t) => t.to_int()
     None => 0
@@ -533,7 +533,7 @@ fn parse_property_double(
                     Some(v) => v
                     None => continue
                   }
-                  let t = keyframe_time_or_default(keyframe.time)
+                  let t = keyframe_time_or_zero(keyframe.time)
                   let s = match keyframe.start_value {
                     Some(Array([Number(n, ..)])) => n
                     Some(Number(n, ..)) => n
@@ -617,7 +617,7 @@ fn parse_property_vec(
                     Some(v) => v
                     None => continue
                   }
-                  let t = keyframe_time_or_default(keyframe.time)
+                  let t = keyframe_time_or_zero(keyframe.time)
                   let s = match keyframe.start_value {
                     Some(Array(arr)) => {
                       let res = []
@@ -755,7 +755,7 @@ fn parse_text_document_property(
               }
               keyframes.push(
                 @model.LottieKeyframe::new(
-                  frame=keyframe_time_or_default(keyframe.time),
+                  frame=keyframe_time_or_zero(keyframe.time),
                   start_value=s,
                 ),
               )
@@ -928,7 +928,7 @@ fn parse_property_bezier(
                       }
                       keyframes.push(
                         @model.LottieKeyframe::new(
-                          frame=keyframe_time_or_default(keyframe.time),
+                          frame=keyframe_time_or_zero(keyframe.time),
                           start_value=s,
                           end_value=e,
                           hold=keyframe_hold_or_none(keyframe.hold),
