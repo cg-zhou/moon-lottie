@@ -61,7 +61,7 @@ test "parse_animation_basic" {
 }
 
 ///|
-test "parse_animation_root_optional_fields_via_from_json" {
+test "parse_animation_with_optional_root_fields" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"nm\":\"demo\",\"ddd\":1,\"layers\":[]}"
   let json = @json.parse(json_str)
@@ -99,7 +99,7 @@ test "parse_animation_missing_required_field_fails" {
 }
 
 ///|
-test "parse_mask_mode_from_typed_json_decode" {
+test "parse_mask_with_subtract_mode" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]],\"c\":true}},\"o\":{\"k\":100},\"mode\":\"s\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
   let json = @json.parse(json_str)
