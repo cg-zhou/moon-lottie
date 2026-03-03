@@ -78,14 +78,14 @@ pub fn evaluate_text_document_property(
       if idx < 0 {
         // Return a dummy document
         return {
-          s: 0.0,
-          f: "",
-          t: "",
-          j: 0,
-          tr: 0.0,
-          lh: 0.0,
-          ls: 0.0,
-          fc: [0.0, 0.0, 0.0],
+          size: 0.0,
+          font: "",
+          text: "",
+          justify: 0,
+          tracking: 0.0,
+          line_height: 0.0,
+          baseline_shift: 0.0,
+          fill_color: [0.0, 0.0, 0.0],
         }
       }
       keyframes[idx].start_value
@@ -239,7 +239,7 @@ pub fn evaluate_path_property(
     Animated(keyframes) => {
       let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
       if idx < 0 {
-        return @model.BezierPath::new(v=[], i=[], o=[], c=false)
+        return @model.BezierPath::new(vertices=[], in_tangents=[], out_tangents=[], closed=false)
       }
       let kf = keyframes[idx]
       if kf.hold == Some(1) {
@@ -282,16 +282,16 @@ pub fn evaluate_path_property(
       }
 
       // Path interpolation
-      let start_v = kf.start_value.v
-      let end_v = next_val.v
+      let start_v = kf.start_value.vertices
+      let end_v = next_val.vertices
       if start_v.length() != end_v.length() {
         return kf.start_value
       }
 
       let res_v = @math.lerp_vec2_array(start_v, end_v, eased_t)
-      let res_i = @math.lerp_vec2_array(kf.start_value.i, next_val.i, eased_t)
-      let res_o = @math.lerp_vec2_array(kf.start_value.o, next_val.o, eased_t)
-      @model.BezierPath::new(v=res_v, i=res_i, o=res_o, c=kf.start_value.c)
+      let res_i = @math.lerp_vec2_array(kf.start_value.in_tangents, next_val.in_tangents, eased_t)
+      let res_o = @math.lerp_vec2_array(kf.start_value.out_tangents, next_val.out_tangents, eased_t)
+      @model.BezierPath::new(vertices=res_v, in_tangents=res_i, out_tangents=res_o, closed=kf.start_value.closed)
     }
   }
 }
@@ -302,7 +302,7 @@ pub fn evaluate_transform(
   frame : Double,
 ) -> @math.Matrix {
   let a = evaluate_vec_property(transform.anchor, frame)
-  let p = if transform.s == Some(true) {
+  let p = if transform.split == Some(true) {
     let x = match transform.px {
       Some(prop) => evaluate_double_property(prop, frame)
       None => 0.0

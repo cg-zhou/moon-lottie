@@ -15,14 +15,14 @@ pub(all) struct TextData {
 
 ///|
 pub(all) struct TextDocument {
-  s : Double // Size
-  f : String // Font
-  t : String // Text
-  j : Int // Justify
-  tr : Double // Tracking
-  lh : Double // Line height
-  ls : Double // Baseline shift
-  fc : Array[Double] // Fill color
+  size : Double
+  font : String
+  text : String
+  justify : Int
+  tracking : Double
+  line_height : Double
+  baseline_shift : Double
+  fill_color : Array[Double]
 }
 
 ///|
@@ -42,42 +42,59 @@ pub fn LayerData::new_null() -> LayerData {
 
 ///|
 pub struct Layer {
-  ddd : Int?
-  ind : Int
-  ty : Int
-  nm : String?
+  three_d : Int?
+  index : Int
+  layer_type : Int
+  name : String?
   parent : Int?
-  ks : Transform
-  ao : Int?
-  ip : Double
-  op : Double
-  st : Double
-  bm : Int?
-  hd : Bool? // Hidden
+  transform : Transform
+  auto_orient : Int?
+  in_point : Double
+  out_point : Double
+  start_time : Double
+  blend_mode : Int?
+  hidden : Bool?
   masks : Array[Mask]?
-  tt : Int? // Matte Type
-  td : Int? // Matte Inherit (1 or 0)
+  matte_type : Int?
+  matte_inherit : Int?
   data : LayerData
 }
 
 ///|
 pub fn Layer::new(
-  ind~ : Int,
-  ty~ : Int,
-  ks~ : Transform,
-  ip~ : Double,
-  op~ : Double,
-  st~ : Double,
-  ddd? : Int? = None,
-  nm? : String? = None,
+  index~ : Int,
+  layer_type~ : Int,
+  transform~ : Transform,
+  in_point~ : Double,
+  out_point~ : Double,
+  start_time~ : Double,
+  three_d? : Int? = None,
+  name? : String? = None,
   parent? : Int? = None,
-  ao? : Int? = None,
-  bm? : Int? = None,
-  hd? : Bool? = None,
+  auto_orient? : Int? = None,
+  blend_mode? : Int? = None,
+  hidden? : Bool? = None,
   masks? : Array[Mask]? = None,
-  tt? : Int? = None,
-  td? : Int? = None,
+  matte_type? : Int? = None,
+  matte_inherit? : Int? = None,
   data? : LayerData = LayerData::Null,
 ) -> Layer {
-  { ddd, ind, ty, nm, parent, ks, ao, ip, op, st, bm, hd, masks, tt, td, data }
+  {
+    three_d,
+    index,
+    layer_type,
+    name,
+    parent,
+    transform,
+    auto_orient,
+    in_point,
+    out_point,
+    start_time,
+    blend_mode,
+    hidden,
+    masks,
+    matte_type,
+    matte_inherit,
+    data,
+  }
 }

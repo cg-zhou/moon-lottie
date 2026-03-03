@@ -4,7 +4,7 @@ pub struct Transform {
   position : LottieProperty[Array[Double]]
   px : LottieProperty[Double]? // Split X
   py : LottieProperty[Double]? // Split Y
-  s : Bool? // Split components
+  split : Bool?
   scale : LottieProperty[Array[Double]]
   rotation : LottieProperty[Double]
   opacity : LottieProperty[Double]
@@ -21,11 +21,11 @@ pub fn Transform::new(
   opacity~ : LottieProperty[Double],
   px? : LottieProperty[Double]? = None,
   py? : LottieProperty[Double]? = None,
-  s? : Bool? = None,
+  split? : Bool? = None,
   skew? : LottieProperty[Double]? = None,
   skew_axis? : LottieProperty[Double]? = None,
 ) -> Transform {
-  { anchor, position, px, py, s, scale, rotation, opacity, skew, skew_axis }
+  { anchor, position, px, py, split, scale, rotation, opacity, skew, skew_axis }
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn Transform::new_default() -> Transform {
     position: LottieProperty::new_static([0.0, 0.0]),
     px: None,
     py: None,
-    s: None,
+    split: None,
     scale: LottieProperty::new_static([100.0, 100.0]),
     rotation: LottieProperty::new_static(0.0),
     opacity: LottieProperty::new_static(100.0),

@@ -104,12 +104,12 @@ test "parse_simple_path_shape" {
     @model.LayerData::Shape(shapes) =>
       match shapes[0].data {
         @model.ShapeData::Path(p) =>
-          match p.ks.value {
+          match p.path.value {
             @model.PropertyValue::Static(bp) => {
-              if bp.v.length() != 2 {
+              if bp.vertices.length() != 2 {
                 fail("Path vertices length mismatch")
               }
-              if bp.c != true {
+              if bp.closed != true {
                 fail("Path closed mismatch")
               }
             }
@@ -136,7 +136,7 @@ test "parse_merge_paths_and_rounding" {
       }
       match items[0].data {
         @model.ShapeData::MergePaths(m) =>
-          match m.mm {
+          match m.merge_mode {
             @model.MergeMode::Add => ()
             _ => fail("MergeMode mismatch")
           }
@@ -144,7 +144,7 @@ test "parse_merge_paths_and_rounding" {
       }
       match items[1].data {
         @model.ShapeData::Rounding(r) =>
-          match r.r.value {
+          match r.radius.value {
             @model.PropertyValue::Static(val) =>
               if val != 5.0 {
                 fail("Rounding value mismatch")
@@ -167,7 +167,7 @@ test "parse_position_keyframe_infra_fields" {
     e => fail("Failed to parse animated position keyframes: \{e}")
   }
 
-  match ani.layers[0].ks.position.value {
+  match ani.layers[0].transform.position.value {
     @model.PropertyValue::Animated(keyframes) => {
       inspect(keyframes.length(), content="2")
       let kf = keyframes[0]
@@ -201,7 +201,7 @@ test "parse_transform_skew_fields" {
     e => fail("Failed to parse transform skew fields: \{e}")
   }
 
-  match ani.layers[0].ks.skew {
+  match ani.layers[0].transform.skew {
     Some(skew) =>
       match skew.value {
         @model.PropertyValue::Static(value) =>
@@ -213,7 +213,7 @@ test "parse_transform_skew_fields" {
     None => fail("skew should be parsed")
   }
 
-  match ani.layers[0].ks.skew_axis {
+  match ani.layers[0].transform.skew_axis {
     Some(skew_axis) =>
       match skew_axis.value {
         @model.PropertyValue::Static(value) =>
@@ -234,7 +234,7 @@ test "parse_animated_transform_trailing_time_marker_uses_previous_value" {
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse trailing time marker keyframes: \{e}")
   }
-  match ani.layers[0].ks.position.value {
+  match ani.layers[0].transform.position.value {
     @model.PropertyValue::Animated(kfs) => {
       if kfs.length() != 2 || kfs[1].start_value.length() < 1 ||
         (kfs[1].start_value[0] - 100.0).abs() > 0.000001 {
@@ -243,7 +243,7 @@ test "parse_animated_transform_trailing_time_marker_uses_previous_value" {
     }
     _ => fail("position should be animated")
   }
-  match ani.layers[0].ks.scale.value {
+  match ani.layers[0].transform.scale.value {
     @model.PropertyValue::Animated(kfs) => {
       if kfs.length() != 2 || kfs[1].start_value.length() < 1 ||
         (kfs[1].start_value[0] - 50.0).abs() > 0.000001 {
@@ -252,7 +252,7 @@ test "parse_animated_transform_trailing_time_marker_uses_previous_value" {
     }
     _ => fail("scale should be animated")
   }
-  match ani.layers[0].ks.rotation.value {
+  match ani.layers[0].transform.rotation.value {
     @model.PropertyValue::Animated(kfs) => {
       if kfs.length() != 2 || (kfs[1].start_value - 30.0).abs() > 0.000001 {
         fail("rotation trailing keyframe should inherit previous end value")
@@ -271,15 +271,15 @@ test "parse_animated_transform_without_a_flag" {
     e => fail("Failed to parse keyframes without a flag: \{e}")
   }
 
-  match ani.layers[0].ks.position.value {
+  match ani.layers[0].transform.position.value {
     @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
     _ => fail("position should be treated as animated when keyframes contain t")
   }
-  match ani.layers[0].ks.scale.value {
+  match ani.layers[0].transform.scale.value {
     @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
     _ => fail("scale should be treated as animated when keyframes contain t")
   }
-  match ani.layers[0].ks.rotation.value {
+  match ani.layers[0].transform.rotation.value {
     @model.PropertyValue::Animated(kfs) => inspect(kfs.length(), content="2")
     _ => fail("rotation should be treated as animated when keyframes contain t")
   }

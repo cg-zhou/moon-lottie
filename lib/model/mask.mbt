@@ -11,20 +11,20 @@ pub(all) enum MaskMode {
 
 ///|
 pub struct Mask {
-  nm : String?
-  inv : Bool
-  pt : LottieProperty[BezierPath]
-  o : LottieProperty[Double]
+  name : String?
+  inverted : Bool
+  path : LottieProperty[BezierPath]
+  opacity : LottieProperty[Double]
   mode : MaskMode
 }
 
 ///|
 pub fn Mask::new(
-  inv~ : Bool,
-  pt~ : LottieProperty[BezierPath],
-  o~ : LottieProperty[Double],
+  inverted~ : Bool,
+  path~ : LottieProperty[BezierPath],
+  opacity~ : LottieProperty[Double],
   mode~ : MaskMode,
-  nm? : String? = None,
+  name? : String? = None,
 ) -> Mask {
-  { nm, inv, pt, o, mode }
+  { name, inverted, path, opacity, mode }
 }
