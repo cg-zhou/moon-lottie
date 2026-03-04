@@ -279,8 +279,10 @@ fn[R : Renderer] Player::render_layer(
         _ => "destination-in"
       }
       self.renderer.set_blend_mode(mode)
+      let matte_saved_frame = self.current_frame
       self.current_frame = comp_frame
       self.render_layer(m_layer, scope)
+      self.current_frame = matte_saved_frame
       self.renderer.set_blend_mode("source-over")
       self.renderer.end_layer("source-over")
     }
