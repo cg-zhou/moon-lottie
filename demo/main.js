@@ -88,15 +88,7 @@ const importObject = {
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
         const key = moonStringJS(id);
-        let img = imageAssets.get(key);
-        if (!img) {
-            const refs = imageLayerRefsByFrame.get(Math.floor(currentFrame)) || [];
-            if (refs.length > 0) {
-                const idx = frameImageDrawCursor < refs.length ? frameImageDrawCursor : refs.length - 1;
-                img = imageAssets.get(refs[idx]);
-                frameImageDrawCursor += 1;
-            }
-        }
+        const img = imageAssets.get(key);
         if (img) ctx.drawImage(img, 0, 0, w, h);
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
@@ -279,17 +271,8 @@ async function startPlayer(jsonStr) {
     statusMsg.innerText = "初始化渲染引擎...";
     await preloadAssets(animationData);
     rebuildImageLayerTimeline(animationData);
-    // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
-    // The actual image data has already been preloaded into imageAssets by JS.
-    const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
-    if (wasmAnimationData.assets) {
-        wasmAnimationData.assets.forEach(asset => {
-            if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
-                asset.p = '';
-            }
-        });
-    }
-    currentJsonStr = JSON.stringify(wasmAnimationData);
+    // Keep the original asset source fields for parser/renderer parity with lottie-web.
+    currentJsonStr = JSON.stringify(animationData);
     
     const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps, get_version } = window.moonLottie;
     
