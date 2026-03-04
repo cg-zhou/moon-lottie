@@ -196,7 +196,7 @@ pub fn LineJoin::from_int(Int) -> Self
 pub fn LineJoin::to_int(Self) -> Int
 
 pub struct LottieKeyframe[T] {
-  frame : Int
+  frame : Double
   start_value : T
   end_value : T?
   in_tangent : Bezier?
@@ -398,4 +398,3 @@ pub fn TrimPath::new(s~ : LottieProperty[Double], e~ : LottieProperty[Double], o
 // Type aliases
 
 // Traits
-

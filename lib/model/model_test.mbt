@@ -202,7 +202,7 @@ test "Property constructors and tangents" {
   let bz_multi = @model.BezierValue::new_multi([0.1, 0.2])
   let bz = @model.Bezier::new(bz_single, bz_multi)
   let kf = @model.LottieKeyframe::new(
-    frame=10,
+    frame=10.0,
     start_value=[1.0, 2.0],
     end_value=Some([3.0, 4.0]),
     in_tangent=Some(bz),
@@ -211,7 +211,7 @@ test "Property constructors and tangents" {
     value_out_tangent=Some([0.6, 0.6]),
     hold=Some(1),
   )
-  if kf.frame != 10 || kf.hold != Some(1) {
+  if kf.frame != 10.0 || kf.hold != Some(1) {
     fail("LottieKeyframe::new failed")
   }
   let static_p = @model.LottieProperty::new_static(9.0, expression=Some("x"))
