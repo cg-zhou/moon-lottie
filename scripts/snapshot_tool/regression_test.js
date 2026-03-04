@@ -243,6 +243,9 @@ async function main() {
   });
 
   let allPassed = true;
+  let totalSimilarity = 0;
+  let totalCompares = 0;
+
   try {
     await page.goto(`http://127.0.0.1:${port}/demo/index.html`, { waitUntil: 'networkidle' });
     await page.waitForFunction(
@@ -270,6 +273,9 @@ async function main() {
           `${colorPrefix}[COMPARE] ${item.file} frame=${frame} similarity=${similarityPct}% (min=${minSimPct}%)${colorSuffix}`
         );
         
+        totalSimilarity += result.similarity;
+        totalCompares++;
+
         if (!isPassed) {
           allPassed = false;
         }
@@ -278,6 +284,11 @@ async function main() {
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
+  }
+
+  if (totalCompares > 0) {
+    const avgSimilarity = (totalSimilarity / totalCompares * 100).toFixed(4);
+    console.log(`\n[SUMMARY] Avg Similarity: ${avgSimilarity}% over ${totalCompares} checks`);
   }
 
   if (!allPassed) {
