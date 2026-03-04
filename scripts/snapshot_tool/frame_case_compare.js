@@ -7,6 +7,8 @@ const pixelmatchModule = require('pixelmatch');
 const { chromium } = require('playwright');
 
 const pixelmatch = pixelmatchModule.default || pixelmatchModule;
+const CANVAS_RENDER_DELAY_MS = 120;
+const PAUSE_BUTTON_TEXT = '‖';
 
 function arg(name, fallback = undefined) {
   const idx = process.argv.indexOf(`--${name}`);
@@ -142,23 +144,23 @@ async function setAndCaptureFrame(page, filename, frame, outputDir) {
   await page.selectOption('#anim-list', filename);
   await page.waitForSelector('#official-lottie-container canvas', { timeout: 15000, state: 'attached' });
 
-  await page.evaluate((f) => {
+  await page.evaluate(({ f, pauseButtonText }) => {
     const compareToggle = document.getElementById('compare-toggle');
     if (compareToggle && !compareToggle.checked) {
       compareToggle.click();
     }
 
     const playPause = document.getElementById('play-pause');
-    if (playPause && playPause.innerText === '‖') {
+    if (playPause && playPause.innerText === pauseButtonText) {
       playPause.click();
     }
 
     const seekBar = document.getElementById('seek-bar');
     seekBar.value = String(f);
     seekBar.dispatchEvent(new Event('input', { bubbles: true }));
-  }, frame);
+  }, { f: frame, pauseButtonText: PAUSE_BUTTON_TEXT });
 
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(CANVAS_RENDER_DELAY_MS);
 
   const moonCanvas = page.locator('#lottie-canvas');
   const officialCanvas = page.locator('#official-lottie-container canvas').first();
@@ -166,7 +168,7 @@ async function setAndCaptureFrame(page, filename, frame, outputDir) {
   await moonCanvas.screenshot({ path: moonPath });
   await officialCanvas.screenshot({ path: officialPath });
 
-  const result = await comparePngFiles(moonPath, officialPath, diffPath);
+  const result = await comparePngFiles(officialPath, moonPath, diffPath);
   return { moonPath, officialPath, diffPath, result };
 }
 
@@ -210,7 +212,14 @@ async function main() {
   const server = await createStaticServer(repoRoot, port);
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
-  const localLottiePath = path.join(__dirname, 'node_modules/lottie-web/build/player/lottie.min.js');
+  const localLottiePathCandidates = [
+    path.join(__dirname, 'node_modules/lottie-web/build/player/lottie.min.js'),
+    path.join(repoRoot, 'node_modules/lottie-web/build/player/lottie.min.js'),
+  ];
+  const localLottiePath = localLottiePathCandidates.find(p => fs.existsSync(p));
+  if (!localLottiePath) {
+    throw new Error('Local lottie-web script not found. Run npm install in scripts/snapshot_tool first.');
+  }
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js', (route) => {
     route.fulfill({
       status: 200,
