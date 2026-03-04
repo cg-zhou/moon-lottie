@@ -134,15 +134,15 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  // Layer transform keyframe times are in the parent composition's frame space
-  // (comp_frame), not the layer's local timeline (layer_frame).
-  let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
+  // lottie-web evaluates layer transforms at `comp_frame - layer.st`
+  // (the layer-local time), not the raw composition frame.
+  let matrix = @runtime.evaluate_transform(layer.transform, layer_frame)
   self.renderer.concat_transform(matrix)
 
   // 1.2 Apply Layer Opacity
   let opacity = @runtime.evaluate_double_property(
     layer.transform.opacity,
-    comp_frame,
+    layer_frame,
   )
   self.renderer.set_opacity(opacity / 100.0)
 
@@ -387,21 +387,9 @@ fn[R : Renderer] Player::render_layer_content(
     Shape(shapes) => {
       // Clear current paths for each layer's top level
       self.current_paths = []
-      // Two-pass rendering:
-      // Pass 1 (forward): non-group items (paths, fills, modifiers) – preserves paint dependency order
-      // Pass 2 (reverse): group items – correct z-ordering (shapes[0] is on top, shapes[last] is at bottom)
-      for shape in shapes {
-        match shape.data {
-          Group(_) => ()
-          _ => self.render_shape(shape)
-        }
-      }
-      for i = shapes.length() - 1; i >= 0; i = i - 1 {
-        match shapes[i].data {
-          Group(_) => self.render_shape(shapes[i])
-          _ => ()
-        }
-      }
+      // Use the same rendering logic as Group internals:
+      // collect paths forward, then draw paints in reverse for correct z-order.
+      self.render_shape_items(shapes)
     }
     Solid(color, w, h) => {
       self.renderer.begin_path()
@@ -485,6 +473,63 @@ fn[R : Renderer] Player::render_layer_content(
 }
 
 ///|
+/// Render a list of shape items matching lottie-web's z-ordering.
+///
+/// lottie-web builds a style list in reverse order, then draws styles forward.
+/// This means fills/strokes at lower array indices (visually "on top" in AE)
+/// are drawn LAST (painter's algorithm – on top).
+///
+/// We achieve the same result by:
+///   1. Forward-scanning to accumulate paths and snapshot them at each paint op.
+///   2. Drawing the collected paint ops in REVERSE order (last = underneath).
+///   3. Rendering nested groups in reverse (index 0 = on top, drawn last).
+fn[R : Renderer] Player::render_shape_items(
+  self : Player[R],
+  items : Array[@model.Shape],
+) -> Unit {
+  // Phase 1: Forward pass – accumulate paths; collect paint ops with snapshots.
+  let paint_items : Array[@model.Shape] = []
+  let paint_path_snapshots : Array[Array[@model.BezierPath]] = []
+  for item in items {
+    match item.data {
+      Transform(_) | Group(_) => ()
+      Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
+        paint_items.push(item)
+        // Snapshot current accumulated paths for this paint op.
+        let snapshot = []
+        for p in self.current_paths {
+          snapshot.push(p)
+        }
+        paint_path_snapshots.push(snapshot)
+      }
+      _ => self.render_shape(item) // path shapes, modifiers, etc.
+    }
+  }
+  // Save accumulated paths (needed for outer merge after Group rendering).
+  let all_inner_paths = []
+  for p in self.current_paths {
+    all_inner_paths.push(p)
+  }
+
+  // Phase 2: Draw paint ops in REVERSE order (last first = underneath).
+  for i = paint_items.length() - 1; i >= 0; i = i - 1 {
+    self.current_paths = paint_path_snapshots[i]
+    self.render_shape(paint_items[i])
+  }
+
+  // Phase 3: Render nested groups in reverse (last = underneath, first = on top).
+  for i = items.length() - 1; i >= 0; i = i - 1 {
+    match items[i].data {
+      Group(_) => self.render_shape(items[i])
+      _ => ()
+    }
+  }
+
+  // Restore accumulated paths for potential outer merge.
+  self.current_paths = all_inner_paths
+}
+
+///|
 pub fn[R : Renderer] Player::render_shape(
   self : Player[R],
   shape : @model.Shape,
@@ -506,37 +551,17 @@ pub fn[R : Renderer] Player::render_shape(
       self.current_paths = []
       let group_has_paint_ops = shape_group_has_paint(items)
 
-      // AE typically puts the group transform at the end of the shape list,
-      // but it applies to all siblings. We find it and apply it first.
+      // Apply group transform first (typically the last item, ty="tr").
       for item in items {
         match item.data {
-          Transform(tr) => {
-            let matrix = @runtime.evaluate_transform(tr, self.current_frame)
-            self.renderer.concat_transform(matrix)
-            let opacity = @runtime.evaluate_double_property(
-              tr.opacity,
-              self.current_frame,
-            )
-            self.renderer.set_opacity(opacity / 100.0)
-          }
+          Transform(_) => self.render_shape(item)
           _ => ()
         }
       }
-      // Two-pass rendering:
-      // Pass 1 (forward): non-group items (paths, fills, modifiers) – preserves paint dependency order
-      // Pass 2 (reverse): nested groups – correct z-ordering (index 0 is on top, index last is at bottom)
-      for item in items {
-        match item.data {
-          Transform(_) | Group(_) => ()
-          _ => self.render_shape(item)
-        }
-      }
-      for i = items.length() - 1; i >= 0; i = i - 1 {
-        match items[i].data {
-          Group(_) => self.render_shape(items[i])
-          _ => ()
-        }
-      }
+
+      // Render non-transform items using the shared helper that
+      // collects paths forward and draws paints in lottie-web z-order.
+      self.render_shape_items(items)
 
       // Merge inner paths with outer paths
       let inner_paths = self.current_paths
@@ -684,6 +709,11 @@ pub fn[R : Renderer] Player::render_shape(
     Transform(tr) => {
       let matrix = @runtime.evaluate_transform(tr, self.current_frame)
       self.renderer.concat_transform(matrix)
+      let opacity = @runtime.evaluate_double_property(
+        tr.opacity,
+        self.current_frame,
+      )
+      self.renderer.set_opacity(opacity / 100.0)
     }
     TrimPath(t) => {
       let start = @runtime.evaluate_double_property(t.start, self.current_frame)
