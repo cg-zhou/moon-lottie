@@ -620,10 +620,10 @@ fn is_animated_keyframe_array(k : Json) -> Bool {
   }
 }
 
-fn keyframe_time_or_zero(time : Double?) -> Int {
+fn keyframe_time_or_zero(time : Double?) -> Double {
   match time {
-    Some(t) => t.to_int()
-    None => 0
+    Some(t) => t
+    None => 0.0
   }
 }
 

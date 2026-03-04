@@ -79,6 +79,18 @@ test "evaluate_double_hold" {
 }
 
 ///|
+test "evaluate_double_preserves_fractional_keyframe_timing" {
+  let k1 = @model.LottieKeyframe::new(frame=0.0, start_value=0.0)
+  let k2 = @model.LottieKeyframe::new(frame=0.5, start_value=100.0)
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+
+  let v = @runtime.evaluate_double_property(prop, 0.25)
+  if (v - 50.0).abs() > 0.001 {
+    fail("fractional keyframe timing should interpolate at the exact subframe position")
+  }
+}
+
+///|
 test "evaluate_path_property_easing" {
   let ot = @model.Bezier::new(
     @model.BezierValue::new_single(0.1),

@@ -19,8 +19,8 @@ fn[T] find_keyframe(
         let is_cycle = e.contains("cycle")
         let is_pingpong = e.contains("pingpong")
         if is_cycle || is_pingpong {
-          let first = keyframes[0].frame.to_double()
-          let last = keyframes[len - 1].frame.to_double()
+          let first = keyframes[0].frame
+          let last = keyframes[len - 1].frame
           let duration = last - first
           if f > last && duration > 0.0 {
             let offset = f - first
@@ -41,20 +41,19 @@ fn[T] find_keyframe(
     None => ()
   }
 
-  if f <= keyframes[0].frame.to_double() {
+  if f <= keyframes[0].frame {
     return (0, 0.0)
   }
 
-  if f >= keyframes[len - 1].frame.to_double() {
+  if f >= keyframes[len - 1].frame {
     return (len - 1, 0.0)
   }
 
   for i = 0; i < len - 1; i = i + 1 {
     let k1 = keyframes[i]
     let k2 = keyframes[i + 1]
-    if f >= k1.frame.to_double() && f < k2.frame.to_double() {
-      let progress = (f - k1.frame.to_double()) /
-        (k2.frame.to_double() - k1.frame.to_double())
+    if f >= k1.frame && f < k2.frame {
+      let progress = (f - k1.frame) / (k2.frame - k1.frame)
       return (i, progress)
     }
   }

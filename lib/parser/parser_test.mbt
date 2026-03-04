@@ -286,6 +286,25 @@ test "parse_position_keyframe_infra_fields" {
 }
 
 ///|
+test "parse_property_keeps_fractional_keyframe_time" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"a\":1,\"k\":[{\"t\":0.5,\"s\":[0,0,0],\"e\":[100,0,0]},{\"t\":1.5,\"s\":[100,0,0]}]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse fractional keyframe timing: \{e}")
+  }
+  match ani.layers[0].transform.position.value {
+    @model.PropertyValue::Animated(kfs) => {
+      if (kfs[0].frame - 0.5).abs() > 0.000001 ||
+        (kfs[1].frame - 1.5).abs() > 0.000001 {
+        fail("fractional keyframe times should be preserved")
+      }
+    }
+    _ => fail("position should be animated")
+  }
+}
+
+///|
 test "parse_transform_skew_fields" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100},\"sk\":{\"k\":15.5},\"sa\":{\"k\":45.0}}}]}"
