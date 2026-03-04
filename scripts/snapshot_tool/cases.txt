@@ -1,0 +1,7 @@
+1_1_Super_Mario.json sim=0.94 23 46
+1_2_3D_Customization.json sim=0.98 20 40 60
+1_3_Businessman_flies_up_with_rocket.json sim=0.90 40 80 100
+1_4_Cat_Fishing_On_Moon.json sim=0.90 50 100 140
+1_5_Crypto.json sim=0.90 50 100 140
+1_6_Designer.json sim=0.90 50 100 150
+1_7_Keyboard_Typing.json sim=0.90 50 100 140

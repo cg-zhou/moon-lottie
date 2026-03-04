@@ -26,7 +26,7 @@
 
 - [ ] **SVG Hash 对比脚本**: 自动运行 `moon test` 并对比 `lib/renderer/__snapshot__` 中的 Hash 值。
 - [x] **像素级帧 Diff 工具**: `test/snapshot_tool/compare_frames.js`，将 SVG 渲染为像素后按帧比较并输出 diff PNG。
-- [x] **用例配置驱动帧对比工具**: `scripts/snapshot_tool/frame_case_compare.js`，读取 `文件名 + 多帧` 配置，导出 moon/offical PNG、diff 图和一致性比例。
+- [x] **用例配置驱动帧对比工具**: `scripts/snapshot_tool/regression_test.js`，读取 `文件名 + [sim=0.99] + 多帧` 配置，导出 moon/offical PNG、diff 图和一致性比例。支持每行指定相似度要求，默认读取 `cases.txt`。
 - [ ] **官方 Trace 提取服务**: 使用 Node.js 脚本批量导出官方渲染指令流。
 
 ## 用例配置驱动帧对比脚本

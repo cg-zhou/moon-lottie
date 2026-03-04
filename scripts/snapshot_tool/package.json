@@ -6,14 +6,14 @@
   "scripts": {
     "generate": "node index.js",
     "compare:frames": "node compare_frames.js",
-    "compare:cases": "node frame_case_compare.js",
-    "test": "node --test frame_case_compare.test.js"
+    "test": "node regression_test.js",
+    "unit-test": "node --test regression_test.test.js"
   },
   "dependencies": {
     "jsdom": "^24.0.0",
     "lottie-web": "^5.12.2",
     "pixelmatch": "^7.1.0",
     "playwright": "^1.58.2",
-    "sharp": "^0.34.2"
+    "sharp": "^0.34.5"
   }
 }

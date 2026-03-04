@@ -26,15 +26,28 @@ function parseCaseConfig(content) {
       if (parts.length < 2) {
         throw new Error(`Invalid case line ${lineNo}: ${line}`);
       }
+      
+      let minSimilarity = 0.0;
+      let frameStartIndex = 1;
+      
+      // Check if the second part is a similarity value like "sim=0.99"
+      if (parts[1].startsWith('sim=')) {
+        minSimilarity = Number(parts[1].split('=')[1]);
+        if (!Number.isFinite(minSimilarity) || minSimilarity < 0 || minSimilarity > 1) {
+          throw new Error(`Invalid similarity value in line ${lineNo}: ${parts[1]}`);
+        }
+        frameStartIndex = 2;
+      }
+
       const file = parts[0];
-      const frames = parts.slice(1).map(v => {
+      const frames = parts.slice(frameStartIndex).map(v => {
         const frame = Number(v);
         if (!Number.isFinite(frame) || frame < 0) {
           throw new Error(`Invalid frame '${v}' at line ${lineNo}`);
         }
         return Math.floor(frame);
       });
-      return { file, frames };
+      return { file, frames, minSimilarity };
     });
 }
 
@@ -173,18 +186,15 @@ async function setAndCaptureFrame(page, filename, frame, outputDir) {
 }
 
 async function main() {
-  const caseFileArg = arg('cases');
-  if (!caseFileArg) {
-    throw new Error('Missing --cases <path-to-case-config>');
-  }
-
+  const caseFileArg = arg('cases', './cases.txt');
   const caseFile = path.resolve(process.cwd(), caseFileArg);
   const port = Number(arg('port', '4173'));
-  const minSimilarity = Number(arg('min-similarity', '0.0'));
+  // Global override if provided, otherwise using sim=... from cases.txt
+  const globalMinSimilarity = arg('min-similarity') ? Number(arg('min-similarity')) : null;
   const outputDirArg = arg('output-dir', '');
   const outputDir = outputDirArg
     ? path.resolve(process.cwd(), outputDirArg)
-    : fs.mkdtempSync(path.join(process.cwd(), 'frame_compare_tmp_'));
+    : path.resolve(process.cwd(), 'frame_compare_result');
 
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -207,10 +217,14 @@ async function main() {
 
   ensureWasmBuilt(repoRoot);
 
+  console.log(`[INFO] Case file: ${caseFile}`);
   console.log(`[INFO] Output directory: ${outputDir}`);
 
   const server = await createStaticServer(repoRoot, port);
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: 'C:\\Users\\cgzhou\\AppData\\Local\\ms-playwright\\chromium-1208\\chrome-win64\\chrome-win64\\chrome.exe'
+  });
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   const localLottiePathCandidates = [
     path.join(__dirname, 'node_modules/lottie-web/build/player/lottie.min.js'),
@@ -241,13 +255,22 @@ async function main() {
     }
 
     for (const item of cases) {
+      const currentMinSim = globalMinSimilarity !== null ? globalMinSimilarity : item.minSimilarity;
+
       for (const frame of item.frames) {
-        const { moonPath, officialPath, diffPath, result } = await setAndCaptureFrame(page, item.file, frame, outputDir);
+        const { result } = await setAndCaptureFrame(page, item.file, frame, outputDir);
         const similarityPct = (result.similarity * 100).toFixed(4);
+        const minSimPct = (currentMinSim * 100).toFixed(2);
+        
+        const isPassed = result.similarity >= currentMinSim;
+        const colorPrefix = isPassed ? '\x1b[32m' : '\x1b[31m'; // 32m: Green, 31m: Red
+        const colorSuffix = '\x1b[0m';
+        
         console.log(
-          `[COMPARE] ${item.file} frame=${frame} similarity=${similarityPct}% moon=${path.basename(moonPath)} official=${path.basename(officialPath)} diff=${path.basename(diffPath)}`
+          `${colorPrefix}[COMPARE] ${item.file} frame=${frame} similarity=${similarityPct}% (min=${minSimPct}%)${colorSuffix}`
         );
-        if (result.similarity < minSimilarity) {
+        
+        if (!isPassed) {
           allPassed = false;
         }
       }
@@ -258,7 +281,7 @@ async function main() {
   }
 
   if (!allPassed) {
-    throw new Error(`Frame comparison failed: min similarity=${minSimilarity}`);
+    throw new Error(`Frame comparison failed.`);
   }
 }
 

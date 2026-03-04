@@ -12,3 +12,5 @@ node_modules
 3rd_repos
 package.json
 package-lock.json
+
+scripts/snapshot_tool/frame_compare_result/
