@@ -63,11 +63,11 @@ const importObject = {
     lineTo: (x, y) => ctx.lineTo(x, y),
     bezierCurveTo: (cp1x, cp1y, cp2x, cp2y, x, y) => ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y),
     fill: (r, g, b, a) => { 
-        ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = `rgb(${r},${g},${b})`; 
+        ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = `rgb(${r},${g},${b})`; 
         ctx.fill(ctx._currentFillRule || "nonzero"); ctx.restore();
     },
     stroke: (r, g, b, a, width) => { 
-        ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = `rgb(${r},${g},${b})`; 
+        ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = `rgb(${r},${g},${b})`; 
         ctx.lineWidth = width; ctx.stroke(); ctx.restore();
     },
     setStrokeStyle: (cap, join, miter) => {
@@ -78,8 +78,8 @@ const importObject = {
     createLinearGradient: (x1, y1, x2, y2) => { currentGradient = ctx.createLinearGradient(x1, y1, x2, y2); },
     createRadialGradient: (cx, cy, r, fx, fy, fr) => { currentGradient = ctx.createRadialGradient(fx, fy, fr, cx, cy, r); },
     addGradientStop: (offset, r, g, b, a) => { if (currentGradient) currentGradient.addColorStop(offset, `rgba(${r},${g},${b},${a})`); },
-    fillGradient: (a) => { if (currentGradient) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = currentGradient; ctx.fill(ctx._currentFillRule || "nonzero"); ctx.restore(); } },
-    strokeGradient: (a, w) => { if (currentGradient) { ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = currentGradient; ctx.lineWidth = w; ctx.stroke(); ctx.restore(); } },
+    fillGradient: (a) => { if (currentGradient) { ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = currentGradient; ctx.fill(ctx._currentFillRule || "nonzero"); ctx.restore(); } },
+    strokeGradient: (a, w) => { if (currentGradient) { ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = currentGradient; ctx.lineWidth = w; ctx.stroke(); ctx.restore(); } },
     clip: () => ctx.clip(ctx._currentFillRule || "nonzero"),
     clearRect: (x, y, w, h) => ctx.clearRect(x, y, w, h),
     setGlobalAlpha: (a) => { ctx.globalAlpha = a; },
@@ -100,7 +100,7 @@ const importObject = {
         if (img) ctx.drawImage(img, 0, 0, w, h);
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
-        ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.font = `${size}px ${moonStringJS(font) || 'Arial'}`;
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
         ctx.fillText(moonStringJS(text), 0, 0); ctx.restore();
