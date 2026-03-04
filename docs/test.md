@@ -26,7 +26,27 @@
 
 - [ ] **SVG Hash 对比脚本**: 自动运行 `moon test` 并对比 `lib/renderer/__snapshot__` 中的 Hash 值。
 - [x] **像素级帧 Diff 工具**: `test/snapshot_tool/compare_frames.js`，将 SVG 渲染为像素后按帧比较并输出 diff PNG。
+- [x] **用例配置驱动帧对比工具**: `scripts/snapshot_tool/frame_case_compare.js`，读取 `文件名 + 多帧` 配置，导出 moon/offical PNG、diff 图和一致性比例。
 - [ ] **官方 Trace 提取服务**: 使用 Node.js 脚本批量导出官方渲染指令流。
+
+## 用例配置驱动帧对比脚本
+
+```bash
+cd scripts/snapshot_tool
+npm run compare:cases -- --cases /path/to/cases.txt --min-similarity 0.99
+```
+
+`cases.txt` 每行格式示例：
+
+```txt
+1_1_Super_Mario.json 23 46
+```
+
+执行后会在当前目录创建 `frame_compare_tmp_*` 临时目录，输出：
+
+- `1_1_Super_Mario_23.png`（moon-lottie）
+- `1_1_Super_Mario_23_official.png`（lottie-web）
+- `1_1_Super_Mario_23_diff.png`（差异图）
 
 ## 活跃瓶颈分析 (Hot Issues)
 
