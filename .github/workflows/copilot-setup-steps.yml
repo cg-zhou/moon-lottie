@@ -37,5 +37,16 @@ jobs:
       - name: Update MoonBit dependencies
         run: |
             moon version --all
-            moon update
+            for i in 1 2 3 4 5; do
+              echo "moon update attempt $i/5"
+              if moon update; then
+                exit 0
+              fi
+              if [ "$i" -lt 5 ]; then
+                echo "moon update failed, retrying in 10s..."
+                sleep 10
+              fi
+            done
+            echo "moon update failed after retries. Check network egress/DNS for download.mooncakes.io in Copilot environment."
+            exit 1
             
