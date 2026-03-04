@@ -29,5 +29,11 @@ moon build --target wasm-gc
 cd demo && npx serve .
 ```
 
+## Copilot 环境里的 MoonBit 依赖初始化
+
+- 仓库使用 `/.github/workflows/copilot-setup-steps.yml` 中固定 job 名 `copilot-setup-steps` 作为 Copilot coding agent 的前置环境。
+- Copilot 沙箱网络策略可能与普通 Actions 不同，偶发会出现 `download.mooncakes.io` DNS/出网失败。
+- 当前前置 workflow 已为 `moon update` 增加重试，建议保留；若仍失败，请在仓库/组织侧放行 `download.mooncakes.io` 与 `cli.moonbitlang.com` 的出网访问。
+
 ## 开源协议
 MIT

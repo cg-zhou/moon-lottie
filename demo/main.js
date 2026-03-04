@@ -24,6 +24,7 @@ let currentFileSize = 0;
 let imageAssets = new Map();
 let imageLayerRefsByFrame = new Map();
 let frameImageDrawCursor = 0;
+const missingImageKeys = new Set();
 
 // Helper to convert MoonBit string (WasmGC array) to JS string
 function moonStringJS(moonStr) {
@@ -63,11 +64,11 @@ const importObject = {
     lineTo: (x, y) => ctx.lineTo(x, y),
     bezierCurveTo: (cp1x, cp1y, cp2x, cp2y, x, y) => ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y),
     fill: (r, g, b, a) => { 
-        ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = `rgb(${r},${g},${b})`; 
+        ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = `rgb(${r},${g},${b})`; 
         ctx.fill(ctx._currentFillRule || "nonzero"); ctx.restore();
     },
     stroke: (r, g, b, a, width) => { 
-        ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = `rgb(${r},${g},${b})`; 
+        ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = `rgb(${r},${g},${b})`; 
         ctx.lineWidth = width; ctx.stroke(); ctx.restore();
     },
     setStrokeStyle: (cap, join, miter) => {
@@ -78,8 +79,8 @@ const importObject = {
     createLinearGradient: (x1, y1, x2, y2) => { currentGradient = ctx.createLinearGradient(x1, y1, x2, y2); },
     createRadialGradient: (cx, cy, r, fx, fy, fr) => { currentGradient = ctx.createRadialGradient(fx, fy, fr, cx, cy, r); },
     addGradientStop: (offset, r, g, b, a) => { if (currentGradient) currentGradient.addColorStop(offset, `rgba(${r},${g},${b},${a})`); },
-    fillGradient: (a) => { if (currentGradient) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = currentGradient; ctx.fill(ctx._currentFillRule || "nonzero"); ctx.restore(); } },
-    strokeGradient: (a, w) => { if (currentGradient) { ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = currentGradient; ctx.lineWidth = w; ctx.stroke(); ctx.restore(); } },
+    fillGradient: (a) => { if (currentGradient) { ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = currentGradient; ctx.fill(ctx._currentFillRule || "nonzero"); ctx.restore(); } },
+    strokeGradient: (a, w) => { if (currentGradient) { ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = currentGradient; ctx.lineWidth = w; ctx.stroke(); ctx.restore(); } },
     clip: () => ctx.clip(ctx._currentFillRule || "nonzero"),
     clearRect: (x, y, w, h) => ctx.clearRect(x, y, w, h),
     setGlobalAlpha: (a) => { ctx.globalAlpha = a; },
@@ -88,19 +89,16 @@ const importObject = {
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
         const key = moonStringJS(id);
-        let img = imageAssets.get(key);
-        if (!img) {
-            const refs = imageLayerRefsByFrame.get(Math.floor(currentFrame)) || [];
-            if (refs.length > 0) {
-                const idx = frameImageDrawCursor < refs.length ? frameImageDrawCursor : refs.length - 1;
-                img = imageAssets.get(refs[idx]);
-                frameImageDrawCursor += 1;
-            }
+        const img = imageAssets.get(key);
+        if (img) {
+            ctx.drawImage(img, 0, 0, w, h);
+        } else if (key && !missingImageKeys.has(key)) {
+            missingImageKeys.add(key);
+            console.warn(`[MoonLottie] Missing image asset for key: ${key}`);
         }
-        if (img) ctx.drawImage(img, 0, 0, w, h);
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
-        ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.font = `${size}px ${moonStringJS(font) || 'Arial'}`;
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
         ctx.fillText(moonStringJS(text), 0, 0); ctx.restore();
@@ -279,17 +277,8 @@ async function startPlayer(jsonStr) {
     statusMsg.innerText = "初始化渲染引擎...";
     await preloadAssets(animationData);
     rebuildImageLayerTimeline(animationData);
-    // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
-    // The actual image data has already been preloaded into imageAssets by JS.
-    const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
-    if (wasmAnimationData.assets) {
-        wasmAnimationData.assets.forEach(asset => {
-            if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
-                asset.p = '';
-            }
-        });
-    }
-    currentJsonStr = JSON.stringify(wasmAnimationData);
+    // Keep the original asset source fields for parser/renderer parity with lottie-web.
+    currentJsonStr = JSON.stringify(animationData);
     
     const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps, get_version } = window.moonLottie;
     
