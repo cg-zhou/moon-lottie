@@ -24,6 +24,7 @@ let currentFileSize = 0;
 let imageAssets = new Map();
 let imageLayerRefsByFrame = new Map();
 let frameImageDrawCursor = 0;
+const missingImageKeys = new Set();
 
 // Helper to convert MoonBit string (WasmGC array) to JS string
 function moonStringJS(moonStr) {
@@ -89,7 +90,12 @@ const importObject = {
     drawImage: (id, w, h) => {
         const key = moonStringJS(id);
         const img = imageAssets.get(key);
-        if (img) ctx.drawImage(img, 0, 0, w, h);
+        if (img) {
+            ctx.drawImage(img, 0, 0, w, h);
+        } else if (key && !missingImageKeys.has(key)) {
+            missingImageKeys.add(key);
+            console.warn(`[MoonLottie] Missing image asset for key: ${key}`);
+        }
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
         ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = `rgb(${r},${g},${b})`;
