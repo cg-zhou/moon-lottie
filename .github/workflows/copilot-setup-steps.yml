@@ -37,16 +37,18 @@ jobs:
       - name: Update MoonBit dependencies
         run: |
             moon version --all
-            for i in 1 2 3 4 5; do
-              echo "moon update attempt $i/5"
+            # Increase MAX_ATTEMPTS when Copilot network is unstable.
+            MAX_ATTEMPTS=5
+            for i in $(seq 1 $MAX_ATTEMPTS); do
+              echo "moon update attempt $i/$MAX_ATTEMPTS"
               if moon update; then
                 exit 0
               fi
-              if [ "$i" -lt 5 ]; then
+              if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
                 echo "moon update failed, retrying in 10s..."
                 sleep 10
               fi
             done
-            echo "moon update failed after retries. Check network egress/DNS for download.mooncakes.io in Copilot environment."
+            echo "moon update failed after $MAX_ATTEMPTS attempts. Verify network egress allows access to download.mooncakes.io and cli.moonbitlang.com, or increase MAX_ATTEMPTS if the network is unstable."
             exit 1
             
