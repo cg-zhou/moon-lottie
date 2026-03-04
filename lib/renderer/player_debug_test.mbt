@@ -224,6 +224,38 @@ test "precomp layer with layer-local keyframes animates after start" {
   }
 }
 
+test "track matte source uses composition frame instead of target layer-local frame" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":60,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"nm":"matte-src","ip":0,"op":60,"st":0,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":20,"s":[100,0]}]}},"shapes":[{"ty":"rc","s":{"k":[40,40]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,1,1]},"o":{"k":100}}]},{"ty":4,"ind":2,"nm":"content","ip":0,"op":60,"st":30,"tt":1,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"k":[0,0]}},"shapes":[{"ty":"rc","s":{"k":[80,80]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(20.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut max_translate_x = 0.0
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.e > max_translate_x {
+          max_translate_x = m.e
+        }
+      _ => ()
+    }
+  }
+
+  if max_translate_x < 40.0 {
+    fail(
+      "Track matte source transform seems evaluated at wrong frame: max x=\{max_translate_x}, expected around 50 at comp frame 20",
+    )
+  }
+}
+
 test "image layers use resolved asset source instead of asset id" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":100,"h":100,"assets":[{"id":"img_0","w":10,"h":20,"u":"data:image/png;base64,","p":"AAAA"}],"layers":[{"ty":2,"ind":1,"refId":"img_0","ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
