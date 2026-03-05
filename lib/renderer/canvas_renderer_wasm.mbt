@@ -286,6 +286,33 @@ pub impl Renderer for CanvasRenderer with set_stroke_style(
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_begin_dash() = "canvas" "beginDash"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_add_dash(value : Double) = "canvas" "addDash"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_apply_dash(offset : Double) = "canvas" "applyDash"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with set_line_dash(
+  self : CanvasRenderer,
+  dash_array : Array[Double],
+  dash_offset : Double,
+) {
+  let _ = self
+  canvas_begin_dash()
+  for d in dash_array {
+    canvas_add_dash(d)
+  }
+  canvas_apply_dash(dash_offset)
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 pub impl Renderer for CanvasRenderer with fill_linear_gradient(
   self : CanvasRenderer,
   x1 : Double,
