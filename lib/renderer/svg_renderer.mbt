@@ -210,6 +210,8 @@ pub impl Renderer for SvgRenderer with set_line_dash(
   dash_array : Array[Double],
   dash_offset : Double,
 ) -> Unit {
+  // SVG dash stroke is handled via stroke-dasharray/stroke-dashoffset attributes
+  // in the SVG output. Not yet implemented for SVG renderer.
   let _ = self
   let _ = dash_array
   let _ = dash_offset

@@ -780,8 +780,8 @@ pub fn[R : Renderer] Player::render_shape(
       let step = if rep.composite == 1 { 1 } else { -1 }
 
       // Check if per-copy opacity varies
-      let needs_opacity = (so - eo).abs() > 0.001 ||
-        (so - 100.0).abs() > 0.001
+      let needs_opacity = (so - eo).abs() > shape_epsilon ||
+        (so - 100.0).abs() > shape_epsilon
 
       let mut i = start_idx
       while (if step == 1 { i < end_idx } else { i > end_idx }) {
@@ -876,7 +876,7 @@ pub fn apply_rounding_to_path(
   let new_i : Array[Array[Double]] = []
   let new_o : Array[Array[Double]] = []
 
-  let count = if path.closed { n } else { n }
+  let count = n
   for idx = 0; idx < count; idx = idx + 1 {
     let is_first = idx == 0 && not(path.closed)
     let is_last = idx == n - 1 && not(path.closed)
@@ -886,10 +886,10 @@ pub fn apply_rounding_to_path(
     let it1 = get_pt_at(i_t, idx, 1)
     let ot0 = get_pt_at(o_t, idx, 0)
     let ot1 = get_pt_at(o_t, idx, 1)
-    let is_sharp = it0.abs() < 0.001 &&
-      it1.abs() < 0.001 &&
-      ot0.abs() < 0.001 &&
-      ot1.abs() < 0.001
+    let is_sharp = it0.abs() < shape_epsilon &&
+      it1.abs() < shape_epsilon &&
+      ot0.abs() < shape_epsilon &&
+      ot1.abs() < shape_epsilon
 
     if not(is_sharp) || is_first || is_last {
       // Non-sharp corner or endpoint: keep as-is
@@ -917,7 +917,7 @@ pub fn apply_rounding_to_path(
       let max_r = max_r / 2.0
       let r = if radius < max_r { radius } else { max_r }
 
-      if r < 0.001 {
+      if r < shape_epsilon {
         new_v.push([cx, cy])
         new_i.push([0.0, 0.0])
         new_o.push([0.0, 0.0])
@@ -1080,6 +1080,10 @@ let cubic_subdivision_intervals = 50
 
 ///|
 let trim_t_epsilon = 0.000000001
+
+///|
+/// Small epsilon for floating-point comparisons in shape modifiers
+let shape_epsilon = 0.001
 
 ///|
 pub fn apply_trim_path(
