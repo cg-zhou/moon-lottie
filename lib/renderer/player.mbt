@@ -95,8 +95,7 @@ fn[R : Renderer] Player::apply_parent_transform(
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let parent_layer_frame = comp_frame - layer.start_time
-      let matrix = @runtime.evaluate_transform(layer.transform, parent_layer_frame)
+      let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
       self.renderer.concat_transform(matrix)
       return
     }
@@ -134,15 +133,14 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  // lottie-web evaluates layer transforms at `comp_frame - layer.st`
-  // (the layer-local time), not the raw composition frame.
-  let matrix = @runtime.evaluate_transform(layer.transform, layer_frame)
+  // lottie-web evaluates layer transform keyframes in composition time.
+  let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
   self.renderer.concat_transform(matrix)
 
   // 1.2 Apply Layer Opacity
   let opacity = @runtime.evaluate_double_property(
     layer.transform.opacity,
-    layer_frame,
+    comp_frame,
   )
   self.renderer.set_opacity(opacity / 100.0)
 
