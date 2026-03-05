@@ -101,12 +101,12 @@ test "svg-exported layer renders top-level groups in reverse order" {
 
 ///| Verify layer transform is evaluated at composition frame.
 ///|
-///| Layer: st=10, ip=10, op=50, keyframes at t=0→[0,0], t=20→[100,0].
-///| At composition frame 20, transform should sample frame 20 (x≈100),
-///| not layer-local frame 10 (x≈50).
+///| Layer: st=10, ip=10, op=50, keyframes at t=10→[0,0], t=30→[100,0].
+///| At composition frame 20, transform should sample frame 20 (x≈50),
+///| not layer-local frame 10 (x=0).
 test "layer transform uses composition frame timing" {
   let json_str =
-    #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":50,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":200,"sh":200,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":200,"ip":10,"op":50,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":20,"s":[100,0]}]}}}]}
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":50,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":200,"sh":200,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":200,"ip":10,"op":50,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":10,"s":[0,0]},{"t":30,"s":[100,0]}]}}}]}
   let json = @json.parse(json_str)
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse: \{e}")
@@ -131,10 +131,10 @@ test "layer transform uses composition frame timing" {
   }
   match found_translate_x {
     Some(x) =>
-      // x should be ~100 at comp frame 20.
-      if x < 95.0 || x > 105.0 {
+      // x should be ~50 at comp frame 20.
+      if x < 49.999 || x > 50.001 {
         fail(
-          "Layer transform timing mismatch: x=\{x}, expected around 100 at composition frame 20",
+          "Layer transform timing mismatch: x=\{x}, expected around 50 at composition frame 20",
         )
       }
     None => fail("No non-zero ConcatTransform found in commands")
@@ -210,7 +210,7 @@ test "precomp layer with global keyframes animates after start" {
   }
   match translate_x {
     Some(x) =>
-      if x < 205.0 || x > 215.0 {
+      if x < 209.999 || x > 210.001 {
         fail(
           "Walk layer position timing mismatch: x=\{x}, expected around 210 at comp frame 110",
         )
