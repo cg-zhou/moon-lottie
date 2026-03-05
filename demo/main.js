@@ -42,6 +42,7 @@ function moonStringJS(moonStr) {
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
+let currentDash = [];
 const fillRuleStack = [];
 const offscreenStack = [];
 
@@ -74,6 +75,9 @@ const importObject = {
         const caps = ["butt", "round", "square"]; const joins = ["miter", "round", "bevel"];
         ctx.lineCap = caps[cap - 1] || "butt"; ctx.lineJoin = joins[join - 1] || "miter"; ctx.miterLimit = miter;
     },
+    beginDash: () => { currentDash = []; },
+    addDash: (value) => { currentDash.push(value); },
+    applyDash: (offset) => { ctx.setLineDash(currentDash); ctx.lineDashOffset = offset; },
     setFillRule: (rule) => { ctx._currentFillRule = moonStringJS(rule); },
     createLinearGradient: (x1, y1, x2, y2) => { currentGradient = ctx.createLinearGradient(x1, y1, x2, y2); },
     createRadialGradient: (cx, cy, r, fx, fy, fr) => { currentGradient = ctx.createRadialGradient(fx, fy, fr, cx, cy, r); },
