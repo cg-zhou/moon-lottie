@@ -196,9 +196,13 @@ test "evaluate_vec_property_spatial_bezier_works_without_temporal_easing_handles
   )
   let k2 = @model.LottieKeyframe::new(frame=100, start_value=[100.0, 100.0])
   let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v25 = @runtime.evaluate_vec_property(prop, 25.0)
   let v = @runtime.evaluate_vec_property(prop, 50.0)
-  if v.length() != 2 {
+  if v.length() != 2 || v25.length() != 2 {
     fail("Unexpected vector length")
+  }
+  if (v25[0] - 100.0).abs() > 0.001 || (v25[1] - 100.0).abs() > 0.001 {
+    fail("Spatial bezier interpolation should produce curve-based values at frame 25")
   }
   if (v[0] - 125.0).abs() > 0.001 || (v[1] - 125.0).abs() > 0.001 {
     fail("Spatial bezier interpolation should still be applied when temporal easing handles are absent")
