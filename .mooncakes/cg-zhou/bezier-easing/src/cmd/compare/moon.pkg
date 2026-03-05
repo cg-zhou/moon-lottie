@@ -1,0 +1,7 @@
+import {
+  "cg-zhou/bezier-easing" @bezier,
+}
+
+options(
+  is_main: true,
+)
