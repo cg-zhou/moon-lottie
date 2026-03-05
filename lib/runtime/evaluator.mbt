@@ -264,7 +264,7 @@ pub fn evaluate_vec_property(
       }
 
       match (k1.out_tangent, k1.in_tangent, k1.value_out_tangent, k1.value_in_tangent) {
-        (Some(ot), Some(it), Some(to), Some(ti)) =>
+        (_, _, Some(to), Some(ti)) =>
           if k1.start_value.length() >= 2 &&
             next_val.length() >= 2 &&
             to.length() >= 2 &&
@@ -284,7 +284,11 @@ pub fn evaluate_vec_property(
             }
             res
           } else {
-            lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
+            match (k1.out_tangent, k1.in_tangent) {
+              (Some(ot), Some(it)) =>
+                lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
+              _ => @math.lerp_array(k1.start_value, next_val, t)
+            }
           }
         (Some(ot), Some(it), _, _) =>
           lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)

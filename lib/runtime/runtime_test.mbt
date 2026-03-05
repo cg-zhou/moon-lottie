@@ -187,6 +187,25 @@ test "evaluate_vec_property_spatial_bezier_does_not_double_apply_temporal_easing
 }
 
 ///|
+test "evaluate_vec_property_spatial_bezier_works_without_temporal_easing_handles" {
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=[0.0, 0.0],
+    value_out_tangent=Some([0.0, 0.0]),
+    value_in_tangent=Some([0.0, 0.0]),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=[100.0, 100.0])
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v = @runtime.evaluate_vec_property(prop, 50.0)
+  if v.length() != 2 {
+    fail("Unexpected vector length")
+  }
+  if (v[0] - 50.0).abs() > 0.001 || (v[1] - 50.0).abs() > 0.001 {
+    fail("Spatial bezier interpolation should not depend on temporal easing handles")
+  }
+}
+
+///|
 test "evaluate_path_property_multidimensional_easing_components" {
   let ot = @model.Bezier::new(
     @model.BezierValue::new_multi([0.0, 0.1]),
