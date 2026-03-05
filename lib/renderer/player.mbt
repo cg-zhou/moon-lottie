@@ -482,18 +482,18 @@ fn[R : Renderer] Player::render_layer_content(
 ///
 /// We achieve the same result by:
 ///   1. Forward-scanning to accumulate paths and snapshot them at each paint op.
-///   2. Drawing the collected paint ops in REVERSE order (last = underneath).
-///   3. Rendering nested groups in reverse (index 0 = on top, drawn last).
+///   2. Putting painted groups into the same draw list as sibling paint ops.
+///   3. Drawing the collected draw list in REVERSE order (last = underneath).
 fn[R : Renderer] Player::render_shape_items(
   self : Player[R],
   items : Array[@model.Shape],
 ) -> Unit {
-  // Phase 1: Forward pass – accumulate paths; collect paint ops with snapshots.
+  // Phase 1: Forward pass – accumulate paths; collect drawable ops with snapshots.
   // Groups WITHOUT paint ops contribute paths (like plain path shapes),
   // so they must be processed here so their paths are available when
   // subsequent fills/strokes take a snapshot.
-  let paint_items : Array[@model.Shape] = []
-  let paint_path_snapshots : Array[Array[@model.BezierPath]] = []
+  let draw_items : Array[@model.Shape] = []
+  let draw_path_snapshots : Array[Array[@model.BezierPath]] = []
   for item in items {
     match item.data {
       Transform(_) => ()
@@ -502,15 +502,19 @@ fn[R : Renderer] Player::render_shape_items(
           // Path-only group: render now so its paths accumulate into
           // current_paths before the next paint op snapshots them.
           self.render_shape(item)
+        } else {
+          // Painted group participates in z-order with sibling paint ops.
+          draw_items.push(item)
+          draw_path_snapshots.push([])
         }
       Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
-        paint_items.push(item)
+        draw_items.push(item)
         // Snapshot current accumulated paths for this paint op.
         let snapshot = []
         for p in self.current_paths {
           snapshot.push(p)
         }
-        paint_path_snapshots.push(snapshot)
+        draw_path_snapshots.push(snapshot)
       }
       _ => self.render_shape(item) // path shapes, modifiers, etc.
     }
@@ -521,20 +525,16 @@ fn[R : Renderer] Player::render_shape_items(
     all_inner_paths.push(p)
   }
 
-  // Phase 2: Draw paint ops in REVERSE order (last first = underneath).
-  for i = paint_items.length() - 1; i >= 0; i = i - 1 {
-    self.current_paths = paint_path_snapshots[i]
-    self.render_shape(paint_items[i])
-  }
-
-  // Phase 3: Render nested groups WITH paint in reverse (last = underneath, first = on top).
-  // Groups without paint were already processed in Phase 1.
-  for i = items.length() - 1; i >= 0; i = i - 1 {
-    match items[i].data {
-      Group(nested) =>
-        if shape_group_has_paint(nested) {
-          self.render_shape(items[i])
-        }
+  // Phase 2: Draw collected drawable ops in REVERSE order (last first = underneath).
+  // This keeps sibling painted groups and sibling paint styles in one shared z-order,
+  // matching lottie-web behavior.
+  for i = draw_items.length() - 1; i >= 0; i = i - 1 {
+    match draw_items[i].data {
+      Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
+        self.current_paths = draw_path_snapshots[i]
+        self.render_shape(draw_items[i])
+      }
+      Group(_) => self.render_shape(draw_items[i])
       _ => ()
     }
   }
