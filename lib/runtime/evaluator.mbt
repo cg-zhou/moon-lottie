@@ -271,16 +271,15 @@ pub fn evaluate_vec_property(
             ti.length() >= 2 {
             let res = []
             for i = 0; i < k1.start_value.length(); i = i + 1 {
-              let eased_t = solve_eased_t_for_component(ot, it, t, i)
               let p0 = k1.start_value[i]
               let p3 = next_val[i]
               // Check if tangents have the component. If not, fallback to p0/p3.
               let p1 = if i < to.length() { p0 + to[i] } else { p0 }
               let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
-              let val = (1.0 - eased_t) * (1.0 - eased_t) * (1.0 - eased_t) * p0 +
-                3.0 * (1.0 - eased_t) * (1.0 - eased_t) * eased_t * p1 +
-                3.0 * (1.0 - eased_t) * eased_t * eased_t * p2 +
-                eased_t * eased_t * eased_t * p3
+              let val = (1.0 - t) * (1.0 - t) * (1.0 - t) * p0 +
+                3.0 * (1.0 - t) * (1.0 - t) * t * p1 +
+                3.0 * (1.0 - t) * t * t * p2 +
+                t * t * t * p3
               res.push(val)
             }
             res
