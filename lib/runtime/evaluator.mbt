@@ -143,6 +143,20 @@ fn lerp_array_with_component_easing(
 }
 
 ///|
+fn lerp_array_with_optional_component_easing(
+  a : Array[Double],
+  b : Array[Double],
+  out_tangent : @model.Bezier?,
+  in_tangent : @model.Bezier?,
+  t : Double,
+) -> Array[Double] {
+  match (out_tangent, in_tangent) {
+    (Some(ot), Some(it)) => lerp_array_with_component_easing(a, b, ot, it, t)
+    _ => @math.lerp_array(a, b, t)
+  }
+}
+
+///|
 fn lerp_vec2_array_with_component_easing(
   a : Array[Array[Double]],
   b : Array[Array[Double]],
@@ -264,32 +278,42 @@ pub fn evaluate_vec_property(
       }
 
       match (k1.out_tangent, k1.in_tangent, k1.value_out_tangent, k1.value_in_tangent) {
-        (Some(ot), Some(it), Some(to), Some(ti)) =>
+        (_, _, Some(to), Some(ti)) =>
           if k1.start_value.length() >= 2 &&
             next_val.length() >= 2 &&
             to.length() >= 2 &&
             ti.length() >= 2 {
             let res = []
             for i = 0; i < k1.start_value.length(); i = i + 1 {
-              let eased_t = solve_eased_t_for_component(ot, it, t, i)
               let p0 = k1.start_value[i]
               let p3 = next_val[i]
               // Check if tangents have the component. If not, fallback to p0/p3.
               let p1 = if i < to.length() { p0 + to[i] } else { p0 }
               let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
-              let val = (1.0 - eased_t) * (1.0 - eased_t) * (1.0 - eased_t) * p0 +
-                3.0 * (1.0 - eased_t) * (1.0 - eased_t) * eased_t * p1 +
-                3.0 * (1.0 - eased_t) * eased_t * eased_t * p2 +
-                eased_t * eased_t * eased_t * p3
+              let val = (1.0 - t) * (1.0 - t) * (1.0 - t) * p0 +
+                3.0 * (1.0 - t) * (1.0 - t) * t * p1 +
+                3.0 * (1.0 - t) * t * t * p2 +
+                t * t * t * p3
               res.push(val)
             }
             res
           } else {
-            lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
+            lerp_array_with_optional_component_easing(
+              k1.start_value,
+              next_val,
+              k1.out_tangent,
+              k1.in_tangent,
+              t,
+            )
           }
-        (Some(ot), Some(it), _, _) =>
-          lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
-        _ => @math.lerp_array(k1.start_value, next_val, t)
+        (_, _, _, _) =>
+          lerp_array_with_optional_component_easing(
+            k1.start_value,
+            next_val,
+            k1.out_tangent,
+            k1.in_tangent,
+            t,
+          )
       }
     }
   }

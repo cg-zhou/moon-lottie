@@ -158,6 +158,58 @@ test "evaluate_vec_property_multidimensional_easing_components" {
 }
 
 ///|
+test "evaluate_vec_property_spatial_bezier_does_not_double_apply_temporal_easing" {
+  let ot = @model.Bezier::new(
+    @model.BezierValue::new_single(0.1),
+    @model.BezierValue::new_single(1.0),
+  )
+  let it = @model.Bezier::new(
+    @model.BezierValue::new_single(0.9),
+    @model.BezierValue::new_single(1.0),
+  )
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=[0.0, 0.0],
+    in_tangent=Some(it),
+    out_tangent=Some(ot),
+    value_out_tangent=Some([0.0, 0.0]),
+    value_in_tangent=Some([0.0, 0.0]),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=[100.0, 100.0])
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v = @runtime.evaluate_vec_property(prop, 50.0)
+  if v.length() != 2 {
+    fail("Unexpected vector length")
+  }
+  if (v[0] - 50.0).abs() > 0.001 || (v[1] - 50.0).abs() > 0.001 {
+    fail("Spatial bezier interpolation should use raw t when value tangents are present")
+  }
+}
+
+///|
+test "evaluate_vec_property_spatial_bezier_works_without_temporal_easing_handles" {
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=[0.0, 0.0],
+    value_out_tangent=Some([200.0, 200.0]),
+    value_in_tangent=Some([0.0, 0.0]),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=[100.0, 100.0])
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+  let v25 = @runtime.evaluate_vec_property(prop, 25.0)
+  let v = @runtime.evaluate_vec_property(prop, 50.0)
+  if v.length() != 2 || v25.length() != 2 {
+    fail("Unexpected vector length")
+  }
+  if v25[0] <= 25.0 || v25[1] <= 25.0 {
+    fail("Spatial bezier interpolation should produce non-linear curve-based values at frame 25")
+  }
+  if (v[0] - 125.0).abs() > 0.001 || (v[1] - 125.0).abs() > 0.001 {
+    fail("Spatial bezier interpolation should still be applied when temporal easing handles are absent")
+  }
+}
+
+///|
 test "evaluate_path_property_multidimensional_easing_components" {
   let ot = @model.Bezier::new(
     @model.BezierValue::new_multi([0.0, 0.1]),
