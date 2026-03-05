@@ -99,16 +99,12 @@ test "svg-exported layer renders top-level groups in reverse order" {
   }
 }
 
-///| Verify layer transform is evaluated at composition frame, not layer-local frame.
+///| Verify layer transform is evaluated at composition frame.
 ///|
-///| A precomp layer with st=10 and animated position (keyframe times in composition space):
-///|   t=10 → [0, 0], t=30 → [100, 0]
-///| At composition frame 20, we are 50% through the animation (t=10..30),
-///| so position should be [50, 0].
-test "layer transform uses layer-local frame matching lottie-web" {
-  // lottie-web evaluates transforms at (comp_frame - layer.st).
-  // Layer: st=10, ip=10, op=50.  Keyframes at LOCAL t=0→[0,0] and t=20→[100,0].
-  // At comp_frame=20 → local_frame = 20-10 = 10, progress = (10-0)/(20-0) = 0.5 → x ≈ 50.
+///| Layer: st=10, ip=10, op=50, keyframes at t=0→[0,0], t=20→[100,0].
+///| At composition frame 20, transform should sample frame 20 (x≈100),
+///| not layer-local frame 10 (x≈50).
+test "layer transform uses composition frame timing" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":50,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":200,"sh":200,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":200,"ip":10,"op":50,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":20,"s":[100,0]}]}}}]}
   let json = @json.parse(json_str)
@@ -135,10 +131,10 @@ test "layer transform uses layer-local frame matching lottie-web" {
   }
   match found_translate_x {
     Some(x) =>
-      // x should be ~50 (interpolated at 50%)
-      if x < 1.0 {
+      // x should be ~100 at comp frame 20.
+      if x < 95.0 || x > 105.0 {
         fail(
-          "Layer transform was not interpolated correctly: x=\{x} (expected ~50). Transform should be evaluated at layer-local frame.",
+          "Layer transform timing mismatch: x=\{x}, expected around 100 at composition frame 20",
         )
       }
     None => fail("No non-zero ConcatTransform found in commands")
@@ -182,14 +178,13 @@ test "shape properties use layer-local frame when layer has non-zero st" {
   }
 }
 
-///| Verify that a precomp layer with non-zero `st` evaluates transforms at
-///| layer-local time (comp_frame - st), matching lottie-web behaviour.
+///| Verify that precomp layer transform keyframes are sampled in composition time.
 ///|
-///| Layer: ip=89, op=150, st=89, LOCAL-time keyframes at t=0→[0,0] and t=60→[600,0].
-///| At comp_frame=110, local_frame=110-89=21, progress=21/60=0.35 → x≈210.
-test "precomp layer with layer-local keyframes animates after start" {
+///| Layer: ip=89, op=150, st=89, keyframes at t=89→[0,0], t=149→[600,0].
+///| At comp_frame=110, progress=(110-89)/(149-89)=0.35 → x≈210.
+test "precomp layer with global keyframes animates after start" {
   let json_str =
-    #|{"v":"5.5.0","fr":30,"ip":0,"op":150,"w":600,"h":400,"assets":[{"id":"comp_walk","layers":[{"ty":1,"ind":1,"ip":0,"op":150,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":600,"sh":400,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_walk","w":600,"h":400,"ip":89,"op":150,"st":89,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":60,"s":[600,0]}]}}}]}
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":150,"w":600,"h":400,"assets":[{"id":"comp_walk","layers":[{"ty":1,"ind":1,"ip":0,"op":150,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":600,"sh":400,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_walk","w":600,"h":400,"ip":89,"op":150,"st":89,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":89,"s":[0,0]},{"t":149,"s":[600,0]}]}}}]}
   let json = @json.parse(json_str)
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse: \{e}")
@@ -198,7 +193,7 @@ test "precomp layer with layer-local keyframes animates after start" {
   let recorder = CommandRecorder::new()
   let player = Player::new(ani, recorder)
 
-  // At comp_frame=110: local_frame = 110-89 = 21, progress = 21/60 = 0.35 → x ≈ 210
+  // At comp_frame=110: progress = 21/60 = 0.35 → x ≈ 210
   player.set_frame(110.0)
   player.render()
 
@@ -215,9 +210,9 @@ test "precomp layer with layer-local keyframes animates after start" {
   }
   match translate_x {
     Some(x) =>
-      if x < 50.0 {
+      if x < 205.0 || x > 215.0 {
         fail(
-          "Walk layer position frozen at start: x=\{x}, expected ~210. Layer transform must use layer-local frame.",
+          "Walk layer position timing mismatch: x=\{x}, expected around 210 at comp frame 110",
         )
       }
     None => fail("No non-zero ConcatTransform found")
