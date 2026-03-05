@@ -114,6 +114,44 @@ test "snapshot_render_alpha_matte" {
 }
 
 ///|
+test "snapshot_render_matte_in_comp_space" {
+  // Matte source and target are sibling layers. When applying track matte,
+  // rendering matte source should start from comp-space transform instead of
+  // inheriting target layer local transform.
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":1,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[120,120]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":80,\"sh\":80,\"sc\":\"#ffffff\",\"td\":1},{\"ty\":1,\"ind\":2,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[260,260]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":200,\"sh\":200,\"sc\":\"#ff0000\",\"tt\":1}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut has_reset_before_matte = false
+  for i = 0; i + 2 < commands.length(); i = i + 1 {
+    match (commands[i], commands[i + 1], commands[i + 2]) {
+      (
+        SetBlendMode("destination-in"),
+        Save,
+        SetTransform({ a: 1.0, b: 0.0, c: 0.0, d: 1.0, e: 0.0, f: 0.0 }),
+      ) => {
+        has_reset_before_matte = true
+        break
+      }
+      _ => ()
+    }
+  }
+  if not(has_reset_before_matte) {
+    fail(
+      "Matte source should be rendered from composition transform space. Commands: \{commands}",
+    )
+  }
+}
+
+///|
 /// Verify that groups WITHOUT their own paint ops contribute paths to the
 /// parent group's fill. This pattern appears in 1_6_Designer.json's leg
 /// layers, where sub-groups (Wedge Group 2, C2 Group) generate paths
