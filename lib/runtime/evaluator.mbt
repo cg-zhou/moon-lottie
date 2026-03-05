@@ -143,6 +143,20 @@ fn lerp_array_with_component_easing(
 }
 
 ///|
+fn lerp_array_with_optional_component_easing(
+  a : Array[Double],
+  b : Array[Double],
+  out_tangent : @model.Bezier?,
+  in_tangent : @model.Bezier?,
+  t : Double,
+) -> Array[Double] {
+  match (out_tangent, in_tangent) {
+    (Some(ot), Some(it)) => lerp_array_with_component_easing(a, b, ot, it, t)
+    _ => @math.lerp_array(a, b, t)
+  }
+}
+
+///|
 fn lerp_vec2_array_with_component_easing(
   a : Array[Array[Double]],
   b : Array[Array[Double]],
@@ -284,15 +298,22 @@ pub fn evaluate_vec_property(
             }
             res
           } else {
-            match (k1.out_tangent, k1.in_tangent) {
-              (Some(ot), Some(it)) =>
-                lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
-              _ => @math.lerp_array(k1.start_value, next_val, t)
-            }
+            lerp_array_with_optional_component_easing(
+              k1.start_value,
+              next_val,
+              k1.out_tangent,
+              k1.in_tangent,
+              t,
+            )
           }
-        (Some(ot), Some(it), _, _) =>
-          lerp_array_with_component_easing(k1.start_value, next_val, ot, it, t)
-        _ => @math.lerp_array(k1.start_value, next_val, t)
+        (_, _, _, _) =>
+          lerp_array_with_optional_component_easing(
+            k1.start_value,
+            next_val,
+            k1.out_tangent,
+            k1.in_tangent,
+            t,
+          )
       }
     }
   }

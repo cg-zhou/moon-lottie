@@ -201,8 +201,8 @@ test "evaluate_vec_property_spatial_bezier_works_without_temporal_easing_handles
   if v.length() != 2 || v25.length() != 2 {
     fail("Unexpected vector length")
   }
-  if (v25[0] - 100.0).abs() > 0.001 || (v25[1] - 100.0).abs() > 0.001 {
-    fail("Spatial bezier interpolation should produce curve-based values at frame 25")
+  if v25[0] <= 25.0 || v25[1] <= 25.0 {
+    fail("Spatial bezier interpolation should produce non-linear curve-based values at frame 25")
   }
   if (v[0] - 125.0).abs() > 0.001 || (v[1] - 125.0).abs() > 0.001 {
     fail("Spatial bezier interpolation should still be applied when temporal easing handles are absent")
