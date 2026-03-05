@@ -489,11 +489,20 @@ fn[R : Renderer] Player::render_shape_items(
   items : Array[@model.Shape],
 ) -> Unit {
   // Phase 1: Forward pass – accumulate paths; collect paint ops with snapshots.
+  // Groups WITHOUT paint ops contribute paths (like plain path shapes),
+  // so they must be processed here so their paths are available when
+  // subsequent fills/strokes take a snapshot.
   let paint_items : Array[@model.Shape] = []
   let paint_path_snapshots : Array[Array[@model.BezierPath]] = []
   for item in items {
     match item.data {
-      Transform(_) | Group(_) => ()
+      Transform(_) => ()
+      Group(nested) =>
+        if not(shape_group_has_paint(nested)) {
+          // Path-only group: render now so its paths accumulate into
+          // current_paths before the next paint op snapshots them.
+          self.render_shape(item)
+        }
       Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
         paint_items.push(item)
         // Snapshot current accumulated paths for this paint op.
@@ -518,10 +527,14 @@ fn[R : Renderer] Player::render_shape_items(
     self.render_shape(paint_items[i])
   }
 
-  // Phase 3: Render nested groups in reverse (last = underneath, first = on top).
+  // Phase 3: Render nested groups WITH paint in reverse (last = underneath, first = on top).
+  // Groups without paint were already processed in Phase 1.
   for i = items.length() - 1; i >= 0; i = i - 1 {
     match items[i].data {
-      Group(_) => self.render_shape(items[i])
+      Group(nested) =>
+        if shape_group_has_paint(nested) {
+          self.render_shape(items[i])
+        }
       _ => ()
     }
   }
@@ -552,10 +565,14 @@ pub fn[R : Renderer] Player::render_shape(
       self.current_paths = []
       let group_has_paint_ops = shape_group_has_paint(items)
 
-      // Apply group transform first (typically the last item, ty="tr").
+      // Evaluate group transform and apply it to the renderer.
+      let mut group_matrix = @math.Matrix::identity()
       for item in items {
         match item.data {
-          Transform(_) => self.render_shape(item)
+          Transform(tr) => {
+            group_matrix = @runtime.evaluate_transform(tr, self.current_frame)
+            self.render_shape(item)
+          }
           _ => ()
         }
       }
@@ -564,12 +581,15 @@ pub fn[R : Renderer] Player::render_shape(
       // collects paths forward and draws paints in lottie-web z-order.
       self.render_shape_items(items)
 
-      // Merge inner paths with outer paths
+      // Merge inner paths with outer paths.
+      // When the group has no paint, its paths bubble up to the parent.
+      // Transform them by the group's local matrix so they are in the
+      // parent's coordinate space.
       let inner_paths = self.current_paths
       self.current_paths = old_paths
       if not(group_has_paint_ops) {
         for p in inner_paths {
-          self.current_paths.push(p)
+          self.current_paths.push(transform_path(p, group_matrix))
         }
       }
       self.renderer.restore()
