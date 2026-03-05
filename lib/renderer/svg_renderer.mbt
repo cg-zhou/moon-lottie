@@ -205,6 +205,17 @@ pub impl Renderer for SvgRenderer with set_stroke_style(
 }
 
 ///|
+pub impl Renderer for SvgRenderer with set_line_dash(
+  self : SvgRenderer,
+  dash_array : Array[Double],
+  dash_offset : Double,
+) -> Unit {
+  let _ = self
+  let _ = dash_array
+  let _ = dash_offset
+}
+
+///|
 pub impl Renderer for SvgRenderer with set_fill_rule(
   self : SvgRenderer,
   rule : String,

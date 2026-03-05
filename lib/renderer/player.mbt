@@ -637,6 +637,19 @@ pub fn[R : Renderer] Player::render_shape(
         self.draw_lottie_path(p)
       }
       self.renderer.set_stroke_style(s.line_cap, s.line_join, s.miter_limit)
+      if s.dashes.length() > 0 {
+        let dash_array : Array[Double] = []
+        let mut dash_offset = 0.0
+        for d in s.dashes {
+          let v = @runtime.evaluate_double_property(d.value, self.current_frame)
+          if d.name == "o" {
+            dash_offset = v
+          } else {
+            dash_array.push(v)
+          }
+        }
+        self.renderer.set_line_dash(dash_array, dash_offset)
+      }
       self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
     GradientFill(f) => {
@@ -753,6 +766,8 @@ pub fn[R : Renderer] Player::render_shape(
       let copies = @runtime.evaluate_double_property(rep.copies, self.current_frame).to_int()
       let offset = @runtime.evaluate_double_property(rep.offset, self.current_frame)
       let tr_matrix = @runtime.evaluate_transform(rep.transform, self.current_frame)
+      let so = @runtime.evaluate_double_property(rep.start_opacity, self.current_frame)
+      let eo = @runtime.evaluate_double_property(rep.end_opacity, self.current_frame)
 
       let original_paths = self.current_paths
       let new_paths = []
@@ -764,6 +779,10 @@ pub fn[R : Renderer] Player::render_shape(
       let end_idx = if rep.composite == 1 { copies } else { -1 }
       let step = if rep.composite == 1 { 1 } else { -1 }
 
+      // Check if per-copy opacity varies
+      let needs_opacity = (so - eo).abs() > 0.001 ||
+        (so - 100.0).abs() > 0.001
+
       let mut i = start_idx
       while (if step == 1 { i < end_idx } else { i > end_idx }) {
         let mut m = @math.Matrix::identity()
@@ -774,9 +793,26 @@ pub fn[R : Renderer] Player::render_shape(
           m = m.multiply(tr_matrix)
         }
 
+        // Compute per-copy opacity: lerp(so, eo, i / (copies - 1))
+        if needs_opacity {
+          let t = if copies > 1 {
+            i.to_double() / (copies - 1).to_double()
+          } else {
+            0.0
+          }
+          let copy_opacity = so + (eo - so) * t
+          self.renderer.save()
+          self.renderer.set_opacity(copy_opacity / 100.0)
+        }
+
         for path in original_paths {
           new_paths.push(transform_path(path, m))
         }
+
+        if needs_opacity {
+          self.renderer.restore()
+        }
+
         i = i + step
       }
       self.current_paths = new_paths
@@ -824,15 +860,100 @@ fn shape_group_has_paint(items : Array[@model.Shape]) -> Bool {
 }
 
 ///|
-fn apply_rounding_to_path(
+pub fn apply_rounding_to_path(
   path : @model.BezierPath,
-  _radius : Double,
+  radius : Double,
 ) -> @model.BezierPath {
-  // Simplified rounding: if a corner is sharp (tangents [0,0]), 
-  // we could attempt to round it. For now, we return as is
-  // until a robust Bezier rounding algorithm is implemented.
-  // Standard Lottie Rounding (rd) is complex as it affects any path.
-  path
+  let v = path.vertices
+  let i_t = path.in_tangents
+  let o_t = path.out_tangents
+  let n = v.length()
+  if n < 2 {
+    return path
+  }
+
+  let new_v : Array[Array[Double]] = []
+  let new_i : Array[Array[Double]] = []
+  let new_o : Array[Array[Double]] = []
+
+  let count = if path.closed { n } else { n }
+  for idx = 0; idx < count; idx = idx + 1 {
+    let is_first = idx == 0 && not(path.closed)
+    let is_last = idx == n - 1 && not(path.closed)
+
+    // Check if this is a sharp corner (zero tangents)
+    let it0 = get_pt_at(i_t, idx, 0)
+    let it1 = get_pt_at(i_t, idx, 1)
+    let ot0 = get_pt_at(o_t, idx, 0)
+    let ot1 = get_pt_at(o_t, idx, 1)
+    let is_sharp = it0.abs() < 0.001 &&
+      it1.abs() < 0.001 &&
+      ot0.abs() < 0.001 &&
+      ot1.abs() < 0.001
+
+    if not(is_sharp) || is_first || is_last {
+      // Non-sharp corner or endpoint: keep as-is
+      new_v.push([get_pt_at(v, idx, 0), get_pt_at(v, idx, 1)])
+      new_i.push([it0, it1])
+      new_o.push([ot0, ot1])
+    } else {
+      // Sharp corner: round it
+      let prev_idx = if idx > 0 { idx - 1 } else { n - 1 }
+      let next_idx = if idx < n - 1 { idx + 1 } else { 0 }
+
+      let cx = get_pt_at(v, idx, 0)
+      let cy = get_pt_at(v, idx, 1)
+      let px = get_pt_at(v, prev_idx, 0)
+      let py = get_pt_at(v, prev_idx, 1)
+      let nx = get_pt_at(v, next_idx, 0)
+      let ny = get_pt_at(v, next_idx, 1)
+
+      // Distances to prev and next
+      let dp = ((cx - px) * (cx - px) + (cy - py) * (cy - py)).sqrt()
+      let dn = ((cx - nx) * (cx - nx) + (cy - ny) * (cy - ny)).sqrt()
+
+      // Clamp radius to half of shortest edge
+      let max_r = if dp < dn { dp } else { dn }
+      let max_r = max_r / 2.0
+      let r = if radius < max_r { radius } else { max_r }
+
+      if r < 0.001 {
+        new_v.push([cx, cy])
+        new_i.push([0.0, 0.0])
+        new_o.push([0.0, 0.0])
+      } else {
+        // Direction vectors
+        let dir_px = (px - cx) / dp
+        let dir_py = (py - cy) / dp
+        let dir_nx = (nx - cx) / dn
+        let dir_ny = (ny - cy) / dn
+
+        // New vertices: offset along each edge by radius
+        let v1x = cx + dir_px * r
+        let v1y = cy + dir_py * r
+        let v2x = cx + dir_nx * r
+        let v2y = cy + dir_ny * r
+
+        // Control point factor for quarter-circle approximation
+        let kappa = 0.5519150244935105 // 4*(sqrt(2)-1)/3 for circular arc
+
+        new_v.push([v1x, v1y])
+        new_i.push([0.0, 0.0])
+        new_o.push([-dir_px * r * kappa, -dir_py * r * kappa])
+
+        new_v.push([v2x, v2y])
+        new_i.push([-dir_nx * r * kappa, -dir_ny * r * kappa])
+        new_o.push([0.0, 0.0])
+      }
+    }
+  }
+
+  @model.BezierPath::new(
+    vertices=new_v,
+    in_tangents=new_i,
+    out_tangents=new_o,
+    closed=path.closed,
+  )
 }
 
 ///|

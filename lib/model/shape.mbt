@@ -198,6 +198,20 @@ pub fn FillShape::new(
 }
 
 ///|
+pub struct DashItem {
+  name : String
+  value : LottieProperty[Double]
+}
+
+///|
+pub fn DashItem::new(
+  name~ : String,
+  value~ : LottieProperty[Double],
+) -> DashItem {
+  { name, value }
+}
+
+///|
 pub struct StrokeShape {
   color : LottieProperty[Array[Double]]
   opacity : LottieProperty[Double]
@@ -205,6 +219,7 @@ pub struct StrokeShape {
   line_cap : Int
   line_join : Int
   miter_limit : Double
+  dashes : Array[DashItem]
 }
 
 ///|
@@ -215,8 +230,9 @@ pub fn StrokeShape::new(
   line_cap? : Int = 1,
   line_join? : Int = 1,
   miter_limit? : Double = 0.0,
+  dashes? : Array[DashItem] = [],
 ) -> StrokeShape {
-  { color, opacity, width, line_cap, line_join, miter_limit }
+  { color, opacity, width, line_cap, line_join, miter_limit, dashes }
 }
 
 ///|
@@ -276,6 +292,7 @@ pub struct GradientStrokeShape {
   line_cap : Int
   line_join : Int
   miter_limit : Double
+  dashes : Array[DashItem]
 }
 
 ///|
@@ -289,6 +306,7 @@ pub fn GradientStrokeShape::new(
   line_cap? : Int = 1,
   line_join? : Int = 1,
   miter_limit? : Double = 0.0,
+  dashes? : Array[DashItem] = [],
 ) -> GradientStrokeShape {
   let ty = GradientType::from_int(gradient_type)
   {
@@ -301,6 +319,7 @@ pub fn GradientStrokeShape::new(
     line_cap,
     line_join,
     miter_limit,
+    dashes,
   }
 }
 
@@ -363,6 +382,8 @@ pub struct Repeater {
   offset : LottieProperty[Double]
   composite : Int
   transform : Transform
+  start_opacity : LottieProperty[Double]
+  end_opacity : LottieProperty[Double]
 }
 
 ///|
@@ -371,8 +392,10 @@ pub fn Repeater::new(
   offset~ : LottieProperty[Double],
   composite? : Int = 1,
   transform~ : Transform,
+  start_opacity? : LottieProperty[Double] = LottieProperty::new_static(100.0),
+  end_opacity? : LottieProperty[Double] = LottieProperty::new_static(100.0),
 ) -> Repeater {
-  { copies, offset, composite, transform }
+  { copies, offset, composite, transform, start_opacity, end_opacity }
 }
 
 ///|

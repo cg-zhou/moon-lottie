@@ -41,6 +41,11 @@ pub trait Renderer {
     line_join : Int,
     miter_limit : Double,
   ) -> Unit
+  set_line_dash(
+    self : Self,
+    dash_array : Array[Double],
+    dash_offset : Double,
+  ) -> Unit
   fill_linear_gradient(
     self : Self,
     x1 : Double,
@@ -135,6 +140,7 @@ pub enum DrawCommand {
   Fill(Int, Int, Int, Double)
   Stroke(Int, Int, Int, Double, Double)
   SetStrokeStyle(Int, Int, Double)
+  SetLineDash(Array[Double], Double)
   FillLinearGradient(Double, Double, Double, Double, Int, Array[Double], Double)
   StrokeLinearGradient(
     Double,
@@ -296,6 +302,15 @@ pub impl Renderer for CommandRecorder with set_stroke_style(
   miter_limit : Double,
 ) {
   self.commands.push(SetStrokeStyle(line_cap, line_join, miter_limit))
+}
+
+///|
+pub impl Renderer for CommandRecorder with set_line_dash(
+  self : CommandRecorder,
+  dash_array : Array[Double],
+  dash_offset : Double,
+) {
+  self.commands.push(SetLineDash(dash_array, dash_offset))
 }
 
 ///|

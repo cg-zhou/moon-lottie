@@ -431,3 +431,102 @@ test "parse_layer_parent_and_matte" {
   inspect(ani.layers[0].matte_type, content="Some(2)")
   inspect(ani.layers[0].matte_inherit, content="Some(1)")
 }
+
+///|
+test "parse_repeater_with_start_end_opacity" {
+  let json_str =
+    #|{"ty":"rp","c":{"k":4},"o":{"k":0},"m":1,"tr":{"a":{"k":[0,0]},"p":{"k":[50,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"so":{"k":100},"eo":{"k":20}}}
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse repeater with so/eo: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::Repeater(rp) => {
+      inspect(rp.composite, content="1")
+      match rp.copies.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="4")
+        _ => fail("repeater copies should be static")
+      }
+      match rp.start_opacity.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="100")
+        _ => fail("repeater start_opacity should be static")
+      }
+      match rp.end_opacity.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="20")
+        _ => fail("repeater end_opacity should be static")
+      }
+    }
+    _ => fail("shape should be repeater")
+  }
+}
+
+///|
+test "parse_repeater_without_opacity_defaults" {
+  let json_str =
+    #|{"ty":"rp","c":{"k":3},"o":{"k":0},"m":1,"tr":{"a":{"k":[0,0]},"p":{"k":[10,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse repeater without so/eo: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::Repeater(rp) => {
+      // Should default to 100
+      match rp.start_opacity.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="100")
+        _ => fail("repeater start_opacity should default to static 100")
+      }
+      match rp.end_opacity.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="100")
+        _ => fail("repeater end_opacity should default to static 100")
+      }
+    }
+    _ => fail("shape should be repeater")
+  }
+}
+
+///|
+test "parse_stroke_with_dashes" {
+  let json_str =
+    #|{"ty":"st","c":{"k":[1,0,0]},"o":{"k":100},"w":{"k":2},"lc":2,"lj":2,"ml":4,"d":[{"n":"d","v":{"k":10}},{"n":"g","v":{"k":5}},{"n":"o","v":{"k":0}}]}
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse stroke with dashes: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::Stroke(s) => {
+      inspect(s.dashes.length(), content="3")
+      inspect(s.dashes[0].name, content="d")
+      match s.dashes[0].value.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="10")
+        _ => fail("dash value should be static")
+      }
+      inspect(s.dashes[1].name, content="g")
+      match s.dashes[1].value.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="5")
+        _ => fail("gap value should be static")
+      }
+      inspect(s.dashes[2].name, content="o")
+      match s.dashes[2].value.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="0")
+        _ => fail("offset value should be static")
+      }
+    }
+    _ => fail("shape should be stroke")
+  }
+}
+
+///|
+test "parse_stroke_without_dashes" {
+  let json_str =
+    #|{"ty":"st","c":{"k":[0,0,1]},"o":{"k":100},"w":{"k":3}}
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse stroke without dashes: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::Stroke(s) => {
+      inspect(s.dashes.length(), content="0")
+    }
+    _ => fail("shape should be stroke")
+  }
+}

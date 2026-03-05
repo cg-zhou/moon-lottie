@@ -174,6 +174,7 @@ struct ShapeStrokeJson {
   line_cap : Int?
   line_join : Int?
   miter_limit : Double?
+  dashes : Array[Json]?
 } derive(
   FromJson(
     fields(
@@ -183,6 +184,20 @@ struct ShapeStrokeJson {
       line_cap(rename="lc"),
       line_join(rename="lj"),
       miter_limit(rename="ml"),
+      dashes(rename="d"),
+    ),
+  ),
+)
+
+///|
+struct DashItemJson {
+  name : String?
+  value : Json?
+} derive(
+  FromJson(
+    fields(
+      name(rename="n"),
+      value(rename="v"),
     ),
   ),
 )
@@ -277,6 +292,16 @@ struct ShapeRepeaterJson {
 } derive(
   FromJson(
     fields(copies(rename="c"), offset(rename="o"), composite(rename="m"), transform(rename="tr")),
+  ),
+)
+
+///|
+struct RepeaterTransformExtraJson {
+  start_opacity : Json?
+  end_opacity : Json?
+} derive(
+  FromJson(
+    fields(start_opacity(rename="so"), end_opacity(rename="eo")),
   ),
 )
 
@@ -1111,6 +1136,29 @@ fn parse_property_bezier(
 ///| Parse a single Shape object
 
 ///|
+/// Parse dash items from stroke "d" array
+fn parse_dash_items(
+  dashes : Array[Json]?,
+) -> Array[@model.DashItem] {
+  let result : Array[@model.DashItem] = []
+  match dashes {
+    Some(arr) =>
+      for d in arr {
+        let item : DashItemJson = (@json.from_json(d)) catch {
+          _ => continue
+        }
+        let name = item.name.unwrap_or("")
+        let value = parse_property_double(item.value) catch {
+          _ => @model.LottieProperty::new_static(0.0)
+        }
+        result.push(@model.DashItem::new(name~, value~))
+      }
+    None => ()
+  }
+  result
+}
+
+///|
 /// Parse a shape from Json
 pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
   let common : ShapeJson = (@json.from_json(json)) catch {
@@ -1184,8 +1232,9 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       let line_cap = decoded.line_cap.unwrap_or(1)
       let line_join = decoded.line_join.unwrap_or(1)
       let miter_limit = decoded.miter_limit.unwrap_or(4.0)
+      let dashes = parse_dash_items(decoded.dashes)
       @model.ShapeData::new_stroke(
-        @model.StrokeShape::new(color~, opacity~, width~, line_cap~, line_join~, miter_limit~),
+        @model.StrokeShape::new(color~, opacity~, width~, line_cap~, line_join~, miter_limit~, dashes~),
       )
     }
     "gf" => {
@@ -1324,8 +1373,35 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
         Some(t) => parse_transform_from_decoded(Some(t))
         None => raise MissingKey("tr in rp")
       }
+      // Parse start_opacity (so) and end_opacity (eo) from the raw tr JSON
+      let tr_json = match json {
+        Object(m) =>
+          match m.get("tr") {
+            Some(tr) => Some(tr)
+            None => None
+          }
+        _ => None
+      }
+      let (start_opacity, end_opacity) = match tr_json {
+        Some(tj) => {
+          let extra : RepeaterTransformExtraJson = (@json.from_json(tj)) catch {
+            _ => { start_opacity: None, end_opacity: None }
+          }
+          let so = parse_property_double(extra.start_opacity) catch {
+            _ => @model.LottieProperty::new_static(100.0)
+          }
+          let eo = parse_property_double(extra.end_opacity) catch {
+            _ => @model.LottieProperty::new_static(100.0)
+          }
+          (so, eo)
+        }
+        None => (
+          @model.LottieProperty::new_static(100.0),
+          @model.LottieProperty::new_static(100.0),
+        )
+      }
       @model.ShapeData::new_repeater(
-        @model.Repeater::new(copies~, offset~, composite~, transform~),
+        @model.Repeater::new(copies~, offset~, composite~, transform~, start_opacity~, end_opacity~),
       )
     }
     "mm" => {
