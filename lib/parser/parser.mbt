@@ -337,6 +337,7 @@ struct LayerJson {
   solid_height : Int?
   shapes : Array[Json]?
   text_data : TextDataJson?
+  effects : Array[Json]?
 } derive(
   FromJson(
     fields(
@@ -360,6 +361,30 @@ struct LayerJson {
       solid_height(rename="sh"),
       shapes(rename="shapes"),
       text_data(rename="t"),
+      effects(rename="ef"),
+    ),
+  ),
+)
+
+///|
+struct LayerEffectParamJson {
+  match_name : String?
+  value : Json?
+} derive(FromJson(fields(match_name(rename="mn"), value(rename="v"))))
+
+///|
+struct LayerEffectJson {
+  effect_type : Int?
+  enabled : Int?
+  match_name : String?
+  params : Array[Json]?
+} derive(
+  FromJson(
+    fields(
+      effect_type(rename="ty"),
+      enabled(rename="en"),
+      match_name(rename="mn"),
+      params(rename="ef"),
     ),
   ),
 )
@@ -1451,6 +1476,57 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
 }
 
 ///|
+fn parse_layer_fill_effect(
+  effects : Array[Json]?,
+) -> @model.LayerFillEffect? {
+  match effects {
+    Some(arr) => {
+      for effect_json in arr {
+        let effect : LayerEffectJson = (@json.from_json(effect_json)) catch {
+          _ => continue
+        }
+        if effect.enabled == Some(0) {
+          continue
+        }
+        let is_fill = effect.match_name == Some("ADBE Fill") ||
+          effect.effect_type == Some(21)
+        if not(is_fill) {
+          continue
+        }
+        let mut color = @model.LottieProperty::new_static([0.0, 0.0, 0.0, 1.0])
+        let mut opacity = @model.LottieProperty::new_static(100.0)
+        match effect.params {
+          Some(params) => {
+            for p_json in params {
+              let param : LayerEffectParamJson = (@json.from_json(p_json)) catch {
+                _ => continue
+              }
+              match param.match_name {
+                Some("ADBE Fill-0002") => {
+                  color = parse_property_vec(param.value) catch {
+                    _ => color
+                  }
+                }
+                Some("ADBE Fill-0005") => {
+                  opacity = parse_property_double(param.value) catch {
+                    _ => opacity
+                  }
+                }
+                _ => ()
+              }
+            }
+          }
+          None => ()
+        }
+        return Some(@model.LayerFillEffect::new(color~, opacity~))
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
 /// Parse Layer
 fn parse_layer(json : Json) -> @model.Layer raise LottieError {
   let decoded : LayerJson = (@json.from_json(json)) catch {
@@ -1479,6 +1555,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
   }
   let matte_type = decoded.matte_type
   let matte_inherit = decoded.matte_inherit
+  let fill_effect = parse_layer_fill_effect(decoded.effects)
   let data : @model.LayerData = match layer_type {
     0 => @model.LayerData::PreComp(decoded.ref_id.unwrap_or(""), decoded.width.unwrap_or(0), decoded.height.unwrap_or(0))
     1 => @model.LayerData::Solid(
@@ -1518,6 +1595,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
     masks~,
     matte_type~,
     matte_inherit~,
+    fill_effect~,
   )
 }
 

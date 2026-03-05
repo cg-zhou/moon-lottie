@@ -158,12 +158,17 @@ fn[R : Renderer] Player::render_layer(
     _ => ()
   }
 
-  // 1.6 Begin isolated compositing layer for track matte
-  // This ensures the layer content and matte are composited together without
-  // affecting previously-rendered layers on the main canvas.
-  match matte_source {
-    Some(_) => self.renderer.begin_layer()
-    None => ()
+  // 1.6 Begin isolated compositing layer for effects / track matte.
+  // This ensures compositing stays local to this layer.
+  let needs_layer_isolation = match matte_source {
+    Some(_) => true
+    None => match layer.fill_effect {
+      Some(_) => true
+      None => false
+    }
+  }
+  if needs_layer_isolation {
+    self.renderer.begin_layer()
   }
 
   // 2. Apply Layer Masks
@@ -268,7 +273,13 @@ fn[R : Renderer] Player::render_layer(
     self.renderer.restore()
   }
 
-  // 5. Apply Track Matte inside the isolated layer, then end isolation
+  // 5. Apply Layer Effects
+  match layer.fill_effect {
+    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, layer_frame)
+    None => ()
+  }
+
+  // 6. Apply Track Matte inside the isolated layer
   match matte_source {
     Some(m_layer) => {
       let mode = match layer.matte_type {
@@ -282,12 +293,34 @@ fn[R : Renderer] Player::render_layer(
       self.render_layer(m_layer, scope)
       self.current_frame = matte_saved_frame
       self.renderer.set_blend_mode("source-over")
-      self.renderer.end_layer("source-over")
     }
     None => ()
   }
+  if needs_layer_isolation {
+    self.renderer.end_layer("source-over")
+  }
   self.renderer.restore()
   self.current_frame = saved_frame
+}
+
+///|
+fn[R : Renderer] Player::apply_layer_fill_effect(
+  self : Player[R],
+  effect : @model.LayerFillEffect,
+  frame : Double,
+) -> Unit {
+  let color = @runtime.evaluate_vec_property(effect.color, frame)
+  let opacity = @runtime.evaluate_double_property(effect.opacity, frame)
+  let (r, g, b) = color_rgb_from_vec(color)
+  self.renderer.set_blend_mode("source-atop")
+  self.renderer.begin_path()
+  self.renderer.move_to(-10000.0, -10000.0)
+  self.renderer.line_to(10000.0, -10000.0)
+  self.renderer.line_to(10000.0, 10000.0)
+  self.renderer.line_to(-10000.0, 10000.0)
+  self.renderer.close_path()
+  self.renderer.fill(r, g, b, opacity / 100.0)
+  self.renderer.set_blend_mode("source-over")
 }
 
 ///|

@@ -309,3 +309,36 @@ test "fill color accepts byte-range channels without rescaling" {
     _ => fail("Expected Fill command")
   }
 }
+
+test "layer fill effect applies source-atop color overlay" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":20,"w":100,"h":100,"layers":[{"ty":4,"ind":1,"ip":0,"op":20,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"ef":[{"ty":21,"mn":"ADBE Fill","en":1,"ef":[{"mn":"ADBE Fill-0002","v":{"a":1,"k":[{"t":0,"s":[1,0,0,1]},{"t":10,"s":[0,1,0,1]}]}},{"mn":"ADBE Fill-0005","v":{"k":50}}]}],"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[0,0,1]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(10.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut saw_layer = false
+  let mut saw_source_atop = false
+  let mut saw_overlay_fill = false
+  for cmd in commands {
+    match cmd {
+      BeginLayer => saw_layer = true
+      SetBlendMode(mode) =>
+        if mode == "source-atop" {
+          saw_source_atop = true
+        }
+      Fill(r, g, b, opacity) =>
+        if saw_source_atop && r == 0 && g == 255 && b == 0 && opacity == 0.5 {
+          saw_overlay_fill = true
+        }
+      _ => ()
+    }
+  }
+  assert_eq(saw_layer, true)
+  assert_eq(saw_source_atop, true)
+  assert_eq(saw_overlay_fill, true)
+}

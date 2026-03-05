@@ -433,6 +433,33 @@ test "parse_layer_parent_and_matte" {
 }
 
 ///|
+test "parse_layer_fill_effect" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":4,\"ind\":1,\"ip\":0,\"op\":20,\"st\":0,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"ef\":[{\"ty\":21,\"mn\":\"ADBE Fill\",\"en\":1,\"ef\":[{\"mn\":\"ADBE Fill-0002\",\"v\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[1,0,0,1]},{\"t\":10,\"s\":[0,1,0,1]}]}},{\"mn\":\"ADBE Fill-0005\",\"v\":{\"a\":0,\"k\":50}}]}],\"shapes\":[{\"ty\":\"rc\",\"s\":{\"k\":[20,20]},\"p\":{\"k\":[0,0]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[1,1,1]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse layer fill effect: \{e}")
+  }
+  match ani.layers[0].fill_effect {
+    Some(effect) => {
+      match effect.color.value {
+        @model.PropertyValue::Animated(keys) => {
+          assert_eq(keys.length(), 2)
+          assert_eq(keys[0].start_value[0], 1.0)
+          assert_eq(keys[1].start_value[1], 1.0)
+        }
+        _ => fail("Expected animated fill effect color")
+      }
+      match effect.opacity.value {
+        @model.PropertyValue::Static(v) => assert_eq(v, 50.0)
+        _ => fail("Expected static fill effect opacity")
+      }
+    }
+    None => fail("Expected layer fill effect to be parsed")
+  }
+}
+
+///|
 test "parse_repeater_with_start_end_opacity" {
   let json_str =
     #|{"ty":"rp","c":{"k":4},"o":{"k":0},"m":1,"tr":{"a":{"k":[0,0]},"p":{"k":[50,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"so":{"k":100},"eo":{"k":20}}}
