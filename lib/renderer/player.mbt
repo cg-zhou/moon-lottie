@@ -279,7 +279,13 @@ fn[R : Renderer] Player::render_layer(
       self.renderer.set_blend_mode(mode)
       let matte_saved_frame = self.current_frame
       self.current_frame = comp_frame
+      // Track matte source is a sibling layer in composition space.
+      // Reset transform before rendering matte source to avoid inheriting
+      // the matted layer's local transform.
+      self.renderer.save()
+      self.renderer.set_transform(@math.Matrix::identity())
       self.render_layer(m_layer, scope)
+      self.renderer.restore()
       self.current_frame = matte_saved_frame
       self.renderer.set_blend_mode("source-over")
       self.renderer.end_layer("source-over")
