@@ -26,6 +26,20 @@ pub(all) struct TextDocument {
 }
 
 ///|
+pub(all) struct LayerFillEffect {
+  color : LottieProperty[Array[Double]]
+  opacity : LottieProperty[Double]
+}
+
+///|
+pub fn LayerFillEffect::new(
+  color~ : LottieProperty[Array[Double]],
+  opacity~ : LottieProperty[Double],
+) -> LayerFillEffect {
+  { color, opacity }
+}
+
+///|
 pub fn LayerData::new_shape(shapes : Array[Shape]) -> LayerData {
   LayerData::Shape(shapes)
 }
@@ -57,6 +71,7 @@ pub struct Layer {
   masks : Array[Mask]?
   matte_type : Int?
   matte_inherit : Int?
+  fill_effect : LayerFillEffect?
   data : LayerData
 }
 
@@ -77,6 +92,7 @@ pub fn Layer::new(
   masks? : Array[Mask]? = None,
   matte_type? : Int? = None,
   matte_inherit? : Int? = None,
+  fill_effect? : LayerFillEffect? = None,
   data? : LayerData = LayerData::Null,
 ) -> Layer {
   {
@@ -95,6 +111,7 @@ pub fn Layer::new(
     masks,
     matte_type,
     matte_inherit,
+    fill_effect,
     data,
   }
 }
