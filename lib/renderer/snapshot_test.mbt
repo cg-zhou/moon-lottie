@@ -294,3 +294,45 @@ test "snapshot_merge_paths_add_with_path_groups" {
     )
   }
 }
+
+///|
+/// Verify sibling painted groups participate in the same z-order as sibling fills.
+/// In 1_6_Designer.json's Right-Leg/Proximal Lower group, the pants Fill comes
+/// before painted skin sub-groups, so pants must be rendered on top.
+test "snapshot_painted_group_and_fill_share_z_order" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"gr\",\"nm\":\"Root\",\"it\":[{\"ty\":\"gr\",\"nm\":\"PantsPath\",\"it\":[{\"ty\":\"el\",\"nm\":\"P\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[80,80]}},{\"ty\":\"tr\",\"p\":{\"k\":[0,0]},\"a\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}]},{\"ty\":\"fl\",\"nm\":\"PantsFill\",\"c\":{\"k\":[0,0,1]},\"o\":{\"k\":100}},{\"ty\":\"gr\",\"nm\":\"SkinGroup\",\"it\":[{\"ty\":\"el\",\"nm\":\"S\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[40,40]}},{\"ty\":\"fl\",\"nm\":\"SkinFill\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}},{\"ty\":\"tr\",\"p\":{\"k\":[0,0]},\"a\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}]},{\"ty\":\"tr\",\"p\":{\"k\":[0,0]},\"a\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}]}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut red_fill_idx = -1
+  let mut blue_fill_idx = -1
+  for i = 0; i < commands.length(); i = i + 1 {
+    match commands[i] {
+      Fill(255, 0, 0, _) =>
+        if red_fill_idx == -1 {
+          red_fill_idx = i
+        }
+      Fill(0, 0, 255, _) =>
+        if blue_fill_idx == -1 {
+          blue_fill_idx = i
+        }
+      _ => ()
+    }
+  }
+  if red_fill_idx == -1 || blue_fill_idx == -1 {
+    fail("Missing expected red/blue fills. Commands: \{commands}")
+  }
+  if red_fill_idx > blue_fill_idx {
+    fail(
+      "Expected red painted-group fill to be rendered before blue sibling fill (blue on top). Commands: \{commands}",
+    )
+  }
+}
