@@ -17,7 +17,8 @@ test "snapshot_render_circle" {
   inspect(
     commands,
     content=(
-      #|[SetTransform({a: 1, b: 0, c: 0, d: 1, e: 0, f: 0}), ClearRect(0, 0, 500, 500), Save, ConcatTransform({a: 1, b: 0, c: 0, d: 1, e: 250, f: 250}), SetOpacity(1), BeginPath, MoveTo(0, -50), CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0), CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50), CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0), CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50), ClosePath, Fill(255, 0, 0, 1), Restore]
+      #|[SetTransform({a: 1, b: 0, c: 0, d: 1, e: 0, f: 0}), ClearRect(0, 0, 500, 500), Save, ConcatTransform({a: 1, b: 0, c: 0, d: 1, e: 250, f: 250}), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(0, -50), CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0), CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50), CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0), CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50), ClosePath, Fill(255, 0, 0, 1), Restore]
+
     ),
   )
 }
@@ -80,7 +81,10 @@ test "snapshot_render_shape_closed_flag_without_path_c" {
 }
 
 ///|
-test "snapshot_merge_paths" {
+test "snapshot_merge_paths_noop" {
+  // lottie-web ignores MergePaths (ty="mm") in both SVG and canvas renderers.
+  // Fill-rule is determined by the fill shape's own `r` property, not MergePaths.
+  // With r absent (defaults to 1 = nonzero), the fill-rule should be "nonzero".
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"gr\",\"it\":[{\"ty\":\"sh\",\"ks\":{\"k\":{\"i\":[[0,0]],\"o\":[[0,0]],\"v\":[[0,0]],\"c\":true}}},{\"ty\":\"mm\",\"mm\":3},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]}}]}]}]}"
   let json = @json.parse(json_str)
   let ani = @parser.parse_animation(json) catch {
@@ -94,7 +98,54 @@ test "snapshot_merge_paths" {
   player.render()
 
   let commands = recorder.get_commands()
-  // Check that SetFillRule("evenodd") is present before Fill
+  // MergePaths is a no-op: no "evenodd" fill-rule should be present
+  let has_evenodd = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        SetFillRule("evenodd") => true
+        _ => false
+      }
+    })
+  if has_evenodd {
+    fail(
+      "MergePaths should be a no-op: SetFillRule('evenodd') must not appear. Commands: \{commands}",
+    )
+  }
+  // Fill shape with no `r` property defaults to nonzero
+  let has_nonzero = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        SetFillRule("nonzero") => true
+        _ => false
+      }
+    })
+  if not(has_nonzero) {
+    fail(
+      "SetFillRule('nonzero') from fill shape r=1 missing. Commands: \{commands}",
+    )
+  }
+}
+
+///|
+test "snapshot_fill_rule_evenodd" {
+  // A fill shape with r=2 must set fill-rule="evenodd", matching lottie-web's
+  // `if (data.r === 2) { pathElement.setAttribute('fill-rule', 'evenodd'); }`.
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"gr\",\"it\":[{\"ty\":\"sh\",\"ks\":{\"k\":{\"i\":[[0,0]],\"o\":[[0,0]],\"v\":[[0,0]],\"c\":true}}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"r\":2}]}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  // Fill with r=2 must emit SetFillRule("evenodd")
   let has_evenodd = commands
     .iter()
     .any(fn(c) {
@@ -105,7 +156,7 @@ test "snapshot_merge_paths" {
     })
   if not(has_evenodd) {
     fail(
-      "SetFillRule('evenodd') command missing from MergePaths(Subtract) rendering. Commands: \{commands}",
+      "SetFillRule('evenodd') missing for fill with r=2. Commands: \{commands}",
     )
   }
 }

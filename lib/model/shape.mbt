@@ -187,14 +187,16 @@ pub fn BezierPath::new_rect(
 pub struct FillShape {
   color : LottieProperty[Array[Double]]
   opacity : LottieProperty[Double]
+  fill_rule : Int
 }
 
 ///|
 pub fn FillShape::new(
   color~ : LottieProperty[Array[Double]],
   opacity~ : LottieProperty[Double],
+  fill_rule? : Int = 1,
 ) -> FillShape {
-  { color, opacity }
+  { color, opacity, fill_rule }
 }
 
 ///|
@@ -267,6 +269,7 @@ pub struct GradientFillShape {
   start_point : LottieProperty[Array[Double]]
   end_point : LottieProperty[Array[Double]]
   gradient_colors : GradientColors
+  fill_rule : Int
 }
 
 ///|
@@ -276,9 +279,10 @@ pub fn GradientFillShape::new(
   start_point~ : LottieProperty[Array[Double]],
   end_point~ : LottieProperty[Array[Double]],
   gradient_colors~ : GradientColors,
+  fill_rule? : Int = 1,
 ) -> GradientFillShape {
   let ty = GradientType::from_int(gradient_type)
-  { gradient_type: ty, opacity, start_point, end_point, gradient_colors }
+  { gradient_type: ty, opacity, start_point, end_point, gradient_colors, fill_rule }
 }
 
 ///|

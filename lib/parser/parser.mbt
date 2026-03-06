@@ -165,7 +165,8 @@ struct ShapePathJson {
 struct ShapeFillJson {
   color : Json?
   opacity : Json?
-} derive(FromJson(fields(color(rename="c"), opacity(rename="o"))))
+  fill_rule : Int?
+} derive(FromJson(fields(color(rename="c"), opacity(rename="o"), fill_rule(rename="r"))))
 
 ///|
 struct ShapeStrokeJson {
@@ -210,6 +211,7 @@ struct ShapeGradientFillJson {
   end_point : Json?
   opacity : Json?
   gradient : Json?
+  fill_rule : Int?
 } derive(
   FromJson(
     fields(
@@ -218,6 +220,7 @@ struct ShapeGradientFillJson {
       end_point(rename="e"),
       opacity(rename="o"),
       gradient(rename="g"),
+      fill_rule(rename="r"),
     ),
   ),
 )
@@ -1252,7 +1255,8 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       let opacity = parse_property_double(decoded.opacity) catch {
         _ => @model.LottieProperty::new_static(100.0)
       }
-      @model.ShapeData::new_fill(@model.FillShape::new(color~, opacity~))
+      let fill_rule = decoded.fill_rule.unwrap_or(1)
+      @model.ShapeData::new_fill(@model.FillShape::new(color~, opacity~, fill_rule~))
     }
     "st" => {
       let decoded : ShapeStrokeJson = (@json.from_json(json)) catch {
@@ -1294,6 +1298,7 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
         None => parse_property_vec(Some(g_json))
       }
       let g_colors = @model.GradientColors::new(color_count=g_p, color_stops=g_k)
+      let fill_rule = decoded.fill_rule.unwrap_or(1)
       @model.ShapeData::new_gradient_fill(
         @model.GradientFillShape::new(
           gradient_type~,
@@ -1301,6 +1306,7 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           start_point~,
           end_point~,
           gradient_colors=g_colors,
+          fill_rule~,
         ),
       )
     }

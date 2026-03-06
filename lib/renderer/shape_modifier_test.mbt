@@ -339,8 +339,10 @@ test "dash_stroke/rendering" {
 }
 
 ///|
-test "merge_paths/fill_rule_set" {
-  // Verify that MergePaths sets appropriate fill rules
+test "merge_paths/noop" {
+  // lottie-web ignores MergePaths (ty="mm") in both SVG and canvas renderers.
+  // The fill-rule is determined by the fill shape's own `r` property (1=nonzero,
+  // 2=evenodd). MergePaths itself must not change the fill-rule.
   let anim = @model.Animation::new(
     version="5.5.0",
     frame_rate=30.0,
@@ -381,7 +383,7 @@ test "merge_paths/fill_rule_set" {
             @model.Shape::new(
               shape_type="mm",
               data=@model.ShapeData::new_merge_paths(
-                @model.MergePaths::new(3), // Subtract
+                @model.MergePaths::new(3), // Subtract mode — must be ignored
               ),
             ),
             @model.Shape::new(
@@ -390,6 +392,7 @@ test "merge_paths/fill_rule_set" {
                 @model.FillShape::new(
                   color=@model.LottieProperty::new_static([1.0, 0.0, 0.0]),
                   opacity=@model.LottieProperty::new_static(100.0),
+                  // r=1 (nonzero) is the default
                 ),
               ),
             ),
@@ -403,16 +406,77 @@ test "merge_paths/fill_rule_set" {
   player.set_frame(0.0)
   player.render()
   let cmds = recorder.get_commands()
-  // Subtract mode should set fill-rule to evenodd
-  let mut found_rule = false
+  // MergePaths must not produce "evenodd"; fill with r=1 must use "nonzero"
+  let mut found_evenodd = false
+  let mut found_nonzero = false
   for cmd in cmds {
     match cmd {
-      SetFillRule(rule) => {
-        found_rule = true
-        inspect(rule, content="evenodd")
-      }
+      SetFillRule("evenodd") => found_evenodd = true
+      SetFillRule("nonzero") => found_nonzero = true
       _ => ()
     }
   }
-  if not(found_rule) { fail("SetFillRule should be set") }
+  if found_evenodd { fail("MergePaths must not set fill-rule to evenodd") }
+  if not(found_nonzero) { fail("Fill with r=1 should set fill-rule to nonzero") }
+}
+
+///|
+test "fill_rule/evenodd_from_r_property" {
+  // A fill shape with r=2 must render with fill-rule="evenodd", matching
+  // lottie-web: `if (data.r === 2) { pathElement.setAttribute('fill-rule', 'evenodd'); }`
+  let anim = @model.Animation::new(
+    version="5.5.0",
+    frame_rate=30.0,
+    in_point=0.0,
+    out_point=10.0,
+    width=100,
+    height=100,
+    layers=[
+      @model.Layer::new(
+        index=1,
+        layer_type=4,
+        transform=@model.Transform::new_default(),
+        in_point=0.0,
+        out_point=10.0,
+        start_time=0.0,
+        data=@model.LayerData::Shape(
+          [
+            @model.Shape::new(
+              shape_type="rc",
+              data=@model.ShapeData::new_rect(
+                @model.RectShape::new(
+                  position=@model.LottieProperty::new_static([50.0, 50.0]),
+                  size=@model.LottieProperty::new_static([80.0, 80.0]),
+                  roundness=@model.LottieProperty::new_static(0.0),
+                ),
+              ),
+            ),
+            @model.Shape::new(
+              shape_type="fl",
+              data=@model.ShapeData::new_fill(
+                @model.FillShape::new(
+                  color=@model.LottieProperty::new_static([1.0, 0.0, 0.0]),
+                  opacity=@model.LottieProperty::new_static(100.0),
+                  fill_rule=2, // evenodd
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  )
+  let recorder = CommandRecorder::new()
+  let player = Player::new(anim, recorder)
+  player.set_frame(0.0)
+  player.render()
+  let cmds = recorder.get_commands()
+  let mut found_evenodd = false
+  for cmd in cmds {
+    match cmd {
+      SetFillRule("evenodd") => found_evenodd = true
+      _ => ()
+    }
+  }
+  if not(found_evenodd) { fail("Fill with r=2 should set fill-rule to evenodd") }
 }
