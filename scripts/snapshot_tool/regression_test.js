@@ -223,7 +223,6 @@ async function main() {
   const server = await createStaticServer(repoRoot, port);
   const browser = await chromium.launch({
     headless: true,
-    executablePath: 'C:\\Users\\cgzhou\\AppData\\Local\\ms-playwright\\chromium-1208\\chrome-win64\\chrome-win64\\chrome.exe'
   });
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   const localLottiePathCandidates = [
