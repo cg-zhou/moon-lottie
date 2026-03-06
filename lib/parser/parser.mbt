@@ -158,7 +158,8 @@ struct ShapeEllipseJson {
 ///|
 struct ShapePathJson {
   path : Json?
-} derive(FromJson(fields(path(rename="ks"))))
+  closed : Json?
+} derive(FromJson(fields(path(rename="ks"), closed(rename="closed"))))
 
 ///|
 struct ShapeFillJson {
@@ -1068,16 +1069,24 @@ fn parse_transform_from_decoded(
 
 ///|
 /// Parse BezierPath data (the 'v', 'i', 'o', 'c' structure)
-fn parse_bezier_path(json : Json) -> @model.BezierPath raise LottieError {
-  let decoded : BezierPathJson = (@json.from_json(json)) catch {
-    _ => raise UnexpectedType("bezier_path", "Object")
-  }
-  let closed = match decoded.closed {
+fn parse_closed_flag(json : Json?, default_closed : Bool) -> Bool {
+  match json {
     Some(True) => true
     Some(False) => false
     Some(Number(n, ..)) => n == 1.0
-    _ => false
+    _ => default_closed
   }
+}
+
+///|
+fn parse_bezier_path(
+  json : Json,
+  fallback_closed : Bool,
+) -> @model.BezierPath raise LottieError {
+  let decoded : BezierPathJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("bezier_path", "Object")
+  }
+  let closed = parse_closed_flag(decoded.closed, fallback_closed)
   let vertices = decoded.vertices.unwrap_or([])
   let in_tangents = decoded.in_tangents.unwrap_or([])
   let out_tangents = decoded.out_tangents.unwrap_or([])
@@ -1088,6 +1097,7 @@ fn parse_bezier_path(json : Json) -> @model.BezierPath raise LottieError {
 /// Parse LottieProperty with BezierPath value
 fn parse_property_bezier(
   json : Json?,
+  fallback_closed : Bool,
 ) -> @model.LottieProperty[@model.BezierPath] raise LottieError {
   match json {
     Some(j) => {
@@ -1117,8 +1127,8 @@ fn parse_property_bezier(
                       }
                       let s = try {
                         match keyframe.start_value {
-                          Some(Array([val])) => parse_bezier_path(val)
-                          Some(val) => parse_bezier_path(val)
+                          Some(Array([val])) => parse_bezier_path(val, fallback_closed)
+                          Some(val) => parse_bezier_path(val, fallback_closed)
                           None => raise MissingKey("s in keyframe")
                         }
                       } catch {
@@ -1126,8 +1136,8 @@ fn parse_property_bezier(
                       }
                       let e = try {
                         match keyframe.end_value {
-                          Some(Array([val])) => Some(parse_bezier_path(val))
-                          Some(val) => Some(parse_bezier_path(val))
+                          Some(Array([val])) => Some(parse_bezier_path(val, fallback_closed))
+                          Some(val) => Some(parse_bezier_path(val, fallback_closed))
                           _ => None
                         }
                       } catch {
@@ -1146,12 +1156,12 @@ fn parse_property_bezier(
                 }
                 @model.LottieProperty::new_animated(keyframes)
               } else {
-                @model.LottieProperty::new_static(parse_bezier_path(k))
+                @model.LottieProperty::new_static(parse_bezier_path(k, fallback_closed))
               }
-            None => @model.LottieProperty::new_static(parse_bezier_path(j))
+            None => @model.LottieProperty::new_static(parse_bezier_path(j, fallback_closed))
           }
         }
-        None => @model.LottieProperty::new_static(parse_bezier_path(j))
+        None => @model.LottieProperty::new_static(parse_bezier_path(j, fallback_closed))
       }
     }
     None => raise InvalidJson("Property bezier json is missing")
@@ -1230,7 +1240,8 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       let decoded : ShapePathJson = (@json.from_json(json)) catch {
         _ => raise UnexpectedType("shape sh", "Object")
       }
-      let path = parse_property_bezier(decoded.path)
+      let shape_closed = parse_closed_flag(decoded.closed, false)
+      let path = parse_property_bezier(decoded.path, shape_closed)
       @model.ShapeData::new_path(@model.PathShape::new(path~))
     }
     "fl" => {
@@ -1459,7 +1470,7 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     _ => raise UnexpectedType("mask", "Object")
   }
   let inverted = decoded.inverted.unwrap_or(false)
-  let path = parse_property_bezier(decoded.path)
+  let path = parse_property_bezier(decoded.path, false)
   let opacity = parse_property_double(decoded.opacity) catch {
     _ => @model.LottieProperty::new_static(100.0)
   }

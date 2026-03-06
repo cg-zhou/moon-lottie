@@ -151,6 +151,31 @@ test "parse_simple_path_shape" {
 }
 
 ///|
+test "parse_path_shape_closed_from_shape_flag" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[1,1]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"sh\",\"nm\":\"path1\",\"closed\":true,\"ks\":{\"v\":[[0,0],[10,0],[10,10],[0,10]],\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]]}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with shape closed flag: \{e}")
+  }
+
+  match ani.layers[0].data {
+    @model.LayerData::Shape(shapes) =>
+      match shapes[0].data {
+        @model.ShapeData::Path(p) =>
+          match p.path.value {
+            @model.PropertyValue::Static(bp) =>
+              if not(bp.closed) {
+                fail("Path should inherit closed=true from shape.closed")
+              }
+            _ => fail("Path should be static")
+          }
+        _ => fail("Should be a Path shape")
+      }
+    _ => fail("Should be a Shape layer")
+  }
+}
+
+///|
 test "parse_merge_paths_and_rounding" {
   let json_str = "{\"ty\":\"gr\",\"it\":[{\"ty\":\"mm\",\"mm\":2},{\"ty\":\"rd\",\"r\":{\"k\":5}}]}"
   let json = @json.parse(json_str)
