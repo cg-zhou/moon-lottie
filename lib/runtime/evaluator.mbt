@@ -251,6 +251,85 @@ pub fn evaluate_double_property(
 }
 
 ///|
+///|
+/// Evaluate a spatial bezier keyframe using arc-length parameterization,
+/// matching lottie-web's behavior. The eased progress `perc` is used as a
+/// fraction of the total arc length along the bezier curve, then linearly
+/// interpolated between sampled curve points.
+fn evaluate_spatial_bezier_arc_length(
+  start_val : Array[Double],
+  end_val : Array[Double],
+  to : Array[Double],
+  ti : Array[Double],
+  perc : Double,
+) -> Array[Double] {
+  let n = 150
+  let len = start_val.length()
+  // Build arc-length-sampled data: (point, partial_length_from_previous)
+  let points : Array[(Array[Double], Double)] = []
+  let mut last_point : Array[Double]? = None
+  let mut total_length = 0.0
+  for k = 0; k < n; k = k + 1 {
+    let t = k.to_double() / (n - 1).to_double()
+    let point = []
+    let mut dist_sq = 0.0
+    for i = 0; i < len; i = i + 1 {
+      let p0 = start_val[i]
+      let p3 = end_val[i]
+      let p1 = p0 + (if i < to.length() { to[i] } else { 0.0 })
+      let p2 = p3 + (if i < ti.length() { ti[i] } else { 0.0 })
+      let coord = (1.0 - t) * (1.0 - t) * (1.0 - t) * p0 +
+        3.0 * (1.0 - t) * (1.0 - t) * t * p1 +
+        3.0 * (1.0 - t) * t * t * p2 +
+        t * t * t * p3
+      point.push(coord)
+      match last_point {
+        Some(lp) => {
+          let diff = coord - lp[i]
+          dist_sq += diff * diff
+        }
+        None => ()
+      }
+    }
+    let partial_length = dist_sq.sqrt()
+    total_length += partial_length
+    points.push((point, partial_length))
+    last_point = Some(point)
+  }
+  if perc <= 0.0 {
+    return points[0].0
+  }
+  if perc >= 1.0 {
+    return points[n - 1].0
+  }
+  let target = total_length * perc
+  let mut added_length = 0.0
+  for j = 0; j < n - 1; j = j + 1 {
+    added_length += points[j].1
+    if target == 0.0 {
+      return points[j].0
+    }
+    let next_partial = points[j + 1].1
+    if target >= added_length && target < added_length + next_partial {
+      let segment_perc = if next_partial > 0.0 {
+        (target - added_length) / next_partial
+      } else {
+        0.0
+      }
+      let result = []
+      for k = 0; k < len; k = k + 1 {
+        result.push(
+          points[j].0[k] +
+          (points[j + 1].0[k] - points[j].0[k]) * segment_perc,
+        )
+      }
+      return result
+    }
+  }
+  points[n - 1].0
+}
+
+///|
 pub fn evaluate_vec_property(
   prop : @model.LottieProperty[Array[Double]],
   frame : Double,
@@ -283,20 +362,21 @@ pub fn evaluate_vec_property(
             next_val.length() >= 2 &&
             to.length() >= 2 &&
             ti.length() >= 2 {
-            let res = []
-            for i = 0; i < k1.start_value.length(); i = i + 1 {
-              let p0 = k1.start_value[i]
-              let p3 = next_val[i]
-              // Check if tangents have the component. If not, fallback to p0/p3.
-              let p1 = if i < to.length() { p0 + to[i] } else { p0 }
-              let p2 = if i < ti.length() { p3 + ti[i] } else { p3 }
-              let val = (1.0 - t) * (1.0 - t) * (1.0 - t) * p0 +
-                3.0 * (1.0 - t) * (1.0 - t) * t * p1 +
-                3.0 * (1.0 - t) * t * t * p2 +
-                t * t * t * p3
-              res.push(val)
+            // Apply temporal easing first (if temporal handles are present),
+            // then use arc-length parameterization for the spatial bezier,
+            // matching lottie-web's behavior.
+            let eased_t = match (k1.out_tangent, k1.in_tangent) {
+              (Some(ot), Some(it)) =>
+                solve_eased_t_for_component(ot, it, t, 0)
+              _ => t
             }
-            res
+            evaluate_spatial_bezier_arc_length(
+              k1.start_value,
+              next_val,
+              to,
+              ti,
+              eased_t,
+            )
           } else {
             lerp_array_with_optional_component_easing(
               k1.start_value,

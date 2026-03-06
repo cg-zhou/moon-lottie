@@ -9,8 +9,35 @@ pub(all) enum LayerData {
 }
 
 ///|
+pub(all) struct TextAnimatorSelector {
+  based_on : Int
+  shape : Int
+  randomize : Int
+  range_end : LottieProperty[Double]
+  ease_high : LottieProperty[Double]
+  ease_low : LottieProperty[Double]
+  amount : LottieProperty[Double]
+  offset : LottieProperty[Double]
+}
+
+///|
+pub(all) struct TextAnimatorProperties {
+  scale : LottieProperty[Array[Double]]?
+  position : LottieProperty[Array[Double]]?
+  opacity : LottieProperty[Double]?
+  tracking : LottieProperty[Double]?
+}
+
+///|
+pub(all) struct TextAnimator {
+  selector : TextAnimatorSelector
+  properties : TextAnimatorProperties
+}
+
+///|
 pub(all) struct TextData {
   text : LottieProperty[TextDocument]
+  animators : Array[TextAnimator]
 }
 
 ///|
