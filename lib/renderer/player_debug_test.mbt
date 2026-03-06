@@ -195,7 +195,16 @@ test "layer transform uses composition frame timing" {
   }
 }
 
-test "shape properties use layer-local frame when layer has non-zero st" {
+///| Verify that shape properties inside a layer with non-zero st are evaluated
+///| at composition frame (matching lottie-web's behaviour).
+///|
+///| lottie-web computes: frameNum = comp.renderedFrame - offsetTime (offsetTime = st)
+///| and compares against kf.t - offsetTime, which is mathematically equivalent
+///| to evaluating at comp.renderedFrame vs raw kf.t values.
+///|
+///| Layer: ip=10, op=30, st=10. Rect p keyframes at t=10→[0,0], t=30→[100,0].
+///| At comp_frame=20: progress=(20-10)/(30-10)=0.5 → p=[50,0] → rect corner x=40.
+test "shape properties use composition frame timing" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"nm":"shape-st-layer","ip":10,"op":30,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"k":[0,0]}},"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"a":1,"k":[{"t":10,"s":[0,0]},{"t":30,"s":[100,0]}]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
   let json = @json.parse(json_str)
@@ -220,11 +229,13 @@ test "shape properties use layer-local frame when layer has non-zero st" {
       _ => ()
     }
   }
+  // At comp_frame=20: progress=(20-10)/(30-10)=0.5 → p=[50,0] → rect corner x=40.
+  // (lottie-web evaluates at comp_frame vs raw kf.t, not layer_frame vs raw kf.t)
   match first_move_x {
     Some(x) => {
-      if x < -10.0 - epsilon || x > -10.0 + epsilon {
+      if x < 40.0 - epsilon || x > 40.0 + epsilon {
         fail(
-          "Shape property was not evaluated at layer-local frame: MoveTo x=\{x}, expected -10.0",
+          "Shape property was not evaluated at composition frame: MoveTo x=\{x}, expected 40.0",
         )
       }
     }
@@ -361,6 +372,65 @@ test "fill color accepts byte-range channels without rescaling" {
       assert_eq(b, 0)
     }
     _ => fail("Expected Fill command")
+  }
+}
+
+///| Verify that TrimPath inside a layer with non-zero st is evaluated at
+///| composition frame — matching lottie-web offsetTime behaviour.
+///|
+///| Layer: ip=21, op=30, st=21.  Path is a horizontal line [-50, 50].
+///| TrimPath s: keyframes t=23→0%, t=30→100%.
+///| TrimPath e: keyframes t=21→0%, t=28→100%.
+///| At comp_frame=28 (= last e-keyframe):
+///|   lottie-web: frameNum = 28-21 = 7; kf_e_adj = {0, 7}; e = 100%
+///|                                      kf_s_adj = {2, 9}; s = (7-2)/(9-2)*100 ≈ 71.4%
+///|   → visible segment from ~71.4% to 100% of the path.
+///|   Visible MoveTo ≈ x = -50 + 71.4% * 100 = 21.4
+test "trim path uses composition frame timing for layer with non-zero st" {
+  // Minimal composition mirroring the rocket flame structure:
+  // one shape layer with st=21, ip=21, op=30 containing a horizontal stroke
+  // and a TrimPath that animates with keyframes in composition time.
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":30,"w":100,"h":100,"layers":[{"ty":4,"ind":1,"nm":"sl7","ip":21,"op":30,"st":21,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"k":[0,0]}},"shapes":[{"ty":"gr","nm":"g1","it":[{"ty":"sh","nm":"path1","ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[-50,0],[50,0]],"c":false}}},{"ty":"st","c":{"k":[1,0,0]},"o":{"k":100},"w":{"k":5},"lc":2,"lj":1,"ml":4},{"ty":"tr","p":{"k":[0,0]},"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}]},{"ty":"tm","s":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":23,"s":[0]},{"t":30,"s":[100]}],"ix":1},"e":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":21,"s":[0]},{"t":28,"s":[100]}],"ix":2},"o":{"a":0,"k":0,"ix":3},"m":1}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+
+  // At comp_frame=28: e=100%, s≈71.4% (with cubic easing; exact value below)
+  // The visible path starts around x≈21.4 (= -50 + 71.4% * 100).
+  player.set_frame(28.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut first_move_x : Double? = None
+  for cmd in commands {
+    match cmd {
+      MoveTo(x, _) => {
+        first_move_x = Some(x)
+        break
+      }
+      _ => ()
+    }
+  }
+  // Path should start around x=21.4 (not at -50 which would happen if
+  // evaluated at layer_frame=7 < first-keyframe → s=0%, e=0%).
+  // lottie-web gives x≈21.43 at frame 28 for this exact animation.
+  match first_move_x {
+    Some(x) => {
+      // lottie-web: x ≈ 21.43.  Accept a loose range around that value.
+      if x < 15.0 || x > 35.0 {
+        fail(
+          "TrimPath start x=\{x} is outside expected range [15, 35] (lottie-web gives ≈21.4); composition-frame timing is broken",
+        )
+      }
+    }
+    None =>
+      fail(
+        "Expected a visible trimmed stroke at comp_frame=28; got no MoveTo — TrimPath evaluated to zero (wrong: layer-local frame used instead of comp frame)",
+      )
   }
 }
 
