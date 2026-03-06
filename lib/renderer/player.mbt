@@ -147,7 +147,9 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  // lottie-web evaluates layer transform keyframes in composition time.
+  // lottie-web evaluates all layer properties (transforms and shapes) using
+  // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
+  // comp_frame vs t.
   let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
   self.renderer.concat_transform(matrix)
 
@@ -289,7 +291,7 @@ fn[R : Renderer] Player::render_layer(
 
   // 5. Apply Layer Effects
   match layer.fill_effect {
-    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, layer_frame)
+    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, comp_frame)
     None => ()
   }
 
@@ -519,8 +521,14 @@ fn[R : Renderer] Player::render_layer_content(
         self.current_comp_frame,
       )
       if doc.text != "" {
-        let (r, g, b) = color_rgb_from_vec(doc.fill_color)
-        self.renderer.draw_text(doc.text, doc.font, doc.size, r, g, b, 1.0, doc.justify)
+        match self.animation.glyphs {
+          Some(glyphs) =>
+            self.render_text_with_glyphs(doc, data.animators, glyphs)
+          None => {
+            let (r, g, b) = color_rgb_from_vec(doc.fill_color)
+            self.renderer.draw_text(doc.text, doc.font, doc.size, r, g, b, 1.0, doc.justify)
+          }
+        }
       }
     }
     Null => ()
@@ -1179,6 +1187,11 @@ let cubic_subdivision_intervals = 50
 let trim_t_epsilon = 0.000000001
 
 ///|
+/// Fallback advance width ratio when no glyph is found for a character.
+/// Approximates a typical character width as a fraction of the font size.
+let glyph_fallback_advance_ratio = 0.6
+
+///|
 /// Small epsilon for floating-point comparisons in shape modifiers
 let shape_epsilon = 0.001
 
@@ -1653,4 +1666,211 @@ fn[R] Player::create_polystar_path(
     out_tangents=outs,
     closed=true,
   )
+}
+
+///|
+fn compute_animator_mult(
+  selector : @model.TextAnimatorSelector,
+  char_index : Int,
+  total_chars : Int,
+  frame : Double,
+) -> Double {
+  if total_chars <= 0 {
+    return 0.0
+  }
+  let offset_raw = @runtime.evaluate_double_property(selector.offset, frame)
+  let divisor = 100.0 / total_chars.to_double()
+  let o = offset_raw / divisor
+  let s_val = 0.0 + o
+  let e_raw = @runtime.evaluate_double_property(selector.range_end, frame)
+  let e_val = e_raw / divisor + o
+  let (s_final, e_final) = if s_val <= e_val {
+    (s_val, e_val)
+  } else {
+    (e_val, s_val)
+  }
+  let ne = @runtime.evaluate_double_property(selector.ease_high, frame)
+  let xe = @runtime.evaluate_double_property(selector.ease_low, frame)
+  let (x1, y1) = if ne > 0.0 { (ne / 100.0, 0.0) } else { (0.0, -ne / 100.0) }
+  let (x2, y2) = if xe > 0.0 {
+    (1.0 - xe / 100.0, 1.0)
+  } else {
+    (1.0, 1.0 + xe / 100.0)
+  }
+  let ind = char_index.to_double()
+  let sh = selector.shape
+  let mult = match sh {
+    2 => {
+      if e_final == s_final {
+        if ind >= e_final { 1.0 } else { 0.0 }
+      } else {
+        let v = 0.5 / (e_final - s_final) + (ind - s_final) / (e_final - s_final)
+        if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
+      }
+    }
+    3 => {
+      if e_final == s_final {
+        if ind >= e_final { 0.0 } else { 1.0 }
+      } else {
+        let v = 0.5 / (e_final - s_final) + (ind - s_final) / (e_final - s_final)
+        let clamped = if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
+        1.0 - clamped
+      }
+    }
+    _ => {
+      if ind >= s_final.floor() {
+        let m = if ind - s_final < 0.0 {
+          let v = (if e_final < 1.0 { e_final } else { 1.0 }) - (s_final - ind)
+          if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
+        } else {
+          let v = e_final - ind
+          if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
+        }
+        m
+      } else {
+        0.0
+      }
+    }
+  }
+  let eased = @math.solve_cubic_bezier_easing(x1, y1, x2, y2, mult)
+  let amount = @runtime.evaluate_double_property(selector.amount, frame)
+  eased * amount / 100.0
+}
+
+///|
+fn[R : Renderer] Player::emit_glyph_shape_paths(
+  self : Player[R],
+  shapes : Array[@model.Shape],
+) -> Unit {
+  for shape in shapes {
+    match shape.hidden {
+      Some(true) => continue
+      _ => ()
+    }
+    match shape.data {
+      @model.ShapeData::Path(p) => {
+        let path = @runtime.evaluate_path_property(p.path, self.current_frame)
+        self.draw_lottie_path(path)
+      }
+      @model.ShapeData::Group(items) =>
+        self.emit_glyph_shape_paths(items)
+      _ => ()
+    }
+  }
+}
+
+///|
+fn[R : Renderer] Player::render_text_with_glyphs(
+  self : Player[R],
+  doc : @model.TextDocument,
+  animators : Array[@model.TextAnimator],
+  glyphs : Array[@model.GlyphInfo],
+) -> Unit {
+  let (fill_r, fill_g, fill_b) = color_rgb_from_vec(doc.fill_color)
+  let text = doc.text
+  let chars = text.to_array()
+  let n = chars.length()
+
+  // Count non-space chars for b=2 animators
+  let mut non_space_count = 0
+  for ch in chars {
+    if ch != ' ' {
+      non_space_count = non_space_count + 1
+    }
+  }
+
+  // Compute advance widths and total width for justification
+  let mut total_width = 0.0
+  let char_advances : Array[Double] = []
+  for ch in chars {
+    let ch_str = ch.to_string()
+    let mut found = false
+    for g in glyphs {
+      if g.ch == ch_str && doc.font.contains(g.style) {
+        let advance = g.advance_width * doc.size / 100.0
+        char_advances.push(advance)
+        total_width += advance
+        found = true
+        break
+      }
+    }
+    if not(found) {
+      let fallback = doc.size * glyph_fallback_advance_ratio
+      char_advances.push(fallback)
+      total_width += fallback
+    }
+  }
+
+  // Starting x based on justification
+  let mut cursor_x = match doc.justify {
+    1 => -total_width
+    2 => -total_width / 2.0
+    _ => 0.0
+  }
+
+  let mut global_char_index = 0
+  let mut non_space_index = 0
+  for ci = 0; ci < n; ci = ci + 1 {
+    let ch = chars[ci]
+    let ch_str = ch.to_string()
+    let is_space = ch == ' '
+    let advance = char_advances[ci]
+
+    // Compute animator scale multipliers for this character
+    let mut anim_scale_x = 1.0
+    let mut anim_scale_y = 1.0
+    for anim in animators {
+      let sel = anim.selector
+      let total_chars = if sel.based_on == 2 {
+        non_space_count
+      } else {
+        n
+      }
+      let char_anim_idx = if sel.based_on == 2 {
+        non_space_index
+      } else {
+        global_char_index
+      }
+      let mult = compute_animator_mult(sel, char_anim_idx, total_chars, self.current_frame)
+      match anim.properties.scale {
+        Some(scale_prop) => {
+          let sv = @runtime.evaluate_vec_property(scale_prop, self.current_frame)
+          let sx = if sv.length() > 0 { sv[0] } else { 100.0 }
+          let sy = if sv.length() > 1 { sv[1] } else { 100.0 }
+          let sx_delta = sx / 100.0 - 1.0
+          let sy_delta = sy / 100.0 - 1.0
+          anim_scale_x = anim_scale_x * (1.0 + mult * sx_delta)
+          anim_scale_y = anim_scale_y * (1.0 + mult * sy_delta)
+        }
+        None => ()
+      }
+    }
+
+    // Find and render glyph
+    for g in glyphs {
+      if g.ch == ch_str && doc.font.contains(g.style) {
+        let glyph_scale = doc.size / g.size
+        let char_scale_x = glyph_scale * anim_scale_x
+        let char_scale_y = glyph_scale * anim_scale_y
+        let saved_paths = self.current_paths
+        self.current_paths = []
+        self.renderer.save()
+        self.renderer.concat_transform(@math.Matrix::identity().translate(cursor_x, 0.0))
+        self.renderer.concat_transform(@math.Matrix::identity().scale(char_scale_x, char_scale_y))
+        self.renderer.begin_path()
+        self.emit_glyph_shape_paths(g.shapes)
+        self.renderer.set_fill_rule("nonzero")
+        self.renderer.fill(fill_r, fill_g, fill_b, 1.0)
+        self.current_paths = saved_paths
+        self.renderer.restore()
+        break
+      }
+    }
+
+    cursor_x += advance
+    global_char_index = global_char_index + 1
+    if not(is_space) {
+      non_space_index = non_space_index + 1
+    }
+  }
 }
