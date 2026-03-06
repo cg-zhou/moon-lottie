@@ -99,6 +99,60 @@ test "svg-exported layer renders top-level groups in reverse order" {
   }
 }
 
+test "trim path after painted group trims deferred stroke paths" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"nm":"trim-after-group","ip":0,"op":10,"st":0,"ks":{"p":{"a":0,"k":[0,0]},"s":{"a":0,"k":[100,100]},"r":{"a":0,"k":0},"o":{"a":0,"k":100},"a":{"a":0,"k":[0,0]}},"shapes":[{"ty":"gr","nm":"path-group","it":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0]],"o":[[0,0],[0,0]],"v":[[0,0],[100,0]],"c":false}}},{"ty":"st","c":{"a":0,"k":[1,0,0]},"o":{"a":0,"k":100},"w":{"a":0,"k":2},"lc":2,"lj":1,"ml":4},{"ty":"tr","p":{"a":0,"k":[0,0]},"a":{"a":0,"k":[0,0]},"s":{"a":0,"k":[100,100]},"r":{"a":0,"k":0},"o":{"a":0,"k":100}}]},{"ty":"tm","s":{"a":0,"k":25},"e":{"a":0,"k":75},"o":{"a":0,"k":0},"m":2}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  let epsilon = 0.02
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut first_move : (Double, Double)? = None
+  let mut first_path_end : (Double, Double)? = None
+  for cmd in commands {
+    match cmd {
+      MoveTo(x, y) =>
+        if first_move is None {
+          first_move = Some((x, y))
+        }
+      LineTo(x, y) =>
+        if first_path_end is None {
+          first_path_end = Some((x, y))
+        }
+      CubicTo(_, _, _, _, x, y) =>
+        if first_path_end is None {
+          first_path_end = Some((x, y))
+        }
+      _ => ()
+    }
+  }
+
+  match first_move {
+    Some((x, y)) => {
+      if x < 25.0 - epsilon || x > 25.0 + epsilon || y != 0.0 {
+        fail("Trimmed stroke start mismatch: (\{x}, \{y}), expected (25, 0)")
+      }
+    }
+    None => fail("Expected MoveTo command for trimmed stroke")
+  }
+
+  match first_path_end {
+    Some((x, y)) => {
+      if x < 75.0 - epsilon || x > 75.0 + epsilon || y != 0.0 {
+        fail("Trimmed stroke end mismatch: (\{x}, \{y}), expected (75, 0)")
+      }
+    }
+    None => fail("Expected path segment command for trimmed stroke end")
+  }
+}
+
 ///| Verify layer transform is evaluated at composition frame.
 ///|
 ///| Layer: st=10, ip=10, op=50, keyframes at t=10→[0,0], t=30→[100,0].

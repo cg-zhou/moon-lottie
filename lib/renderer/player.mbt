@@ -533,6 +533,7 @@ fn[R : Renderer] Player::render_shape_items(
   // subsequent fills/strokes take a snapshot.
   let draw_items : Array[@model.Shape] = []
   let draw_path_snapshots : Array[Array[@model.BezierPath]] = []
+  let draw_item_path_modifiers : Array[Array[@model.Shape]] = []
   for item in items {
     match item.data {
       Transform(_) => ()
@@ -545,6 +546,7 @@ fn[R : Renderer] Player::render_shape_items(
           // Painted group participates in z-order with sibling paint ops.
           draw_items.push(item)
           draw_path_snapshots.push([])
+          draw_item_path_modifiers.push([])
         }
       Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
         draw_items.push(item)
@@ -554,6 +556,31 @@ fn[R : Renderer] Player::render_shape_items(
           snapshot.push(p)
         }
         draw_path_snapshots.push(snapshot)
+        draw_item_path_modifiers.push([])
+      }
+      TrimPath(t) => {
+        // Keep existing behavior for currently accumulated (non-deferred) paths.
+        self.render_shape(item)
+        // Trim Paths in lottie-web affect preceding drawable content in the same
+        // shape list. Our paint ops and painted groups are deferred for z-order,
+        // so we need to also apply this modifier to already collected draw items.
+        let start = @runtime.evaluate_double_property(t.start, self.current_frame)
+        let end = @runtime.evaluate_double_property(t.end, self.current_frame)
+        let offset = @runtime.evaluate_double_property(t.offset, self.current_frame)
+        for i = 0; i < draw_items.length(); i = i + 1 {
+          match draw_items[i].data {
+            Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) =>
+              draw_path_snapshots[i] = apply_trim_path_with_mode(
+                draw_path_snapshots[i],
+                start,
+                end,
+                offset,
+                t.multiple,
+              )
+            Group(_) => draw_item_path_modifiers[i].push(item)
+            _ => ()
+          }
+        }
       }
       _ => self.render_shape(item) // path shapes, modifiers, etc.
     }
@@ -573,7 +600,25 @@ fn[R : Renderer] Player::render_shape_items(
         self.current_paths = draw_path_snapshots[i]
         self.render_shape(draw_items[i])
       }
-      Group(_) => self.render_shape(draw_items[i])
+      Group(nested) => {
+        let modifiers = draw_item_path_modifiers[i]
+        if modifiers.length() == 0 {
+          self.render_shape(draw_items[i])
+        } else {
+          let group_items_with_modifiers = []
+          for nested_item in nested {
+            group_items_with_modifiers.push(nested_item)
+          }
+          for modifier in modifiers {
+            group_items_with_modifiers.push(modifier)
+          }
+          let decorated_group = @model.Shape::new(
+            shape_type = draw_items[i].shape_type,
+            data = @model.ShapeData::new_group(group_items_with_modifiers),
+          )
+          self.render_shape(decorated_group)
+        }
+      }
       _ => ()
     }
   }
