@@ -115,7 +115,6 @@ fn[R : Renderer] Player::render_layer(
 
   let layer_frame = comp_frame - layer.start_time
   let saved_frame = self.current_frame
-  self.current_frame = layer_frame
   self.debug_layer = match layer.name {
     Some(name) => "\{name}#\{layer.index}"
     None => "#\{layer.index}"
@@ -133,7 +132,9 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  // lottie-web evaluates layer transform keyframes in composition time.
+  // lottie-web evaluates all layer properties (transforms and shapes) using
+  // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
+  // comp_frame vs t.
   let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
   self.renderer.concat_transform(matrix)
 
@@ -275,7 +276,7 @@ fn[R : Renderer] Player::render_layer(
 
   // 5. Apply Layer Effects
   match layer.fill_effect {
-    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, layer_frame)
+    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, comp_frame)
     None => ()
   }
 
@@ -711,6 +712,7 @@ pub fn[R : Renderer] Player::render_shape(
       let color_vec = @runtime.evaluate_vec_property(f.color, self.current_frame)
       let opacity = @runtime.evaluate_double_property(f.opacity, self.current_frame)
       let (r, g, b) = color_rgb_from_vec(color_vec)
+      self.renderer.set_fill_rule(if f.fill_rule == 2 { "evenodd" } else { "nonzero" })
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -747,6 +749,7 @@ pub fn[R : Renderer] Player::render_shape(
       let end_p = @runtime.evaluate_vec_property(f.end_point, self.current_frame)
       let stops = @runtime.evaluate_vec_property(f.gradient_colors.color_stops, self.current_frame)
       let opacity = @runtime.evaluate_double_property(f.opacity, self.current_frame)
+      self.renderer.set_fill_rule(if f.fill_rule == 2 { "evenodd" } else { "nonzero" })
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -907,17 +910,13 @@ pub fn[R : Renderer] Player::render_shape(
       }
       self.current_paths = new_paths
     }
-    MergePaths(merge) =>
-      // Lottie MergePaths: 1=Merge, 2=Add, 3=Subtract, 4=Intersect, 5=Exclude
-      // For SVG, we use fill-rule="evenodd" to approximate boolean operations
-      // since we don't have a path boolean engine in MoonBit yet.
-      match merge.merge_mode {
-        @model.MergeMode::Merge | @model.MergeMode::Add =>
-          self.renderer.set_fill_rule("nonzero")
-        @model.MergeMode::Subtract
-        | @model.MergeMode::Intersect
-        | @model.MergeMode::Exclude => self.renderer.set_fill_rule("evenodd")
-      }
+    MergePaths(_merge) =>
+      // lottie-web's SVG and canvas renderers do not register MergePaths (ty="mm")
+      // as a shape modifier and do not handle it in any special way — it is
+      // effectively ignored. Fill-rule is controlled by the fill shape's own
+      // `r` property (1=nonzero, 2=evenodd), not by MergePaths merge mode.
+      // We match that behavior here and treat MergePaths as a no-op.
+      ()
     Rounding(rounding) => {
       let radius = @runtime.evaluate_double_property(
         rounding.radius,
