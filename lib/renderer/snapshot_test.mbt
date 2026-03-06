@@ -52,6 +52,34 @@ test "snapshot_render_mask" {
 }
 
 ///|
+test "snapshot_render_shape_closed_flag_without_path_c" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"sh\",\"nm\":\"body\",\"closed\":true,\"ks\":{\"v\":[[-50,-50],[50,-50],[50,50],[-50,50]],\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let has_close_path = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        ClosePath => true
+        _ => false
+      }
+    })
+  if not(has_close_path) {
+    fail(
+      "Expected ClosePath from shape.closed fallback, but none was emitted. Commands: \{commands}",
+    )
+  }
+}
+
+///|
 test "snapshot_merge_paths" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"gr\",\"it\":[{\"ty\":\"sh\",\"ks\":{\"k\":{\"i\":[[0,0]],\"o\":[[0,0]],\"v\":[[0,0]],\"c\":true}}},{\"ty\":\"mm\",\"mm\":3},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]}}]}]}]}"
   let json = @json.parse(json_str)
