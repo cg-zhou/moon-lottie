@@ -720,6 +720,7 @@ pub fn[R : Renderer] Player::render_shape(
       let color_vec = @runtime.evaluate_vec_property(f.color, self.current_comp_frame)
       let opacity = @runtime.evaluate_double_property(f.opacity, self.current_comp_frame)
       let (r, g, b) = color_rgb_from_vec(color_vec)
+      self.renderer.set_fill_rule(if f.fill_rule == 2 { "evenodd" } else { "nonzero" })
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -756,6 +757,7 @@ pub fn[R : Renderer] Player::render_shape(
       let end_p = @runtime.evaluate_vec_property(f.end_point, self.current_comp_frame)
       let stops = @runtime.evaluate_vec_property(f.gradient_colors.color_stops, self.current_comp_frame)
       let opacity = @runtime.evaluate_double_property(f.opacity, self.current_comp_frame)
+      self.renderer.set_fill_rule(if f.fill_rule == 2 { "evenodd" } else { "nonzero" })
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -916,17 +918,13 @@ pub fn[R : Renderer] Player::render_shape(
       }
       self.current_paths = new_paths
     }
-    MergePaths(merge) =>
-      // Lottie MergePaths: 1=Merge, 2=Add, 3=Subtract, 4=Intersect, 5=Exclude
-      // For SVG, we use fill-rule="evenodd" to approximate boolean operations
-      // since we don't have a path boolean engine in MoonBit yet.
-      match merge.merge_mode {
-        @model.MergeMode::Merge | @model.MergeMode::Add =>
-          self.renderer.set_fill_rule("nonzero")
-        @model.MergeMode::Subtract
-        | @model.MergeMode::Intersect
-        | @model.MergeMode::Exclude => self.renderer.set_fill_rule("evenodd")
-      }
+    MergePaths(_merge) =>
+      // lottie-web's SVG and canvas renderers do not register MergePaths (ty="mm")
+      // as a shape modifier and do not handle it in any special way — it is
+      // effectively ignored. Fill-rule is controlled by the fill shape's own
+      // `r` property (1=nonzero, 2=evenodd), not by MergePaths merge mode.
+      // We match that behavior here and treat MergePaths as a no-op.
+      ()
     Rounding(rounding) => {
       let radius = @runtime.evaluate_double_property(
         rounding.radius,
