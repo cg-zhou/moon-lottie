@@ -605,16 +605,16 @@ fn[R : Renderer] Player::render_shape_items(
         if modifiers.length() == 0 {
           self.render_shape(draw_items[i])
         } else {
-          let items_with_modifiers = []
+          let group_items_with_modifiers = []
           for nested_item in nested {
-            items_with_modifiers.push(nested_item)
+            group_items_with_modifiers.push(nested_item)
           }
           for modifier in modifiers {
-            items_with_modifiers.push(modifier)
+            group_items_with_modifiers.push(modifier)
           }
           let decorated_group = @model.Shape::new(
             shape_type = draw_items[i].shape_type,
-            data = @model.ShapeData::new_group(items_with_modifiers),
+            data = @model.ShapeData::new_group(group_items_with_modifiers),
           )
           self.render_shape(decorated_group)
         }
