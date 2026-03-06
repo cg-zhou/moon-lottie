@@ -195,7 +195,15 @@ test "layer transform uses composition frame timing" {
   }
 }
 
-test "shape properties use layer-local frame when layer has non-zero st" {
+///| Verify shape properties are evaluated at composition frame, matching lottie-web.
+///|
+///| lottie-web formula: frameNum = comp.renderedFrame - layer.st, compared against
+///| keyframe.t - layer.st. This simplifies to: comp_frame vs raw keyframe t values.
+///|
+///| Layer: st=10, ip=10, op=30, keyframes at t=10→[0,0], t=30→[100,0].
+///| At composition frame 20: between t=10 and t=30, progress=0.5
+///| → rect center x=50 → first vertex x=50-10=40.
+test "shape properties use composition frame timing matching lottie-web" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":50,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"nm":"shape-st-layer","ip":10,"op":30,"st":10,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"k":[0,0]}},"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"a":1,"k":[{"t":10,"s":[0,0]},{"t":30,"s":[100,0]}]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
   let json = @json.parse(json_str)
@@ -222,9 +230,10 @@ test "shape properties use layer-local frame when layer has non-zero st" {
   }
   match first_move_x {
     Some(x) => {
-      if x < -10.0 - epsilon || x > -10.0 + epsilon {
+      // rect centered at (50, 0) → top-left vertex x = 50 - 10 = 40
+      if x < 40.0 - epsilon || x > 40.0 + epsilon {
         fail(
-          "Shape property was not evaluated at layer-local frame: MoveTo x=\{x}, expected -10.0",
+          "Shape property timing mismatch: MoveTo x=\{x}, expected 40.0 (comp_frame=20, rect center=50)",
         )
       }
     }

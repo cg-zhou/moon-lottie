@@ -115,7 +115,6 @@ fn[R : Renderer] Player::render_layer(
 
   let layer_frame = comp_frame - layer.start_time
   let saved_frame = self.current_frame
-  self.current_frame = layer_frame
   self.debug_layer = match layer.name {
     Some(name) => "\{name}#\{layer.index}"
     None => "#\{layer.index}"
@@ -133,7 +132,9 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 1. Apply Layer Transform
-  // lottie-web evaluates layer transform keyframes in composition time.
+  // lottie-web evaluates all layer properties (transforms and shapes) using
+  // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
+  // comp_frame vs t.
   let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
   self.renderer.concat_transform(matrix)
 
@@ -275,7 +276,7 @@ fn[R : Renderer] Player::render_layer(
 
   // 5. Apply Layer Effects
   match layer.fill_effect {
-    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, layer_frame)
+    Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, comp_frame)
     None => ()
   }
 
