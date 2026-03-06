@@ -19,6 +19,7 @@ struct AnimationRootJson {
   three_d : Int?
   assets : Array[Json]?
   layers : Array[Json]
+  chars : Array[Json]?
 } derive(
   FromJson(
     fields(
@@ -30,6 +31,7 @@ struct AnimationRootJson {
       height(rename="h"),
       name(rename="nm"),
       three_d(rename="ddd"),
+      chars(rename="chars"),
     ),
   ),
 )
@@ -412,7 +414,80 @@ struct AssetJson {
 ///|
 struct TextDataJson {
   document : Json?
-} derive(FromJson(fields(document(rename="d"))))
+  animators : Array[Json]?
+} derive(FromJson(fields(document(rename="d"), animators(rename="a"))))
+
+///|
+struct GlyphCharJson {
+  ch : String?
+  style : String?
+  size : Double?
+  advance_width : Double?
+  data : Json?
+} derive(
+  FromJson(
+    fields(
+      ch(rename="ch"),
+      style(rename="style"),
+      size(rename="size"),
+      advance_width(rename="w"),
+      data(rename="data"),
+    ),
+  ),
+)
+
+///|
+struct GlyphDataJson {
+  shapes : Array[Json]?
+} derive(FromJson(fields(shapes(rename="shapes"))))
+
+///|
+struct TextAnimatorJson {
+  selector : Json?
+  properties : Json?
+} derive(FromJson(fields(selector(rename="s"), properties(rename="a"))))
+
+///|
+struct TextAnimatorSelectorJson {
+  based_on : Int?
+  shape : Int?
+  randomize : Int?
+  range_end : Json?
+  ease_high : Json?
+  ease_low : Json?
+  amount : Json?
+  offset : Json?
+} derive(
+  FromJson(
+    fields(
+      based_on(rename="b"),
+      shape(rename="sh"),
+      randomize(rename="rn"),
+      range_end(rename="e"),
+      ease_high(rename="ne"),
+      ease_low(rename="xe"),
+      amount(rename="a"),
+      offset(rename="o"),
+    ),
+  ),
+)
+
+///|
+struct TextAnimatorPropertiesJson {
+  scale : Json?
+  position : Json?
+  opacity : Json?
+  tracking : Json?
+} derive(
+  FromJson(
+    fields(
+      scale(rename="s"),
+      position(rename="p"),
+      opacity(rename="o"),
+      tracking(rename="t"),
+    ),
+  ),
+)
 
 ///|
 struct GradientJson {
@@ -474,12 +549,10 @@ struct PropertyKeyframeJson {
 )
 
 struct TextPropertyJson {
-  animated_flag : Json?
   value : Json?
 } derive(
   FromJson(
     fields(
-      animated_flag(rename="a"),
       value(rename="k"),
     ),
   ),
@@ -940,53 +1013,116 @@ fn parse_text_document_property(
       let prop : TextPropertyJson = (@json.from_json(j)) catch {
         _ => raise UnexpectedType("text property", "Object")
       }
-      let a = property_animated_flag(prop.animated_flag)
       let k = match prop.value {
         Some(v) => v
         None => raise MissingKey("k in text property")
       }
-      if a {
-        let keyframes = []
-        match k {
-          Array(arr) =>
-            for kf_json in arr {
-              let keyframe : PropertyKeyframeJson? = try {
-                Some(@json.from_json(kf_json))
-              } catch {
-                _ => None
-              }
-              let keyframe = match keyframe {
-                Some(v) => v
-                None => continue
-              }
-              let s = match keyframe.start_value {
-                Some(v) => parse_text_document(v)
-                None => raise MissingKey("s in text keyframe")
-              }
-              keyframes.push(
-                @model.LottieKeyframe::new(
-                  frame=keyframe_time_or_zero(keyframe.time),
-                  start_value=s,
-                ),
-              )
+      // Lottie text 'd.k' is always an array of keyframe objects with 's'
+      // (text document) and 't' (frame time) fields, regardless of whether
+      // the 'a' (animated) flag is set.  Parse the same way in all cases.
+      match k {
+        Array(arr) => {
+          let keyframes = []
+          for kf_json in arr {
+            let keyframe : PropertyKeyframeJson? = try {
+              Some(@json.from_json(kf_json))
+            } catch {
+              _ => None
             }
-          _ => ()
-        }
-        @model.LottieProperty::new_animated(keyframes)
-      } else {
-        match k {
-          Array(arr) =>
-            if arr.length() > 0 {
-              @model.LottieProperty::new_static(parse_text_document(arr[0]))
-            } else {
-              raise MissingKey("k array is empty")
+            let keyframe = match keyframe {
+              Some(v) => v
+              None => continue
             }
-          _ => @model.LottieProperty::new_static(parse_text_document(k))
+            let s = match keyframe.start_value {
+              Some(v) => parse_text_document(v)
+              None => continue
+            }
+            keyframes.push(
+              @model.LottieKeyframe::new(
+                frame=keyframe_time_or_zero(keyframe.time),
+                start_value=s,
+              ),
+            )
+          }
+          if keyframes.length() == 0 {
+            raise MissingKey("k array has no valid text keyframes")
+          }
+          // Single keyframe at t=0 → static property (common case)
+          if keyframes.length() == 1 {
+            @model.LottieProperty::new_static(keyframes[0].start_value)
+          } else {
+            @model.LottieProperty::new_animated(keyframes)
+          }
         }
+        _ => @model.LottieProperty::new_static(parse_text_document(k))
       }
     }
     None => raise InvalidJson("Text property missing")
   }
+}
+
+///|
+fn parse_text_animator_selector(
+  json : Json,
+) -> @model.TextAnimatorSelector raise LottieError {
+  let decoded : TextAnimatorSelectorJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("text animator selector", "Object")
+  }
+  let range_end = parse_property_double(decoded.range_end) catch {
+    _ => @model.LottieProperty::new_static(100.0)
+  }
+  let ease_high = parse_property_double(decoded.ease_high) catch {
+    _ => @model.LottieProperty::new_static(0.0)
+  }
+  let ease_low = parse_property_double(decoded.ease_low) catch {
+    _ => @model.LottieProperty::new_static(0.0)
+  }
+  let amount = parse_property_double(decoded.amount) catch {
+    _ => @model.LottieProperty::new_static(100.0)
+  }
+  let offset = parse_property_double(decoded.offset) catch {
+    _ => @model.LottieProperty::new_static(0.0)
+  }
+  {
+    based_on: decoded.based_on.unwrap_or(1),
+    shape: decoded.shape.unwrap_or(1),
+    randomize: decoded.randomize.unwrap_or(0),
+    range_end,
+    ease_high,
+    ease_low,
+    amount,
+    offset,
+  }
+}
+
+///|
+fn parse_text_animator_properties(
+  json : Json,
+) -> @model.TextAnimatorProperties raise LottieError {
+  let decoded : TextAnimatorPropertiesJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("text animator properties", "Object")
+  }
+  let scale = try {
+    Some(parse_property_vec(decoded.scale))
+  } catch {
+    _ => None
+  }
+  let position = try {
+    Some(parse_property_vec(decoded.position))
+  } catch {
+    _ => None
+  }
+  let opacity = try {
+    Some(parse_property_double(decoded.opacity))
+  } catch {
+    _ => None
+  }
+  let tracking = try {
+    Some(parse_property_double(decoded.tracking))
+  } catch {
+    _ => None
+  }
+  { scale, position, opacity, tracking }
 }
 
 ///|
@@ -996,7 +1132,30 @@ fn parse_text_data_from_decoded(
   match decoded {
     Some(d_json) => {
       let d = parse_text_document_property(d_json.document)
-      { text: d }
+      let animators : Array[@model.TextAnimator] = []
+      match d_json.animators {
+        Some(arr) =>
+          for a_json in arr {
+            let anim_json : TextAnimatorJson = (@json.from_json(a_json)) catch {
+              _ => continue
+            }
+            let selector = match anim_json.selector {
+              Some(s_json) =>
+                parse_text_animator_selector(s_json) catch { _ => continue }
+              None => continue
+            }
+            let properties = match anim_json.properties {
+              Some(p_json) =>
+                parse_text_animator_properties(p_json) catch {
+                  _ => { scale: None, position: None, opacity: None, tracking: None }
+                }
+              None => { scale: None, position: None, opacity: None, tracking: None }
+            }
+            animators.push({ selector, properties })
+          }
+        None => ()
+      }
+      { text: d, animators }
     }
     None => raise InvalidJson("Text data is missing")
   }
@@ -1643,6 +1802,16 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     }
   }
 
+  let glyphs : Array[@model.GlyphInfo] = []
+  match root.chars {
+    Some(arr) =>
+      for c_json in arr {
+        let g = parse_glyph_char(c_json) catch { _ => continue }
+        glyphs.push(g)
+      }
+    None => ()
+  }
+
   @model.Animation::new(
     version~,
     frame_rate~,
@@ -1654,7 +1823,38 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     three_d=root.three_d,
     assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
+    glyphs=if glyphs.length() > 0 { Some(glyphs) } else { None },
   )
+}
+
+///|
+fn parse_glyph_char(json : Json) -> @model.GlyphInfo raise LottieError {
+  let decoded : GlyphCharJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("glyph char", "Object")
+  }
+  let ch = decoded.ch.unwrap_or("")
+  let style = decoded.style.unwrap_or("")
+  let size = decoded.size.unwrap_or(100.0)
+  let advance_width = decoded.advance_width.unwrap_or(0.0)
+  let shapes : Array[@model.Shape] = []
+  match decoded.data {
+    Some(data_json) => {
+      let glyph_data : GlyphDataJson = (@json.from_json(data_json)) catch {
+        _ => raise UnexpectedType("glyph data", "Object")
+      }
+      match glyph_data.shapes {
+        Some(arr) =>
+          for s_json in arr {
+            shapes.push(parse_shape(s_json)) catch {
+              _ => ()
+            }
+          }
+        None => ()
+      }
+    }
+    None => ()
+  }
+  { ch, style, size, advance_width, shapes }
 }
 
 ///|

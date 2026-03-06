@@ -1,4 +1,13 @@
 ///|
+pub(all) struct GlyphInfo {
+  ch : String
+  style : String
+  size : Double
+  advance_width : Double
+  shapes : Array[Shape]
+}
+
+///|
 pub struct Animation {
   version : String // JSON: v
   frame_rate : Double // JSON: fr
@@ -11,6 +20,7 @@ pub struct Animation {
   assets : Array[Asset]?
   layers : Array[Layer]
   markers : Array[Marker]?
+  glyphs : Array[GlyphInfo]?
 }
 
 ///|
@@ -26,6 +36,7 @@ pub fn Animation::new(
   assets? : Array[Asset]? = None,
   layers~ : Array[Layer],
   markers? : Array[Marker]? = None,
+  glyphs? : Array[GlyphInfo]? = None,
 ) -> Animation {
   {
     version,
@@ -39,6 +50,7 @@ pub fn Animation::new(
     assets,
     layers,
     markers,
+    glyphs,
   }
 }
 

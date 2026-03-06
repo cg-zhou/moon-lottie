@@ -158,7 +158,11 @@ test "evaluate_vec_property_multidimensional_easing_components" {
 }
 
 ///|
-test "evaluate_vec_property_spatial_bezier_does_not_double_apply_temporal_easing" {
+test "evaluate_vec_property_spatial_bezier_applies_temporal_easing" {
+  // Verify that temporal easing (o/i handles) IS applied before evaluating the
+  // spatial bezier arc-length position, matching lottie-web behaviour.
+  // With easing out=(0.1,1.0)/in=(0.9,1.0), the eased t at frame 50 of 100 is
+  // ~0.875, so the position lands near 87.5 (well past the midpoint 50).
   let ot = @model.Bezier::new(
     @model.BezierValue::new_single(0.1),
     @model.BezierValue::new_single(1.0),
@@ -181,13 +185,21 @@ test "evaluate_vec_property_spatial_bezier_does_not_double_apply_temporal_easing
   if v.length() != 2 {
     fail("Unexpected vector length")
   }
-  if (v[0] - 50.0).abs() > 0.001 || (v[1] - 50.0).abs() > 0.001 {
-    fail("Spatial bezier interpolation should use raw t when value tangents are present")
+  // Easing (0.1,1.0)/(0.9,1.0) gives eased_t ≈ 0.875 at raw t=0.5, so the
+  // position should be near 87.5, well past the midpoint 50.
+  if v[0] < 80.0 || v[1] < 80.0 {
+    fail(
+      "Temporal easing should be applied to spatial bezier keyframes: expected v > 80, got \{v[0]}",
+    )
   }
 }
 
 ///|
-test "evaluate_vec_property_spatial_bezier_works_without_temporal_easing_handles" {
+test "evaluate_vec_property_spatial_bezier_arc_length_parameterization" {
+  // Verify that arc-length parameterization is used for spatial bezier keyframes
+  // (matching lottie-web). With a bezier that curves through [200,200] as a
+  // control point, arc-length gives a more uniform distribution: at t=0.5 the
+  // position is ~75, not 125 (which would be the direct cubic parameter result).
   let k1 = @model.LottieKeyframe::new(
     frame=0,
     start_value=[0.0, 0.0],
@@ -197,15 +209,21 @@ test "evaluate_vec_property_spatial_bezier_works_without_temporal_easing_handles
   let k2 = @model.LottieKeyframe::new(frame=100, start_value=[100.0, 100.0])
   let prop = @model.LottieProperty::new_animated([k1, k2])
   let v25 = @runtime.evaluate_vec_property(prop, 25.0)
-  let v = @runtime.evaluate_vec_property(prop, 50.0)
-  if v.length() != 2 || v25.length() != 2 {
+  let v50 = @runtime.evaluate_vec_property(prop, 50.0)
+  if v25.length() != 2 || v50.length() != 2 {
     fail("Unexpected vector length")
   }
+  // Arc-length at 25%: ~37.5 (more than 25 because curve bows outward early)
   if v25[0] <= 25.0 || v25[1] <= 25.0 {
-    fail("Spatial bezier interpolation should produce non-linear curve-based values at frame 25")
+    fail(
+      "Arc-length should produce non-linear values at frame 25: expected >25, got \{v25[0]}",
+    )
   }
-  if (v[0] - 125.0).abs() > 0.001 || (v[1] - 125.0).abs() > 0.001 {
-    fail("Spatial bezier interpolation should still be applied when temporal easing handles are absent")
+  // Arc-length at 50%: ~75 (NOT 125 which would be the direct cubic result)
+  if v50[0] < 60.0 || v50[0] > 90.0 || v50[1] < 60.0 || v50[1] > 90.0 {
+    fail(
+      "Arc-length at 50% should be ~75, not 125 (direct cubic): got \{v50[0]}",
+    )
   }
 }
 
