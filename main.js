@@ -455,6 +455,18 @@ document.getElementById('compare-toggle').onchange = (e) => {
     if (isCompare) updateUI();
 };
 
+function initDeployTime() {
+    const deployTimeEl = document.getElementById('deploy-time');
+    if (deployTimeEl && deployTimeEl.dataset.utc) {
+        const utcStr = deployTimeEl.dataset.utc;
+        const date = new Date(utcStr);
+        if (!isNaN(date.getTime())) {
+            deployTimeEl.innerText = date.toLocaleString();
+            deployTimeEl.title = `UTC: ${utcStr}`;
+        }
+    }
+}
+
 // Animation list change
 document.getElementById('anim-list').onchange = (e) => {
     loadRemoteAnimation(e.target.value);
@@ -484,4 +496,6 @@ function handleFile(file) {
     reader.readAsText(file);
 }
 
-init();
+init().then(() => {
+    initDeployTime();
+});
