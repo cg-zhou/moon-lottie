@@ -270,6 +270,86 @@ test "evaluate_path_property_multidimensional_easing_components" {
 }
 
 ///|
+/// When a path keyframe has no `end_value` (e), interpolation should use the
+/// next keyframe's `start_value` — matching lottie-web's behavior.
+/// Previously the evaluator incorrectly held at the current keyframe's start_value.
+test "evaluate_path_property_no_end_value_uses_next_start" {
+  let p0 = @model.BezierPath::new(
+    vertices=[[0.0, 0.0]],
+    in_tangents=[[0.0, 0.0]],
+    out_tangents=[[0.0, 0.0]],
+    closed=false,
+  )
+  let p1 = @model.BezierPath::new(
+    vertices=[[100.0, 100.0]],
+    in_tangents=[[0.0, 0.0]],
+    out_tangents=[[0.0, 0.0]],
+    closed=false,
+  )
+  // Keyframe at t=0 with NO end_value (no 'e' field, matching typical lottie JSON)
+  let k1 = @model.LottieKeyframe::new(frame=0, start_value=p0)
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=p1)
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+
+  // At frame 50 (midpoint) with no easing, result should be interpolated to 50,50
+  let v = @runtime.evaluate_path_property(prop, 50.0)
+  let vx = get_pt_at(v.vertices, 0, 0)
+  let vy = get_pt_at(v.vertices, 0, 1)
+  if (vx - 50.0).abs() > 0.001 {
+    fail(
+      "Path x should interpolate to 50 (not hold at 0) when end_value is absent, got \{vx}",
+    )
+  }
+  if (vy - 50.0).abs() > 0.001 {
+    fail(
+      "Path y should interpolate to 50 (not hold at 0) when end_value is absent, got \{vy}",
+    )
+  }
+}
+
+///|
+/// Path keyframe easing tangents (o/i fields) should be parsed and applied when
+/// interpolating path properties — matching lottie-web's ShapeProperty behavior.
+test "evaluate_path_property_easing_tangents" {
+  let ot = @model.Bezier::new(
+    @model.BezierValue::new_single(0.1),
+    @model.BezierValue::new_single(1.0),
+  )
+  let it = @model.Bezier::new(
+    @model.BezierValue::new_single(0.9),
+    @model.BezierValue::new_single(1.0),
+  )
+  let p0 = @model.BezierPath::new(
+    vertices=[[0.0, 0.0]],
+    in_tangents=[[0.0, 0.0]],
+    out_tangents=[[0.0, 0.0]],
+    closed=false,
+  )
+  let p1 = @model.BezierPath::new(
+    vertices=[[100.0, 100.0]],
+    in_tangents=[[0.0, 0.0]],
+    out_tangents=[[0.0, 0.0]],
+    closed=false,
+  )
+  // k1 has no end_value — interpolation uses k2.start_value, with easing
+  let k1 = @model.LottieKeyframe::new(
+    frame=0,
+    start_value=p0,
+    in_tangent=Some(it),
+    out_tangent=Some(ot),
+  )
+  let k2 = @model.LottieKeyframe::new(frame=100, start_value=p1)
+  let prop = @model.LottieProperty::new_animated([k1, k2])
+
+  // Easing (0.1,1.0)/(0.9,1.0) is fast-in/slow-out; at raw t=0.5 the eased t>0.5
+  let v = @runtime.evaluate_path_property(prop, 50.0)
+  let vx = get_pt_at(v.vertices, 0, 0)
+  if vx <= 50.0 {
+    fail("Eased path should advance past 50 at raw t=0.5, got \{vx}")
+  }
+}
+
+///|
 fn get_pt_at(v : Array[Array[Double]], i : Int, j : Int) -> Double {
   if i >= 0 && i < v.length() && j >= 0 && j < v[i].length() {
     v[i][j]
