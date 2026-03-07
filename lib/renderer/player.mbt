@@ -1206,6 +1206,10 @@ pub fn apply_trim_path(
   let e_val = end / 100.0
   let o_val = offset / 360.0 // Offset is in degrees in AE? Or 0-100? In Lottie it's degrees.
 
+  if s_val == e_val {
+    return []
+  }
+
   if s_val <= 0.0 && e_val >= 1.0 {
     return paths
   }
@@ -1244,6 +1248,9 @@ fn apply_trim_path_simultaneously(
   let s_val = start / 100.0
   let e_val = end / 100.0
   let o_val = offset / 360.0
+  if s_val == e_val {
+    return []
+  }
   if s_val <= 0.0 && e_val >= 1.0 {
     return paths
   }
@@ -1259,6 +1266,9 @@ fn apply_trim_path_simultaneously(
     let mut val = e_val + o_val
     val = val - val.floor()
     val
+  }
+  if start_norm == end_norm {
+    return []
   }
   if start_norm < end_norm {
     trim_paths_by_global_range(paths, start_norm, end_norm)
@@ -1412,6 +1422,11 @@ pub fn trim_single_path(
     return [path]
   }
 
+  // Empty trim: when start equals end, nothing is visible
+  if s == e {
+    return []
+  }
+
   // 1. Calculate length of each segment
   let seg_lengths = []
   let mut total_length = 0.0
@@ -1469,6 +1484,10 @@ pub fn trim_single_path(
         path, seg_lengths, total_length, start_norm, end_norm,
       ),
     ]
+  } else if start_norm == end_norm {
+    // After offset normalization, start and end are at the same point:
+    // this means the full path is selected (wraps all the way around).
+    return [path]
   } else {
     let p1 = extract_bezier_segment(
       path, seg_lengths, total_length, start_norm, 1.0,
@@ -1749,7 +1768,7 @@ fn[R : Renderer] Player::emit_glyph_shape_paths(
     }
     match shape.data {
       @model.ShapeData::Path(p) => {
-        let path = @runtime.evaluate_path_property(p.path, self.current_frame)
+        let path = @runtime.evaluate_path_property(p.path, self.current_comp_frame)
         self.draw_lottie_path(path)
       }
       @model.ShapeData::Group(items) =>
@@ -1766,7 +1785,10 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   animators : Array[@model.TextAnimator],
   glyphs : Array[@model.GlyphInfo],
 ) -> Unit {
-  let (fill_r, fill_g, fill_b) = color_rgb_from_vec(doc.fill_color)
+  // Base fill color from text document (normalized 0-1)
+  let base_fill_r = get_vec_at(doc.fill_color, 0, 0.0)
+  let base_fill_g = get_vec_at(doc.fill_color, 1, 0.0)
+  let base_fill_b = get_vec_at(doc.fill_color, 2, 0.0)
   let text = doc.text
   let chars = text.to_array()
   let n = chars.length()
@@ -1816,9 +1838,15 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     let is_space = ch == ' '
     let advance = char_advances[ci]
 
-    // Compute animator scale multipliers for this character
+    // Compute animator effects for this character
     let mut anim_scale_x = 1.0
     let mut anim_scale_y = 1.0
+    let mut anim_pos_x = 0.0
+    let mut anim_pos_y = 0.0
+    // Keep fill color in normalized [0,1] space for blending
+    let mut char_fill_r = base_fill_r
+    let mut char_fill_g = base_fill_g
+    let mut char_fill_b = base_fill_b
     for anim in animators {
       let sel = anim.selector
       let total_chars = if sel.based_on == 2 {
@@ -1831,10 +1859,14 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       } else {
         global_char_index
       }
-      let mult = compute_animator_mult(sel, char_anim_idx, total_chars, self.current_frame)
+      let mult = compute_animator_mult(
+        sel, char_anim_idx, total_chars, self.current_comp_frame,
+      )
       match anim.properties.scale {
         Some(scale_prop) => {
-          let sv = @runtime.evaluate_vec_property(scale_prop, self.current_frame)
+          let sv = @runtime.evaluate_vec_property(
+            scale_prop, self.current_comp_frame,
+          )
           let sx = if sv.length() > 0 { sv[0] } else { 100.0 }
           let sy = if sv.length() > 1 { sv[1] } else { 100.0 }
           let sx_delta = sx / 100.0 - 1.0
@@ -1844,7 +1876,37 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         }
         None => ()
       }
+      match anim.properties.position {
+        Some(pos_prop) => {
+          let pv = @runtime.evaluate_vec_property(
+            pos_prop, self.current_comp_frame,
+          )
+          let px = if pv.length() > 0 { pv[0] } else { 0.0 }
+          let py = if pv.length() > 1 { pv[1] } else { 0.0 }
+          anim_pos_x = anim_pos_x + mult * px
+          anim_pos_y = anim_pos_y + mult * py
+        }
+        None => ()
+      }
+      match anim.properties.fill_color {
+        Some(fc_prop) => {
+          let fv = @runtime.evaluate_vec_property(
+            fc_prop, self.current_comp_frame,
+          )
+          // fv values are in [0,1] normalized range; blend toward anim color
+          let ar = get_vec_at(fv, 0, 0.0)
+          let ag = get_vec_at(fv, 1, 0.0)
+          let ab = get_vec_at(fv, 2, 0.0)
+          char_fill_r = char_fill_r + mult * (ar - char_fill_r)
+          char_fill_g = char_fill_g + mult * (ag - char_fill_g)
+          char_fill_b = char_fill_b + mult * (ab - char_fill_b)
+        }
+        None => ()
+      }
     }
+    let fill_r = color_channel_to_u8(char_fill_r)
+    let fill_g = color_channel_to_u8(char_fill_g)
+    let fill_b = color_channel_to_u8(char_fill_b)
 
     // Find and render glyph
     for g in glyphs {
@@ -1855,8 +1917,12 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         let saved_paths = self.current_paths
         self.current_paths = []
         self.renderer.save()
-        self.renderer.concat_transform(@math.Matrix::identity().translate(cursor_x, 0.0))
-        self.renderer.concat_transform(@math.Matrix::identity().scale(char_scale_x, char_scale_y))
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(cursor_x + anim_pos_x, anim_pos_y),
+        )
+        self.renderer.concat_transform(
+          @math.Matrix::identity().scale(char_scale_x, char_scale_y),
+        )
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
         self.renderer.set_fill_rule("nonzero")
