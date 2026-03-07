@@ -34,7 +34,8 @@ jobs:
       - name: Prepare demo for deployment
         run: |
           mkdir -p /tmp/demo_dist
-          cp demo/index.html /tmp/demo_dist/
+          DEPLOY_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          sed "s/data-utc=\"\"/data-utc=\"$DEPLOY_TIME\"/g" demo/index.html > /tmp/demo_dist/index.html
           cp demo/main.js /tmp/demo_dist/
           cp demo/sample_index.json /tmp/demo_dist/
           cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
