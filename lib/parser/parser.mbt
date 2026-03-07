@@ -1324,12 +1324,16 @@ fn parse_property_bezier(
                       } catch {
                         _ => None
                       }
+                      let in_tangent = parse_bezier_tangent(keyframe.in_tangent)
+                      let out_tangent = parse_bezier_tangent(keyframe.out_tangent)
                       keyframes.push(
                         @model.LottieKeyframe::new(
                           frame=keyframe_time_or_zero(keyframe.time),
                           start_value=s,
                           end_value=e,
                           hold=keyframe_hold_or_none(keyframe.hold),
+                          in_tangent=in_tangent,
+                          out_tangent=out_tangent,
                         ),
                       )
                     }

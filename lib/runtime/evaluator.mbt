@@ -415,13 +415,15 @@ pub fn evaluate_path_property(
       if kf.hold == Some(1) {
         return kf.start_value
       }
-      if t <= 0.0 {
+      if t <= 0.0 || idx >= keyframes.length() - 1 {
         return kf.start_value
       }
 
+      let k2 = keyframes[idx + 1]
+
       let next_val = match kf.end_value {
         Some(v) => v
-        None => return kf.start_value
+        None => k2.start_value
       }
 
       let eased_t = match (kf.out_tangent, kf.in_tangent) {
