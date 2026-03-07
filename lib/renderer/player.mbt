@@ -757,6 +757,10 @@ pub fn[R : Renderer] Player::render_shape(
           }
         }
         self.renderer.set_line_dash(dash_array, dash_offset)
+      } else {
+        // Reset any previously set dash pattern so it does not bleed into
+        // subsequent strokes within the same save/restore scope.
+        self.renderer.set_line_dash([], 0.0)
       }
       self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
