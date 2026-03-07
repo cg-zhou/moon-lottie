@@ -26,6 +26,7 @@ pub(all) struct TextAnimatorProperties {
   position : LottieProperty[Array[Double]]?
   opacity : LottieProperty[Double]?
   tracking : LottieProperty[Double]?
+  fill_color : LottieProperty[Array[Double]]?
 }
 
 ///|

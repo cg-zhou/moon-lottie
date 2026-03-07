@@ -481,6 +481,7 @@ struct TextAnimatorPropertiesJson {
   position : Json?
   opacity : Json?
   tracking : Json?
+  fill_color : Json?
 } derive(
   FromJson(
     fields(
@@ -488,6 +489,7 @@ struct TextAnimatorPropertiesJson {
       position(rename="p"),
       opacity(rename="o"),
       tracking(rename="t"),
+      fill_color(rename="fc"),
     ),
   ),
 )
@@ -1125,7 +1127,12 @@ fn parse_text_animator_properties(
   } catch {
     _ => None
   }
-  { scale, position, opacity, tracking }
+  let fill_color = try {
+    Some(parse_property_vec(decoded.fill_color))
+  } catch {
+    _ => None
+  }
+  { scale, position, opacity, tracking, fill_color }
 }
 
 ///|
@@ -1150,9 +1157,21 @@ fn parse_text_data_from_decoded(
             let properties = match anim_json.properties {
               Some(p_json) =>
                 parse_text_animator_properties(p_json) catch {
-                  _ => { scale: None, position: None, opacity: None, tracking: None }
+                  _ => {
+                    scale: None,
+                    position: None,
+                    opacity: None,
+                    tracking: None,
+                    fill_color: None,
+                  }
                 }
-              None => { scale: None, position: None, opacity: None, tracking: None }
+              None => {
+                scale: None,
+                position: None,
+                opacity: None,
+                tracking: None,
+                fill_color: None,
+              }
             }
             animators.push({ selector, properties })
           }
