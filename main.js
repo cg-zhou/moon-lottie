@@ -45,6 +45,8 @@ let currentGradient = null;
 let currentDash = [];
 const fillRuleStack = [];
 const offscreenStack = [];
+// Stack for two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
+const matteStack = [];
 
 const importObject = {
   demo: {
@@ -187,6 +189,51 @@ const importObject = {
         savedCtx.drawImage(offscreen, 0, 0);
         savedCtx.restore();
         ctx = savedCtx;
+    },
+    // Two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern).
+    // Called before save() and layer transforms: saves background to buffer[0],
+    // captures currentTransform, clears canvas.
+    prepareMatteLayer: () => {
+        const buf0 = document.createElement('canvas');
+        buf0.width = canvas.width;
+        buf0.height = canvas.height;
+        const buf0Ctx = buf0.getContext('2d');
+        buf0Ctx.drawImage(canvas, 0, 0);
+        const currentTransform = ctx.getTransform();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(currentTransform);
+        matteStack.push({ buf0, buf1: null, currentTransform });
+    },
+    // Called after restore(): saves layer content to buffer[1],
+    // clears canvas, restores base transform for matte source rendering.
+    beginMatteExit: () => {
+        if (matteStack.length === 0) return;
+        const state = matteStack[matteStack.length - 1];
+        const buf1 = document.createElement('canvas');
+        buf1.width = canvas.width;
+        buf1.height = canvas.height;
+        const buf1Ctx = buf1.getContext('2d');
+        buf1Ctx.drawImage(canvas, 0, 0);
+        state.buf1 = buf1;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(state.currentTransform);
+    },
+    // Called after matte source has been rendered on canvas.
+    // Composites: source-in(layer content, matte), destination-over(background), restore.
+    endMatteExit: (matte_type) => {
+        if (matteStack.length === 0) return;
+        const { buf0, buf1, currentTransform } = matteStack.pop();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // operationsMap: 1=source-in, 2=source-out, 3=source-in, 4=source-out
+        const compositeOp = (matte_type === 1 || matte_type === 3) ? 'source-in' : 'source-out';
+        ctx.globalCompositeOperation = compositeOp;
+        ctx.drawImage(buf1, 0, 0);
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.drawImage(buf0, 0, 0);
+        ctx.setTransform(currentTransform);
+        ctx.globalCompositeOperation = 'source-over';
     }
   },
   expressions: {
