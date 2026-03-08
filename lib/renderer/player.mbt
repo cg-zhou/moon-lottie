@@ -1735,7 +1735,8 @@ fn compute_animator_mult(
   let offset_raw = @runtime.evaluate_double_property(selector.offset, frame)
   let divisor = 100.0 / total_chars.to_double()
   let o = offset_raw / divisor
-  let s_val = 0.0 + o
+  let s_raw = @runtime.evaluate_double_property(selector.range_start, frame)
+  let s_val = s_raw / divisor + o
   let e_raw = @runtime.evaluate_double_property(selector.range_end, frame)
   let e_val = e_raw / divisor + o
   let (s_final, e_final) = if s_val <= e_val {

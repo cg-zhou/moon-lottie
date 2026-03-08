@@ -13,6 +13,7 @@ pub(all) struct TextAnimatorSelector {
   based_on : Int
   shape : Int
   randomize : Int
+  range_start : LottieProperty[Double]
   range_end : LottieProperty[Double]
   ease_high : LottieProperty[Double]
   ease_low : LottieProperty[Double]
