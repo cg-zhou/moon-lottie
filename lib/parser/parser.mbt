@@ -149,13 +149,15 @@ struct ShapeRectJson {
   position : Json?
   size : Json?
   roundness : Json?
-} derive(FromJson(fields(position(rename="p"), size(rename="s"), roundness(rename="r"))))
+  direction : Int?
+} derive(FromJson(fields(position(rename="p"), size(rename="s"), roundness(rename="r"), direction(rename="d"))))
 
 ///|
 struct ShapeEllipseJson {
   position : Json?
   size : Json?
-} derive(FromJson(fields(position(rename="p"), size(rename="s"))))
+  direction : Int?
+} derive(FromJson(fields(position(rename="p"), size(rename="s"), direction(rename="d"))))
 
 ///|
 struct ShapePathJson {
@@ -1411,7 +1413,10 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       let roundness = parse_property_double(decoded.roundness) catch {
         _ => @model.LottieProperty::new_static(0.0)
       }
-      @model.ShapeData::new_rect(@model.RectShape::new(position~, size~, roundness~))
+      let direction = decoded.direction.unwrap_or(1)
+      @model.ShapeData::new_rect(
+        @model.RectShape::new(position~, size~, roundness~, direction~),
+      )
     }
     "el" => {
       let decoded : ShapeEllipseJson = (@json.from_json(json)) catch {
@@ -1419,7 +1424,10 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       }
       let position = parse_property_vec(decoded.position)
       let size = parse_property_vec(decoded.size)
-      @model.ShapeData::new_ellipse(@model.EllipseShape::new(position~, size~))
+      let direction = decoded.direction.unwrap_or(1)
+      @model.ShapeData::new_ellipse(
+        @model.EllipseShape::new(position~, size~, direction~),
+      )
     }
     "sh" => {
       let decoded : ShapePathJson = (@json.from_json(json)) catch {

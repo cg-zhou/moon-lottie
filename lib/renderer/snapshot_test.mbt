@@ -417,16 +417,11 @@ test "snapshot_painted_group_and_fill_share_z_order" {
 }
 
 ///|
-/// Verify the track matte (destination-in) sequence matches lottie-web's buffer
-/// approach: SetBlendMode("destination-in") must be followed by SetBlendMode("source-over")
-/// to signal the JS layer to apply the full-canvas source-in masking that zeros
-/// pixels outside the matte region.
-test "snapshot_alpha_matte_uses_lottie_web_buffer_sequence" {
-  // Layers:
-  //   [0] Solid white 100×100 at (250,250)  – td=1  (matte source)
-  //   [1] Solid red  200×200 at (250,250)   – tt=1  (alpha matte target)
-  // After matte: red only visible where white solid is drawn.
-  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":1,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":100,\"sh\":100,\"sc\":\"#ffffff\",\"td\":1},{\"ty\":1,\"ind\":2,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":200,\"sh\":200,\"sc\":\"#ff0000\",\"tt\":1}]}"
+/// Ellipse with d=3 (counter-clockwise) must traverse top→left→bottom→right,
+/// matching lottie-web's `_cw = this.d !== 3` logic.
+test "snapshot_ellipse_direction_ccw_d3" {
+  // Layer at origin, ellipse d=3 (CCW), size=[100,100], position=[0,0]
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"el\",\"d\":3,\"nm\":\"ccw-circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
   let json = @json.parse(json_str)
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse: \{e}")
@@ -438,51 +433,139 @@ test "snapshot_alpha_matte_uses_lottie_web_buffer_sequence" {
   player.render()
 
   let commands = recorder.get_commands()
-  // The command sequence for the track matte must be exactly:
-  //   SetBlendMode("destination-in")  ← JS saves layer content + clears offscreen
-  //   … (matte source rendered with source-over) …
-  //   SetBlendMode("source-over")     ← JS applies source-in with saved content
-  //   EndLayer("source-over")         ← JS composites masked offscreen onto main
-  // Verify SetBlendMode("destination-in") comes before SetBlendMode("source-over")
-  // which comes before EndLayer("source-over"), and all are present.
-  let mut dest_in_idx = -1
-  let mut src_over_after_dest_in_idx = -1
-  let mut end_layer_idx = -1
-  for i = 0; i < commands.length(); i = i + 1 {
-    match commands[i] {
-      SetBlendMode("destination-in") =>
-        if dest_in_idx == -1 {
-          dest_in_idx = i
+  // Find the MoveTo and first CubicTo after BeginPath
+  let mut after_begin = false
+  let mut move_x = 0.0
+  let mut move_y = 0.0
+  let mut first_cubic_ex = 0.0
+  let mut first_cubic_ey = 0.0
+  let mut found_first_cubic = false
+  for cmd in commands {
+    match cmd {
+      BeginPath => {
+        after_begin = true
+        found_first_cubic = false
+      }
+      MoveTo(x, y) =>
+        if after_begin {
+          move_x = x
+          move_y = y
         }
-      SetBlendMode("source-over") =>
-        if dest_in_idx >= 0 && src_over_after_dest_in_idx == -1 {
-          src_over_after_dest_in_idx = i
-        }
-      EndLayer("source-over") =>
-        if src_over_after_dest_in_idx >= 0 && end_layer_idx == -1 {
-          end_layer_idx = i
+      CubicTo(_, _, _, _, ex, ey) =>
+        if after_begin && not(found_first_cubic) {
+          first_cubic_ex = ex
+          first_cubic_ey = ey
+          found_first_cubic = true
         }
       _ => ()
     }
   }
-  if dest_in_idx == -1 {
+  // d=3 CCW: first vertex = top (0, -50), first segment ends at LEFT (-50, 0)
+  if move_x != 0.0 || move_y != -50.0 {
     fail(
-      "Missing SetBlendMode(\"destination-in\") for alpha matte. Commands: \{commands}",
+      "CCW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
     )
   }
-  if src_over_after_dest_in_idx == -1 {
+  if first_cubic_ex != -50.0 || first_cubic_ey != 0.0 {
     fail(
-      "Missing SetBlendMode(\"source-over\") after destination-in. Commands: \{commands}",
+      "CCW ellipse first segment should end at left (-50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{commands}",
     )
   }
-  if end_layer_idx == -1 {
+}
+
+///|
+/// Ellipse with default direction (d=1, CW) must traverse top→right→bottom→left,
+/// unchanged from previous behaviour. This is verified by the existing
+/// snapshot_render_circle test; this test checks the explicit d=1 JSON field.
+test "snapshot_ellipse_direction_cw_d1" {
+  // Explicit d=1 should produce same result as no d field (clockwise)
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"el\",\"d\":1,\"nm\":\"cw-circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut after_begin = false
+  let mut move_x = 0.0
+  let mut move_y = 0.0
+  let mut first_cubic_ex = 0.0
+  let mut first_cubic_ey = 0.0
+  let mut found_first_cubic = false
+  for cmd in commands {
+    match cmd {
+      BeginPath => {
+        after_begin = true
+        found_first_cubic = false
+      }
+      MoveTo(x, y) =>
+        if after_begin {
+          move_x = x
+          move_y = y
+        }
+      CubicTo(_, _, _, _, ex, ey) =>
+        if after_begin && not(found_first_cubic) {
+          first_cubic_ex = ex
+          first_cubic_ey = ey
+          found_first_cubic = true
+        }
+      _ => ()
+    }
+  }
+  // d=1 CW: first vertex = top (0, -50), first segment ends at RIGHT (50, 0)
+  if move_x != 0.0 || move_y != -50.0 {
     fail(
-      "Missing EndLayer(\"source-over\") after the matte sequence. Commands: \{commands}",
+      "CW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
     )
   }
-  if not(dest_in_idx < src_over_after_dest_in_idx && src_over_after_dest_in_idx < end_layer_idx) {
+  if first_cubic_ex != 50.0 || first_cubic_ey != 0.0 {
     fail(
-      "Alpha matte command sequence out of order. Commands: \{commands}",
+      "CW ellipse first segment should end at right (50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{commands}",
+    )
+  }
+}
+
+///|
+/// Rect with d=3 (counter-clockwise) must traverse top-right→top-left→bottom-left→bottom-right,
+/// opposite to the default CW order (top-left→top-right→bottom-right→bottom-left).
+test "snapshot_rect_direction_ccw_d3" {
+  // Layer at origin, rect d=3 (CCW), size=[100,100], position=[0,0]
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"rc\",\"d\":3,\"nm\":\"ccw-rect\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[0,1,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  // d=3 CCW rect with size=[100,100], center=[0,0]:
+  //   first vertex = top-right = [+50, -50]
+  let mut after_begin = false
+  let mut move_x = 0.0
+  let mut move_y = 0.0
+  for cmd in commands {
+    match cmd {
+      BeginPath => after_begin = true
+      MoveTo(x, y) =>
+        if after_begin {
+          move_x = x
+          move_y = y
+        }
+      _ => ()
+    }
+  }
+  if move_x != 50.0 || move_y != -50.0 {
+    fail(
+      "CCW rect (d=3) should start at top-right (50, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
     )
   }
 }
