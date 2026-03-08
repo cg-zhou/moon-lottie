@@ -466,3 +466,84 @@ test "layer fill effect applies source-atop color overlay" {
   assert_eq(saw_source_atop, true)
   assert_eq(saw_overlay_fill, true)
 }
+
+test "text animator opacity affects glyph fill opacity" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"B","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Test Bold","t":"AB","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[{"a":{"o":{"a":0,"k":0}},"s":{}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut fill_count = 0
+  for cmd in commands {
+    match cmd {
+      Fill(_, _, _, opacity) => {
+        fill_count = fill_count + 1
+        if opacity > 0.000001 {
+          fail("Expected glyph fill opacity to be 0, got \{opacity}")
+        }
+      }
+      _ => ()
+    }
+  }
+  assert_eq(fill_count, 2)
+}
+
+test "text animator tracking shifts glyph positions" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"B","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Test Bold","t":"AB","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[{"a":{"t":{"a":0,"k":20}},"s":{}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut max_translate_x = -1.0
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.a == 1.0 && m.b == 0.0 && m.c == 0.0 && m.d == 1.0 && m.e > max_translate_x {
+          max_translate_x = m.e
+        }
+      _ => ()
+    }
+  }
+  if max_translate_x < 69.999 || max_translate_x > 70.001 {
+    fail(
+      "Expected second glyph translate x around 70 (50 advance + 20 tracking), got \{max_translate_x}",
+    )
+  }
+}
+
+test "matte source render resets transform to identity during matte exit" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"td":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[10,10]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[80,80]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,1,1]},"o":{"k":100}}]},{"ty":4,"ind":2,"tt":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[60,20]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[120,120]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut in_matte_exit = false
+  let mut saw_identity_set_transform = false
+  for cmd in commands {
+    match cmd {
+      BeginMatteExit => in_matte_exit = true
+      EndMatteExit(_) => in_matte_exit = false
+      SetTransform(m) =>
+        if in_matte_exit && m == @math.Matrix::identity() {
+          saw_identity_set_transform = true
+        }
+      _ => ()
+    }
+  }
+  assert_eq(saw_identity_set_transform, true)
+}
