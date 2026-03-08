@@ -425,7 +425,7 @@ async function startPlayer(jsonStr) {
         try {
             officialPlayer = window.lottie.loadAnimation({
                 container: container,
-                renderer: 'canvas',
+                renderer: 'svg',
                 loop: false,
                 autoplay: false,
                 animationData: animationData,
