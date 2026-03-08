@@ -415,3 +415,74 @@ test "snapshot_painted_group_and_fill_share_z_order" {
     )
   }
 }
+
+///|
+/// Verify the track matte (destination-in) sequence matches lottie-web's buffer
+/// approach: SetBlendMode("destination-in") must be followed by SetBlendMode("source-over")
+/// to signal the JS layer to apply the full-canvas source-in masking that zeros
+/// pixels outside the matte region.
+test "snapshot_alpha_matte_uses_lottie_web_buffer_sequence" {
+  // Layers:
+  //   [0] Solid white 100×100 at (250,250)  – td=1  (matte source)
+  //   [1] Solid red  200×200 at (250,250)   – tt=1  (alpha matte target)
+  // After matte: red only visible where white solid is drawn.
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":1,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":100,\"sh\":100,\"sc\":\"#ffffff\",\"td\":1},{\"ty\":1,\"ind\":2,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":200,\"sh\":200,\"sc\":\"#ff0000\",\"tt\":1}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  // The command sequence for the track matte must be exactly:
+  //   SetBlendMode("destination-in")  ← JS saves layer content + clears offscreen
+  //   … (matte source rendered with source-over) …
+  //   SetBlendMode("source-over")     ← JS applies source-in with saved content
+  //   EndLayer("source-over")         ← JS composites masked offscreen onto main
+  // Verify SetBlendMode("destination-in") comes before SetBlendMode("source-over")
+  // which comes before EndLayer("source-over"), and all are present.
+  let mut dest_in_idx = -1
+  let mut src_over_after_dest_in_idx = -1
+  let mut end_layer_idx = -1
+  for i = 0; i < commands.length(); i = i + 1 {
+    match commands[i] {
+      SetBlendMode("destination-in") =>
+        if dest_in_idx == -1 {
+          dest_in_idx = i
+        }
+      SetBlendMode("source-over") =>
+        if dest_in_idx >= 0 && src_over_after_dest_in_idx == -1 {
+          src_over_after_dest_in_idx = i
+        }
+      EndLayer("source-over") =>
+        if src_over_after_dest_in_idx >= 0 && end_layer_idx == -1 {
+          end_layer_idx = i
+        }
+      _ => ()
+    }
+  }
+  if dest_in_idx == -1 {
+    fail(
+      "Missing SetBlendMode(\"destination-in\") for alpha matte. Commands: \{commands}",
+    )
+  }
+  if src_over_after_dest_in_idx == -1 {
+    fail(
+      "Missing SetBlendMode(\"source-over\") after destination-in. Commands: \{commands}",
+    )
+  }
+  if end_layer_idx == -1 {
+    fail(
+      "Missing EndLayer(\"source-over\") after the matte sequence. Commands: \{commands}",
+    )
+  }
+  if not(dest_in_idx < src_over_after_dest_in_idx && src_over_after_dest_in_idx < end_layer_idx) {
+    fail(
+      "Alpha matte command sequence out of order. Commands: \{commands}",
+    )
+  }
+}
