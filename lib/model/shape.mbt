@@ -113,6 +113,9 @@ pub struct RectShape {
   position : LottieProperty[Array[Double]]
   size : LottieProperty[Array[Double]]
   roundness : LottieProperty[Double]
+  /// Winding direction: 3 = counter-clockwise, anything else = clockwise (default).
+  /// Matches lottie-web: `if (this.d === 2 || this.d === 1)` for CW, else CCW.
+  direction : Int
 }
 
 ///|
@@ -120,22 +123,27 @@ pub fn RectShape::new(
   position~ : LottieProperty[Array[Double]],
   size~ : LottieProperty[Array[Double]],
   roundness~ : LottieProperty[Double],
+  direction? : Int = 1,
 ) -> RectShape {
-  { position, size, roundness }
+  { position, size, roundness, direction }
 }
 
 ///|
 pub struct EllipseShape {
   position : LottieProperty[Array[Double]]
   size : LottieProperty[Array[Double]]
+  /// Winding direction: 3 = counter-clockwise, anything else = clockwise (default).
+  /// Matches lottie-web: `_cw = this.d !== 3`.
+  direction : Int
 }
 
 ///|
 pub fn EllipseShape::new(
   position~ : LottieProperty[Array[Double]],
   size~ : LottieProperty[Array[Double]],
+  direction? : Int = 1,
 ) -> EllipseShape {
-  { position, size }
+  { position, size, direction }
 }
 
 ///|
@@ -177,6 +185,25 @@ pub fn BezierPath::new_rect(
   let hh = h / 2.0
   BezierPath::new(
     vertices=[[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh]],
+    in_tangents=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    out_tangents=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+    closed=true,
+  )
+}
+
+///|
+/// Counter-clockwise rectangle: top-right → top-left → bottom-left → bottom-right.
+/// Matches lottie-web `d === 3` direction.
+pub fn BezierPath::new_rect_ccw(
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+) -> BezierPath {
+  let hw = w / 2.0
+  let hh = h / 2.0
+  BezierPath::new(
+    vertices=[[x + hw, y - hh], [x - hw, y - hh], [x - hw, y + hh], [x + hw, y + hh]],
     in_tangents=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
     out_tangents=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
     closed=true,
