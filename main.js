@@ -24,6 +24,7 @@ let currentFileSize = 0;
 let imageAssets = new Map();
 let imageLayerRefsByFrame = new Map();
 let frameImageDrawCursor = 0;
+let currentAnimationRequestId = null;
 
 // Helper to convert MoonBit string (WasmGC array) to JS string
 function moonStringJS(moonStr) {
@@ -294,7 +295,13 @@ async function initAnimList() {
             listEl.appendChild(opt);
         });
         
-        if (entries.length > 0) {
+        const lastSelected = localStorage.getItem('moon-lottie-last-anim');
+        const hasLastInList = lastSelected && entries.some(e => (typeof e === 'object' ? e.file : e) === lastSelected);
+        
+        if (hasLastInList) {
+            listEl.value = lastSelected;
+            loadRemoteAnimation(lastSelected);
+        } else if (entries.length > 0) {
             const firstFile = typeof entries[0] === 'object' ? entries[0].file : entries[0];
             loadRemoteAnimation(firstFile);
         }
@@ -380,7 +387,17 @@ async function startPlayer(jsonStr) {
     let animationData;
     try { animationData = JSON.parse(jsonStr); } catch (e) { alert("无效的 JSON 文件"); return; }
 
+    console.log(`[MoonLottie] Starting new animation: ${currentFileName}`);
     statusMsg.innerText = "初始化渲染引擎...";
+    
+    // Stop any existing render loop and reset timing
+    if (currentAnimationRequestId) {
+        console.log(`[MoonLottie] Cancelling existing animation loop (ID: ${currentAnimationRequestId})`);
+        cancelAnimationFrame(currentAnimationRequestId);
+        currentAnimationRequestId = null;
+    }
+    lastTimestamp = 0; 
+
     await preloadAssets(animationData);
     rebuildImageLayerTimeline(animationData);
     // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
@@ -425,7 +442,7 @@ async function startPlayer(jsonStr) {
         try {
             officialPlayer = window.lottie.loadAnimation({
                 container: container,
-                renderer: 'canvas',
+                renderer: 'svg',
                 loop: false,
                 autoplay: false,
                 animationData: animationData,
@@ -462,14 +479,19 @@ async function startPlayer(jsonStr) {
     updatePlayPauseButton();
     
     statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
-    requestAnimationFrame(renderLoop);
+    
+    currentAnimationRequestId = requestAnimationFrame(renderLoop);
+    console.log(`[MoonLottie] New animation loop started (ID: ${currentAnimationRequestId})`);
 }
 
 function renderLoop(timestamp) {
     if (!player) return;
     
     if (isPlaying) {
-        if (!lastTimestamp) lastTimestamp = timestamp;
+        if (!lastTimestamp) {
+            console.log(`[MoonLottie] Render loop iteration starting with new timestamp: ${timestamp}`);
+            lastTimestamp = timestamp;
+        }
         const deltaTime = (timestamp - lastTimestamp) / 1000;
         lastTimestamp = timestamp;
 
@@ -492,7 +514,7 @@ function renderLoop(timestamp) {
         lastTimestamp = 0;
     }
     
-    requestAnimationFrame(renderLoop);
+    currentAnimationRequestId = requestAnimationFrame(renderLoop);
 }
 
 function updateUI() {
@@ -569,6 +591,7 @@ function initDeployTime() {
 
 // Animation list change
 document.getElementById('anim-list').onchange = (e) => {
+    localStorage.setItem('moon-lottie-last-anim', e.target.value);
     loadRemoteAnimation(e.target.value);
 };
 
