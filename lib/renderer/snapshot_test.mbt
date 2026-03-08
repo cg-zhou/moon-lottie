@@ -178,17 +178,33 @@ test "snapshot_render_alpha_matte" {
   player.render()
 
   let commands = recorder.get_commands()
-  // Check for SetBlendMode("destination-in")
-  let has_matte_mode = commands
+  // Check for two-buffer matte pattern: PrepareMatteLayer, BeginMatteExit, EndMatteExit
+  let has_prepare = commands
     .iter()
     .any(fn(c) {
       match c {
-        SetBlendMode("destination-in") => true
+        PrepareMatteLayer => true
         _ => false
       }
     })
-  if not(has_matte_mode) {
-    fail("Matte blend mode missing. Commands: \{commands}")
+  let has_begin_exit = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        BeginMatteExit => true
+        _ => false
+      }
+    })
+  let has_end_exit = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        EndMatteExit(1) => true
+        _ => false
+      }
+    })
+  if not(has_prepare && has_begin_exit && has_end_exit) {
+    fail("Two-buffer matte pattern missing. Commands: \{commands}")
   }
 }
 
@@ -209,21 +225,27 @@ test "snapshot_render_matte_in_comp_space" {
   player.render()
 
   let commands = recorder.get_commands()
-  let mut has_reset_before_matte = false
-  for i = 0; i + 2 < commands.length(); i = i + 1 {
-    match (commands[i], commands[i + 1], commands[i + 2]) {
-      (
-        SetBlendMode("destination-in"),
-        Save,
-        SetTransform({ a: 1.0, b: 0.0, c: 0.0, d: 1.0, e: 0.0, f: 0.0 }),
-      ) => {
-        has_reset_before_matte = true
-        break
+  // In the two-buffer pattern, after BeginMatteExit the matte source is rendered
+  // starting from the base transform (identity). Its ConcatTransform should apply
+  // its own position (120,120), NOT inherited from the target (260,260).
+  let mut matte_source_at_comp_pos = false
+  let mut after_begin_exit = false
+  for cmd in commands {
+    if after_begin_exit {
+      match cmd {
+        ConcatTransform({ a: 1.0, b: 0.0, c: 0.0, d: 1.0, e: 120.0, f: 120.0 }) => {
+          matte_source_at_comp_pos = true
+          break
+        }
+        _ => ()
       }
+    }
+    match cmd {
+      BeginMatteExit => after_begin_exit = true
       _ => ()
     }
   }
-  if not(has_reset_before_matte) {
+  if not(matte_source_at_comp_pos) {
     fail(
       "Matte source should be rendered from composition transform space. Commands: \{commands}",
     )

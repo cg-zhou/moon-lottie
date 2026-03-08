@@ -118,9 +118,17 @@ pub trait Renderer {
   set_fill_rule(self : Self, rule : String) -> Unit
   set_opacity(self : Self, opacity : Double) -> Unit
 
-  // Isolated compositing layer for track matte / blend mode isolation
+  // Isolated compositing layer for fill effect isolation
   begin_layer(self : Self) -> Unit
   end_layer(self : Self, mode : String) -> Unit
+
+  // Two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
+  // Called before save() and layer transforms: saves background, captures base transform, clears canvas
+  prepare_matte_layer(self : Self) -> Unit
+  // Called after restore(): saves layer content, clears canvas, restores base transform
+  begin_matte_exit(self : Self) -> Unit
+  // Called after matte source has been rendered: source-in composite, destination-over background, restore
+  end_matte_exit(self : Self, matte_type : Int) -> Unit
 }
 
 ///| DrawCommand representing a single drawing operation.
@@ -184,6 +192,9 @@ pub enum DrawCommand {
   SetOpacity(Double)
   BeginLayer
   EndLayer(String)
+  PrepareMatteLayer
+  BeginMatteExit
+  EndMatteExit(Int)
 } derive(Show, Eq)
 
 ///|
@@ -459,4 +470,26 @@ pub impl Renderer for CommandRecorder with end_layer(
   mode : String,
 ) {
   self.commands.push(EndLayer(mode))
+}
+
+///|
+pub impl Renderer for CommandRecorder with prepare_matte_layer(
+  self : CommandRecorder,
+) {
+  self.commands.push(PrepareMatteLayer)
+}
+
+///|
+pub impl Renderer for CommandRecorder with begin_matte_exit(
+  self : CommandRecorder,
+) {
+  self.commands.push(BeginMatteExit)
+}
+
+///|
+pub impl Renderer for CommandRecorder with end_matte_exit(
+  self : CommandRecorder,
+  matte_type : Int,
+) {
+  self.commands.push(EndMatteExit(matte_type))
 }
