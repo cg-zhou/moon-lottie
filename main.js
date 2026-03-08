@@ -109,17 +109,70 @@ const importObject = {
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
         ctx.fillText(moonStringJS(text), 0, 0); ctx.restore();
     },
-    setGlobalCompositeOperation: (mode) => { ctx.globalCompositeOperation = moonStringJS(mode); },
+    setGlobalCompositeOperation: (mode) => {
+        const modeStr = moonStringJS(mode);
+        // Alpha matte (tt=1) fix: match lottie-web's buffer approach exactly.
+        // lottie-web saves layer content to buffer1, clears the canvas, renders the matte
+        // with source-over, then applies source-in with buffer1 so that ALL canvas pixels
+        // are zeroed outside the matte region.  A plain destination-in drawImage only
+        // affects pixels within the drawn primitive's bounding box – everything else
+        // would bleed through unchanged, causing the dark-Bg-fills-canvas bug.
+        //
+        // The guard `offscreenStack.length > 0` ensures this only applies inside an
+        // isolated layer (beginLayer context).  Alpha mattes in moon-lottie always
+        // trigger beginLayer for the matted layer, so this guard is always satisfied.
+        // matteContent is stored on the current offscreen stack entry so that nested
+        // layers (e.g. a matte source with its own fill effect) do not accidentally
+        // consume each other's saved buffers.
+        if (modeStr === 'destination-in' && offscreenStack.length > 0) {
+            const entry = offscreenStack[offscreenStack.length - 1];
+            const w = ctx.canvas.width;
+            const h = ctx.canvas.height;
+            // Step 1: snapshot the current layer content at identity pixel coordinates.
+            const contentBuffer = document.createElement('canvas');
+            contentBuffer.width = w;
+            contentBuffer.height = h;
+            contentBuffer.getContext('2d').drawImage(ctx.canvas, 0, 0);
+            // Step 2: clear the offscreen so the matte renders onto a blank surface.
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, w, h);
+            ctx.restore();
+            entry.matteContent = contentBuffer;
+            // Leave globalCompositeOperation as source-over so the matte draws normally.
+        } else if (modeStr === 'source-over' && offscreenStack.length > 0 &&
+                   offscreenStack[offscreenStack.length - 1].matteContent !== null) {
+            // The matte has just been rendered onto the cleared offscreen with source-over.
+            // Apply lottie-web's source-in step: draw the saved layer content through the
+            // matte.  Because the saved buffer is full-canvas size, source-in processes
+            // every pixel – zeroing anything outside the matte region.
+            const entry = offscreenStack[offscreenStack.length - 1];
+            const buf = entry.matteContent;
+            entry.matteContent = null;
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.drawImage(buf, 0, 0);
+            ctx.restore();
+            // restore() returns the transform to what it was just before this save().
+            // globalCompositeOperation is also restored to its pre-save value (source-over,
+            // since we did not change it between clearing the offscreen and now).
+        } else {
+            ctx.globalCompositeOperation = modeStr;
+        }
+    },
     beginLayer: () => {
         // Create an offscreen canvas for isolated compositing (track matte support).
         // We copy the current accumulated transform so drawing coordinates are unchanged.
+        // matteContent holds the saved layer pixels during the destination-in matte phase
+        // (see setGlobalCompositeOperation); it is null when no matte phase is active.
         const offscreen = document.createElement('canvas');
         offscreen.width = canvas.width;
         offscreen.height = canvas.height;
         const offCtx = offscreen.getContext('2d');
         const t = ctx.getTransform();
         offCtx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-        offscreenStack.push({ savedCtx: ctx, offscreen, savedOpacity: ctx.globalAlpha });
+        offscreenStack.push({ savedCtx: ctx, offscreen, savedOpacity: ctx.globalAlpha, matteContent: null });
         ctx = offCtx;
         ctx.globalAlpha = 1.0;
     },
