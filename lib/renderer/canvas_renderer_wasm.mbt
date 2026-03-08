@@ -528,3 +528,43 @@ pub impl Renderer for CanvasRenderer with end_layer(
   let _ = self
   canvas_end_layer(mode)
 }
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_prepare_matte_layer() = "canvas" "prepareMatteLayer"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_begin_matte_exit() = "canvas" "beginMatteExit"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_end_matte_exit(matte_type : Int) = "canvas" "endMatteExit"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with prepare_matte_layer(
+  self : CanvasRenderer,
+) {
+  let _ = self
+  canvas_prepare_matte_layer()
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with begin_matte_exit(
+  self : CanvasRenderer,
+) {
+  let _ = self
+  canvas_begin_matte_exit()
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with end_matte_exit(
+  self : CanvasRenderer,
+  matte_type : Int,
+) {
+  let _ = self
+  canvas_end_matte_exit(matte_type)
+}

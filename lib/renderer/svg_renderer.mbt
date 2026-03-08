@@ -265,6 +265,29 @@ pub impl Renderer for SvgRenderer with end_layer(
 }
 
 ///|
+pub impl Renderer for SvgRenderer with prepare_matte_layer(
+  self : SvgRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
+pub impl Renderer for SvgRenderer with begin_matte_exit(
+  self : SvgRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
+pub impl Renderer for SvgRenderer with end_matte_exit(
+  self : SvgRenderer,
+  matte_type : Int,
+) -> Unit {
+  let _ = self
+  let _ = matte_type
+}
+
+///|
 pub impl Renderer for SvgRenderer with clear_rect(
   self : SvgRenderer,
   x : Double,

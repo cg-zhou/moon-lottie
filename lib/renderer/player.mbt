@@ -138,29 +138,7 @@ fn[R : Renderer] Player::render_layer(
   self.debug_property = "layer"
   self.debug_log("render_layer")
 
-  self.renderer.save()
-
-  // 0. Apply Parent Transform
-  match layer.parent {
-    Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
-    None => ()
-  }
-
-  // 1. Apply Layer Transform
-  // lottie-web evaluates all layer properties (transforms and shapes) using
-  // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
-  // comp_frame vs t.
-  let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
-  self.renderer.concat_transform(matrix)
-
-  // 1.2 Apply Layer Opacity
-  let opacity = @runtime.evaluate_double_property(
-    layer.transform.opacity,
-    comp_frame,
-  )
-  self.renderer.set_opacity(opacity / 100.0)
-
-  // 1.5 Find matte source (before rendering so we know if begin_layer is needed)
+  // 0. Find matte source (needed before prepareLayer, matching lottie-web's order).
   let mut matte_source : @model.Layer? = None
   match layer.matte_type {
     Some(1) | Some(2) | Some(3) | Some(4) => {
@@ -174,20 +152,46 @@ fn[R : Renderer] Player::render_layer(
     _ => ()
   }
 
-  // 1.6 Begin isolated compositing layer for effects / track matte.
-  // This ensures compositing stays local to this layer.
-  let needs_layer_isolation = match matte_source {
-    Some(_) => true
-    None => match layer.fill_effect {
-      Some(_) => true
-      None => false
-    }
+  // 0.1 prepareLayer (lottie-web pattern): called BEFORE save() and transforms.
+  // Saves background to buffer[0], captures base transform, clears canvas.
+  match matte_source {
+    Some(_) => self.renderer.prepare_matte_layer()
+    None => ()
   }
-  if needs_layer_isolation {
+
+  self.renderer.save()
+
+  // 1. Apply Parent Transform
+  match layer.parent {
+    Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
+    None => ()
+  }
+
+  // 2. Apply Layer Transform
+  // lottie-web evaluates all layer properties (transforms and shapes) using
+  // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
+  // comp_frame vs t.
+  let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
+  self.renderer.concat_transform(matrix)
+
+  // 2.2 Apply Layer Opacity
+  let opacity = @runtime.evaluate_double_property(
+    layer.transform.opacity,
+    comp_frame,
+  )
+  self.renderer.set_opacity(opacity / 100.0)
+
+  // 2.5 Begin isolated compositing layer for fill effects only.
+  // Track matte now uses the two-buffer prepareLayer/exitLayer pattern instead.
+  let needs_fill_isolation = match layer.fill_effect {
+    Some(_) => true
+    None => false
+  }
+  if needs_fill_isolation {
     self.renderer.begin_layer()
   }
 
-  // 2. Apply Layer Masks
+  // 3. Apply Layer Masks
   let mut mask_restore_count = 0
   match layer.masks {
     Some(masks) => {
@@ -281,47 +285,53 @@ fn[R : Renderer] Player::render_layer(
     None => ()
   }
 
-  // 3. Render Layer Content
+  // 4. Render Layer Content
   self.render_layer_content(layer, layer_frame)
 
-  // 4. Restore mask states
+  // 5. Restore mask states
   for _ in 0..<mask_restore_count {
     self.renderer.restore()
   }
 
-  // 5. Apply Layer Effects
+  // 6. Apply Layer Effects
   match layer.fill_effect {
     Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, comp_frame)
     None => ()
   }
 
-  // 6. Apply Track Matte inside the isolated layer
+  if needs_fill_isolation {
+    self.renderer.end_layer("source-over")
+  }
+
+  self.renderer.restore()
+
+  // 7. Apply Track Matte using lottie-web's exitLayer two-buffer pattern.
+  // This runs AFTER restore() so the canvas is back at the base transform,
+  // matching lottie-web's exitLayer() which is called after restore().
   match matte_source {
     Some(m_layer) => {
-      let mode = match layer.matte_type {
-        Some(1) | Some(3) => "destination-in"
-        Some(2) | Some(4) => "destination-out"
-        _ => "destination-in"
-      }
-      self.renderer.set_blend_mode(mode)
+      // begin_matte_exit: saves layer content to buffer[1], clears canvas,
+      // restores base transform for matte source rendering.
+      self.renderer.begin_matte_exit()
+      // Render matte source on main canvas starting from base transform.
+      // The matte's render_layer will apply its own parent chain from identity,
+      // matching lottie-web's mask.renderFrame(true) called from exitLayer.
       let matte_saved_frame = self.current_frame
       self.current_frame = comp_frame
-      // Track matte source is a sibling layer in composition space.
-      // Reset transform before rendering matte source to avoid inheriting
-      // the matted layer's local transform.
-      self.renderer.save()
-      self.renderer.set_transform(@math.Matrix::identity())
       self.render_layer(m_layer, scope)
-      self.renderer.restore()
       self.current_frame = matte_saved_frame
-      self.renderer.set_blend_mode("source-over")
+      // end_matte_exit: source-in composite buffer[1] (layer content) with
+      // matte on canvas, then destination-over buffer[0] (background).
+      let matte_type = match layer.matte_type {
+        Some(1) | Some(3) => 1
+        Some(2) | Some(4) => 2
+        _ => 1
+      }
+      self.renderer.end_matte_exit(matte_type)
     }
     None => ()
   }
-  if needs_layer_isolation {
-    self.renderer.end_layer("source-over")
-  }
-  self.renderer.restore()
+
   self.current_frame = saved_frame
   self.current_comp_frame = saved_comp_frame
 }
