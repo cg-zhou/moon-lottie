@@ -318,7 +318,10 @@ fn[R : Renderer] Player::render_layer(
       // matching lottie-web's mask.renderFrame(true) called from exitLayer.
       let matte_saved_frame = self.current_frame
       self.current_frame = comp_frame
+      self.renderer.save()
+      self.renderer.set_transform(@math.Matrix::identity())
       self.render_layer(m_layer, scope)
+      self.renderer.restore()
       self.current_frame = matte_saved_frame
       // end_matte_exit: source-in composite buffer[1] (layer content) with
       // matte on canvas, then destination-over buffer[0] (background).
@@ -1735,7 +1738,8 @@ fn compute_animator_mult(
   let offset_raw = @runtime.evaluate_double_property(selector.offset, frame)
   let divisor = 100.0 / total_chars.to_double()
   let o = offset_raw / divisor
-  let s_val = 0.0 + o
+  let s_raw = @runtime.evaluate_double_property(selector.range_start, frame)
+  let s_val = s_raw / divisor + o
   let e_raw = @runtime.evaluate_double_property(selector.range_end, frame)
   let e_val = e_raw / divisor + o
   let (s_final, e_final) = if s_val <= e_val {
@@ -1769,6 +1773,59 @@ fn compute_animator_mult(
         let v = 0.5 / (e_final - s_final) + (ind - s_final) / (e_final - s_final)
         let clamped = if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
         1.0 - clamped
+      }
+    }
+    4 => {
+      if e_final == s_final {
+        0.0
+      } else {
+        let v = 0.5 / (e_final - s_final) + (ind - s_final) / (e_final - s_final)
+        let mut clamped = if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
+        if clamped < 0.5 {
+          clamped = clamped * 2.0
+        } else {
+          clamped = 1.0 - 2.0 * (clamped - 0.5)
+        }
+        clamped
+      }
+    }
+    5 => {
+      if e_final == s_final {
+        0.0
+      } else {
+        let tot = e_final - s_final
+        let clamped_ind = {
+          let v = ind + 0.5 - s_final
+          if v < 0.0 {
+            0.0
+          } else if v > tot {
+            tot
+          } else {
+            v
+          }
+        }
+        let x = -tot / 2.0 + clamped_ind
+        let a = tot / 2.0
+        @math.sqrt(1.0 - (x * x) / (a * a))
+      }
+    }
+    6 => {
+      if e_final == s_final {
+        0.0
+      } else {
+        let tot = e_final - s_final
+        let clamped_ind = {
+          let v = ind + 0.5 - s_final
+          if v < 0.0 {
+            0.0
+          } else if v > tot {
+            tot
+          } else {
+            v
+          }
+        }
+        let pi = 3.141592653589793
+        (1.0 + @std_math.cos(pi + pi * 2.0 * clamped_ind / tot)) / 2.0
       }
     }
     _ => {
@@ -1827,6 +1884,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   let text = doc.text
   let chars = text.to_array()
   let n = chars.length()
+  let base_tracking = doc.tracking * 0.001 * doc.size
 
   // Count non-space chars for b=2 animators
   let mut non_space_count = 0
@@ -1846,7 +1904,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       if g.ch == ch_str && doc.font.contains(g.style) {
         let advance = g.advance_width * doc.size / 100.0
         char_advances.push(advance)
-        total_width += advance
+        total_width += advance + base_tracking
         found = true
         break
       }
@@ -1854,7 +1912,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     if not(found) {
       let fallback = doc.size * glyph_fallback_advance_ratio
       char_advances.push(fallback)
-      total_width += fallback
+      total_width += fallback + base_tracking
     }
   }
 
@@ -1878,6 +1936,8 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     let mut anim_scale_y = 1.0
     let mut anim_pos_x = 0.0
     let mut anim_pos_y = 0.0
+    let mut anim_tracking = 0.0
+    let mut char_opacity = 1.0
     // Keep fill color in normalized [0,1] space for blending
     let mut char_fill_r = base_fill_r
     let mut char_fill_g = base_fill_g
@@ -1938,6 +1998,34 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         }
         None => ()
       }
+      match anim.properties.opacity {
+        Some(opacity_prop) => {
+          let ov = @runtime.evaluate_double_property(
+            opacity_prop, self.current_comp_frame,
+          ) / 100.0
+          char_opacity = char_opacity + mult * (ov - char_opacity)
+        }
+        None => ()
+      }
+      match anim.properties.tracking {
+        Some(tracking_prop) => {
+          let tv = @runtime.evaluate_double_property(
+            tracking_prop, self.current_comp_frame,
+          )
+          anim_tracking = anim_tracking + mult * tv
+        }
+        None => ()
+      }
+    }
+    if ci > 0 || doc.justify != 0 {
+      cursor_x = cursor_x + anim_tracking
+    }
+    let fill_opacity = if char_opacity < 0.0 {
+      0.0
+    } else if char_opacity > 1.0 {
+      1.0
+    } else {
+      char_opacity
     }
     let fill_r = color_channel_to_u8(char_fill_r)
     let fill_g = color_channel_to_u8(char_fill_g)
@@ -1961,14 +2049,14 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
         self.renderer.set_fill_rule("nonzero")
-        self.renderer.fill(fill_r, fill_g, fill_b, 1.0)
+        self.renderer.fill(fill_r, fill_g, fill_b, fill_opacity)
         self.current_paths = saved_paths
         self.renderer.restore()
         break
       }
     }
 
-    cursor_x += advance
+    cursor_x += advance + base_tracking
     global_char_index = global_char_index + 1
     if not(is_space) {
       non_space_index = non_space_index + 1

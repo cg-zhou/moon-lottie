@@ -457,6 +457,7 @@ struct TextAnimatorSelectorJson {
   based_on : Int?
   shape : Int?
   randomize : Int?
+  range_start : Json?
   range_end : Json?
   ease_high : Json?
   ease_low : Json?
@@ -468,6 +469,7 @@ struct TextAnimatorSelectorJson {
       based_on(rename="b"),
       shape(rename="sh"),
       randomize(rename="rn"),
+      range_start(rename="s"),
       range_end(rename="e"),
       ease_high(rename="ne"),
       ease_low(rename="xe"),
@@ -1078,6 +1080,9 @@ fn parse_text_animator_selector(
   let range_end = parse_property_double(decoded.range_end) catch {
     _ => @model.LottieProperty::new_static(100.0)
   }
+  let range_start = parse_property_double(decoded.range_start) catch {
+    _ => @model.LottieProperty::new_static(0.0)
+  }
   let ease_high = parse_property_double(decoded.ease_high) catch {
     _ => @model.LottieProperty::new_static(0.0)
   }
@@ -1094,6 +1099,7 @@ fn parse_text_animator_selector(
     based_on: decoded.based_on.unwrap_or(1),
     shape: decoded.shape.unwrap_or(1),
     randomize: decoded.randomize.unwrap_or(0),
+    range_start,
     range_end,
     ease_high,
     ease_low,
