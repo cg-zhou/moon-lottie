@@ -415,3 +415,157 @@ test "snapshot_painted_group_and_fill_share_z_order" {
     )
   }
 }
+
+///|
+/// Ellipse with d=3 (counter-clockwise) must traverse top→left→bottom→right,
+/// matching lottie-web's `_cw = this.d !== 3` logic.
+test "snapshot_ellipse_direction_ccw_d3" {
+  // Layer at origin, ellipse d=3 (CCW), size=[100,100], position=[0,0]
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"el\",\"d\":3,\"nm\":\"ccw-circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  // Find the MoveTo and first CubicTo after BeginPath
+  let mut after_begin = false
+  let mut move_x = 0.0
+  let mut move_y = 0.0
+  let mut first_cubic_ex = 0.0
+  let mut first_cubic_ey = 0.0
+  let mut found_first_cubic = false
+  for cmd in commands {
+    match cmd {
+      BeginPath => {
+        after_begin = true
+        found_first_cubic = false
+      }
+      MoveTo(x, y) =>
+        if after_begin {
+          move_x = x
+          move_y = y
+        }
+      CubicTo(_, _, _, _, ex, ey) =>
+        if after_begin && not(found_first_cubic) {
+          first_cubic_ex = ex
+          first_cubic_ey = ey
+          found_first_cubic = true
+        }
+      _ => ()
+    }
+  }
+  // d=3 CCW: first vertex = top (0, -50), first segment ends at LEFT (-50, 0)
+  if move_x != 0.0 || move_y != -50.0 {
+    fail(
+      "CCW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
+    )
+  }
+  if first_cubic_ex != -50.0 || first_cubic_ey != 0.0 {
+    fail(
+      "CCW ellipse first segment should end at left (-50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{commands}",
+    )
+  }
+}
+
+///|
+/// Ellipse with default direction (d=1, CW) must traverse top→right→bottom→left,
+/// unchanged from previous behaviour. This is verified by the existing
+/// snapshot_render_circle test; this test checks the explicit d=1 JSON field.
+test "snapshot_ellipse_direction_cw_d1" {
+  // Explicit d=1 should produce same result as no d field (clockwise)
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"el\",\"d\":1,\"nm\":\"cw-circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut after_begin = false
+  let mut move_x = 0.0
+  let mut move_y = 0.0
+  let mut first_cubic_ex = 0.0
+  let mut first_cubic_ey = 0.0
+  let mut found_first_cubic = false
+  for cmd in commands {
+    match cmd {
+      BeginPath => {
+        after_begin = true
+        found_first_cubic = false
+      }
+      MoveTo(x, y) =>
+        if after_begin {
+          move_x = x
+          move_y = y
+        }
+      CubicTo(_, _, _, _, ex, ey) =>
+        if after_begin && not(found_first_cubic) {
+          first_cubic_ex = ex
+          first_cubic_ey = ey
+          found_first_cubic = true
+        }
+      _ => ()
+    }
+  }
+  // d=1 CW: first vertex = top (0, -50), first segment ends at RIGHT (50, 0)
+  if move_x != 0.0 || move_y != -50.0 {
+    fail(
+      "CW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
+    )
+  }
+  if first_cubic_ex != 50.0 || first_cubic_ey != 0.0 {
+    fail(
+      "CW ellipse first segment should end at right (50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{commands}",
+    )
+  }
+}
+
+///|
+/// Rect with d=3 (counter-clockwise) must traverse top-right→top-left→bottom-left→bottom-right,
+/// opposite to the default CW order (top-left→top-right→bottom-right→bottom-left).
+test "snapshot_rect_direction_ccw_d3" {
+  // Layer at origin, rect d=3 (CCW), size=[100,100], position=[0,0]
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"rc\",\"d\":3,\"nm\":\"ccw-rect\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[0,1,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  // d=3 CCW rect with size=[100,100], center=[0,0]:
+  //   first vertex = top-right = [+50, -50]
+  let mut after_begin = false
+  let mut move_x = 0.0
+  let mut move_y = 0.0
+  for cmd in commands {
+    match cmd {
+      BeginPath => after_begin = true
+      MoveTo(x, y) =>
+        if after_begin {
+          move_x = x
+          move_y = y
+        }
+      _ => ()
+    }
+  }
+  if move_x != 50.0 || move_y != -50.0 {
+    fail(
+      "CCW rect (d=3) should start at top-right (50, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
+    )
+  }
+}

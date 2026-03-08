@@ -709,7 +709,7 @@ pub fn[R : Renderer] Player::render_shape(
       let y = get_vec_at(p, 1, 0.0)
       let w = get_vec_at(s, 0, 0.0)
       let h = get_vec_at(s, 1, 0.0)
-      self.current_paths.push(create_rect_path(x, y, w, h, corner_r))
+      self.current_paths.push(create_rect_path(x, y, w, h, corner_r, r.direction))
     }
     Ellipse(e) => {
       let p = @runtime.evaluate_vec_property(e.position, self.current_comp_frame)
@@ -718,7 +718,7 @@ pub fn[R : Renderer] Player::render_shape(
       let cy = get_vec_at(p, 1, 0.0)
       let rx = get_vec_at(s, 0, 0.0) / 2.0
       let ry = get_vec_at(s, 1, 0.0) / 2.0
-      self.current_paths.push(create_ellipse_path(cx, cy, rx, ry))
+      self.current_paths.push(create_ellipse_path(cx, cy, rx, ry, e.direction))
     }
     Path(p) => {
       let path = @runtime.evaluate_path_property(p.path, self.current_comp_frame)
@@ -1159,9 +1159,16 @@ fn create_rect_path(
   w : Double,
   h : Double,
   r : Double,
+  direction : Int,
 ) -> @model.BezierPath {
   let _ = r
-  @model.BezierPath::new_rect(x, y, w, h)
+  // lottie-web: `if (this.d === 2 || this.d === 1)` produces CW; else (d=3) CCW.
+  if direction == 3 {
+    // Counter-clockwise: top-right → top-left → bottom-left → bottom-right
+    @model.BezierPath::new_rect_ccw(x, y, w, h)
+  } else {
+    @model.BezierPath::new_rect(x, y, w, h)
+  }
 }
 
 ///|
@@ -1170,16 +1177,30 @@ fn create_ellipse_path(
   cy : Double,
   rx : Double,
   ry : Double,
+  direction : Int,
 ) -> @model.BezierPath {
   let kappa = 0.55228475
   let ox = rx * kappa
   let oy = ry * kappa
-  @model.BezierPath::new(
-    vertices=[[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]],
-    in_tangents=[[-ox, 0.0], [0.0, -oy], [ox, 0.0], [0.0, oy]],
-    out_tangents=[[ox, 0.0], [0.0, oy], [-ox, 0.0], [0.0, -oy]],
-    closed=true,
-  )
+  // lottie-web: `_cw = this.d !== 3` — d=3 produces counter-clockwise winding,
+  // any other value (including 1, 2) produces clockwise winding.
+  if direction != 3 {
+    // Clockwise: top → right → bottom → left
+    @model.BezierPath::new(
+      vertices=[[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]],
+      in_tangents=[[-ox, 0.0], [0.0, -oy], [ox, 0.0], [0.0, oy]],
+      out_tangents=[[ox, 0.0], [0.0, oy], [-ox, 0.0], [0.0, -oy]],
+      closed=true,
+    )
+  } else {
+    // Counter-clockwise: top → left → bottom → right
+    @model.BezierPath::new(
+      vertices=[[cx, cy - ry], [cx - rx, cy], [cx, cy + ry], [cx + rx, cy]],
+      in_tangents=[[ox, 0.0], [0.0, -oy], [-ox, 0.0], [0.0, oy]],
+      out_tangents=[[-ox, 0.0], [0.0, oy], [ox, 0.0], [0.0, -oy]],
+      closed=true,
+    )
+  }
 }
 
 ///|
