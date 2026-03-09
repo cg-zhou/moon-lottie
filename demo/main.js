@@ -235,7 +235,8 @@ async function init() {
     if (!response.ok) throw new Error("WASM not found");
     
     const buffer = await response.arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(buffer, importObject, wasmCompileOptions);
+    const module = await WebAssembly.compile(buffer, wasmCompileOptions);
+    const instance = await WebAssembly.instantiate(module, importObject);
     
     window.moonLottie = instance.exports;
     statusDot.style.background = "#34c759"; // Green

@@ -29,7 +29,8 @@ test('wasm-gc demo passes strings directly between JS and MoonBit', async () => 
   const wasmBuffer = fs.readFileSync(wasmPath);
 
   const noop = () => {};
-  const instanceResult = await WebAssembly.instantiate(wasmBuffer, {
+  const module = await WebAssembly.compile(wasmBuffer, wasmCompileOptions);
+  const instance = await WebAssembly.instantiate(module, {
     _: new Proxy({}, { get: (_, name) => typeof name === 'string' ? name : undefined }),
     demo: {
       get_json_string: () => currentJsonStr,
@@ -43,7 +44,7 @@ test('wasm-gc demo passes strings directly between JS and MoonBit', async () => 
     },
   }, wasmCompileOptions);
 
-  const exports = instanceResult.instance.exports;
+  const exports = instance.exports;
   const player = exports.create_player_from_js();
   assert.ok(player);
 
