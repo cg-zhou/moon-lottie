@@ -98,7 +98,7 @@ const importObject = {
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
         const key = moonStringJS(id);
-        let img = key ? imageAssets.get(key) : null;
+        let img = imageAssets.get(key);
         if (!img) {
             const refs = getImageRefsForFrame(currentFrame);
             if (refs.length > 0) {
@@ -372,7 +372,7 @@ function rebuildImageLayerTimeline(json) {
     imageLayerRefsByFrame = new Map();
     if (!json.layers) return;
     const start = Math.floor(Number(json.ip ?? 0));
-    const end = Math.ceil(Number(json.op ?? start));
+    const end = Math.floor(Number(json.op ?? start));
     for (let f = start; f < end; f += 1) {
         imageLayerRefsByFrame.set(f, collectImageRefsForFrame(json, f));
     }
