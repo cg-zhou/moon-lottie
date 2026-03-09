@@ -34,7 +34,10 @@ function collectImageRefsFromLayer(layer, scopeLayers, layerIndex, frame, assetB
     // Mirror Player::render_layer matte exit order: target content is rendered
     // first, then the sibling matte source is rendered during exit compositing.
     if (TRACK_MATTE_TYPES.has(layer.tt) && layerIndex > 0) {
-        collectImageRefsFromLayer(scopeLayers[layerIndex - 1], scopeLayers, layerIndex - 1, frame, assetById, refs);
+        const matteSource = scopeLayers[layerIndex - 1];
+        if (matteSource?.td === TRACK_MATTE_LAYER) {
+            collectImageRefsFromLayer(matteSource, scopeLayers, layerIndex - 1, frame, assetById, refs);
+        }
     }
 }
 

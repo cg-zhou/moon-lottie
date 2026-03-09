@@ -372,7 +372,7 @@ function rebuildImageLayerTimeline(json) {
     imageLayerRefsByFrame = new Map();
     if (!json.layers) return;
     const start = Math.floor(Number(json.ip ?? 0));
-    const end = Math.floor(Number(json.op ?? start));
+    const end = Math.floor(Number(json.op ?? (start + 1)));
     for (let f = start; f < end; f += 1) {
         imageLayerRefsByFrame.set(f, collectImageRefsForFrame(json, f));
     }
@@ -380,6 +380,11 @@ function rebuildImageLayerTimeline(json) {
 
 function getImageRefsForFrame(frame) {
     const wholeFrame = Math.floor(frame);
+    const start = Math.floor(Number(currentAnimationData?.ip ?? 0));
+    const end = Math.floor(Number(currentAnimationData?.op ?? (start + 1)));
+    if (wholeFrame < start || wholeFrame >= end) {
+        return [];
+    }
     let refs = imageLayerRefsByFrame.get(wholeFrame);
     if (!refs) {
         if (currentAnimationData) {

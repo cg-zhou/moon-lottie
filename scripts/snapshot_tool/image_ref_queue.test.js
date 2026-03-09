@@ -9,16 +9,22 @@ const helperUrl = pathToFileURL(
 
 test('collectImageRefsForFrame matches reverse render order and matte exit order', async () => {
   const { collectImageRefsForFrame } = await import(helperUrl);
-  const animation = {
-    layers: [
-      { ty: 2, refId: 'matte', ind: 1, td: 1, ip: 0, op: 10, st: 0 },
-      { ty: 2, refId: 'target', ind: 2, tt: 1, ip: 0, op: 10, st: 0 },
-      { ty: 2, refId: 'front', ind: 3, ip: 0, op: 10, st: 0 },
-    ],
-    assets: [],
-  };
+  for (const matteType of [1, 2, 3, 4]) {
+    const animation = {
+      layers: [
+        { ty: 2, refId: 'matte', ind: 1, td: 1, ip: 0, op: 10, st: 0 },
+        { ty: 2, refId: 'target', ind: 2, tt: matteType, ip: 0, op: 10, st: 0 },
+        { ty: 2, refId: 'front', ind: 3, ip: 0, op: 10, st: 0 },
+      ],
+      assets: [],
+    };
 
-  assert.deepEqual(collectImageRefsForFrame(animation, 0), ['front', 'target', 'matte']);
+    assert.deepEqual(
+      collectImageRefsForFrame(animation, 0),
+      ['front', 'target', 'matte'],
+      `tt=${matteType} should preserve target-then-matte order`
+    );
+  }
 });
 
 test('collectImageRefsForFrame recurses through precomps using layer-local frame', async () => {
@@ -40,4 +46,17 @@ test('collectImageRefsForFrame recurses through precomps using layer-local frame
 
   assert.deepEqual(collectImageRefsForFrame(animation, 5), ['early']);
   assert.deepEqual(collectImageRefsForFrame(animation, 8), ['early', 'late']);
+});
+
+test('collectImageRefsForFrame ignores non-matte previous layers for matte recursion', async () => {
+  const { collectImageRefsForFrame } = await import(helperUrl);
+  const animation = {
+    layers: [
+      { ty: 2, refId: 'plain', ind: 1, ip: 0, op: 10, st: 0 },
+      { ty: 2, refId: 'target', ind: 2, tt: 1, ip: 0, op: 10, st: 0 },
+    ],
+    assets: [],
+  };
+
+  assert.deepEqual(collectImageRefsForFrame(animation, 0), ['target', 'plain']);
 });
