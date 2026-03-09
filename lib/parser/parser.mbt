@@ -63,18 +63,20 @@ struct TextDocumentJson {
 
 struct MaskJson {
   inverted : Bool?
+  closed : Bool?
   path : Json?
   opacity : Json?
   mode : String?
   name : String?
 } derive(
   FromJson(
-    fields(
-      inverted(rename="inv"),
-      path(rename="pt"),
-      opacity(rename="o"),
-      name(rename="nm"),
-    ),
+      fields(
+        inverted(rename="inv"),
+        closed(rename="cl"),
+        path(rename="pt"),
+        opacity(rename="o"),
+        name(rename="nm"),
+      ),
   ),
 )
 
@@ -1672,7 +1674,8 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     _ => raise UnexpectedType("mask", "Object")
   }
   let inverted = decoded.inverted.unwrap_or(false)
-  let path = parse_property_bezier(decoded.path, false)
+  let closed = decoded.closed.unwrap_or(false)
+  let path = parse_property_bezier(decoded.path, closed)
   let opacity = parse_property_double(decoded.opacity) catch {
     _ => @model.LottieProperty::new_static(100.0)
   }

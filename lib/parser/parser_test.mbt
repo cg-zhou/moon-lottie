@@ -116,6 +116,27 @@ test "parse_mask_with_subtract_mode" {
 }
 
 ///|
+test "parse_mask_path_closed_from_mask_cl_flag" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"cl\":true,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]]}},\"o\":{\"k\":100},\"mode\":\"a\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with mask closed flag: \{e}")
+  }
+  match ani.layers[0].masks {
+    Some(masks) =>
+      match masks[0].path.value {
+        @model.PropertyValue::Static(path) =>
+          if not(path.closed) {
+            fail("Mask path should inherit closed=true from mask.cl")
+          }
+        _ => fail("Mask path should be static")
+      }
+    None => fail("masks should be parsed")
+  }
+}
+
+///|
 test "parse_shape_layer" {
   // ... (existing test code)
 }
