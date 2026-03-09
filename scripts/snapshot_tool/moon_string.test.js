@@ -1,72 +1,54 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
-const { pathToFileURL } = require('node:url');
+const { spawnSync } = require('node:child_process');
 
-const helperUrl = pathToFileURL(
-  path.resolve(__dirname, '../../demo/moon_string.js')
-).href;
+const wasmCompileOptions = { builtins: ['js-string'] };
 
-test('moonStringJS returns native JS strings unchanged', async () => {
-  const { moonStringJS } = await import(helperUrl);
-  assert.equal(moonStringJS('image_0'), 'image_0');
-  assert.equal(moonStringJS(''), '');
-  assert.equal(moonStringJS(null), '');
-  assert.equal(moonStringJS(undefined), '');
-});
+function ensureWasmBuilt(repoRoot) {
+  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/main/main.wasm');
+  if (fs.existsSync(wasmPath)) return;
 
-test('moonStringJS decodes WasmGC-style objects via valueOf/toString before array fallback', async () => {
-  const { moonStringJS } = await import(helperUrl);
+  const result = spawnSync('moon', ['build', '--target', 'wasm-gc'], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+  if (result.status !== 0) {
+    throw new Error('Failed to build wasm target with moon build --target wasm-gc');
+  }
+}
 
-  assert.equal(
-    moonStringJS({ valueOf: () => 'image_7' }),
-    'image_7'
-  );
+test('wasm-gc demo passes strings directly between JS and MoonBit', async () => {
+  const repoRoot = path.resolve(__dirname, '../..');
+  ensureWasmBuilt(repoRoot);
 
-  assert.equal(
-    moonStringJS({ toString: () => '5.1.18' }),
-    '5.1.18'
-  );
-});
+  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/main/main.wasm');
+  const jsonPath = path.join(repoRoot, 'samples', '1_1_Super_Mario.json');
+  const currentJsonStr = fs.readFileSync(jsonPath, 'utf8');
+  const wasmBuffer = fs.readFileSync(wasmPath);
 
-test('moonStringJS still supports array-like char code objects', async () => {
-  const { moonStringJS } = await import(helperUrl);
-  const arrayLike = {
-    length: 7,
-    0: 105,
-    1: 109,
-    2: 97,
-    3: 103,
-    4: 101,
-    5: 95,
-    6: 49,
-  };
-  assert.equal(moonStringJS(arrayLike), 'image_1');
-});
+  const noop = () => {};
+  const instanceResult = await WebAssembly.instantiate(wasmBuffer, {
+    _: new Proxy({}, { get: (_, name) => typeof name === 'string' ? name : undefined }),
+    demo: {
+      get_json_string: () => currentJsonStr,
+      log_frame: noop,
+    },
+    spectest: { print_char: noop },
+    canvas: new Proxy({}, { get: () => noop }),
+    expressions: new Proxy({}, { get: () => noop }),
+    'moonbit:ffi': {
+      make_closure: (funcref, closure) => funcref.bind(null, closure),
+    },
+  }, wasmCompileOptions);
 
-test('readWasmString reconstructs exported wasm strings from len/char callbacks', async () => {
-  const { readWasmString } = await import(helperUrl);
-  const text = '5.1.18';
-  assert.equal(
-    readWasmString(text.length, (idx) => text.charCodeAt(idx)),
-    text
-  );
-});
+  const exports = instanceResult.instance.exports;
+  const player = exports.create_player_from_js();
+  assert.ok(player);
 
-test('readWasmString returns empty string for empty or invalid exported values', async () => {
-  const { readWasmString } = await import(helperUrl);
-  assert.equal(readWasmString(0, () => 0), '');
-  assert.equal(readWasmString(-1, () => 0), '');
-  assert.equal(readWasmString(3, () => undefined), '');
-  assert.equal(readWasmString(3, () => -1), '');
-});
-
-test('readWasmString does not invoke callback when exported length is negative', async () => {
-  const { readWasmString } = await import(helperUrl);
-  let called = false;
-  assert.equal(readWasmString(-1, () => {
-    called = true;
-    return 65;
-  }), '');
-  assert.equal(called, false);
+  const version = exports.get_version(player);
+  assert.equal(typeof version, 'string');
+  assert.ok(version.length > 0);
+  assert.equal(version, '5.7.0');
 });

@@ -1,5 +1,3 @@
-import { moonStringJS, readWasmString } from './moon_string.js';
-
 // MoonLottie UI 2.0 - 现代化播放驱动
 
 const canvas = document.getElementById('lottie-canvas');
@@ -14,6 +12,10 @@ const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
 
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const wasmCompileOptions = { builtins: ['js-string'] };
+const wasmStringGlobals = new Proxy({}, {
+    get: (_, name) => typeof name === 'string' ? name : undefined,
+});
 
 let isPlaying = true;
 let currentFrame = 0;
@@ -36,12 +38,12 @@ const matteStack = [];
 
 const importObject = {
   demo: {
-    get_json_len: () => currentJsonStr.length,
-    get_json_char: (idx) => currentJsonStr.charCodeAt(idx),
+    get_json_string: () => currentJsonStr,
     log_frame: (f) => {
         // if (Math.floor(f) % 30 === 0) console.log("WASM Frame:", f);
     }
   },
+  _: wasmStringGlobals,
   spectest: { print_char: (c) => {} },
   canvas: {
     save: () => { ctx.save(); fillRuleStack.push(ctx._currentFillRule || "nonzero"); },
@@ -66,7 +68,7 @@ const importObject = {
     beginDash: () => { currentDash = []; },
     addDash: (value) => { currentDash.push(value); },
     applyDash: (offset) => { ctx.setLineDash(currentDash); ctx.lineDashOffset = offset; },
-    setFillRule: (rule) => { ctx._currentFillRule = moonStringJS(rule); },
+    setFillRule: (rule) => { ctx._currentFillRule = rule; },
     createLinearGradient: (x1, y1, x2, y2) => { currentGradient = ctx.createLinearGradient(x1, y1, x2, y2); },
     createRadialGradient: (cx, cy, r, fx, fy, fr) => { currentGradient = ctx.createRadialGradient(fx, fy, fr, cx, cy, r); },
     addGradientStop: (offset, r, g, b, a) => { if (currentGradient) currentGradient.addColorStop(offset, `rgba(${r},${g},${b},${a})`); },
@@ -84,12 +86,12 @@ const importObject = {
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.font = `${size}px ${moonStringJS(font) || 'Arial'}`;
+        ctx.font = `${size}px ${font || 'Arial'}`;
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
-        ctx.fillText(moonStringJS(text), 0, 0); ctx.restore();
+        ctx.fillText(text, 0, 0); ctx.restore();
     },
     setGlobalCompositeOperation: (mode) => {
-        const modeStr = moonStringJS(mode);
+        const modeStr = mode;
         // Alpha matte (tt=1) fix: match lottie-web's buffer approach exactly.
         // lottie-web saves layer content to buffer1, clears the canvas, renders the matte
         // with source-over, then applies source-in with buffer1 so that ALL canvas pixels
@@ -161,7 +163,7 @@ const importObject = {
         // Composite the offscreen layer onto the main canvas using identity transform.
         savedCtx.save();
         savedCtx.setTransform(1, 0, 0, 1, 0, 0);
-        savedCtx.globalCompositeOperation = moonStringJS(mode);
+        savedCtx.globalCompositeOperation = mode;
         savedCtx.globalAlpha = savedOpacity;
         savedCtx.drawImage(offscreen, 0, 0);
         savedCtx.restore();
@@ -215,11 +217,11 @@ const importObject = {
   },
   expressions: {
     evaluate_double: (code_ptr, time, val) => {
-        try { return new Function('value', 'time', `"use strict"; return (${moonStringJS(code_ptr)});`)(val, time); } catch (e) { return val; }
+        try { return new Function('value', 'time', `"use strict"; return (${code_ptr});`)(val, time); } catch (e) { return val; }
     },
     evaluate_vec_into: (code_ptr, time, arr) => {
         try {
-            const res = new Function('value', 'time', `"use strict"; return (${moonStringJS(code_ptr)});`)([...arr], time);
+            const res = new Function('value', 'time', `"use strict"; return (${code_ptr});`)([...arr], time);
             if (Array.isArray(res)) res.forEach((v, i) => i < arr.length && arr.set(i, v));
         } catch (e) {}
     }
@@ -233,7 +235,7 @@ async function init() {
     if (!response.ok) throw new Error("WASM not found");
     
     const buffer = await response.arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(buffer, importObject);
+    const { instance } = await WebAssembly.instantiate(buffer, importObject, wasmCompileOptions);
     
     window.moonLottie = instance.exports;
     statusDot.style.background = "#34c759"; // Green
@@ -248,10 +250,7 @@ async function init() {
 }
 
 function getVersionString(player) {
-    return readWasmString(
-        window.moonLottie.get_version_len(player),
-        (idx) => window.moonLottie.get_version_char(player, idx),
-    );
+    return window.moonLottie.get_version(player);
 }
 
 async function initAnimList() {

@@ -9,6 +9,7 @@ options(
   "is-main": true,
   link: {
     "wasm-gc": {
+      "use-js-builtin-string": true,
       "exports": [
         "create_player_from_js",
         "update_player",
@@ -18,8 +19,7 @@ options(
         "get_width",
         "get_height",
         "get_fps",
-        "get_version_len",
-        "get_version_char",
+        "get_version",
       ],
     },
   },

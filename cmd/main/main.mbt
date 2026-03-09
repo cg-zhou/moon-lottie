@@ -1,8 +1,5 @@
 ///|
-extern "wasm" fn js_get_json_len() -> Int = "demo" "get_json_len"
-
-///|
-extern "wasm" fn js_get_json_char(idx : Int) -> Int = "demo" "get_json_char"
+extern "wasm" fn js_get_json_string() -> String = "demo" "get_json_string"
 
 ///|
 extern "wasm" fn js_log_frame(frame : Double) -> Unit = "demo" "log_frame"
@@ -14,13 +11,7 @@ fn main {
 
 ///|
 fn get_json_from_js() -> String {
-  let len = js_get_json_len()
-  let sb = @builtin.StringBuilder::new(size_hint=len)
-  for i = 0; i < len; i = i + 1 {
-    let c = js_get_json_char(i)
-    sb.write_char(c.to_char().unwrap())
-  }
-  sb.to_string()
+  js_get_json_string()
 }
 
 ///|
@@ -71,25 +62,10 @@ pub fn get_fps(player : @renderer.Player[@renderer.CanvasRenderer]) -> Double {
 }
 
 ///|
-pub fn get_version_len(
+pub fn get_version(
   player : @renderer.Player[@renderer.CanvasRenderer],
-) -> Int {
-  player.animation.version.length()
-}
-
-///|
-pub fn get_version_char(
-  player : @renderer.Player[@renderer.CanvasRenderer],
-  idx : Int,
-) -> Int {
-  let version = player.animation.version
-  if idx < 0 || idx >= version.length() {
-    // JS reconstructs exported strings by reading indices in [0, len).
-    // Return -1 as an invalid-index sentinel instead of trapping on misuse.
-    -1
-  } else {
-    version[idx].to_int()
-  }
+) -> String {
+  player.animation.version
 }
 
 ///|
