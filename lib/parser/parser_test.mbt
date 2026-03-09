@@ -73,6 +73,33 @@ test "parse_animation_with_optional_root_fields" {
 }
 
 ///|
+test "parse_animation_fonts_and_glyph_family" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"fonts\":{\"list\":[{\"fName\":\"Montserrat-Bold\",\"fFamily\":\"Montserrat\",\"fStyle\":\"Bold\",\"ascent\":74.2}]},\"chars\":[{\"ch\":\"O\",\"style\":\"Bold\",\"fFamily\":\"Montserrat\",\"size\":56.5,\"w\":82.6,\"data\":{\"shapes\":[]}}],\"layers\":[]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation fonts/glyph family: \{e}")
+  }
+  match ani.fonts {
+    Some(fonts) => {
+      inspect(fonts.length(), content="1")
+      inspect(fonts[0].name, content="Montserrat-Bold")
+      inspect(fonts[0].family, content="Montserrat")
+      inspect(fonts[0].style, content="Bold")
+      inspect(fonts[0].ascent, content="74.2")
+    }
+    None => fail("fonts should be parsed")
+  }
+  match ani.glyphs {
+    Some(glyphs) => {
+      inspect(glyphs.length(), content="1")
+      inspect(glyphs[0].family, content="Montserrat")
+    }
+    None => fail("glyphs should be parsed")
+  }
+}
+
+///|
 test "parse_animation_missing_required_field_fails" {
   let cases = [
     ("v", "{\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[]}"),

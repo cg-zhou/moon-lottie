@@ -521,6 +521,58 @@ test "text animator tracking shifts glyph positions" {
   }
 }
 
+test "glyph rendering scales text size with 100-unit lottie basis" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"fonts":{"list":[{"fName":"Test Bold","fFamily":"Test","fStyle":"Bold","ascent":75}]},"chars":[{"ch":"A","size":50,"style":"Bold","fFamily":"Test","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[100,0],[100,100],[0,100]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Test Bold","t":"A","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut saw_scale = false
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.e == 0.0 && m.f == 0.0 && m.a == 0.5 && m.d == 0.5 {
+          saw_scale = true
+        }
+      _ => ()
+    }
+  }
+  assert_eq(saw_scale, true)
+}
+
+test "glyph rendering matches family as well as style" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"fonts":{"list":[{"fName":"Family B Regular","fFamily":"Family B","fStyle":"Regular","ascent":75}]},"chars":[{"ch":"A","size":100,"style":"Regular","fFamily":"Family A","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"A","size":100,"style":"Regular","fFamily":"Family B","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[40,0],[40,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Family B Regular","t":"A","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut matched_family_b = false
+  for cmd in commands {
+    match cmd {
+      LineTo(x, y) =>
+        if x == 40.0 && y == 0.0 {
+          matched_family_b = true
+        }
+      CubicTo(_, _, _, _, x, y) =>
+        if x == 40.0 && y == 0.0 {
+          matched_family_b = true
+        }
+      _ => ()
+    }
+  }
+  assert_eq(matched_family_b, true)
+}
+
 test "matte source render resets transform to identity during matte exit" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"td":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[10,10]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[80,80]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,1,1]},"o":{"k":100}}]},{"ty":4,"ind":2,"tt":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[60,20]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[120,120]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
