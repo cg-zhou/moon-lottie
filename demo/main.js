@@ -1,3 +1,5 @@
+import { collectImageRefsForFrame } from './image_ref_queue.js';
+
 // MoonLottie UI 2.0 - 现代化播放驱动
 
 const canvas = document.getElementById('lottie-canvas');
@@ -95,9 +97,9 @@ const importObject = {
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (id, w, h) => {
         const key = moonStringJS(id);
-        let img = imageAssets.get(key);
+        let img = key ? imageAssets.get(key) : null;
         if (!img) {
-            const refs = imageLayerRefsByFrame.get(Math.floor(currentFrame)) || [];
+            const refs = getImageRefsForFrame(currentFrame);
             if (refs.length > 0) {
                 const idx = frameImageDrawCursor < refs.length ? frameImageDrawCursor : refs.length - 1;
                 img = imageAssets.get(refs[idx]);
@@ -368,19 +370,25 @@ async function preloadAssets(json) {
 function rebuildImageLayerTimeline(json) {
     imageLayerRefsByFrame = new Map();
     if (!json.layers) return;
-    json.layers.forEach(layer => {
-        if (!layer || layer.ty !== 2 || !layer.refId) return;
-        const ip = Math.floor(Number(layer.ip ?? 0));
-        const op = Math.floor(Number(layer.op ?? ip + 1));
-        for (let f = ip; f < op; f++) {
-            let refs = imageLayerRefsByFrame.get(f);
-            if (!refs) {
-                refs = [];
-                imageLayerRefsByFrame.set(f, refs);
-            }
-            refs.push(layer.refId);
+    const start = Math.floor(Number(json.ip ?? 0));
+    const end = Math.ceil(Number(json.op ?? start));
+    for (let f = start; f < end; f += 1) {
+        imageLayerRefsByFrame.set(f, collectImageRefsForFrame(json, f));
+    }
+}
+
+function getImageRefsForFrame(frame) {
+    const wholeFrame = Math.floor(frame);
+    let refs = imageLayerRefsByFrame.get(wholeFrame);
+    if (!refs) {
+        try {
+            refs = collectImageRefsForFrame(JSON.parse(currentJsonStr), wholeFrame);
+        } catch (e) {
+            refs = [];
         }
-    });
+        imageLayerRefsByFrame.set(wholeFrame, refs);
+    }
+    return refs;
 }
 
 async function startPlayer(jsonStr) {
