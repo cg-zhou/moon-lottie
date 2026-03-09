@@ -25,6 +25,7 @@ pub(all) struct TextAnimatorSelector {
 pub(all) struct TextAnimatorProperties {
   scale : LottieProperty[Array[Double]]?
   position : LottieProperty[Array[Double]]?
+  rotation : LottieProperty[Double]?
   opacity : LottieProperty[Double]?
   tracking : LottieProperty[Double]?
   fill_color : LottieProperty[Array[Double]]?
@@ -40,6 +41,8 @@ pub(all) struct TextAnimator {
 pub(all) struct TextData {
   text : LottieProperty[TextDocument]
   animators : Array[TextAnimator]
+  anchor_grouping : Int
+  grouping_alignment : LottieProperty[Array[Double]]
 }
 
 ///|

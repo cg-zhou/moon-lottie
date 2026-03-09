@@ -424,7 +424,18 @@ struct AssetJson {
 struct TextDataJson {
   document : Json?
   animators : Array[Json]?
-} derive(FromJson(fields(document(rename="d"), animators(rename="a"))))
+  more_options : Json?
+} derive(
+  FromJson(
+    fields(document(rename="d"), animators(rename="a"), more_options(rename="m")),
+  ),
+)
+
+///|
+struct TextMoreOptionsJson {
+  grouping : Int?
+  alignment : Json?
+} derive(FromJson(fields(grouping(rename="g"), alignment(rename="a"))))
 
 ///|
 struct GlyphCharJson {
@@ -511,6 +522,7 @@ struct TextAnimatorSelectorJson {
 struct TextAnimatorPropertiesJson {
   scale : Json?
   position : Json?
+  rotation : Json?
   opacity : Json?
   tracking : Json?
   fill_color : Json?
@@ -519,6 +531,7 @@ struct TextAnimatorPropertiesJson {
     fields(
       scale(rename="s"),
       position(rename="p"),
+      rotation(rename="r"),
       opacity(rename="o"),
       tracking(rename="t"),
       fill_color(rename="fc"),
@@ -1153,6 +1166,11 @@ fn parse_text_animator_properties(
   } catch {
     _ => None
   }
+  let rotation = try {
+    Some(parse_property_double(decoded.rotation))
+  } catch {
+    _ => None
+  }
   let opacity = try {
     Some(parse_property_double(decoded.opacity))
   } catch {
@@ -1168,7 +1186,7 @@ fn parse_text_animator_properties(
   } catch {
     _ => None
   }
-  { scale, position, opacity, tracking, fill_color }
+  { scale, position, rotation, opacity, tracking, fill_color }
 }
 
 ///|
@@ -1196,6 +1214,7 @@ fn parse_text_data_from_decoded(
                   _ => {
                     scale: None,
                     position: None,
+                    rotation: None,
                     opacity: None,
                     tracking: None,
                     fill_color: None,
@@ -1204,6 +1223,7 @@ fn parse_text_data_from_decoded(
               None => {
                 scale: None,
                 position: None,
+                rotation: None,
                 opacity: None,
                 tracking: None,
                 fill_color: None,
@@ -1213,7 +1233,19 @@ fn parse_text_data_from_decoded(
           }
         None => ()
       }
-      { text: d, animators }
+      let (anchor_grouping, grouping_alignment) = match d_json.more_options {
+        Some(m_json) => {
+          let decoded_more : TextMoreOptionsJson = (@json.from_json(m_json)) catch {
+            _ => { grouping: None, alignment: None }
+          }
+          let alignment = parse_property_vec(decoded_more.alignment) catch {
+            _ => @model.LottieProperty::new_static([0.0, 0.0])
+          }
+          (decoded_more.grouping.unwrap_or(1), alignment)
+        }
+        None => (1, @model.LottieProperty::new_static([0.0, 0.0]))
+      }
+      { text: d, animators, anchor_grouping, grouping_alignment }
     }
     None => raise InvalidJson("Text data is missing")
   }

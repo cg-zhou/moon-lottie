@@ -567,13 +567,19 @@ fn[R : Renderer] Player::render_layer_content(
         data.text,
         self.current_comp_frame,
       )
-      if doc.text != "" {
-        match self.animation.glyphs {
-          Some(glyphs) =>
-            self.render_text_with_glyphs(doc, data.animators, glyphs)
-          None => {
-            let (r, g, b) = color_rgb_from_vec(doc.fill_color)
-            self.renderer.draw_text(doc.text, doc.font, doc.size, r, g, b, 1.0, doc.justify)
+        if doc.text != "" {
+          match self.animation.glyphs {
+            Some(glyphs) =>
+            self.render_text_with_glyphs(
+              doc,
+              data.animators,
+              data.anchor_grouping,
+              data.grouping_alignment,
+              glyphs,
+            )
+            None => {
+              let (r, g, b) = color_rgb_from_vec(doc.fill_color)
+              self.renderer.draw_text(doc.text, doc.font, doc.size, r, g, b, 1.0, doc.justify)
           }
         }
       }
@@ -1882,6 +1888,91 @@ fn compute_animator_mult(
   eased * amount / 100.0
 }
 
+fn build_text_animator_random_order(total : Int, seed : Int) -> Array[Int] {
+  let order : Array[Int] = []
+  if total <= 0 {
+    return order
+  }
+  let step = if total > 1 { total - 1 } else { 1 }
+  let offset = ((seed * 3 + 1) % total + total) % total
+  for i = 0; i < total; i = i + 1 {
+    order.push((i * step + offset) % total)
+  }
+  order
+}
+
+///|
+fn build_text_letter_group_metrics(
+  chars : Array[Char],
+  advances : Array[Double],
+  anchor_grouping : Int,
+) -> (Array[Double], Array[Double]) {
+  let grouped_widths : Array[Double] = []
+  let grouped_offsets : Array[Double] = []
+  let n = chars.length()
+  let mut current_size = 0.0
+  let mut current_pos = 0
+  for i = 0; i < n; i = i + 1 {
+    let ch = chars[i]
+    let advance = advances[i]
+    grouped_widths.push(advance)
+    grouped_offsets.push(current_size)
+    match anchor_grouping {
+      2 => {
+        current_size = current_size + advance
+        if ch == ' ' || ch == '\r' || i == n - 1 {
+          let final_size = if ch == ' ' || ch == '\r' {
+            current_size - advance
+          } else {
+            current_size
+          }
+          for j = current_pos; j <= i; j = j + 1 {
+            grouped_widths[j] = final_size
+          }
+          current_pos = i + 1
+          current_size = 0.0
+        }
+      }
+      3 => {
+        current_size = current_size + advance
+        if ch == '\r' || i == n - 1 {
+          let final_size = if ch == '\r' { current_size - advance } else { current_size }
+          for j = current_pos; j <= i; j = j + 1 {
+            grouped_widths[j] = final_size
+          }
+          current_pos = i + 1
+          current_size = 0.0
+        }
+      }
+      _ => ()
+    }
+  }
+  (grouped_widths, grouped_offsets)
+}
+
+///|
+fn get_text_group_alignment(
+  grouping_alignment : @model.LottieProperty[Array[Double]],
+  frame : Double,
+) -> (Double, Double) {
+  let alignment = @runtime.evaluate_vec_property(grouping_alignment, frame)
+  (get_vec_at(alignment, 0, 0.0), get_vec_at(alignment, 1, 0.0))
+}
+
+///|
+fn get_text_group_pivot(
+  group_width : Double,
+  group_offset : Double,
+  align_x : Double,
+  align_y : Double,
+  y_off : Double,
+) -> (Double, Double, Double) {
+  let offf = group_width / 2.0 - group_offset
+  let pivot_x = (align_x * group_width) * 0.005
+  let pivot_y = (align_y * y_off) * 0.01
+  (offf, pivot_x, pivot_y)
+}
+
 ///|
 fn[R : Renderer] Player::emit_glyph_shape_paths(
   self : Player[R],
@@ -1909,6 +2000,8 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   self : Player[R],
   doc : @model.TextDocument,
   animators : Array[@model.TextAnimator],
+  anchor_grouping : Int,
+  grouping_alignment : @model.LottieProperty[Array[Double]],
   glyphs : Array[@model.GlyphInfo],
 ) -> Unit {
   // Base fill color from text document (normalized 0-1)
@@ -1928,7 +2021,6 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       non_space_count = non_space_count + 1
     }
   }
-
   // Compute advance widths and total width for justification
   let mut total_width = 0.0
   let char_advances : Array[Double] = []
@@ -1957,6 +2049,16 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
     }
   }
+  let (group_widths, group_offsets) = build_text_letter_group_metrics(
+    chars,
+    char_advances,
+    anchor_grouping,
+  )
+  let (align_x, align_y) = get_text_group_alignment(
+    grouping_alignment,
+    self.current_comp_frame,
+  )
+  let y_off = doc.size * 1.2 * 0.714
 
   // Starting x based on justification
   let mut cursor_x = match doc.justify {
@@ -1967,6 +2069,18 @@ fn[R : Renderer] Player::render_text_with_glyphs(
 
   let mut global_char_index = 0
   let mut non_space_index = 0
+  let random_orders : Array[Array[Int]] = []
+  for ai = 0; ai < animators.length(); ai = ai + 1 {
+    let selector = animators[ai].selector
+    if selector.randomize == 1 {
+      let total_chars = if selector.based_on == 2 { non_space_count } else { n }
+      random_orders.push(
+        build_text_animator_random_order(total_chars, ai + text.length()),
+      )
+    } else {
+      random_orders.push([])
+    }
+  }
   for ci = 0; ci < n; ci = ci + 1 {
     let ch = chars[ci]
     let ch_str = ch.to_string()
@@ -1978,23 +2092,32 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     let mut anim_scale_y = 1.0
     let mut anim_pos_x = 0.0
     let mut anim_pos_y = 0.0
+    let mut anim_rotation = 0.0
     let mut anim_tracking = 0.0
     let mut char_opacity = 1.0
     // Keep fill color in normalized [0,1] space for blending
     let mut char_fill_r = base_fill_r
     let mut char_fill_g = base_fill_g
     let mut char_fill_b = base_fill_b
-    for anim in animators {
+    for ai = 0; ai < animators.length(); ai = ai + 1 {
+      let anim = animators[ai]
       let sel = anim.selector
       let total_chars = if sel.based_on == 2 {
         non_space_count
       } else {
         n
       }
-      let char_anim_idx = if sel.based_on == 2 {
+      let base_char_anim_idx = if sel.based_on == 2 {
         non_space_index
       } else {
         global_char_index
+      }
+      let char_anim_idx = if sel.randomize == 1 &&
+          base_char_anim_idx >= 0 &&
+          base_char_anim_idx < random_orders[ai].length() {
+        random_orders[ai][base_char_anim_idx]
+      } else {
+        base_char_anim_idx
       }
       let mult = compute_animator_mult(
         sel, char_anim_idx, total_chars, self.current_comp_frame,
@@ -2022,6 +2145,15 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           let py = if pv.length() > 1 { pv[1] } else { 0.0 }
           anim_pos_x = anim_pos_x + mult * px
           anim_pos_y = anim_pos_y + mult * py
+        }
+        None => ()
+      }
+      match anim.properties.rotation {
+        Some(rotation_prop) => {
+          let rv = @runtime.evaluate_double_property(
+            rotation_prop, self.current_comp_frame,
+          )
+          anim_rotation = anim_rotation + mult * rv
         }
         None => ()
       }
@@ -2079,17 +2211,46 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         let glyph_scale = doc.size / 100.0
         let char_scale_x = glyph_scale * anim_scale_x
         let char_scale_y = glyph_scale * anim_scale_y
+        let (offf, pivot_x, pivot_y) = get_text_group_pivot(
+          group_widths[ci],
+          group_offsets[ci],
+          align_x,
+          align_y,
+          y_off,
+        )
         let saved_paths = self.current_paths
         self.current_paths = []
         self.renderer.save()
         self.renderer.concat_transform(
-          @math.Matrix::identity().translate(
-            cursor_x + anim_pos_x,
-            anim_pos_y - doc.baseline_shift,
-          ),
+          @math.Matrix::identity().translate(-offf, 0.0),
+        )
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(-pivot_x, -pivot_y),
         )
         self.renderer.concat_transform(
           @math.Matrix::identity().scale(char_scale_x, char_scale_y),
+        )
+        if anim_rotation != 0.0 {
+          self.renderer.concat_transform(
+            @math.Matrix::identity().rotate(
+              -anim_rotation * 3.141592653589793 / 180.0,
+            ),
+          )
+        }
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(anim_pos_x, anim_pos_y),
+        )
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(cursor_x, 0.0),
+        )
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(0.0, -doc.baseline_shift),
+        )
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(offf, 0.0),
+        )
+        self.renderer.concat_transform(
+          @math.Matrix::identity().translate(pivot_x, pivot_y),
         )
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)

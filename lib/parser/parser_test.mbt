@@ -336,6 +336,28 @@ test "parse_text_animator_selector_range_start_end" {
 }
 
 ///|
+test "parse_text_animator_rotation_property" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"A\"}}]},\"a\":[{\"a\":{\"r\":{\"k\":45}},\"s\":{}}]}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse text animator rotation: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Text(text_data) =>
+      match text_data.animators[0].properties.rotation {
+        Some(rotation) =>
+          match rotation.value {
+            @model.PropertyValue::Static(v) => inspect(v, content="45")
+            _ => fail("text animator rotation should be static")
+          }
+        None => fail("text animator rotation should be parsed")
+      }
+    _ => fail("layer should be text layer")
+  }
+}
+
+///|
 test "parse_transform_property_with_bool_a_flag" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"a\":true,\"k\":[{\"t\":0,\"s\":[0,0,0],\"e\":[100,0,0]},{\"t\":10}]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}"
