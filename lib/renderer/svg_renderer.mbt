@@ -310,6 +310,8 @@ pub impl Renderer for SvgRenderer with draw_image(
   height : Double,
   asset_index : Int,
 ) -> Unit {
+  // SVG renderer writes the resolved href directly, so it does not need the
+  // wasm-only numeric asset index used by the canvas bridge.
   let _ = asset_index
   self.buffer.write_string(
     "<image href=\"\{id}\" width=\"\{width}\" height=\"\{height}\" />",

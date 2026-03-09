@@ -461,6 +461,8 @@ pub impl Renderer for CanvasRenderer with draw_image(
   asset_index : Int,
 ) {
   let _ = self
+  // Wasm canvas bridge uses numeric asset indices to avoid relying on
+  // unstable WasmGC string marshalling for image ids.
   let _ = id
   canvas_draw_image(asset_index, w, h)
 }

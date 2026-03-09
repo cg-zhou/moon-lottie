@@ -1,6 +1,6 @@
 export function moonStringJS(moonStr) {
     if (typeof moonStr === 'string') return moonStr;
-    if (moonStr == null) return "";
+    if (moonStr === null || moonStr === undefined) return "";
 
     const primitive = typeof moonStr.valueOf === 'function' ? moonStr.valueOf() : moonStr;
     if (typeof primitive === 'string') return primitive;
