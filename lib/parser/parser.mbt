@@ -424,7 +424,18 @@ struct AssetJson {
 struct TextDataJson {
   document : Json?
   animators : Array[Json]?
-} derive(FromJson(fields(document(rename="d"), animators(rename="a"))))
+  more_options : Json?
+} derive(
+  FromJson(
+    fields(document(rename="d"), animators(rename="a"), more_options(rename="m")),
+  ),
+)
+
+///|
+struct TextMoreOptionsJson {
+  grouping : Int?
+  alignment : Json?
+} derive(FromJson(fields(grouping(rename="g"), alignment(rename="a"))))
 
 ///|
 struct GlyphCharJson {
@@ -484,6 +495,7 @@ struct TextAnimatorJson {
 struct TextAnimatorSelectorJson {
   based_on : Int?
   shape : Int?
+  range_units : Int?
   randomize : Int?
   range_start : Json?
   range_end : Json?
@@ -496,6 +508,7 @@ struct TextAnimatorSelectorJson {
     fields(
       based_on(rename="b"),
       shape(rename="sh"),
+      range_units(rename="r"),
       randomize(rename="rn"),
       range_start(rename="s"),
       range_end(rename="e"),
@@ -511,6 +524,7 @@ struct TextAnimatorSelectorJson {
 struct TextAnimatorPropertiesJson {
   scale : Json?
   position : Json?
+  rotation : Json?
   opacity : Json?
   tracking : Json?
   fill_color : Json?
@@ -519,6 +533,7 @@ struct TextAnimatorPropertiesJson {
     fields(
       scale(rename="s"),
       position(rename="p"),
+      rotation(rename="r"),
       opacity(rename="o"),
       tracking(rename="t"),
       fill_color(rename="fc"),
@@ -1126,6 +1141,7 @@ fn parse_text_animator_selector(
   {
     based_on: decoded.based_on.unwrap_or(1),
     shape: decoded.shape.unwrap_or(1),
+    range_units: decoded.range_units.unwrap_or(1),
     randomize: decoded.randomize.unwrap_or(0),
     range_start,
     range_end,
@@ -1153,6 +1169,11 @@ fn parse_text_animator_properties(
   } catch {
     _ => None
   }
+  let rotation = try {
+    Some(parse_property_double(decoded.rotation))
+  } catch {
+    _ => None
+  }
   let opacity = try {
     Some(parse_property_double(decoded.opacity))
   } catch {
@@ -1168,7 +1189,7 @@ fn parse_text_animator_properties(
   } catch {
     _ => None
   }
-  { scale, position, opacity, tracking, fill_color }
+  { scale, position, rotation, opacity, tracking, fill_color }
 }
 
 ///|
@@ -1196,6 +1217,7 @@ fn parse_text_data_from_decoded(
                   _ => {
                     scale: None,
                     position: None,
+                    rotation: None,
                     opacity: None,
                     tracking: None,
                     fill_color: None,
@@ -1204,6 +1226,7 @@ fn parse_text_data_from_decoded(
               None => {
                 scale: None,
                 position: None,
+                rotation: None,
                 opacity: None,
                 tracking: None,
                 fill_color: None,
@@ -1213,7 +1236,19 @@ fn parse_text_data_from_decoded(
           }
         None => ()
       }
-      { text: d, animators }
+      let (anchor_grouping, grouping_alignment) = match d_json.more_options {
+        Some(m_json) => {
+          let decoded_more : TextMoreOptionsJson = (@json.from_json(m_json)) catch {
+            _ => { grouping: None, alignment: None }
+          }
+          let alignment = parse_property_vec(decoded_more.alignment) catch {
+            _ => @model.LottieProperty::new_static([0.0, 0.0])
+          }
+          (decoded_more.grouping.unwrap_or(1), alignment)
+        }
+        None => (1, @model.LottieProperty::new_static([0.0, 0.0]))
+      }
+      { text: d, animators, anchor_grouping, grouping_alignment }
     }
     None => raise InvalidJson("Text data is missing")
   }
@@ -1330,6 +1365,7 @@ fn parse_property_bezier(
             Some(k) =>
               if a_flag || is_animated_keyframe_array(k) {
                 let keyframes = []
+                let mut prev_value : @model.BezierPath? = None
                 match k {
                   Array(arr) =>
                     for kf_json in arr {
@@ -1346,7 +1382,11 @@ fn parse_property_bezier(
                         match keyframe.start_value {
                           Some(Array([val])) => parse_bezier_path(val, fallback_closed)
                           Some(val) => parse_bezier_path(val, fallback_closed)
-                          None => raise MissingKey("s in keyframe")
+                          None =>
+                            match prev_value {
+                              Some(v) => v
+                              None => raise MissingKey("s in keyframe")
+                            }
                         }
                       } catch {
                         _ => continue
@@ -1372,6 +1412,10 @@ fn parse_property_bezier(
                           out_tangent=out_tangent,
                         ),
                       )
+                      prev_value = match e {
+                        Some(v) => Some(v)
+                        None => Some(s)
+                      }
                     }
                   _ => ()
                 }

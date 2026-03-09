@@ -330,7 +330,45 @@ test "parse_text_animator_selector_range_start_end" {
         @model.PropertyValue::Static(v) => inspect(v, content="75")
         _ => fail("selector range_end should be static")
       }
+      inspect(selector.range_units, content="1")
     }
+    _ => fail("layer should be text layer")
+  }
+}
+
+///|
+test "parse_text_animator_selector_range_units" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"AB\"}}]},\"a\":[{\"a\":{\"fc\":{\"k\":[1,0,0]}},\"s\":{\"s\":{\"k\":0},\"e\":{\"k\":2},\"a\":{\"k\":100},\"b\":1,\"sh\":1,\"r\":2,\"rn\":0,\"ne\":{\"k\":0},\"xe\":{\"k\":0},\"o\":{\"k\":0}}}]}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse text animator selector range units: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Text(text_data) =>
+      inspect(text_data.animators[0].selector.range_units, content="2")
+    _ => fail("layer should be text layer")
+  }
+}
+
+///|
+test "parse_text_animator_rotation_property" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"A\"}}]},\"a\":[{\"a\":{\"r\":{\"k\":45}},\"s\":{}}]}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse text animator rotation: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Text(text_data) =>
+      match text_data.animators[0].properties.rotation {
+        Some(rotation) =>
+          match rotation.value {
+            @model.PropertyValue::Static(v) => inspect(v, content="45")
+            _ => fail("text animator rotation should be static")
+          }
+        None => fail("text animator rotation should be parsed")
+      }
     _ => fail("layer should be text layer")
   }
 }
@@ -469,6 +507,33 @@ test "parse_animated_transform_trailing_time_marker_uses_previous_value" {
       }
     }
     _ => fail("rotation should be animated")
+  }
+}
+
+///|
+test "parse_animated_shape_path_trailing_time_marker_uses_previous_value" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"shapes\":[{\"ty\":\"sh\",\"ks\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[0,0],[10,0],[10,10],[0,10]],\"c\":true}],\"e\":[{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[0,0],[20,0],[20,20],[0,20]],\"c\":true}]},{\"t\":10}]},\"closed\":true},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animated shape path trailing marker: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Shape(shapes) =>
+      match shapes[0].data {
+        @model.ShapeData::Path(path_shape) =>
+          match path_shape.path.value {
+            @model.PropertyValue::Animated(kfs) => {
+              if kfs.length() != 2 || kfs[1].start_value.vertices.length() < 2 ||
+                (kfs[1].start_value.vertices[1][0] - 20.0).abs() > 0.000001 {
+                fail("shape path trailing keyframe should inherit previous end value")
+              }
+            }
+            _ => fail("shape path should be animated")
+          }
+        _ => fail("first shape should be path")
+      }
+    _ => fail("layer should be shape layer")
   }
 }
 
