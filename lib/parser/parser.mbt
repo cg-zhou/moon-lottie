@@ -19,6 +19,7 @@ struct AnimationRootJson {
   three_d : Int?
   assets : Array[Json]?
   layers : Array[Json]
+  fonts : Json?
   chars : Array[Json]?
 } derive(
   FromJson(
@@ -31,6 +32,7 @@ struct AnimationRootJson {
       height(rename="h"),
       name(rename="nm"),
       three_d(rename="ddd"),
+      fonts(rename="fonts"),
       chars(rename="chars"),
     ),
   ),
@@ -428,6 +430,7 @@ struct TextDataJson {
 struct GlyphCharJson {
   ch : String?
   style : String?
+  family : String?
   size : Double?
   advance_width : Double?
   data : Json?
@@ -436,6 +439,7 @@ struct GlyphCharJson {
     fields(
       ch(rename="ch"),
       style(rename="style"),
+      family(rename="fFamily"),
       size(rename="size"),
       advance_width(rename="w"),
       data(rename="data"),
@@ -447,6 +451,28 @@ struct GlyphCharJson {
 struct GlyphDataJson {
   shapes : Array[Json]?
 } derive(FromJson(fields(shapes(rename="shapes"))))
+
+///|
+struct FontInfoJson {
+  name : String?
+  family : String?
+  style : String?
+  ascent : Double?
+} derive(
+  FromJson(
+    fields(
+      name(rename="fName"),
+      family(rename="fFamily"),
+      style(rename="fStyle"),
+      ascent(rename="ascent"),
+    ),
+  ),
+)
+
+///|
+struct FontsJson {
+  list : Array[Json]?
+} derive(FromJson(fields(list(rename="list"))))
 
 ///|
 struct TextAnimatorJson {
@@ -1858,6 +1884,24 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     None => ()
   }
 
+  let fonts : Array[@model.FontInfo] = []
+  match root.fonts {
+    Some(fonts_json) => {
+      let decoded : FontsJson = (@json.from_json(fonts_json)) catch {
+        _ => { list: None }
+      }
+      match decoded.list {
+        Some(arr) =>
+          for f_json in arr {
+            let font = parse_font_info(f_json) catch { _ => continue }
+            fonts.push(font)
+          }
+        None => ()
+      }
+    }
+    None => ()
+  }
+
   @model.Animation::new(
     version~,
     frame_rate~,
@@ -1869,6 +1913,7 @@ pub fn parse_animation(json : Json) -> @model.Animation raise LottieError {
     three_d=root.three_d,
     assets=if assets.length() > 0 { Some(assets) } else { None },
     layers~,
+    fonts=if fonts.length() > 0 { Some(fonts) } else { None },
     glyphs=if glyphs.length() > 0 { Some(glyphs) } else { None },
   )
 }
@@ -1880,6 +1925,7 @@ fn parse_glyph_char(json : Json) -> @model.GlyphInfo raise LottieError {
   }
   let ch = decoded.ch.unwrap_or("")
   let style = decoded.style.unwrap_or("")
+  let family = decoded.family.unwrap_or("")
   let size = decoded.size.unwrap_or(100.0)
   let advance_width = decoded.advance_width.unwrap_or(0.0)
   let shapes : Array[@model.Shape] = []
@@ -1900,7 +1946,20 @@ fn parse_glyph_char(json : Json) -> @model.GlyphInfo raise LottieError {
     }
     None => ()
   }
-  { ch, style, size, advance_width, shapes }
+  { ch, style, family, size, advance_width, shapes }
+}
+
+///|
+fn parse_font_info(json : Json) -> @model.FontInfo raise LottieError {
+  let decoded : FontInfoJson = (@json.from_json(json)) catch {
+    _ => raise UnexpectedType("font info", "Object")
+  }
+  {
+    name: decoded.name.unwrap_or(""),
+    family: decoded.family.unwrap_or(""),
+    style: decoded.style.unwrap_or(""),
+    ascent: decoded.ascent.unwrap_or(0.0),
+  }
 }
 
 ///|

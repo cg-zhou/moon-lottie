@@ -409,6 +409,39 @@ fn get_pt_at(v : Array[Array[Double]], i : Int, j : Int) -> Double {
 }
 
 ///|
+fn find_font_info(
+  animation : @model.Animation,
+  font_name : String,
+) -> @model.FontInfo? {
+  match animation.fonts {
+    Some(fonts) =>
+      for font in fonts {
+        if font.name == font_name {
+          return Some(font)
+        }
+      }
+    None => ()
+  }
+  None
+}
+
+///|
+fn glyph_matches_font(
+  glyph : @model.GlyphInfo,
+  doc_font_name : String,
+  font_info : @model.FontInfo?,
+) -> Bool {
+  if doc_font_name.contains(glyph.style) {
+    match font_info {
+      Some(font) => glyph.family == "" || glyph.family == font.family
+      None => true
+    }
+  } else {
+    false
+  }
+}
+
+///|
 fn color_channel_to_u8(v : Double) -> Int {
   // Align with lottie-rs `Rgba::from(Value)`:
   // - [0, 1] normalized values
@@ -1885,6 +1918,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   let chars = text.to_array()
   let n = chars.length()
   let base_tracking = doc.tracking * 0.001 * doc.size
+  let font_info = find_font_info(self.animation, doc.font)
 
   // Count non-space chars for b=2 animators
   let mut non_space_count = 0
@@ -1897,14 +1931,18 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   // Compute advance widths and total width for justification
   let mut total_width = 0.0
   let char_advances : Array[Double] = []
-  for ch in chars {
+  for ci = 0; ci < n; ci = ci + 1 {
+    let ch = chars[ci]
     let ch_str = ch.to_string()
     let mut found = false
     for g in glyphs {
-      if g.ch == ch_str && doc.font.contains(g.style) {
+      if g.ch == ch_str && glyph_matches_font(g, doc.font, font_info) {
         let advance = g.advance_width * doc.size / 100.0
         char_advances.push(advance)
-        total_width += advance + base_tracking
+        total_width += advance
+        if ci < n - 1 {
+          total_width += base_tracking
+        }
         found = true
         break
       }
@@ -1912,7 +1950,10 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     if not(found) {
       let fallback = doc.size * glyph_fallback_advance_ratio
       char_advances.push(fallback)
-      total_width += fallback + base_tracking
+      total_width += fallback
+      if ci < n - 1 {
+        total_width += base_tracking
+      }
     }
   }
 
@@ -2033,15 +2074,18 @@ fn[R : Renderer] Player::render_text_with_glyphs(
 
     // Find and render glyph
     for g in glyphs {
-      if g.ch == ch_str && doc.font.contains(g.style) {
-        let glyph_scale = doc.size / g.size
+      if g.ch == ch_str && glyph_matches_font(g, doc.font, font_info) {
+        let glyph_scale = doc.size / 100.0
         let char_scale_x = glyph_scale * anim_scale_x
         let char_scale_y = glyph_scale * anim_scale_y
         let saved_paths = self.current_paths
         self.current_paths = []
         self.renderer.save()
         self.renderer.concat_transform(
-          @math.Matrix::identity().translate(cursor_x + anim_pos_x, anim_pos_y),
+          @math.Matrix::identity().translate(
+            cursor_x + anim_pos_x,
+            anim_pos_y - doc.baseline_shift,
+          ),
         )
         self.renderer.concat_transform(
           @math.Matrix::identity().scale(char_scale_x, char_scale_y),

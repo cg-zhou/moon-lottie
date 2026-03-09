@@ -2,9 +2,18 @@
 pub(all) struct GlyphInfo {
   ch : String
   style : String
+  family : String
   size : Double
   advance_width : Double
   shapes : Array[Shape]
+}
+
+///|
+pub(all) struct FontInfo {
+  name : String
+  family : String
+  style : String
+  ascent : Double
 }
 
 ///|
@@ -20,6 +29,7 @@ pub struct Animation {
   assets : Array[Asset]?
   layers : Array[Layer]
   markers : Array[Marker]?
+  fonts : Array[FontInfo]?
   glyphs : Array[GlyphInfo]?
 }
 
@@ -36,6 +46,7 @@ pub fn Animation::new(
   assets? : Array[Asset]? = None,
   layers~ : Array[Layer],
   markers? : Array[Marker]? = None,
+  fonts? : Array[FontInfo]? = None,
   glyphs? : Array[GlyphInfo]? = None,
 ) -> Animation {
   {
@@ -50,6 +61,7 @@ pub fn Animation::new(
     assets,
     layers,
     markers,
+    fonts,
     glyphs,
   }
 }
