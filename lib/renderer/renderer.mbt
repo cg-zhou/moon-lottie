@@ -95,7 +95,13 @@ pub trait Renderer {
   clip(self : Self) -> Unit
 
   // Images
-  draw_image(self : Self, id : String, width : Double, height : Double) -> Unit
+  draw_image(
+    self : Self,
+    id : String,
+    width : Double,
+    height : Double,
+    asset_index : Int,
+  ) -> Unit
 
   // Text
   draw_text(
@@ -183,7 +189,7 @@ pub enum DrawCommand {
     Double,
     Double
   )
-  DrawImage(String, Double, Double)
+  DrawImage(String, Double, Double, Int)
   DrawText(String, String, Double, Int, Int, Int, Double, Int)
   Clip
   ClearRect(Double, Double, Double, Double)
@@ -414,8 +420,9 @@ pub impl Renderer for CommandRecorder with draw_image(
   id : String,
   w : Double,
   h : Double,
+  asset_index : Int,
 ) {
-  self.commands.push(DrawImage(id, w, h))
+  self.commands.push(DrawImage(id, w, h, asset_index))
 }
 
 ///|

@@ -308,7 +308,9 @@ pub impl Renderer for SvgRenderer with draw_image(
   id : String,
   width : Double,
   height : Double,
+  asset_index : Int,
 ) -> Unit {
+  let _ = asset_index
   self.buffer.write_string(
     "<image href=\"\{id}\" width=\"\{width}\" height=\"\{height}\" />",
   )

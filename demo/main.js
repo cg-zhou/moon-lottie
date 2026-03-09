@@ -1,4 +1,4 @@
-import { collectImageRefsForFrame } from './image_ref_queue.js';
+import { moonStringJS } from './moon_string.js';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
@@ -21,28 +21,10 @@ let lastTimestamp = 0;
 let player = null;
 let officialPlayer = null;
 let currentJsonStr = "";
-let currentAnimationData = null;
 let currentFileName = "";
 let currentFileSize = 0;
-let imageAssets = new Map();
-let imageLayerRefsByFrame = new Map();
-let frameImageDrawCursor = 0;
+let imageAssetsByIndex = [];
 let currentAnimationRequestId = null;
-
-// Helper to convert MoonBit string (WasmGC array) to JS string
-function moonStringJS(moonStr) {
-    if (typeof moonStr === 'string') return moonStr;
-    if (!moonStr) return "";
-    const len = typeof moonStr.length === 'function' ? moonStr.length() : moonStr.length;
-    if (typeof len !== 'number') return "";
-    let res = "";
-    for (let i = 0; i < len; i++) {
-        const code = typeof moonStr.get === 'function' ? moonStr.get(i) : moonStr[i];
-        if (typeof code !== 'number') return "";
-        res += String.fromCharCode(code);
-    }
-    return res;
-}
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -96,17 +78,8 @@ const importObject = {
     setOpacity: (a) => { ctx.globalAlpha *= a; },
     setTransform: (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
-    drawImage: (id, w, h) => {
-        const key = moonStringJS(id);
-        let img = imageAssets.get(key);
-        if (!img) {
-            const refs = getImageRefsForFrame(currentFrame);
-            if (refs.length > 0) {
-                const idx = frameImageDrawCursor < refs.length ? frameImageDrawCursor : refs.length - 1;
-                img = imageAssets.get(refs[idx]);
-                frameImageDrawCursor += 1;
-            }
-        }
+    drawImage: (assetIndex, w, h) => {
+        const img = imageAssetsByIndex[assetIndex] || null;
         if (img) ctx.drawImage(img, 0, 0, w, h);
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
@@ -347,16 +320,13 @@ function resolveAssetSrc(asset) {
 async function preloadAssets(json) {
     if (!json.assets) return;
     statusMsg.innerText = "正在加载资源文件...";
-    const promises = json.assets.map(asset => {
+    imageAssetsByIndex = new Array(json.assets.length).fill(null);
+    const promises = json.assets.map((asset, index) => {
         if (asset.p) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Keep both keys for compatibility:
-                    // - asset.id: backward compatibility with old runtimes
-                    // - resolved src: current runtime path (lottie-rs-aligned)
-                    imageAssets.set(asset.id, img);
-                    imageAssets.set(resolveAssetSrc(asset), img);
+                    imageAssetsByIndex[index] = img;
                     resolve();
                 };
                 img.onerror = resolve;
@@ -368,43 +338,9 @@ async function preloadAssets(json) {
     await Promise.all(promises);
 }
 
-function rebuildImageLayerTimeline(json) {
-    imageLayerRefsByFrame = new Map();
-    if (!json.layers) return;
-    const { start, end } = getAnimationFrameRange(json);
-    for (let f = start; f < end; f += 1) {
-        imageLayerRefsByFrame.set(f, collectImageRefsForFrame(json, f));
-    }
-}
-
-function getAnimationFrameRange(animation) {
-    const start = Math.floor(Number(animation?.ip ?? 0));
-    const end = Math.floor(Number(animation?.op ?? (start + 1)));
-    return { start, end };
-}
-
-function getImageRefsForFrame(frame) {
-    const wholeFrame = Math.floor(frame);
-    const { start, end } = getAnimationFrameRange(currentAnimationData);
-    if (wholeFrame < start || wholeFrame >= end) {
-        return [];
-    }
-    let refs = imageLayerRefsByFrame.get(wholeFrame);
-    if (!refs) {
-        if (currentAnimationData) {
-            refs = collectImageRefsForFrame(currentAnimationData, wholeFrame);
-        } else {
-            refs = [];
-        }
-        imageLayerRefsByFrame.set(wholeFrame, refs);
-    }
-    return refs;
-}
-
 async function startPlayer(jsonStr) {
     let animationData;
     try { animationData = JSON.parse(jsonStr); } catch (e) { alert("无效的 JSON 文件"); return; }
-    currentAnimationData = animationData;
 
     console.log(`[MoonLottie] Starting new animation: ${currentFileName}`);
     statusMsg.innerText = "初始化渲染引擎...";
@@ -418,9 +354,8 @@ async function startPlayer(jsonStr) {
     lastTimestamp = 0; 
 
     await preloadAssets(animationData);
-    rebuildImageLayerTimeline(animationData);
     // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
-    // The actual image data has already been preloaded into imageAssets by JS.
+    // The actual image data has already been preloaded into imageAssetsByIndex by JS.
     const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
     if (wasmAnimationData.assets) {
         wasmAnimationData.assets.forEach(asset => {
@@ -520,7 +455,6 @@ function renderLoop(timestamp) {
         // 基于真实时间计算应该前进的帧数
         // delta_frames = delta_time(s) * fps * speed
         const frameDelta = deltaTime * fps * speed;
-        frameImageDrawCursor = 0;
         
         currentFrame = window.moonLottie.update_player_with_speed(player, currentFrame, frameDelta);
         
@@ -556,7 +490,6 @@ function updatePlayPauseButton() {
 seekBar.oninput = () => {
     if (!player) return;
     currentFrame = parseFloat(seekBar.value);
-    frameImageDrawCursor = 0;
     window.moonLottie.update_player_with_speed(player, currentFrame, 0);
     updateUI();
 };
