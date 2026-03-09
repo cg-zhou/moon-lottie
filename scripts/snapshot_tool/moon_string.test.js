@@ -58,6 +58,7 @@ test('readWasmString returns empty string for empty or invalid exported values',
   assert.equal(readWasmString(0, () => 0), '');
   assert.equal(readWasmString(-1, () => 0), '');
   assert.equal(readWasmString(3, () => undefined), '');
+  assert.equal(readWasmString(3, () => -1), '');
 });
 
 test('readWasmString does not invoke callback when exported length is negative', async () => {

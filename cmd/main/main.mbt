@@ -85,8 +85,8 @@ pub fn get_version_char(
   let version = player.animation.version
   if idx < 0 || idx >= version.length() {
     // JS reconstructs exported strings by reading indices in [0, len).
-    // Return 0 as an invalid-index sentinel instead of trapping on misuse.
-    0
+    // Return -1 as an invalid-index sentinel instead of trapping on misuse.
+    -1
   } else {
     version[idx].to_int()
   }

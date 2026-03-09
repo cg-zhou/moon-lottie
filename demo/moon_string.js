@@ -24,13 +24,25 @@ export function moonStringJS(moonStr) {
     return res;
 }
 
+function warnInvalidWasmString(message) {
+    if (typeof console === 'object' && typeof console.warn === 'function') {
+        console.warn(`[moon-lottie] ${message}`);
+    }
+}
+
 export function readWasmString(length, getCharCodeAt) {
-    if (typeof length !== 'number' || length < 0) return "";
+    if (typeof length !== 'number' || length < 0) {
+        warnInvalidWasmString(`invalid exported string length: ${length}`);
+        return "";
+    }
 
     let res = "";
     for (let i = 0; i < length; i++) {
         const code = getCharCodeAt(i);
-        if (typeof code !== 'number') return "";
+        if (typeof code !== 'number' || code < 0) {
+            warnInvalidWasmString(`invalid exported string char code at ${i}: ${code}`);
+            return "";
+        }
         res += String.fromCharCode(code);
     }
     return res;
