@@ -1,3 +1,6 @@
+const TRACK_MATTE_LAYER = 1;
+const TRACK_MATTE_TYPES = new Set([1, 2, 3, 4]);
+
 function isLayerVisibleAtFrame(layer, frame) {
     if (!layer || layer.hd) return false;
     const ip = Number(layer.ip ?? 0);
@@ -10,7 +13,7 @@ function collectImageRefsFromScope(layers, frame, assetById, refs) {
     for (let i = layers.length - 1; i >= 0; i -= 1) {
         const layer = layers[i];
         if (!isLayerVisibleAtFrame(layer, frame)) continue;
-        if (layer.td === 1) continue;
+        if (layer.td === TRACK_MATTE_LAYER) continue;
         collectImageRefsFromLayer(layer, layers, i, frame, assetById, refs);
     }
 }
@@ -28,7 +31,7 @@ function collectImageRefsFromLayer(layer, scopeLayers, layerIndex, frame, assetB
         refs.push(layer.refId);
     }
 
-    if ([1, 2, 3, 4].includes(layer.tt) && layerIndex > 0) {
+    if (TRACK_MATTE_TYPES.has(layer.tt) && layerIndex > 0) {
         collectImageRefsFromLayer(scopeLayers[layerIndex - 1], scopeLayers, layerIndex - 1, frame, assetById, refs);
     }
 }
