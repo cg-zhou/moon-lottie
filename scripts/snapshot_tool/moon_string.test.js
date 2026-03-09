@@ -11,6 +11,8 @@ test('moonStringJS returns native JS strings unchanged', async () => {
   const { moonStringJS } = await import(helperUrl);
   assert.equal(moonStringJS('image_0'), 'image_0');
   assert.equal(moonStringJS(''), '');
+  assert.equal(moonStringJS(null), '');
+  assert.equal(moonStringJS(undefined), '');
 });
 
 test('moonStringJS decodes WasmGC-style objects via valueOf/toString before array fallback', async () => {
