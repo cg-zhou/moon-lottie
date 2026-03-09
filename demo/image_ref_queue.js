@@ -13,6 +13,8 @@ function collectImageRefsFromScope(layers, frame, assetById, refs) {
     for (let i = layers.length - 1; i >= 0; i -= 1) {
         const layer = layers[i];
         if (!isLayerVisibleAtFrame(layer, frame)) continue;
+        // Mirror the current Moon renderer, which only skips direct rendering for
+        // matte-source siblings marked with td === 1.
         if (layer.td === TRACK_MATTE_LAYER) continue;
         collectImageRefsFromLayer(layer, layers, i, frame, assetById, refs);
     }

@@ -371,17 +371,21 @@ async function preloadAssets(json) {
 function rebuildImageLayerTimeline(json) {
     imageLayerRefsByFrame = new Map();
     if (!json.layers) return;
-    const start = Math.floor(Number(json.ip ?? 0));
-    const end = Math.floor(Number(json.op ?? (start + 1)));
+    const { start, end } = getAnimationFrameRange(json);
     for (let f = start; f < end; f += 1) {
         imageLayerRefsByFrame.set(f, collectImageRefsForFrame(json, f));
     }
 }
 
+function getAnimationFrameRange(animation) {
+    const start = Math.floor(Number(animation?.ip ?? 0));
+    const end = Math.floor(Number(animation?.op ?? (start + 1)));
+    return { start, end };
+}
+
 function getImageRefsForFrame(frame) {
     const wholeFrame = Math.floor(frame);
-    const start = Math.floor(Number(currentAnimationData?.ip ?? 0));
-    const end = Math.floor(Number(currentAnimationData?.op ?? (start + 1)));
+    const { start, end } = getAnimationFrameRange(currentAnimationData);
     if (wholeFrame < start || wholeFrame >= end) {
         return [];
     }
