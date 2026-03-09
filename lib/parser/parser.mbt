@@ -495,6 +495,7 @@ struct TextAnimatorJson {
 struct TextAnimatorSelectorJson {
   based_on : Int?
   shape : Int?
+  range_units : Int?
   randomize : Int?
   range_start : Json?
   range_end : Json?
@@ -507,6 +508,7 @@ struct TextAnimatorSelectorJson {
     fields(
       based_on(rename="b"),
       shape(rename="sh"),
+      range_units(rename="r"),
       randomize(rename="rn"),
       range_start(rename="s"),
       range_end(rename="e"),
@@ -1139,6 +1141,7 @@ fn parse_text_animator_selector(
   {
     based_on: decoded.based_on.unwrap_or(1),
     shape: decoded.shape.unwrap_or(1),
+    range_units: decoded.range_units.unwrap_or(1),
     randomize: decoded.randomize.unwrap_or(0),
     range_start,
     range_end,
@@ -1362,6 +1365,7 @@ fn parse_property_bezier(
             Some(k) =>
               if a_flag || is_animated_keyframe_array(k) {
                 let keyframes = []
+                let mut prev_value : @model.BezierPath? = None
                 match k {
                   Array(arr) =>
                     for kf_json in arr {
@@ -1378,7 +1382,11 @@ fn parse_property_bezier(
                         match keyframe.start_value {
                           Some(Array([val])) => parse_bezier_path(val, fallback_closed)
                           Some(val) => parse_bezier_path(val, fallback_closed)
-                          None => raise MissingKey("s in keyframe")
+                          None =>
+                            match prev_value {
+                              Some(v) => v
+                              None => raise MissingKey("s in keyframe")
+                            }
                         }
                       } catch {
                         _ => continue
@@ -1404,6 +1412,10 @@ fn parse_property_bezier(
                           out_tangent=out_tangent,
                         ),
                       )
+                      prev_value = match e {
+                        Some(v) => Some(v)
+                        None => Some(s)
+                      }
                     }
                   _ => ()
                 }

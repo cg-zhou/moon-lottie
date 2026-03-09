@@ -650,6 +650,48 @@ test "text animator randomize changes selector order" {
   inspect(opacities, content="[0.625, 0.875, 0.125, 0.375]")
 }
 
+test "text animator selector based on words shares word index" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":240,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"B","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"C","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Test Bold","t":"A B","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[{"a":{"o":{"a":0,"k":0}},"s":{"s":{"a":0,"k":0},"e":{"a":0,"k":100},"a":{"a":0,"k":100},"b":3,"sh":2,"rn":0,"ne":{"a":0,"k":0},"xe":{"a":0,"k":0},"o":{"a":0,"k":0}}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let opacities : Array[Double] = []
+  for cmd in commands {
+    match cmd {
+      Fill(_, _, _, opacity) => opacities.push(opacity)
+      _ => ()
+    }
+  }
+  inspect(opacities, content="[0.75, 0.25]")
+}
+
+test "text animator selector range units index uses raw indices" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":240,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"B","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"C","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Test Bold","t":"ABC","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[{"a":{"o":{"a":0,"k":0}},"s":{"s":{"a":0,"k":1},"e":{"a":0,"k":3},"a":{"a":0,"k":100},"b":1,"sh":2,"r":2,"rn":0,"ne":{"a":0,"k":0},"xe":{"a":0,"k":0},"o":{"a":0,"k":0}}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let opacities : Array[Double] = []
+  for cmd in commands {
+    match cmd {
+      Fill(_, _, _, opacity) => opacities.push(opacity)
+      _ => ()
+    }
+  }
+  inspect(opacities, content="[1, 0.75, 0.25]")
+}
+
 test "matte source render resets transform to identity during matte exit" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"td":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[10,10]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[80,80]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,1,1]},"o":{"k":100}}]},{"ty":4,"ind":2,"tt":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[60,20]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[120,120]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}

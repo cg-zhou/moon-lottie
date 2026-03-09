@@ -12,6 +12,7 @@ pub(all) enum LayerData {
 pub(all) struct TextAnimatorSelector {
   based_on : Int
   shape : Int
+  range_units : Int
   randomize : Int
   range_start : LottieProperty[Double]
   range_end : LottieProperty[Double]

@@ -1776,7 +1776,7 @@ fn compute_animator_mult(
     return 0.0
   }
   let offset_raw = @runtime.evaluate_double_property(selector.offset, frame)
-  let divisor = 100.0 / total_chars.to_double()
+  let divisor = if selector.range_units == 2 { 1.0 } else { 100.0 / total_chars.to_double() }
   let o = offset_raw / divisor
   let s_raw = @runtime.evaluate_double_property(selector.range_start, frame)
   let s_val = s_raw / divisor + o
@@ -1886,6 +1886,53 @@ fn compute_animator_mult(
   let eased = @math.solve_cubic_bezier_easing(x1, y1, x2, y2, mult)
   let amount = @runtime.evaluate_double_property(selector.amount, frame)
   eased * amount / 100.0
+}
+
+///|
+fn is_text_newline_char(ch : Char) -> Bool {
+  ch == '\r' || ch == '\n'
+}
+
+///|
+fn should_advance_selector_index(
+  chars : Array[Char],
+  ci : Int,
+  based_on : Int,
+) -> Bool {
+  let ch = chars[ci]
+  if is_text_newline_char(ch) {
+    return based_on != 2
+  }
+  match based_on {
+    2 => ch != ' '
+    3 => ch == ' ' || ci == chars.length() - 1
+    4 => ci == chars.length() - 1
+    _ => true
+  }
+}
+
+///|
+fn count_selector_total_chars(chars : Array[Char], based_on : Int) -> Int {
+  let mut total = 0
+  for ci = 0; ci < chars.length(); ci = ci + 1 {
+    if should_advance_selector_index(chars, ci, based_on) {
+      total = total + 1
+    }
+  }
+  total
+}
+
+///|
+fn build_selector_indices(chars : Array[Char], based_on : Int) -> Array[Int] {
+  let indices : Array[Int] = []
+  let mut current = 0
+  for ci = 0; ci < chars.length(); ci = ci + 1 {
+    indices.push(current)
+    if should_advance_selector_index(chars, ci, based_on) {
+      current = current + 1
+    }
+  }
+  indices
 }
 
 fn build_text_animator_random_order(total : Int, seed : Int) -> Array[Int] {
@@ -2014,13 +2061,6 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   let base_tracking = doc.tracking * 0.001 * doc.size
   let font_info = find_font_info(self.animation, doc.font)
 
-  // Count non-space chars for b=2 animators
-  let mut non_space_count = 0
-  for ch in chars {
-    if ch != ' ' {
-      non_space_count = non_space_count + 1
-    }
-  }
   // Compute advance widths and total width for justification
   let mut total_width = 0.0
   let char_advances : Array[Double] = []
@@ -2049,6 +2089,18 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
     }
   }
+  let char_indices_by_mode = [
+    build_selector_indices(chars, 1),
+    build_selector_indices(chars, 2),
+    build_selector_indices(chars, 3),
+    build_selector_indices(chars, 4),
+  ]
+  let selector_totals_by_mode = [
+    count_selector_total_chars(chars, 1),
+    count_selector_total_chars(chars, 2),
+    count_selector_total_chars(chars, 3),
+    count_selector_total_chars(chars, 4),
+  ]
   let (group_widths, group_offsets) = build_text_letter_group_metrics(
     chars,
     char_advances,
@@ -2067,13 +2119,16 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     _ => 0.0
   }
 
-  let mut global_char_index = 0
-  let mut non_space_index = 0
   let random_orders : Array[Array[Int]] = []
   for ai = 0; ai < animators.length(); ai = ai + 1 {
     let selector = animators[ai].selector
+    let mode_idx = if selector.based_on >= 1 && selector.based_on <= 4 {
+      selector.based_on - 1
+    } else {
+      0
+    }
     if selector.randomize == 1 {
-      let total_chars = if selector.based_on == 2 { non_space_count } else { n }
+      let total_chars = selector_totals_by_mode[mode_idx]
       random_orders.push(
         build_text_animator_random_order(total_chars, ai + text.length()),
       )
@@ -2084,7 +2139,6 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   for ci = 0; ci < n; ci = ci + 1 {
     let ch = chars[ci]
     let ch_str = ch.to_string()
-    let is_space = ch == ' '
     let advance = char_advances[ci]
 
     // Compute animator effects for this character
@@ -2102,16 +2156,13 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     for ai = 0; ai < animators.length(); ai = ai + 1 {
       let anim = animators[ai]
       let sel = anim.selector
-      let total_chars = if sel.based_on == 2 {
-        non_space_count
+      let mode_idx = if sel.based_on >= 1 && sel.based_on <= 4 {
+        sel.based_on - 1
       } else {
-        n
+        0
       }
-      let base_char_anim_idx = if sel.based_on == 2 {
-        non_space_index
-      } else {
-        global_char_index
-      }
+      let total_chars = selector_totals_by_mode[mode_idx]
+      let base_char_anim_idx = char_indices_by_mode[mode_idx][ci]
       let char_anim_idx = if sel.randomize == 1 &&
           base_char_anim_idx >= 0 &&
           base_char_anim_idx < random_orders[ai].length() {
@@ -2263,9 +2314,5 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     }
 
     cursor_x += advance + base_tracking
-    global_char_index = global_char_index + 1
-    if not(is_space) {
-      non_space_index = non_space_index + 1
-    }
   }
 }
