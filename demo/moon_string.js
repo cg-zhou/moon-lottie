@@ -23,3 +23,15 @@ export function moonStringJS(moonStr) {
     }
     return res;
 }
+
+export function readWasmString(length, getCharCodeAt) {
+    if (typeof length !== 'number' || length < 0) return "";
+
+    let res = "";
+    for (let i = 0; i < length; i++) {
+        const code = getCharCodeAt(i);
+        if (typeof code !== 'number') return "";
+        res += String.fromCharCode(code);
+    }
+    return res;
+}

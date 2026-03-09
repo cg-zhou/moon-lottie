@@ -1,4 +1,4 @@
-import { moonStringJS } from './moon_string.js';
+import { moonStringJS, readWasmString } from './moon_string.js';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
@@ -247,6 +247,13 @@ async function init() {
   }
 }
 
+function getVersionString(player) {
+    return readWasmString(
+        window.moonLottie.get_version_len(player),
+        (idx) => window.moonLottie.get_version_char(player, idx),
+    );
+}
+
 async function initAnimList() {
     const listEl = document.getElementById('anim-list');
     try {
@@ -366,7 +373,7 @@ async function startPlayer(jsonStr) {
     }
     currentJsonStr = JSON.stringify(wasmAnimationData);
     
-    const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps, get_version } = window.moonLottie;
+    const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps } = window.moonLottie;
     
     player = create_player_from_js();
     if (!player) { statusMsg.innerText = "动画解析失败"; return; }
@@ -421,7 +428,7 @@ async function startPlayer(jsonStr) {
     const totalFrames = get_frame_count(player);
     document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
     document.getElementById('info-duration').innerText = (totalFrames / fps).toFixed(2) + "s";
-    document.getElementById('info-version').innerText = moonStringJS(get_version(player));
+    document.getElementById('info-version').innerText = getVersionString(player);
 
     const inPoint = window.moonLottie.get_in_point(player);
     seekBar.min = inPoint;

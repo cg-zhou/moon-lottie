@@ -71,10 +71,25 @@ pub fn get_fps(player : @renderer.Player[@renderer.CanvasRenderer]) -> Double {
 }
 
 ///|
-pub fn get_version(
+pub fn get_version_len(
   player : @renderer.Player[@renderer.CanvasRenderer],
-) -> String {
-  player.animation.version
+) -> Int {
+  player.animation.version.length()
+}
+
+///|
+pub fn get_version_char(
+  player : @renderer.Player[@renderer.CanvasRenderer],
+  idx : Int,
+) -> Int {
+  let version = player.animation.version
+  if idx < 0 || idx >= version.length() {
+    // JS reconstructs exported strings by reading indices in [0, len).
+    // Return 0 as an invalid-index sentinel instead of trapping on misuse.
+    0
+  } else {
+    version[idx].to_int()
+  }
 }
 
 ///|

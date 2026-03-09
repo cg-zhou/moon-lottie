@@ -16,7 +16,9 @@ pub fn get_height(@renderer.Player[@renderer.CanvasRenderer]) -> Int
 
 pub fn get_in_point(@renderer.Player[@renderer.CanvasRenderer]) -> Double
 
-pub fn get_version(@renderer.Player[@renderer.CanvasRenderer]) -> String
+pub fn get_version_char(@renderer.Player[@renderer.CanvasRenderer], Int) -> Int
+
+pub fn get_version_len(@renderer.Player[@renderer.CanvasRenderer]) -> Int
 
 pub fn get_width(@renderer.Player[@renderer.CanvasRenderer]) -> Int
 
