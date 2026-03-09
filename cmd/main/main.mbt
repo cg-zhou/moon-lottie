@@ -1,8 +1,5 @@
 ///|
-extern "wasm" fn js_get_json_len() -> Int = "demo" "get_json_len"
-
-///|
-extern "wasm" fn js_get_json_char(idx : Int) -> Int = "demo" "get_json_char"
+extern "wasm" fn js_get_json_string() -> String = "demo" "get_json_string"
 
 ///|
 extern "wasm" fn js_log_frame(frame : Double) -> Unit = "demo" "log_frame"
@@ -14,13 +11,7 @@ fn main {
 
 ///|
 fn get_json_from_js() -> String {
-  let len = js_get_json_len()
-  let sb = @builtin.StringBuilder::new(size_hint=len)
-  for i = 0; i < len; i = i + 1 {
-    let c = js_get_json_char(i)
-    sb.write_char(c.to_char().unwrap())
-  }
-  sb.to_string()
+  js_get_json_string()
 }
 
 ///|

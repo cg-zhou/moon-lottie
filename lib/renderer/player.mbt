@@ -544,7 +544,8 @@ fn[R : Renderer] Player::render_layer_content(
     Image(ref_id) =>
       match self.animation.assets {
         Some(assets) =>
-          for asset in assets {
+          for i = 0; i < assets.length(); i = i + 1 {
+            let asset = assets[i]
             if asset.id == ref_id {
               let w = match asset.width {
                 Some(v) => v
@@ -555,7 +556,7 @@ fn[R : Renderer] Player::render_layer_content(
                 None => 0
               }
               let src = resolve_image_asset_src(asset)
-              self.renderer.draw_image(src, w.to_double(), h.to_double())
+              self.renderer.draw_image(src, w.to_double(), h.to_double(), i)
               break
             }
           }

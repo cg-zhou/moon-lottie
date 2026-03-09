@@ -12,6 +12,10 @@ const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
 
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const wasmCompileOptions = { builtins: ['js-string'] };
+const wasmStringGlobals = new Proxy({}, {
+    get: (_, name) => typeof name === 'string' ? name : undefined,
+});
 
 let isPlaying = true;
 let currentFrame = 0;
@@ -21,25 +25,8 @@ let officialPlayer = null;
 let currentJsonStr = "";
 let currentFileName = "";
 let currentFileSize = 0;
-let imageAssets = new Map();
-let imageLayerRefsByFrame = new Map();
-let frameImageDrawCursor = 0;
+let imageAssetsByIndex = [];
 let currentAnimationRequestId = null;
-
-// Helper to convert MoonBit string (WasmGC array) to JS string
-function moonStringJS(moonStr) {
-    if (typeof moonStr === 'string') return moonStr;
-    if (!moonStr) return "";
-    const len = typeof moonStr.length === 'function' ? moonStr.length() : moonStr.length;
-    if (typeof len !== 'number') return "";
-    let res = "";
-    for (let i = 0; i < len; i++) {
-        const code = typeof moonStr.get === 'function' ? moonStr.get(i) : moonStr[i];
-        if (typeof code !== 'number') return "";
-        res += String.fromCharCode(code);
-    }
-    return res;
-}
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -51,12 +38,12 @@ const matteStack = [];
 
 const importObject = {
   demo: {
-    get_json_len: () => currentJsonStr.length,
-    get_json_char: (idx) => currentJsonStr.charCodeAt(idx),
+    get_json_string: () => currentJsonStr,
     log_frame: (f) => {
         // if (Math.floor(f) % 30 === 0) console.log("WASM Frame:", f);
     }
   },
+  _: wasmStringGlobals,
   spectest: { print_char: (c) => {} },
   canvas: {
     save: () => { ctx.save(); fillRuleStack.push(ctx._currentFillRule || "nonzero"); },
@@ -81,7 +68,7 @@ const importObject = {
     beginDash: () => { currentDash = []; },
     addDash: (value) => { currentDash.push(value); },
     applyDash: (offset) => { ctx.setLineDash(currentDash); ctx.lineDashOffset = offset; },
-    setFillRule: (rule) => { ctx._currentFillRule = moonStringJS(rule); },
+    setFillRule: (rule) => { ctx._currentFillRule = rule; },
     createLinearGradient: (x1, y1, x2, y2) => { currentGradient = ctx.createLinearGradient(x1, y1, x2, y2); },
     createRadialGradient: (cx, cy, r, fx, fy, fr) => { currentGradient = ctx.createRadialGradient(fx, fy, fr, cx, cy, r); },
     addGradientStop: (offset, r, g, b, a) => { if (currentGradient) currentGradient.addColorStop(offset, `rgba(${r},${g},${b},${a})`); },
@@ -93,27 +80,18 @@ const importObject = {
     setOpacity: (a) => { ctx.globalAlpha *= a; },
     setTransform: (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
-    drawImage: (id, w, h) => {
-        const key = moonStringJS(id);
-        let img = imageAssets.get(key);
-        if (!img) {
-            const refs = imageLayerRefsByFrame.get(Math.floor(currentFrame)) || [];
-            if (refs.length > 0) {
-                const idx = frameImageDrawCursor < refs.length ? frameImageDrawCursor : refs.length - 1;
-                img = imageAssets.get(refs[idx]);
-                frameImageDrawCursor += 1;
-            }
-        }
+    drawImage: (assetIndex, w, h) => {
+        const img = imageAssetsByIndex[assetIndex] || null;
         if (img) ctx.drawImage(img, 0, 0, w, h);
     },
     drawText: (text, font, size, r, g, b, a, justify) => {
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.font = `${size}px ${moonStringJS(font) || 'Arial'}`;
+        ctx.font = `${size}px ${font || 'Arial'}`;
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
-        ctx.fillText(moonStringJS(text), 0, 0); ctx.restore();
+        ctx.fillText(text, 0, 0); ctx.restore();
     },
     setGlobalCompositeOperation: (mode) => {
-        const modeStr = moonStringJS(mode);
+        const modeStr = mode;
         // Alpha matte (tt=1) fix: match lottie-web's buffer approach exactly.
         // lottie-web saves layer content to buffer1, clears the canvas, renders the matte
         // with source-over, then applies source-in with buffer1 so that ALL canvas pixels
@@ -185,7 +163,7 @@ const importObject = {
         // Composite the offscreen layer onto the main canvas using identity transform.
         savedCtx.save();
         savedCtx.setTransform(1, 0, 0, 1, 0, 0);
-        savedCtx.globalCompositeOperation = moonStringJS(mode);
+        savedCtx.globalCompositeOperation = mode;
         savedCtx.globalAlpha = savedOpacity;
         savedCtx.drawImage(offscreen, 0, 0);
         savedCtx.restore();
@@ -239,11 +217,11 @@ const importObject = {
   },
   expressions: {
     evaluate_double: (code_ptr, time, val) => {
-        try { return new Function('value', 'time', `"use strict"; return (${moonStringJS(code_ptr)});`)(val, time); } catch (e) { return val; }
+        try { return new Function('value', 'time', `"use strict"; return (${code_ptr});`)(val, time); } catch (e) { return val; }
     },
     evaluate_vec_into: (code_ptr, time, arr) => {
         try {
-            const res = new Function('value', 'time', `"use strict"; return (${moonStringJS(code_ptr)});`)([...arr], time);
+            const res = new Function('value', 'time', `"use strict"; return (${code_ptr});`)([...arr], time);
             if (Array.isArray(res)) res.forEach((v, i) => i < arr.length && arr.set(i, v));
         } catch (e) {}
     }
@@ -257,7 +235,8 @@ async function init() {
     if (!response.ok) throw new Error("WASM not found");
     
     const buffer = await response.arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(buffer, importObject);
+    const module = await WebAssembly.compile(buffer, wasmCompileOptions);
+    const instance = await WebAssembly.instantiate(module, importObject);
     
     window.moonLottie = instance.exports;
     statusDot.style.background = "#34c759"; // Green
@@ -269,6 +248,10 @@ async function init() {
     statusDot.style.background = "#ff3b30"; // Red
     statusMsg.innerText = "错误: " + err.message;
   }
+}
+
+function getVersionString(player) {
+    return window.moonLottie.get_version(player);
 }
 
 async function initAnimList() {
@@ -344,16 +327,13 @@ function resolveAssetSrc(asset) {
 async function preloadAssets(json) {
     if (!json.assets) return;
     statusMsg.innerText = "正在加载资源文件...";
-    const promises = json.assets.map(asset => {
+    imageAssetsByIndex = new Array(json.assets.length).fill(null);
+    const promises = json.assets.map((asset, index) => {
         if (asset.p) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Keep both keys for compatibility:
-                    // - asset.id: backward compatibility with old runtimes
-                    // - resolved src: current runtime path (lottie-rs-aligned)
-                    imageAssets.set(asset.id, img);
-                    imageAssets.set(resolveAssetSrc(asset), img);
+                    imageAssetsByIndex[index] = img;
                     resolve();
                 };
                 img.onerror = resolve;
@@ -363,24 +343,6 @@ async function preloadAssets(json) {
         return Promise.resolve();
     });
     await Promise.all(promises);
-}
-
-function rebuildImageLayerTimeline(json) {
-    imageLayerRefsByFrame = new Map();
-    if (!json.layers) return;
-    json.layers.forEach(layer => {
-        if (!layer || layer.ty !== 2 || !layer.refId) return;
-        const ip = Math.floor(Number(layer.ip ?? 0));
-        const op = Math.floor(Number(layer.op ?? ip + 1));
-        for (let f = ip; f < op; f++) {
-            let refs = imageLayerRefsByFrame.get(f);
-            if (!refs) {
-                refs = [];
-                imageLayerRefsByFrame.set(f, refs);
-            }
-            refs.push(layer.refId);
-        }
-    });
 }
 
 async function startPlayer(jsonStr) {
@@ -399,9 +361,8 @@ async function startPlayer(jsonStr) {
     lastTimestamp = 0; 
 
     await preloadAssets(animationData);
-    rebuildImageLayerTimeline(animationData);
     // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
-    // The actual image data has already been preloaded into imageAssets by JS.
+    // The actual image data has already been preloaded into imageAssetsByIndex by JS.
     const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
     if (wasmAnimationData.assets) {
         wasmAnimationData.assets.forEach(asset => {
@@ -412,7 +373,7 @@ async function startPlayer(jsonStr) {
     }
     currentJsonStr = JSON.stringify(wasmAnimationData);
     
-    const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps, get_version } = window.moonLottie;
+    const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps } = window.moonLottie;
     
     player = create_player_from_js();
     if (!player) { statusMsg.innerText = "动画解析失败"; return; }
@@ -467,7 +428,7 @@ async function startPlayer(jsonStr) {
     const totalFrames = get_frame_count(player);
     document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
     document.getElementById('info-duration').innerText = (totalFrames / fps).toFixed(2) + "s";
-    document.getElementById('info-version').innerText = moonStringJS(get_version(player));
+    document.getElementById('info-version').innerText = getVersionString(player);
 
     const inPoint = window.moonLottie.get_in_point(player);
     seekBar.min = inPoint;
@@ -501,7 +462,6 @@ function renderLoop(timestamp) {
         // 基于真实时间计算应该前进的帧数
         // delta_frames = delta_time(s) * fps * speed
         const frameDelta = deltaTime * fps * speed;
-        frameImageDrawCursor = 0;
         
         currentFrame = window.moonLottie.update_player_with_speed(player, currentFrame, frameDelta);
         
@@ -537,7 +497,6 @@ function updatePlayPauseButton() {
 seekBar.oninput = () => {
     if (!player) return;
     currentFrame = parseFloat(seekBar.value);
-    frameImageDrawCursor = 0;
     window.moonLottie.update_player_with_speed(player, currentFrame, 0);
     updateUI();
 };

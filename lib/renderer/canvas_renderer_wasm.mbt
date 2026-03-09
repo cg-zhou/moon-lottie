@@ -115,7 +115,7 @@ fn canvas_clear_rect(x : Double, y : Double, w : Double, h : Double) = "canvas" 
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
-fn canvas_draw_image(id : String, w : Double, h : Double) = "canvas" "drawImage"
+fn canvas_draw_image(asset_index : Int, w : Double, h : Double) = "canvas" "drawImage"
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
@@ -458,9 +458,13 @@ pub impl Renderer for CanvasRenderer with draw_image(
   id : String,
   w : Double,
   h : Double,
+  asset_index : Int,
 ) {
   let _ = self
-  canvas_draw_image(id, w, h)
+  // Wasm canvas bridge uses numeric asset indices to avoid relying on
+  // unstable WasmGC string marshalling for image ids.
+  let _ = id
+  canvas_draw_image(asset_index, w, h)
 }
 
 ///|
