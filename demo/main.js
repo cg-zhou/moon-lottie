@@ -21,6 +21,7 @@ let lastTimestamp = 0;
 let player = null;
 let officialPlayer = null;
 let currentJsonStr = "";
+let currentAnimationData = null;
 let currentFileName = "";
 let currentFileSize = 0;
 let imageAssets = new Map();
@@ -381,9 +382,9 @@ function getImageRefsForFrame(frame) {
     const wholeFrame = Math.floor(frame);
     let refs = imageLayerRefsByFrame.get(wholeFrame);
     if (!refs) {
-        try {
-            refs = collectImageRefsForFrame(JSON.parse(currentJsonStr), wholeFrame);
-        } catch (e) {
+        if (currentAnimationData) {
+            refs = collectImageRefsForFrame(currentAnimationData, wholeFrame);
+        } else {
             refs = [];
         }
         imageLayerRefsByFrame.set(wholeFrame, refs);
@@ -394,6 +395,7 @@ function getImageRefsForFrame(frame) {
 async function startPlayer(jsonStr) {
     let animationData;
     try { animationData = JSON.parse(jsonStr); } catch (e) { alert("无效的 JSON 文件"); return; }
+    currentAnimationData = animationData;
 
     console.log(`[MoonLottie] Starting new animation: ${currentFileName}`);
     statusMsg.innerText = "初始化渲染引擎...";
