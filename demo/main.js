@@ -16,17 +16,23 @@ const wasmBuiltinOptions = { builtins: ['js-string'] };
 const wasmJsStringImportModule = 'wasm:js-string';
 const wasmJsStringShim = {
     length: (s) => (typeof s === 'string' ? s.length : 0),
-    charCodeAt: (s, i) => (typeof s === 'string' ? s.charCodeAt(i) : 0),
+    charCodeAt: (s, i) => {
+        if (typeof s !== 'string') return 0;
+        const index = Number(i);
+        if (!Number.isInteger(index) || index < 0 || index >= s.length) return 0;
+        return s.charCodeAt(index);
+    },
     equals: (s1, s2) => s1 === s2,
-    concat: (s1, s2) => String(s1 ?? '') + String(s2 ?? ''),
+    concat: (s1, s2) => `${s1 ?? ''}${s2 ?? ''}`,
     fromCodePoint: (cp) => {
         const codePoint = Number(cp);
         return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : "";
     },
     fromCharCodeArray: (chars, start, end) => {
-        if (chars == null || typeof chars.length !== 'number') return "";
+        const length = Number(chars?.length);
+        if (!Number.isFinite(length) || length < 0) return "";
         const from = Math.max(0, Number(start) || 0);
-        const to = Math.min(chars.length, end == null ? chars.length : (Number(end) || 0));
+        const to = Math.min(length, end == null ? length : (Number(end) || 0));
         let result = "";
         for (let i = from; i < to; i++) {
             result += String.fromCharCode(Number(chars[i]) || 0);
@@ -265,7 +271,7 @@ async function init() {
       const imports = WebAssembly.Module.imports(module);
       const usesJsString = imports.some(i => i.module === wasmJsStringImportModule);
       if (!usesJsString) throw builtinErr;
-      console.warn("WASM module requires 'wasm:js-string' builtin but it's not supported by this browser. Falling back to a JS shim.");
+      console.warn("Failed to instantiate the WASM module with 'wasm:js-string' builtin support. Falling back to a JS shim.");
       instance = await WebAssembly.instantiate(module, {
         ...importObject,
         [wasmJsStringImportModule]: wasmJsStringShim,
