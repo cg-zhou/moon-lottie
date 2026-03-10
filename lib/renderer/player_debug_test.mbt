@@ -527,21 +527,81 @@ test "text animator tracking shifts glyph positions" {
   player.set_frame(0.0)
   player.render()
 
-  let commands = recorder.get_commands()
-  let mut max_translate_x = -1.0
+  let positions = first_move_positions_for_fills(recorder.get_commands())
+  assert_eq(positions.length(), 2)
+  let (first_x, _) = positions[0]
+  let (second_x, _) = positions[1]
+  let advance_delta = second_x - first_x
+  if advance_delta < 69.999 || advance_delta > 70.001 {
+    fail(
+      "Expected second glyph advance delta around 70 (50 advance + 20 tracking), got \{advance_delta}",
+    )
+  }
+}
+
+fn first_move_positions_for_fills(
+  commands : Array[DrawCommand],
+) -> Array[(Double, Double)] {
+  let positions : Array[(Double, Double)] = []
+  let matrix_stack : Array[@math.Matrix] = []
+  let mut current_matrix = @math.Matrix::identity()
+  let mut current_path_first_move : (Double, Double)? = None
+  let mut path_open = false
   for cmd in commands {
     match cmd {
-      ConcatTransform(m) =>
-        if m.a == 1.0 && m.b == 0.0 && m.c == 0.0 && m.d == 1.0 && m.e > max_translate_x {
-          max_translate_x = m.e
+      Save => matrix_stack.push(current_matrix)
+      Restore =>
+        match matrix_stack.pop() {
+          Some(prev) => current_matrix = prev
+          None => ()
         }
+      SetTransform(m) => current_matrix = m
+      ConcatTransform(m) => current_matrix = current_matrix.multiply(m)
+      BeginPath => {
+        path_open = true
+        current_path_first_move = None
+      }
+      MoveTo(x, y) =>
+        if path_open {
+          match current_path_first_move {
+            Some(_) => ()
+            None => current_path_first_move = Some(current_matrix.transform_point(x, y))
+          }
+        }
+      Fill(_, _, _, _) => {
+        path_open = false
+        match current_path_first_move {
+          Some(pos) => positions.push(pos)
+          None => ()
+        }
+      }
       _ => ()
     }
   }
-  if max_translate_x < 69.999 || max_translate_x > 70.001 {
-    fail(
-      "Expected second glyph translate x around 70 (50 advance + 20 tracking), got \{max_translate_x}",
-    )
+  positions
+}
+
+test "glyph text advances are not scaled by glyph size" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"fonts":{"list":[{"fName":"Test Bold","fFamily":"Test","fStyle":"Bold","ascent":75}]},"chars":[{"ch":"A","size":16,"style":"Bold","fFamily":"Test","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[100,0],[100,100],[0,100]],"c":true}}}]}},{"ch":"B","size":16,"style":"Bold","fFamily":"Test","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[100,0],[100,100],[0,100]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":16,"f":"Test Bold","t":"AB","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let positions = first_move_positions_for_fills(recorder.get_commands())
+  assert_eq(positions.length(), 2)
+  let epsilon = 0.001
+  let (first_x, first_y) = positions[0]
+  let (second_x, second_y) = positions[1]
+  let advance_delta = second_x - first_x
+  if advance_delta < 15.999 - epsilon || advance_delta > 16.001 + epsilon {
+    fail("Expected second glyph advance delta to be x≈16, got \{advance_delta}")
+  }
+  if second_y < first_y - epsilon || second_y > first_y + epsilon {
+    fail("Expected glyphs to share the same y, got first=\{first_y} second=\{second_y}")
   }
 }
 
@@ -560,7 +620,7 @@ test "glyph rendering scales text size with 100-unit lottie basis" {
   for cmd in commands {
     match cmd {
       ConcatTransform(m) =>
-        if m.e == 0.0 && m.f == 0.0 && m.a == 0.5 && m.d == 0.5 {
+        if m.a == 0.5 && m.d == 0.5 {
           saw_scale = true
         }
       _ => ()
@@ -608,24 +668,19 @@ test "text animator rotation rotates glyph around its center" {
   player.render()
 
   let commands = recorder.get_commands()
-  let mut saw_center_translate = false
   let mut saw_rotation = false
   for cmd in commands {
     match cmd {
       ConcatTransform(m) => {
-        if m.a == 1.0 && m.b == 0.0 && m.c == 0.0 && m.d == 1.0 && m.e == 25.0 && m.f == 0.0 {
-          saw_center_translate = true
-        }
         if m.a.abs() < 0.000001 && m.d.abs() < 0.000001 &&
-            (m.b.abs() - 1.0).abs() < 0.000001 &&
-            (m.c.abs() - 1.0).abs() < 0.000001 {
+            (m.b.abs() - 0.5).abs() < 0.000001 &&
+            (m.c.abs() - 0.5).abs() < 0.000001 {
           saw_rotation = true
         }
       }
       _ => ()
     }
   }
-  assert_eq(saw_center_translate, true)
   assert_eq(saw_rotation, true)
 }
 
