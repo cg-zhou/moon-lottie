@@ -2284,9 +2284,9 @@ fn[R : Renderer] Player::render_text_with_glyphs(
             anim_rotation * 3.141592653589793 / 180.0,
           )
         }
-        glyph_matrix = glyph_matrix.scale(char_scale_x, char_scale_y)
         glyph_matrix = glyph_matrix.translate(-pivot_x, -pivot_y)
         glyph_matrix = glyph_matrix.translate(-offf, 0.0)
+        glyph_matrix = glyph_matrix.scale(char_scale_x, char_scale_y)
         self.renderer.concat_transform(glyph_matrix)
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
