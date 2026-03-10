@@ -12,15 +12,34 @@ const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
 
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-const hasJsStringBuiltin = (typeof WebAssembly === 'object' && typeof WebAssembly.compile === 'function') ? (function() {
-    try {
-        const bytes = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 2, 13, 1, 3, 106, 115, 45, 115, 116, 114, 105, 110, 103, 6, 108, 101, 110, 103, 116, 104, 0, 0]);
-        new WebAssembly.Module(bytes);
-        return true;
-    } catch (e) { return false; }
-})() : false;
-
-const wasmCompileOptions = hasJsStringBuiltin ? { builtins: ['js-string'] } : {};
+const wasmBuiltinOptions = { builtins: ['js-string'] };
+const wasmJsStringImportModule = 'wasm:js-string';
+const wasmJsStringShim = {
+    length: (s) => (typeof s === 'string' ? s.length : 0),
+    charCodeAt: (s, i) => {
+        if (typeof s !== 'string') return 0;
+        const index = Number(i);
+        if (!Number.isInteger(index) || index < 0 || index >= s.length) return 0;
+        return s.charCodeAt(index);
+    },
+    equals: (s1, s2) => s1 === s2,
+    concat: (s1, s2) => `${s1 ?? ''}${s2 ?? ''}`,
+    fromCodePoint: (cp) => {
+        const codePoint = Number(cp);
+        return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : "";
+    },
+    fromCharCodeArray: (chars, start, end) => {
+        const length = Number(chars?.length);
+        if (!Number.isFinite(length) || length < 0) return "";
+        const from = Math.max(0, Number(start) || 0);
+        const to = Math.min(length, end == null ? length : (Number(end) || 0));
+        let result = "";
+        for (let i = from; i < to; i++) {
+            result += String.fromCharCode(Number(chars[i]) || 0);
+        }
+        return result;
+    },
+};
 const wasmStringGlobals = new Proxy({}, {
     get: (_, name) => typeof name === 'string' ? name : undefined,
 });
@@ -243,28 +262,21 @@ async function init() {
     if (!response.ok) throw new Error("WASM not found");
     
     const buffer = await response.arrayBuffer();
-    const module = await WebAssembly.compile(buffer, wasmCompileOptions);
-    
-    // 如果不支持 js-stringbuiltin，但 WASM 模块尝试导入它，
-    // 我们需要将 importObject.js-string 映射到相应的 shim 逻辑
-    const finalImportObject = { ...importObject };
-    if (!hasJsStringBuiltin) {
-      // 检查模块导入段中是否包含 js-string 相关导入
+    let instance;
+    try {
+      const module = await WebAssembly.compile(buffer, wasmBuiltinOptions);
+      instance = await WebAssembly.instantiate(module, importObject, wasmBuiltinOptions);
+    } catch (builtinErr) {
+      const module = await WebAssembly.compile(buffer);
       const imports = WebAssembly.Module.imports(module);
-      const usesJsString = imports.some(i => i.module === 'js-string');
-      if (usesJsString) {
-        console.warn("WASM module requires 'js-string' builtin but it's not supported by this browser. Providing a basic shim.");
-        finalImportObject['js-string'] = {
-          length: (s) => (typeof s === 'string' ? s.length : 0),
-          charCodeAt: (s, i) => (typeof s === 'string' ? s.charCodeAt(i) : 0),
-          substring: (s, start, end) => (typeof s === 'string' ? s.substring(start, end) : ""),
-          equals: (s1, s2) => s1 === s2,
-          compare: (s1, s2) => s1.localeCompare(s2),
-        };
-      }
+      const usesJsString = imports.some(i => i.module === wasmJsStringImportModule);
+      if (!usesJsString) throw builtinErr;
+      console.warn("Failed to instantiate the WASM module with 'wasm:js-string' builtin support. Falling back to a JS shim.");
+      instance = await WebAssembly.instantiate(module, {
+        ...importObject,
+        [wasmJsStringImportModule]: wasmJsStringShim,
+      });
     }
-
-    const instance = await WebAssembly.instantiate(module, finalImportObject);
     
     window.moonLottie = instance.exports;
     statusDot.style.background = "#34c759"; // Green
