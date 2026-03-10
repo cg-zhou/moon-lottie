@@ -2272,37 +2272,21 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         let saved_paths = self.current_paths
         self.current_paths = []
         self.renderer.save()
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(-offf, 0.0),
-        )
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(-pivot_x, -pivot_y),
-        )
-        self.renderer.concat_transform(
-          @math.Matrix::identity().scale(char_scale_x, char_scale_y),
-        )
+        let mut glyph_matrix = @math.Matrix::identity()
+        glyph_matrix = glyph_matrix.translate(cursor_x, 0.0)
+        glyph_matrix = glyph_matrix.translate(0.0, -doc.baseline_shift)
+        glyph_matrix = glyph_matrix.translate(offf, 0.0)
+        glyph_matrix = glyph_matrix.translate(pivot_x, pivot_y)
+        glyph_matrix = glyph_matrix.translate(anim_pos_x, anim_pos_y)
         if anim_rotation != 0.0 {
-          self.renderer.concat_transform(
-            @math.Matrix::identity().rotate(
-              -anim_rotation * 3.141592653589793 / 180.0,
-            ),
+          glyph_matrix = glyph_matrix.rotate(
+            -anim_rotation * 3.141592653589793 / 180.0,
           )
         }
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(anim_pos_x, anim_pos_y),
-        )
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(cursor_x, 0.0),
-        )
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(0.0, -doc.baseline_shift),
-        )
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(offf, 0.0),
-        )
-        self.renderer.concat_transform(
-          @math.Matrix::identity().translate(pivot_x, pivot_y),
-        )
+        glyph_matrix = glyph_matrix.scale(char_scale_x, char_scale_y)
+        glyph_matrix = glyph_matrix.translate(-pivot_x, -pivot_y)
+        glyph_matrix = glyph_matrix.translate(-offf, 0.0)
+        self.renderer.concat_transform(glyph_matrix)
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
         self.renderer.set_fill_rule("nonzero")
