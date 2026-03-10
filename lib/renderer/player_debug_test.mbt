@@ -750,8 +750,8 @@ test "text animator rotation rotates glyph around its center" {
         // The glyph matrix composes a 90° animator rotation with the text size scale
         // (doc size 50 => 0.5), so the effective rotation entries have magnitude 0.5.
         if m.a.abs() < 0.000001 && m.d.abs() < 0.000001 &&
-            (m.b.abs() - 0.5).abs() < 0.000001 &&
-            (m.c.abs() - 0.5).abs() < 0.000001 {
+            (m.b - 0.5).abs() < 0.000001 &&
+            (m.c + 0.5).abs() < 0.000001 {
           saw_rotation = true
         }
       }
@@ -759,6 +759,29 @@ test "text animator rotation rotates glyph around its center" {
     }
   }
   assert_eq(saw_rotation, true)
+}
+
+test "text animator opacity uses lottie-web multiplier blending" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":100,"f":"Test Bold","t":"A","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[{"a":{"o":{"a":0,"k":50}},"s":{"s":{"a":0,"k":0},"e":{"a":0,"k":100},"a":{"a":0,"k":100},"b":1,"sh":2,"rn":0,"ne":{"a":0,"k":0},"xe":{"a":0,"k":0},"o":{"a":0,"k":0}}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let mut fill_opacity = -1.0
+  for cmd in recorder.get_commands() {
+    match cmd {
+      Fill(_, _, _, opacity) => fill_opacity = opacity
+      _ => ()
+    }
+  }
+  let epsilon = 0.000001
+  if fill_opacity < 0.625 - epsilon || fill_opacity > 0.625 + epsilon {
+    fail("Expected glyph fill opacity to be 0.625, got \{fill_opacity}")
+  }
 }
 
 test "text animator randomize changes selector order" {

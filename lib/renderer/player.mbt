@@ -2228,7 +2228,8 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           let ov = @runtime.evaluate_double_property(
             opacity_prop, self.current_comp_frame,
           ) / 100.0
-          char_opacity = char_opacity + mult * (ov - char_opacity)
+          // Match lottie-web's per-selector opacity blend instead of a plain lerp.
+          char_opacity = char_opacity + ((ov * mult) - char_opacity) * mult
         }
         None => ()
       }
@@ -2280,12 +2281,12 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         glyph_matrix = glyph_matrix.translate(anim_pos_x, anim_pos_y)
         if anim_rotation != 0.0 {
           glyph_matrix = glyph_matrix.rotate(
-            -anim_rotation * 3.141592653589793 / 180.0,
+            anim_rotation * 3.141592653589793 / 180.0,
           )
         }
-        glyph_matrix = glyph_matrix.scale(char_scale_x, char_scale_y)
         glyph_matrix = glyph_matrix.translate(-pivot_x, -pivot_y)
         glyph_matrix = glyph_matrix.translate(-offf, 0.0)
+        glyph_matrix = glyph_matrix.scale(char_scale_x, char_scale_y)
         self.renderer.concat_transform(glyph_matrix)
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
