@@ -226,22 +226,6 @@ async function main() {
     executablePath: '/home/runner/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome'
   });
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
-  const localLottiePathCandidates = [
-    path.join(__dirname, 'node_modules/lottie-web/build/player/lottie.min.js'),
-    path.join(repoRoot, 'node_modules/lottie-web/build/player/lottie.min.js'),
-  ];
-  const localLottiePath = localLottiePathCandidates.find(p => fs.existsSync(p));
-  if (!localLottiePath) {
-    throw new Error('Local lottie-web script not found. Run npm install in scripts/snapshot_tool first.');
-  }
-  await page.route('https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/javascript; charset=utf-8',
-      body: fs.readFileSync(localLottiePath, 'utf8'),
-    });
-  });
-
   let allPassed = true;
   let totalSimilarity = 0;
   let totalCompares = 0;
