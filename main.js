@@ -12,7 +12,15 @@ const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
 
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-const wasmCompileOptions = { builtins: ['js-string'] };
+const hasJsStringBuiltin = (typeof WebAssembly === 'object' && typeof WebAssembly.compile === 'function') ? (function() {
+    try {
+        const bytes = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 2, 13, 1, 3, 106, 115, 45, 115, 116, 114, 105, 110, 103, 6, 108, 101, 110, 103, 116, 104, 0, 0]);
+        new WebAssembly.Module(bytes);
+        return true;
+    } catch (e) { return false; }
+})() : false;
+
+const wasmCompileOptions = hasJsStringBuiltin ? { builtins: ['js-string'] } : {};
 const wasmStringGlobals = new Proxy({}, {
     get: (_, name) => typeof name === 'string' ? name : undefined,
 });
@@ -236,7 +244,27 @@ async function init() {
     
     const buffer = await response.arrayBuffer();
     const module = await WebAssembly.compile(buffer, wasmCompileOptions);
-    const instance = await WebAssembly.instantiate(module, importObject);
+    
+    // 如果不支持 js-stringbuiltin，但 WASM 模块尝试导入它，
+    // 我们需要将 importObject.js-string 映射到相应的 shim 逻辑
+    const finalImportObject = { ...importObject };
+    if (!hasJsStringBuiltin) {
+      // 检查模块导入段中是否包含 js-string 相关导入
+      const imports = WebAssembly.Module.imports(module);
+      const usesJsString = imports.some(i => i.module === 'js-string');
+      if (usesJsString) {
+        console.warn("WASM module requires 'js-string' builtin but it's not supported by this browser. Providing a basic shim.");
+        finalImportObject['js-string'] = {
+          length: (s) => (typeof s === 'string' ? s.length : 0),
+          charCodeAt: (s, i) => (typeof s === 'string' ? s.charCodeAt(i) : 0),
+          substring: (s, start, end) => (typeof s === 'string' ? s.substring(start, end) : ""),
+          equals: (s1, s2) => s1 === s2,
+          compare: (s1, s2) => s1.localeCompare(s2),
+        };
+      }
+    }
+
+    const instance = await WebAssembly.instantiate(module, finalImportObject);
     
     window.moonLottie = instance.exports;
     statusDot.style.background = "#34c759"; // Green
