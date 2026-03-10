@@ -24,6 +24,14 @@ test('parseCaseConfig rejects invalid line', () => {
   assert.throws(() => parseCaseConfig('a.json x'), /Invalid frame/);
 });
 
+test('parseCaseConfig parses explicit similarity thresholds', () => {
+  const cases = parseCaseConfig('sample.json sim=0.95 12 24');
+
+  assert.deepEqual(cases, [
+    { file: 'sample.json', frames: [12, 24], minSimilarity: 0.95 },
+  ]);
+});
+
 test('demo uses vendored lottie-web asset', () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const html = fs.readFileSync(path.join(repoRoot, 'demo', 'index.html'), 'utf8');
