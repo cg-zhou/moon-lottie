@@ -262,20 +262,23 @@ async function init() {
     if (!response.ok) throw new Error("WASM not found");
     
     const buffer = await response.arrayBuffer();
+    
+    // 我们总是先提供 shim，除非浏览器明确支持并要求使用 builtins 选项
+    const finalImportObject = {
+      ...importObject,
+      [wasmJsStringImportModule]: wasmJsStringShim,
+    };
+
     let instance;
     try {
+      // 尝试在支持环境下优化启动
       const module = await WebAssembly.compile(buffer, wasmBuiltinOptions);
       instance = await WebAssembly.instantiate(module, importObject, wasmBuiltinOptions);
     } catch (builtinErr) {
+      // 降级启动：如果上面的代码报错（例如在 iOS 微信或旧安卓下），则使用标准实例化
+      // 注意：这里不再调用 WebAssembly.Module.imports 以避免在某些环境中触发新错误
       const module = await WebAssembly.compile(buffer);
-      const imports = WebAssembly.Module.imports(module);
-      const usesJsString = imports.some(i => i.module === wasmJsStringImportModule);
-      if (!usesJsString) throw builtinErr;
-      console.warn("Failed to instantiate the WASM module with 'wasm:js-string' builtin support. Falling back to a JS shim.");
-      instance = await WebAssembly.instantiate(module, {
-        ...importObject,
-        [wasmJsStringImportModule]: wasmJsStringShim,
-      });
+      instance = await WebAssembly.instantiate(module, finalImportObject);
     }
     
     window.moonLottie = instance.exports;
