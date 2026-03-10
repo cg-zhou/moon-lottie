@@ -2228,6 +2228,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           let ov = @runtime.evaluate_double_property(
             opacity_prop, self.current_comp_frame,
           ) / 100.0
+          // Match lottie-web's per-selector opacity blend instead of a plain lerp.
           char_opacity = char_opacity + ((ov * mult) - char_opacity) * mult
         }
         None => ()
