@@ -581,6 +581,81 @@ fn first_move_positions_for_fills(
   positions
 }
 
+fn bounds_for_fills(
+  commands : Array[DrawCommand],
+) -> Array[(Double, Double, Double, Double)] {
+  let bounds : Array[(Double, Double, Double, Double)] = []
+  let matrix_stack : Array[@math.Matrix] = []
+  let mut current_matrix = @math.Matrix::identity()
+  let mut path_open = false
+  let mut min_x = 0.0
+  let mut min_y = 0.0
+  let mut max_x = 0.0
+  let mut max_y = 0.0
+  let mut has_point = false
+  let add_point = fn(x : Double, y : Double) {
+    let (tx, ty) = current_matrix.transform_point(x, y)
+    if not(has_point) {
+      min_x = tx
+      min_y = ty
+      max_x = tx
+      max_y = ty
+      has_point = true
+    } else {
+      if tx < min_x {
+        min_x = tx
+      }
+      if ty < min_y {
+        min_y = ty
+      }
+      if tx > max_x {
+        max_x = tx
+      }
+      if ty > max_y {
+        max_y = ty
+      }
+    }
+  }
+  for cmd in commands {
+    match cmd {
+      Save => matrix_stack.push(current_matrix)
+      Restore =>
+        match matrix_stack.pop() {
+          Some(prev) => current_matrix = prev
+          None => ()
+        }
+      SetTransform(m) => current_matrix = m
+      ConcatTransform(m) => current_matrix = current_matrix.multiply(m)
+      BeginPath => {
+        path_open = true
+        has_point = false
+      }
+      MoveTo(x, y) =>
+        if path_open {
+          add_point(x, y)
+        }
+      LineTo(x, y) =>
+        if path_open {
+          add_point(x, y)
+        }
+      CubicTo(cp1x, cp1y, cp2x, cp2y, x, y) =>
+        if path_open {
+          add_point(cp1x, cp1y)
+          add_point(cp2x, cp2y)
+          add_point(x, y)
+        }
+      Fill(_, _, _, _) => {
+        path_open = false
+        if has_point {
+          bounds.push((min_x, min_y, max_x, max_y))
+        }
+      }
+      _ => ()
+    }
+  }
+  bounds
+}
+
 test "glyph text advances are not scaled by glyph size" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"fonts":{"list":[{"fName":"Test Bold","fFamily":"Test","fStyle":"Bold","ascent":75}]},"chars":[{"ch":"A","size":16,"style":"Bold","fFamily":"Test","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[100,0],[100,100],[0,100]],"c":true}}}]}},{"ch":"B","size":16,"style":"Bold","fFamily":"Test","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[100,0],[100,100],[0,100]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":16,"f":"Test Bold","t":"AB","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[]}}]}
@@ -615,18 +690,18 @@ test "glyph rendering scales text size with 100-unit lottie basis" {
   player.set_frame(0.0)
   player.render()
 
-  let commands = recorder.get_commands()
-  let mut saw_scale = false
-  for cmd in commands {
-    match cmd {
-      ConcatTransform(m) =>
-        if m.a == 0.5 && m.d == 0.5 {
-          saw_scale = true
-        }
-      _ => ()
-    }
+  let bounds = bounds_for_fills(recorder.get_commands())
+  assert_eq(bounds.length(), 1)
+  let (min_x, min_y, max_x, max_y) = bounds[0]
+  let width = max_x - min_x
+  let height = max_y - min_y
+  let epsilon = 0.001
+  if width < 49.999 - epsilon || width > 50.001 + epsilon {
+    fail("Expected scaled glyph width to be ≈50, got \{width}")
   }
-  assert_eq(saw_scale, true)
+  if height < 49.999 - epsilon || height > 50.001 + epsilon {
+    fail("Expected scaled glyph height to be ≈50, got \{height}")
+  }
 }
 
 test "glyph rendering matches family as well as style" {
@@ -672,6 +747,8 @@ test "text animator rotation rotates glyph around its center" {
   for cmd in commands {
     match cmd {
       ConcatTransform(m) => {
+        // The glyph matrix composes a 90° animator rotation with the text size scale
+        // (doc size 50 => 0.5), so the effective rotation entries have magnitude 0.5.
         if m.a.abs() < 0.000001 && m.d.abs() < 0.000001 &&
             (m.b.abs() - 0.5).abs() < 0.000001 &&
             (m.c.abs() - 0.5).abs() < 0.000001 {
