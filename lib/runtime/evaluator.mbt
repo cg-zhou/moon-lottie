@@ -1,20 +1,20 @@
 let expression_double_handler : @ref.Ref[
-  ((String, Double, Int, Double) -> Double)?,
+  ((String, Double, Int, String, Double) -> Double)?,
 ] = @ref.new(None)
 
 let expression_vec_handler : @ref.Ref[
-  ((String, Double, Int, String) -> String)?,
+  ((String, Double, Int, String, String) -> String)?,
 ] = @ref.new(None)
 
 let expression_path_handler : @ref.Ref[
-  ((String, Double, Int, String) -> String)?,
+  ((String, Double, Int, String, String) -> String)?,
 ] = @ref.new(None)
 
 ///|
 pub fn install_expression_handlers(
-  double_handler : (String, Double, Int, Double) -> Double,
-  vec_handler : (String, Double, Int, String) -> String,
-  path_handler : (String, Double, Int, String) -> String,
+  double_handler : (String, Double, Int, String, Double) -> Double,
+  vec_handler : (String, Double, Int, String, String) -> String,
+  path_handler : (String, Double, Int, String, String) -> String,
 ) -> Unit {
   expression_double_handler.val = Some(double_handler)
   expression_vec_handler.val = Some(vec_handler)
@@ -284,12 +284,13 @@ fn apply_double_expression(
   prop : @model.LottieProperty[Double],
   frame : Double,
   layer_index : Int,
+  comp_id : String,
   value : Double,
 ) -> Double {
   match prop.expression {
     Some(expression) =>
       match expression_double_handler.val {
-        Some(handler) => handler(expression, frame, layer_index, value)
+        Some(handler) => handler(expression, frame, layer_index, comp_id, value)
         None => value
       }
     None => value
@@ -301,6 +302,7 @@ fn apply_vec_expression(
   prop : @model.LottieProperty[Array[Double]],
   frame : Double,
   layer_index : Int,
+  comp_id : String,
   value : Array[Double],
 ) -> Array[Double] {
   match prop.expression {
@@ -312,6 +314,7 @@ fn apply_vec_expression(
               expression,
               frame,
               layer_index,
+              comp_id,
               serialize_double_array(value),
             ),
           )
@@ -326,6 +329,7 @@ fn apply_path_expression(
   prop : @model.LottieProperty[@model.BezierPath],
   frame : Double,
   layer_index : Int,
+  comp_id : String,
   value : @model.BezierPath,
 ) -> @model.BezierPath {
   match prop.expression {
@@ -337,6 +341,7 @@ fn apply_path_expression(
               expression,
               frame,
               layer_index,
+              comp_id,
               serialize_bezier_path(value),
             ),
             value,
@@ -419,8 +424,15 @@ pub fn evaluate_double_property_with_context(
   prop : @model.LottieProperty[Double],
   frame : Double,
   layer_index : Int,
+  comp_id : String,
 ) -> Double {
-  apply_double_expression(prop, frame, layer_index, evaluate_double_property(prop, frame))
+  apply_double_expression(
+    prop,
+    frame,
+    layer_index,
+    comp_id,
+    evaluate_double_property(prop, frame),
+  )
 }
 
 ///|
@@ -577,8 +589,9 @@ pub fn evaluate_vec_property_with_context(
   prop : @model.LottieProperty[Array[Double]],
   frame : Double,
   layer_index : Int,
+  comp_id : String,
 ) -> Array[Double] {
-  apply_vec_expression(prop, frame, layer_index, evaluate_vec_property(prop, frame))
+  apply_vec_expression(prop, frame, layer_index, comp_id, evaluate_vec_property(prop, frame))
 }
 
 ///|
@@ -658,8 +671,9 @@ pub fn evaluate_path_property_with_context(
   prop : @model.LottieProperty[@model.BezierPath],
   frame : Double,
   layer_index : Int,
+  comp_id : String,
 ) -> @model.BezierPath {
-  apply_path_expression(prop, frame, layer_index, evaluate_path_property(prop, frame))
+  apply_path_expression(prop, frame, layer_index, comp_id, evaluate_path_property(prop, frame))
 }
 
 ///|
@@ -715,23 +729,24 @@ pub fn evaluate_transform_with_context(
   transform : @model.Transform,
   frame : Double,
   layer_index : Int,
+  comp_id : String,
 ) -> @math.Matrix {
-  let a = evaluate_vec_property_with_context(transform.anchor, frame, layer_index)
+  let a = evaluate_vec_property_with_context(transform.anchor, frame, layer_index, comp_id)
   let p = if transform.split == Some(true) {
     let x = match transform.px {
-      Some(prop) => evaluate_double_property_with_context(prop, frame, layer_index)
+      Some(prop) => evaluate_double_property_with_context(prop, frame, layer_index, comp_id)
       None => 0.0
     }
     let y = match transform.py {
-      Some(prop) => evaluate_double_property_with_context(prop, frame, layer_index)
+      Some(prop) => evaluate_double_property_with_context(prop, frame, layer_index, comp_id)
       None => 0.0
     }
     [x, y]
   } else {
-    evaluate_vec_property_with_context(transform.position, frame, layer_index)
+    evaluate_vec_property_with_context(transform.position, frame, layer_index, comp_id)
   }
-  let s = evaluate_vec_property_with_context(transform.scale, frame, layer_index)
-  let r = evaluate_double_property_with_context(transform.rotation, frame, layer_index)
+  let s = evaluate_vec_property_with_context(transform.scale, frame, layer_index, comp_id)
+  let r = evaluate_double_property_with_context(transform.rotation, frame, layer_index, comp_id)
 
   let m = @math.Matrix::identity()
 

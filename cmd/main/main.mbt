@@ -9,6 +9,7 @@ extern "wasm" fn js_evaluate_expression_double(
   expression : String,
   frame : Double,
   layer_index : Int,
+  comp_id : String,
   value : Double,
 ) -> Double = "expressions" "evaluate_double"
 
@@ -17,6 +18,7 @@ extern "wasm" fn js_evaluate_expression_vec(
   expression : String,
   frame : Double,
   layer_index : Int,
+  comp_id : String,
   value : String,
 ) -> String = "expressions" "evaluate_vec"
 
@@ -25,6 +27,7 @@ extern "wasm" fn js_evaluate_expression_path(
   expression : String,
   frame : Double,
   layer_index : Int,
+  comp_id : String,
   value : String,
 ) -> String = "expressions" "evaluate_path"
 
@@ -42,12 +45,12 @@ fn get_json_from_js() -> String {
 pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
   try {
     @runtime.install_expression_handlers(
-      (expression, frame, layer_index, value) =>
-        js_evaluate_expression_double(expression, frame, layer_index, value),
-      (expression, frame, layer_index, value) =>
-        js_evaluate_expression_vec(expression, frame, layer_index, value),
-      (expression, frame, layer_index, value) =>
-        js_evaluate_expression_path(expression, frame, layer_index, value),
+      (expression, frame, layer_index, comp_id, value) =>
+        js_evaluate_expression_double(expression, frame, layer_index, comp_id, value),
+      (expression, frame, layer_index, comp_id, value) =>
+        js_evaluate_expression_vec(expression, frame, layer_index, comp_id, value),
+      (expression, frame, layer_index, comp_id, value) =>
+        js_evaluate_expression_path(expression, frame, layer_index, comp_id, value),
     )
     let json_str = get_json_from_js()
     let json = @json.parse(json_str)

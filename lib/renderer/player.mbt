@@ -11,6 +11,7 @@ pub struct Player[R] {
   // which is equivalent to evaluating at comp.renderedFrame vs raw kf.t.
   mut current_comp_frame : Double
   mut current_layer_index : Int
+  mut current_comp_id : String
   mut current_paths : Array[@model.BezierPath]
   mut debug_enabled : Bool
   mut debug_logs : Array[String]
@@ -27,6 +28,7 @@ pub fn[R] Player::new(animation : @model.Animation, renderer : R) -> Player[R] {
     current_frame: 0.0,
     current_comp_frame: 0.0,
     current_layer_index: -1,
+    current_comp_id: "",
     current_paths: [],
     debug_enabled: false,
     debug_logs: [],
@@ -42,7 +44,12 @@ fn[R] Player::evaluate_double(
   prop : @model.LottieProperty[Double],
   frame : Double,
 ) -> Double {
-  @runtime.evaluate_double_property_with_context(prop, frame, self.current_layer_index)
+  @runtime.evaluate_double_property_with_context(
+    prop,
+    frame,
+    self.current_layer_index,
+    self.current_comp_id,
+  )
 }
 
 ///|
@@ -51,7 +58,12 @@ fn[R] Player::evaluate_vec(
   prop : @model.LottieProperty[Array[Double]],
   frame : Double,
 ) -> Array[Double] {
-  @runtime.evaluate_vec_property_with_context(prop, frame, self.current_layer_index)
+  @runtime.evaluate_vec_property_with_context(
+    prop,
+    frame,
+    self.current_layer_index,
+    self.current_comp_id,
+  )
 }
 
 ///|
@@ -60,7 +72,12 @@ fn[R] Player::evaluate_path(
   prop : @model.LottieProperty[@model.BezierPath],
   frame : Double,
 ) -> @model.BezierPath {
-  @runtime.evaluate_path_property_with_context(prop, frame, self.current_layer_index)
+  @runtime.evaluate_path_property_with_context(
+    prop,
+    frame,
+    self.current_layer_index,
+    self.current_comp_id,
+  )
 }
 
 ///|
@@ -69,7 +86,12 @@ fn[R] Player::evaluate_transform(
   transform : @model.Transform,
   frame : Double,
 ) -> @math.Matrix {
-  @runtime.evaluate_transform_with_context(transform, frame, self.current_layer_index)
+  @runtime.evaluate_transform_with_context(
+    transform,
+    frame,
+    self.current_layer_index,
+    self.current_comp_id,
+  )
 }
 
 ///|
@@ -111,6 +133,7 @@ pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
     self.animation.width.to_double(),
     self.animation.height.to_double(),
   )
+  self.current_comp_id = ""
 
   // Lottie renders layers from bottom to top (reverse order in the array)
   let layers = self.animation.layers
@@ -145,6 +168,7 @@ fn[R : Renderer] Player::apply_parent_transform(
         layer.transform,
         comp_frame,
         layer.index,
+        self.current_comp_id,
       )
       self.renderer.concat_transform(matrix)
       return
@@ -167,6 +191,7 @@ fn[R : Renderer] Player::render_layer(
   let saved_frame = self.current_frame
   let saved_comp_frame = self.current_comp_frame
   let saved_layer_index = self.current_layer_index
+  let saved_comp_id = self.current_comp_id
   // Shape properties inside this layer must be evaluated at comp_frame.
   // lottie-web computes: frameNum = comp.renderedFrame - offsetTime
   // and compares against kf.t - offsetTime, which is equivalent to
@@ -382,6 +407,7 @@ fn[R : Renderer] Player::render_layer(
   self.current_frame = saved_frame
   self.current_comp_frame = saved_comp_frame
   self.current_layer_index = saved_layer_index
+  self.current_comp_id = saved_comp_id
 }
 
 ///|
@@ -555,7 +581,9 @@ fn[R : Renderer] Player::render_layer_content(
           for asset in assets {
             if asset.id == ref_id {
               let saved_frame = self.current_frame
+              let saved_comp_id = self.current_comp_id
               self.current_frame = precomp_frame
+              self.current_comp_id = ref_id
               self.renderer.save()
               self.renderer.begin_path()
               self.renderer.move_to(0.0, 0.0)
@@ -581,6 +609,7 @@ fn[R : Renderer] Player::render_layer_content(
               }
               self.renderer.restore()
               self.current_frame = saved_frame
+              self.current_comp_id = saved_comp_id
               break
             }
           }

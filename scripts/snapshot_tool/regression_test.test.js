@@ -593,3 +593,48 @@ test('default expression host does not fall back to a wrong comp when expression
   assert.equal(matched, 1);
   assert.equal(result, 0);
 });
+
+test('default expression host uses explicit comp scope for nested thisComp.layer effect lookups', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const expression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').effect('Trace Path')('Progress');";
+  const animationData = {
+    fr: 60,
+    layers: [
+      { ind: 1, nm: 'grow graph' },
+      { ind: 4, nm: 'grow graph' },
+    ],
+    assets: [{
+      id: 'comp_79',
+      layers: [
+        {
+          ind: 1,
+          nm: 'traceNull',
+          ef: [{
+            nm: 'Trace Path',
+            mn: 'Pseudo/ADBE Trace Path',
+            ef: [{ nm: 'Progress', v: { a: 0, k: 42 } }],
+          }],
+        },
+        {
+          ind: 4,
+          nm: 'bar',
+          shapes: [{
+            ty: 'tm',
+            s: { a: 0, k: 0, x: expression },
+          }],
+        },
+      ],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const result = host.evaluateDouble(expression, 0, 4, 'comp_79', 0);
+
+  assert.equal(result, 42);
+});

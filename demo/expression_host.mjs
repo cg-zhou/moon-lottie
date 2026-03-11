@@ -114,10 +114,14 @@ function getLayerCollections(animationData) {
     return collections;
 }
 
-function findLayerContextByIndex(animationData, layerIndex, expression = null) {
+function findLayerContextByIndex(animationData, layerIndex, expression = null, compId = '') {
     const targetIndex = Number(layerIndex);
+    const preferredLayers = findLayerCollectionForCompId(animationData, compId);
+    const collections = preferredLayers
+        ? [preferredLayers, ...getLayerCollections(animationData).filter((layers) => layers !== preferredLayers)]
+        : getLayerCollections(animationData);
     const candidates = [];
-    for (const layers of getLayerCollections(animationData)) {
+    for (const layers of collections) {
         for (const layer of layers) {
             if (Number(layer?.ind) !== targetIndex) {
                 continue;
@@ -137,6 +141,17 @@ function findLayerContextByIndex(animationData, layerIndex, expression = null) {
 
 function findLayerByIndex(animationData, layerIndex, expression = null) {
     return findLayerContextByIndex(animationData, layerIndex, expression)?.layer ?? null;
+}
+
+function findLayerCollectionForCompId(animationData, compId) {
+    if (!compId) {
+        return Array.isArray(animationData?.layers) ? animationData.layers : null;
+    }
+    if (!Array.isArray(animationData?.assets)) {
+        return null;
+    }
+    const asset = animationData.assets.find((candidate) => candidate?.id === compId);
+    return Array.isArray(asset?.layers) ? asset.layers : null;
 }
 
 function findLayerInComp(layers, layerRef) {
@@ -890,9 +905,11 @@ export function getExpressionHost() {
 
 export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta }) {
     return {
-        evaluateDouble(expression, frame, layerIndex, value) {
+        evaluateDouble(expression, frame, layerIndex, compIdOrLegacyValue, maybeValue) {
             const animationData = getAnimationData();
-            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression);
+            const compId = maybeValue === undefined ? '' : String(compIdOrLegacyValue ?? '');
+            const value = maybeValue === undefined ? compIdOrLegacyValue : maybeValue;
+            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression, compId);
             const layer = layerContext?.layer ?? null;
             try {
                 const result = getExpressionFunction(expression)(
@@ -903,7 +920,11 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
                         value,
                         animationData,
                         playbackMeta: getPlaybackMeta(),
-                        currentCompLayers: layerContext?.layers ?? animationData?.layers ?? [],
+                        currentCompLayers:
+                            layerContext?.layers
+                            ?? findLayerCollectionForCompId(animationData, compId)
+                            ?? animationData?.layers
+                            ?? [],
                     }),
                 );
                 if (Number.isFinite(result)) {
@@ -917,9 +938,11 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
             }
         },
 
-        evaluateVec(expression, frame, layerIndex, value) {
+        evaluateVec(expression, frame, layerIndex, compIdOrLegacyValue, maybeValue) {
             const animationData = getAnimationData();
-            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression);
+            const compId = maybeValue === undefined ? '' : String(compIdOrLegacyValue ?? '');
+            const value = maybeValue === undefined ? compIdOrLegacyValue : maybeValue;
+            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression, compId);
             const layer = layerContext?.layer ?? null;
             try {
                 const result = getExpressionFunction(expression)(
@@ -930,7 +953,11 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
                         value: cloneNumberArray(value),
                         animationData,
                         playbackMeta: getPlaybackMeta(),
-                        currentCompLayers: layerContext?.layers ?? animationData?.layers ?? [],
+                        currentCompLayers:
+                            layerContext?.layers
+                            ?? findLayerCollectionForCompId(animationData, compId)
+                            ?? animationData?.layers
+                            ?? [],
                     }),
                 );
                 if (Array.isArray(result)) {
@@ -942,9 +969,11 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
             return cloneNumberArray(value);
         },
 
-        evaluatePath(expression, frame, layerIndex, pathValue) {
+        evaluatePath(expression, frame, layerIndex, compIdOrLegacyValue, maybeValue) {
             const animationData = getAnimationData();
-            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression);
+            const compId = maybeValue === undefined ? '' : String(compIdOrLegacyValue ?? '');
+            const pathValue = maybeValue === undefined ? compIdOrLegacyValue : maybeValue;
+            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression, compId);
             const layer = layerContext?.layer ?? null;
             try {
                 const result = getExpressionFunction(expression)(
@@ -956,7 +985,11 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
                         animationData,
                         playbackMeta: getPlaybackMeta(),
                         currentPath: pathValue,
-                        currentCompLayers: layerContext?.layers ?? animationData?.layers ?? [],
+                        currentCompLayers:
+                            layerContext?.layers
+                            ?? findLayerCollectionForCompId(animationData, compId)
+                            ?? animationData?.layers
+                            ?? [],
                     }),
                 );
                 if (result && Array.isArray(result.vertices) && Array.isArray(result.inTangents) && Array.isArray(result.outTangents)) {
@@ -980,11 +1013,11 @@ export function createExpressionModule(options) {
     const resolveHost = () => getExpressionHost() ?? fallbackHost;
 
     return {
-        evaluate_double: (expression, frame, layerIndex, value) =>
-            resolveHost().evaluateDouble(expression, frame, layerIndex, value),
-        evaluate_vec: (expression, frame, layerIndex, value) =>
-            serializeNumberArray(parseNumberArray(resolveHost().evaluateVec(expression, frame, layerIndex, parseNumberArray(value)))),
-        evaluate_path: (expression, frame, layerIndex, value) =>
-            serializePath(resolveHost().evaluatePath(expression, frame, layerIndex, parsePath(value))),
+        evaluate_double: (expression, frame, layerIndex, compId, value) =>
+            resolveHost().evaluateDouble(expression, frame, layerIndex, compId, value),
+        evaluate_vec: (expression, frame, layerIndex, compId, value) =>
+            serializeNumberArray(parseNumberArray(resolveHost().evaluateVec(expression, frame, layerIndex, compId, parseNumberArray(value)))),
+        evaluate_path: (expression, frame, layerIndex, compId, value) =>
+            serializePath(resolveHost().evaluatePath(expression, frame, layerIndex, compId, parsePath(value))),
     };
 }
