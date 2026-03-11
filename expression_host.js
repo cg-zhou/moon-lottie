@@ -548,52 +548,194 @@ function createBezierSegments(pathValue) {
     return { vertices, inTangents, outTangents, closed, segments };
 }
 
-function samplePathAtProgress(pathValue, progress) {
-    const { segments } = createBezierSegments(pathValue);
-    if (segments.length === 0) {
-        return {
-            point: [0, 0],
-            tangent: [1, 0],
-        };
-    }
+const DEFAULT_CURVE_SEGMENTS = 150;
 
-    const clampedProgress = Math.min(Math.max(Number(progress) || 0, 0), 1);
-    const samples = [];
-    let totalLength = 0;
-    const subdivisions = 24;
+function createExpressionShapePath(pathValue) {
+    const { vertices, inTangents, outTangents, closed } = createBezierSegments(pathValue);
+    return {
+        v: vertices,
+        i: vertices.map((point, index) => [
+            (point[0] ?? 0) + (inTangents[index]?.[0] ?? 0),
+            (point[1] ?? 0) + (inTangents[index]?.[1] ?? 0),
+        ]),
+        o: vertices.map((point, index) => [
+            (point[0] ?? 0) + (outTangents[index]?.[0] ?? 0),
+            (point[1] ?? 0) + (outTangents[index]?.[1] ?? 0),
+        ]),
+        c: closed,
+        _length: vertices.length,
+    };
+}
 
-    for (const segment of segments) {
-        let previousPoint = null;
-        for (let step = 0; step <= subdivisions; step++) {
-            const t = step / subdivisions;
-            const point = [
-                cubicPoint(segment.p0[0] ?? 0, segment.p1[0] ?? 0, segment.p2[0] ?? 0, segment.p3[0] ?? 0, t),
-                cubicPoint(segment.p0[1] ?? 0, segment.p1[1] ?? 0, segment.p2[1] ?? 0, segment.p3[1] ?? 0, t),
-            ];
-            if (previousPoint) {
-                totalLength += Math.hypot(point[0] - previousPoint[0], point[1] - previousPoint[1]);
+function getBezierLength(pt1, pt2, pt3, pt4) {
+    let addedLength = 0;
+    const percents = [];
+    const lengths = [];
+    const point = [];
+    const lastPoint = [];
+    const len = pt3.length;
+
+    for (let segmentIndex = 0; segmentIndex < DEFAULT_CURVE_SEGMENTS; segmentIndex++) {
+        const perc = segmentIndex / (DEFAULT_CURVE_SEGMENTS - 1);
+        let pointDistance = 0;
+        for (let coordIndex = 0; coordIndex < len; coordIndex++) {
+            const coord =
+                (1 - perc) ** 3 * pt1[coordIndex]
+                + 3 * (1 - perc) ** 2 * perc * pt3[coordIndex]
+                + 3 * (1 - perc) * perc ** 2 * pt4[coordIndex]
+                + perc ** 3 * pt2[coordIndex];
+            point[coordIndex] = coord;
+            if (lastPoint[coordIndex] != null) {
+                pointDistance += (point[coordIndex] - lastPoint[coordIndex]) ** 2;
             }
-            samples.push({ segment, t, point, length: totalLength });
-            previousPoint = point;
+            lastPoint[coordIndex] = point[coordIndex];
+        }
+        if (pointDistance) {
+            pointDistance = Math.sqrt(pointDistance);
+            addedLength += pointDistance;
+        }
+        percents[segmentIndex] = perc;
+        lengths[segmentIndex] = addedLength;
+    }
+
+    return { addedLength, percents, lengths };
+}
+
+function getSegmentsLength(shapePath) {
+    const lengths = [];
+    let totalLength = 0;
+    for (let index = 0; index < shapePath._length - 1; index++) {
+        lengths[index] = getBezierLength(
+            shapePath.v[index],
+            shapePath.v[index + 1],
+            shapePath.o[index],
+            shapePath.i[index + 1],
+        );
+        totalLength += lengths[index].addedLength;
+    }
+    if (shapePath.c && shapePath._length > 0) {
+        const lastIndex = shapePath._length - 1;
+        lengths[lastIndex] = getBezierLength(
+            shapePath.v[lastIndex],
+            shapePath.v[0],
+            shapePath.o[lastIndex],
+            shapePath.i[0],
+        );
+        totalLength += lengths[lastIndex].addedLength;
+    }
+    return { lengths, totalLength };
+}
+
+function getDistancePerc(perc, bezierData) {
+    const { percents, lengths } = bezierData;
+    const len = percents.length;
+    let initPos = Math.floor((len - 1) * perc);
+    const lengthPos = perc * bezierData.addedLength;
+    let lerpPerc = 0;
+
+    if (initPos === len - 1 || initPos === 0 || lengthPos === lengths[initPos]) {
+        return percents[initPos];
+    }
+
+    const dir = lengths[initPos] > lengthPos ? -1 : 1;
+    let searching = true;
+    while (searching) {
+        if (lengths[initPos] <= lengthPos && lengths[initPos + 1] > lengthPos) {
+            lerpPerc = (lengthPos - lengths[initPos]) / (lengths[initPos + 1] - lengths[initPos]);
+            searching = false;
+        } else {
+            initPos += dir;
+        }
+        if (initPos < 0 || initPos >= len - 1) {
+            if (initPos === len - 1) {
+                return percents[initPos];
+            }
+            searching = false;
         }
     }
 
-    const targetLength = totalLength * clampedProgress;
-    let selected = samples[samples.length - 1];
-    for (const sample of samples) {
-        if (sample.length >= targetLength) {
-            selected = sample;
-            break;
+    return percents[initPos] + (percents[initPos + 1] - percents[initPos]) * lerpPerc;
+}
+
+function getPointInSegment(pt1, pt2, pt3, pt4, percent, bezierData) {
+    const t = getDistancePerc(percent, bezierData);
+    const u = 1 - t;
+    const x = Math.round((
+        u ** 3 * pt1[0]
+        + (t * u ** 2 + u * t * u + u ** 2 * t) * pt3[0]
+        + (t ** 2 * u + u * t ** 2 + t * u * t) * pt4[0]
+        + t ** 3 * pt2[0]
+    ) * 1000) / 1000;
+    const y = Math.round((
+        u ** 3 * pt1[1]
+        + (t * u ** 2 + u * t * u + u ** 2 * t) * pt3[1]
+        + (t ** 2 * u + u * t ** 2 + t * u * t) * pt4[1]
+        + t ** 3 * pt2[1]
+    ) * 1000) / 1000;
+    return [x, y];
+}
+
+function pointOnPath(shapePath, progress) {
+    if (!shapePath || shapePath._length === 0) {
+        return [0, 0];
+    }
+    const clampedProgress = Math.min(Math.max(Number(progress) || 0, 0), 1);
+    const segmentsLength = getSegmentsLength(shapePath);
+    const lengthPos = segmentsLength.totalLength * clampedProgress;
+    let accumulatedLength = 0;
+
+    for (let index = 0; index < segmentsLength.lengths.length; index++) {
+        const segmentLength = segmentsLength.lengths[index];
+        if (!segmentLength) {
+            continue;
         }
+        if (accumulatedLength + segmentLength.addedLength > lengthPos) {
+            const endIndex = (shapePath.c && index === segmentsLength.lengths.length - 1) ? 0 : index + 1;
+            const segmentPerc = (lengthPos - accumulatedLength) / segmentLength.addedLength;
+            return getPointInSegment(
+                shapePath.v[index],
+                shapePath.v[endIndex],
+                shapePath.o[index],
+                shapePath.i[endIndex],
+                segmentPerc,
+                segmentLength,
+            );
+        }
+        accumulatedLength += segmentLength.addedLength;
     }
 
-    const { segment, t, point } = selected;
-    const tangent = normalizePoint([
-        cubicDerivative(segment.p0[0] ?? 0, segment.p1[0] ?? 0, segment.p2[0] ?? 0, segment.p3[0] ?? 0, t),
-        cubicDerivative(segment.p0[1] ?? 0, segment.p1[1] ?? 0, segment.p2[1] ?? 0, segment.p3[1] ?? 0, t),
-    ]);
+    return shapePath.c
+        ? [shapePath.v[0][0], shapePath.v[0][1]]
+        : [shapePath.v[shapePath._length - 1][0], shapePath.v[shapePath._length - 1][1]];
+}
 
-    return { point, tangent };
+function vectorOnPath(shapePath, progress, vectorType) {
+    let normalizedProgress = progress;
+    // Match lottie-web's exact endpoint handling.
+    if (normalizedProgress == 1) {
+        normalizedProgress = shapePath.c;
+    } else if (normalizedProgress == 0) {
+        normalizedProgress = 0.999;
+    }
+    const pt1 = pointOnPath(shapePath, normalizedProgress);
+    const pt2 = pointOnPath(shapePath, normalizedProgress + 0.001);
+    const xLength = pt2[0] - pt1[0];
+    const yLength = pt2[1] - pt1[1];
+    const magnitude = Math.sqrt(xLength ** 2 + yLength ** 2);
+    if (magnitude === 0) {
+        return [0, 0];
+    }
+    return vectorType === 'tangent'
+        ? [xLength / magnitude, yLength / magnitude]
+        : [-yLength / magnitude, xLength / magnitude];
+}
+
+function samplePathAtProgress(pathValue, progress) {
+    const shapePath = createExpressionShapePath(pathValue);
+    return {
+        point: pointOnPath(shapePath, progress),
+        tangent: vectorOnPath(shapePath, progress, 'tangent'),
+    };
 }
 
 function createPathProxy(pathValue) {
@@ -603,6 +745,7 @@ function createPathProxy(pathValue) {
         outTangents: outTangentPoints,
         closed,
     } = createBezierSegments(pathValue);
+    const shapePath = createExpressionShapePath(pathValue);
     const proxyTarget = {
         vertices,
         inTangentPoints,
@@ -613,8 +756,8 @@ function createPathProxy(pathValue) {
         inTangents: () => clonePointArray(inTangentPoints),
         outTangents: () => clonePointArray(outTangentPoints),
         isClosed: () => closed,
-        pointOnPath: (progress) => cloneNumberArray(samplePathAtProgress(pathValue, progress).point),
-        tangentOnPath: (progress) => cloneNumberArray(samplePathAtProgress(pathValue, progress).tangent),
+        pointOnPath: (progress) => cloneNumberArray(pointOnPath(shapePath, progress)),
+        tangentOnPath: (progress) => cloneNumberArray(vectorOnPath(shapePath, progress, 'tangent')),
     };
     proxyTarget.path = proxyTarget;
     return proxyTarget;
@@ -824,13 +967,11 @@ function createPropertyHelpers(rawProperty, frame, frameDuration) {
     };
 
     const velocityAtTime = (timeSeconds) => {
+        const deltaSeconds = -0.001;
         const frameCenter = (Number(timeSeconds) || 0) / safeDuration;
-        const before = sampleKeyframedProperty(rawProperty, frameCenter - 0.01);
-        const after = sampleKeyframedProperty(rawProperty, frameCenter + 0.01);
-        // Divide by the time delta in SECONDS (0.02 frames * safeDuration s/frame)
-        // so the result is in units-per-second, matching lottie-web's convention.
-        const timeDeltaSeconds = 0.02 * safeDuration;
-        return binaryOp(after, before, (left, right) => (left - right) / timeDeltaSeconds);
+        const before = sampleKeyframedProperty(rawProperty, frameCenter);
+        const after = sampleKeyframedProperty(rawProperty, (Number(timeSeconds) + deltaSeconds) / safeDuration);
+        return binaryOp(after, before, (left, right) => (left - right) / deltaSeconds);
     };
 
     return {
