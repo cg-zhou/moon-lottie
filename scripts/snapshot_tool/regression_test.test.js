@@ -165,3 +165,203 @@ test('default expression host supports createPath-style path mutations', async (
   assert.equal(pathValue.closed, true);
   assert.deepEqual(pathValue.vertices, [[0, 0], [20, 5]]);
 });
+
+test('default expression host resolves thisComp.layer and thisLayer.effect lookups', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const animationData = {
+    fr: 60,
+    layers: [
+      {
+        ind: 7,
+        nm: 'color',
+        ef: [{
+          nm: 'color linea',
+          ef: [{ nm: 'Color', v: { a: 0, k: [0.1, 0.2, 0.3, 1] } }],
+        }],
+      },
+      {
+        ind: 9,
+        nm: 'traceNull',
+        ef: [{
+          nm: 'Pseudo/ADBE Trace Path',
+          ef: [{ mn: 'Pseudo/ADBE Trace Path-0001', v: { a: 0, k: 25 } }],
+        }],
+        ks: { p: { a: 0, k: [11, 22, 0] } },
+      },
+    ],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const color = host.evaluateVec(
+    "var $bm_rt; $bm_rt = thisComp.layer('color').effect('color linea')('Color');",
+    0,
+    9,
+    [0, 0, 0, 0],
+  );
+  const progress = host.evaluateDouble(
+    "var $bm_rt; $bm_rt = thisLayer.effect('Pseudo/ADBE Trace Path')('Pseudo/ADBE Trace Path-0001') + thisLayer.index;",
+    0,
+    9,
+    0,
+  );
+
+  assert.deepEqual(color, [0.1, 0.2, 0.3, 1]);
+  assert.equal(progress, 34);
+});
+
+test('default expression host resolves maskPath access through thisComp.layer', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const animationData = {
+    fr: 30,
+    layers: [{
+      ind: 3,
+      nm: 'monster',
+      masksProperties: [{
+        nm: 'Mask 1',
+        pt: {
+          a: 0,
+          k: {
+            v: [[0, 0], [20, 5], [10, 10]],
+            i: [[0, 0], [0, 0], [0, 0]],
+            o: [[0, 0], [0, 0], [0, 0]],
+            c: true,
+          },
+        },
+      }],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 30 }),
+  });
+
+  const value = host.evaluateVec(
+    "var $bm_rt; $bm_rt = thisComp.layer('monster').mask('Mask 1').maskPath.points()[1];",
+    0,
+    3,
+    [0, 0],
+  );
+
+  assert.deepEqual(value, [20, 5]);
+});
+
+test('default expression host resolves content path lookup and toComp projection', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 12,
+      nm: 'wire',
+      ks: {
+        p: { a: 0, k: [0, 10, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+      shapes: [{
+        ty: 'gr',
+        nm: 'Group 1',
+        it: [{
+          ty: 'sh',
+          nm: 'Path 1',
+          ks: {
+            a: 0,
+            k: {
+              v: [[0, 0], [100, 0]],
+              i: [[0, 0], [0, 0]],
+              o: [[0, 0], [0, 0]],
+              c: false,
+            },
+          },
+        }],
+      }],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const point = host.evaluateVec(
+    "var $bm_rt; var pathLayer = thisComp.layer('wire'); var pathToTrace = pathLayer('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape'); $bm_rt = pathLayer.toComp(pathToTrace.pointOnPath(0.5));",
+    0,
+    12,
+    [0, 0, 0],
+  );
+  const angle = host.evaluateDouble(
+    "var $bm_rt; var pathToTrace = thisComp.layer('wire')('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape'); var pathTan = pathToTrace.tangentOnPath(0.5); $bm_rt = radiansToDegrees(Math.atan2(pathTan[1], pathTan[0]));",
+    0,
+    12,
+    0,
+  );
+
+  assert.deepEqual(point, [50, 10, 0]);
+  assert.equal(angle, 0);
+});
+
+test('default expression host resolves layer control effects and fromCompToSurface in path expressions', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const animationData = {
+    fr: 60,
+    layers: [
+      {
+        ind: 1,
+        nm: 'null-a',
+        ks: {
+          a: { a: 0, k: [5, 0, 0] },
+          p: { a: 0, k: [100, 50, 0] },
+          s: { a: 0, k: [100, 100, 100] },
+          r: { a: 0, k: 0 },
+        },
+      },
+      {
+        ind: 2,
+        nm: 'wire',
+        ef: [{
+          nm: 'Control A',
+          mn: 'ADBE Layer Control',
+          ef: [{ mn: 'ADBE Layer Control-0001', v: { a: 0, k: 1 } }],
+        }],
+        ks: {
+          a: { a: 0, k: [0, 0, 0] },
+          p: { a: 0, k: [10, 0, 0] },
+          s: { a: 0, k: [100, 100, 100] },
+          r: { a: 0, k: 0 },
+        },
+      },
+    ],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const pathValue = host.evaluatePath(
+    "var $bm_rt; var target = effect('Control A')('ADBE Layer Control-0001'); var pts = thisProperty.points(); pts[0] = fromCompToSurface(target.toComp(target.anchorPoint)); $bm_rt = createPath(pts, thisProperty.inTangents(), thisProperty.outTangents(), thisProperty.isClosed());",
+    0,
+    2,
+    {
+      vertices: [[0, 0], [10, 0]],
+      inTangents: [[0, 0], [0, 0]],
+      outTangents: [[0, 0], [0, 0]],
+      closed: false,
+    },
+  );
+
+  assert.deepEqual(pathValue.vertices[0], [90, 50, 0]);
+});

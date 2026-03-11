@@ -83,20 +83,20 @@ function findLayerByIndex(animationData, layerIndex) {
     return animationData?.layers?.find((layer) => Number(layer?.ind) === Number(layerIndex)) ?? null;
 }
 
-function findPropertyByExpression(node, expression) {
+function findPropertyContextByExpression(node, expression, parents = []) {
     if (!node || typeof node !== 'object') return null;
     if (Array.isArray(node)) {
         for (const item of node) {
-            const match = findPropertyByExpression(item, expression);
+            const match = findPropertyContextByExpression(item, expression, parents);
             if (match) return match;
         }
         return null;
     }
     if (node.x === expression) {
-        return node;
+        return { property: node, parents };
     }
     for (const value of Object.values(node)) {
-        const match = findPropertyByExpression(value, expression);
+        const match = findPropertyContextByExpression(value, expression, [...parents, node]);
         if (match) return match;
     }
     return null;
@@ -185,7 +185,10 @@ const {
   velocityAtTime,
   framesToTime,
   timeToFrames,
+  fromCompToSurface,
   createPath,
+  radiansToDegrees,
+  degreesToRadians,
   clamp,
   sum,
   sub,
@@ -202,23 +205,370 @@ return typeof $bm_rt === 'undefined' ? value : $bm_rt;
     return expressionFunctionCache.get(expression);
 }
 
-function createEffectAccessor(layer, frame) {
+function createEffectAccessor(layer, animationData, frame) {
     return (effectName) => {
-        const effect = layer?.ef?.find((item) => item?.nm === effectName) ?? null;
+        const effect = layer?.ef?.find((item) => item?.nm === effectName || item?.mn === effectName) ?? null;
         return (paramName) => {
             const param = effect?.ef?.find((item) => item?.mn === paramName || item?.nm === paramName) ?? null;
             if (!param) return 0;
             if (param.v) {
-                return sampleKeyframedProperty(param.v, frame);
+                const value = sampleKeyframedProperty(param.v, frame);
+                if (param.mn === 'ADBE Layer Control-0001') {
+                    const layerIndex = Number(value) || 0;
+                    const targetLayer = findLayerByIndex(animationData, layerIndex);
+                    return targetLayer ? createLayerProxy(targetLayer, animationData, frame) : {};
+                }
+                return value;
             }
             return clonePropertyValue(param.k ?? 0);
         };
     };
 }
 
+function getTransformPosition(transform, frame) {
+    if (!transform) return [0, 0, 0];
+    if (transform.p?.s === true) {
+        return [
+            Number(sampleKeyframedProperty(transform.x, frame) ?? sampleKeyframedProperty(transform.px, frame)) || 0,
+            Number(sampleKeyframedProperty(transform.y, frame) ?? sampleKeyframedProperty(transform.py, frame)) || 0,
+            Number(sampleKeyframedProperty(transform.z, frame) ?? sampleKeyframedProperty(transform.pz, frame)) || 0,
+        ];
+    }
+    return cloneNumberArray(sampleKeyframedProperty(transform.p, frame));
+}
+
+function getTransformAnchor(transform, frame) {
+    return cloneNumberArray(sampleKeyframedProperty(transform?.a, frame));
+}
+
+function getTransformScale(transform, frame) {
+    const value = cloneNumberArray(sampleKeyframedProperty(transform?.s, frame));
+    return value.length > 0 ? value : [100, 100, 100];
+}
+
+function getTransformRotation(transform, frame) {
+    return Number(sampleKeyframedProperty(transform?.r ?? transform?.rz, frame)) || 0;
+}
+
+function multiplyMatrices(left, right) {
+    return {
+        a: left.a * right.a + left.c * right.b,
+        b: left.b * right.a + left.d * right.b,
+        c: left.a * right.c + left.c * right.d,
+        d: left.b * right.c + left.d * right.d,
+        e: left.a * right.e + left.c * right.f + left.e,
+        f: left.b * right.e + left.d * right.f + left.f,
+    };
+}
+
+function createTranslationMatrix(x, y) {
+    return { a: 1, b: 0, c: 0, d: 1, e: Number(x) || 0, f: Number(y) || 0 };
+}
+
+function createScaleMatrix(x, y) {
+    return { a: Number(x) || 1, b: 0, c: 0, d: Number(y) || 1, e: 0, f: 0 };
+}
+
+function createRotationMatrix(degrees) {
+    const radians = (Number(degrees) || 0) * Math.PI / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    return { a: cos, b: sin, c: -sin, d: cos, e: 0, f: 0 };
+}
+
+function applyMatrixToPoint(matrix, point) {
+    const vector = cloneNumberArray(point);
+    const x = vector[0] ?? 0;
+    const y = vector[1] ?? 0;
+    const z = vector[2] ?? 0;
+    return [
+        matrix.a * x + matrix.c * y + matrix.e,
+        matrix.b * x + matrix.d * y + matrix.f,
+        z,
+    ];
+}
+
+function invertMatrix(matrix) {
+    const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+    if (Math.abs(determinant) <= 1e-6) {
+        return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+    }
+    return {
+        a: matrix.d / determinant,
+        b: -matrix.b / determinant,
+        c: -matrix.c / determinant,
+        d: matrix.a / determinant,
+        e: (matrix.c * matrix.f - matrix.d * matrix.e) / determinant,
+        f: (matrix.b * matrix.e - matrix.a * matrix.f) / determinant,
+    };
+}
+
+function findLayerParent(layer, animationData) {
+    if (!layer?.parent) return null;
+    return animationData?.layers?.find((candidate) => Number(candidate?.ind) === Number(layer.parent)) ?? null;
+}
+
+function evaluateLayerMatrix(layer, animationData, frame) {
+    const transform = layer?.ks ?? {};
+    const position = getTransformPosition(transform, frame);
+    const anchor = getTransformAnchor(transform, frame);
+    const scale = getTransformScale(transform, frame);
+    const rotation = getTransformRotation(transform, frame);
+
+    let matrix = createTranslationMatrix(position[0] ?? 0, position[1] ?? 0);
+    matrix = multiplyMatrices(matrix, createRotationMatrix(rotation));
+    matrix = multiplyMatrices(matrix, createScaleMatrix((scale[0] ?? 100) / 100, (scale[1] ?? 100) / 100));
+    matrix = multiplyMatrices(matrix, createTranslationMatrix(-(anchor[0] ?? 0), -(anchor[1] ?? 0)));
+
+    const parent = findLayerParent(layer, animationData);
+    return parent ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame), matrix) : matrix;
+}
+
+function cubicPoint(p0, p1, p2, p3, t) {
+    const oneMinusT = 1 - t;
+    return oneMinusT ** 3 * p0 + 3 * oneMinusT ** 2 * t * p1 + 3 * oneMinusT * t ** 2 * p2 + t ** 3 * p3;
+}
+
+function cubicDerivative(p0, p1, p2, p3, t) {
+    const oneMinusT = 1 - t;
+    return 3 * oneMinusT ** 2 * (p1 - p0) + 6 * oneMinusT * t * (p2 - p1) + 3 * t ** 2 * (p3 - p2);
+}
+
+function normalizePoint(point) {
+    const x = Number(point[0]) || 0;
+    const y = Number(point[1]) || 0;
+    const length = Math.hypot(x, y);
+    if (length <= 1e-9) {
+        return [0, 0];
+    }
+    return [x / length, y / length];
+}
+
+function createBezierSegments(pathValue) {
+    const vertices = clonePointArray(pathValue?.v ?? pathValue?.vertices ?? []);
+    const inTangents = clonePointArray(pathValue?.i ?? pathValue?.inTangents ?? []);
+    const outTangents = clonePointArray(pathValue?.o ?? pathValue?.outTangents ?? []);
+    const closed = !!(pathValue?.c ?? pathValue?.closed);
+    const segmentCount = closed ? vertices.length : Math.max(0, vertices.length - 1);
+    const segments = [];
+
+    for (let index = 0; index < segmentCount; index++) {
+        const nextIndex = (index + 1) % vertices.length;
+        const start = vertices[index];
+        const end = vertices[nextIndex];
+        const out = outTangents[index] ?? [0, 0];
+        const incoming = inTangents[nextIndex] ?? [0, 0];
+        segments.push({
+            p0: start,
+            p1: [(start[0] ?? 0) + (out[0] ?? 0), (start[1] ?? 0) + (out[1] ?? 0)],
+            p2: [(end[0] ?? 0) + (incoming[0] ?? 0), (end[1] ?? 0) + (incoming[1] ?? 0)],
+            p3: end,
+        });
+    }
+
+    return { vertices, inTangents, outTangents, closed, segments };
+}
+
+function samplePathAtProgress(pathValue, progress) {
+    const { segments } = createBezierSegments(pathValue);
+    if (segments.length === 0) {
+        return {
+            point: [0, 0],
+            tangent: [1, 0],
+        };
+    }
+
+    const clampedProgress = Math.min(Math.max(Number(progress) || 0, 0), 1);
+    const samples = [];
+    let totalLength = 0;
+    const subdivisions = 24;
+
+    for (const segment of segments) {
+        let previousPoint = null;
+        for (let step = 0; step <= subdivisions; step++) {
+            const t = step / subdivisions;
+            const point = [
+                cubicPoint(segment.p0[0] ?? 0, segment.p1[0] ?? 0, segment.p2[0] ?? 0, segment.p3[0] ?? 0, t),
+                cubicPoint(segment.p0[1] ?? 0, segment.p1[1] ?? 0, segment.p2[1] ?? 0, segment.p3[1] ?? 0, t),
+            ];
+            if (previousPoint) {
+                totalLength += Math.hypot(point[0] - previousPoint[0], point[1] - previousPoint[1]);
+            }
+            samples.push({ segment, t, point, length: totalLength });
+            previousPoint = point;
+        }
+    }
+
+    const targetLength = totalLength * clampedProgress;
+    let selected = samples[samples.length - 1];
+    for (const sample of samples) {
+        if (sample.length >= targetLength) {
+            selected = sample;
+            break;
+        }
+    }
+
+    const { segment, t, point } = selected;
+    const tangent = normalizePoint([
+        cubicDerivative(segment.p0[0] ?? 0, segment.p1[0] ?? 0, segment.p2[0] ?? 0, segment.p3[0] ?? 0, t),
+        cubicDerivative(segment.p0[1] ?? 0, segment.p1[1] ?? 0, segment.p2[1] ?? 0, segment.p3[1] ?? 0, t),
+    ]);
+
+    return { point, tangent };
+}
+
+function createPathProxy(pathValue) {
+    const {
+        vertices,
+        inTangents: inTangentPoints,
+        outTangents: outTangentPoints,
+        closed,
+    } = createBezierSegments(pathValue);
+    const proxyTarget = {
+        vertices,
+        inTangentPoints,
+        outTangentPoints,
+        closed,
+        path: null,
+        points: () => clonePointArray(vertices),
+        inTangents: () => clonePointArray(inTangentPoints),
+        outTangents: () => clonePointArray(outTangentPoints),
+        isClosed: () => closed,
+        pointOnPath: (progress) => cloneNumberArray(samplePathAtProgress(pathValue, progress).point),
+        tangentOnPath: (progress) => cloneNumberArray(samplePathAtProgress(pathValue, progress).tangent),
+    };
+    proxyTarget.path = proxyTarget;
+    return proxyTarget;
+}
+
+function createTransformProxy(layer, frame) {
+    const transform = layer?.ks ?? {};
+    return {
+        anchorPoint: getTransformAnchor(transform, frame),
+        position: getTransformPosition(transform, frame),
+        scale: getTransformScale(transform, frame),
+        rotation: getTransformRotation(transform, frame),
+        opacity: Number(sampleKeyframedProperty(transform.o, frame)) || 0,
+    };
+}
+
+function findShapeByName(items, name) {
+    if (!Array.isArray(items)) return null;
+    for (const item of items) {
+        if (item?.nm === name) {
+            return item;
+        }
+        const nested = findShapeByName(item?.it, name);
+        if (nested) {
+            return nested;
+        }
+    }
+    return null;
+}
+
+function resolveShapeSelector(target, selector, frame) {
+    if (selector == null) return null;
+    if (Array.isArray(target)) {
+        if (typeof selector === 'number') {
+            return target[Math.max(0, Math.trunc(selector) - 1)] ?? null;
+        }
+        if (typeof selector === 'string') {
+            return target.find((item) => item?.nm === selector || item?.mn === selector) ?? null;
+        }
+        return null;
+    }
+    if (!target || typeof target !== 'object') return null;
+    if (selector === 'ADBE Root Vectors Group') {
+        return target.shapes ?? null;
+    }
+    if (selector === 'ADBE Vectors Group') {
+        return target.it ?? null;
+    }
+    if (selector === 'ADBE Vector Shape') {
+        return target.ks ? createPathProxy(sampleKeyframedProperty(target.ks, frame)) : null;
+    }
+    return null;
+}
+
+function createShapeProxy(target, frame) {
+    const callable = function (selector) {
+        const next = resolveShapeSelector(target, selector, frame);
+        return next ? createShapeProxy(next, frame) : {};
+    };
+
+    return new Proxy(callable, {
+        apply(_fn, _thisArg, args) {
+            return callable(args[0]);
+        },
+        get(_fn, prop) {
+            if (prop === 'path') {
+                if (target?.ks) {
+                    return createPathProxy(sampleKeyframedProperty(target.ks, frame));
+                }
+                return undefined;
+            }
+            if (prop === 'points' || prop === 'inTangents' || prop === 'outTangents' || prop === 'isClosed' || prop === 'pointOnPath' || prop === 'tangentOnPath' || prop === 'vertices' || prop === 'closed') {
+                const pathProxy = target?.ks ? createPathProxy(sampleKeyframedProperty(target.ks, frame)) : target;
+                const value = pathProxy?.[prop];
+                return typeof value === 'function' ? value.bind(pathProxy) : value;
+            }
+            if (typeof prop === 'string' && target && prop in target) {
+                return target[prop];
+            }
+            return undefined;
+        },
+    });
+}
+
+function createMaskAccessor(layer, frame) {
+    return (maskName) => {
+        const masks = layer?.masksProperties ?? layer?.masks ?? [];
+        const mask = masks.find((item) => item?.nm === maskName) ?? null;
+        if (!mask) {
+            return {};
+        }
+        const pathProxy = createPathProxy(sampleKeyframedProperty(mask.pt, frame));
+        return {
+            maskPath: pathProxy,
+            opacity: Number(sampleKeyframedProperty(mask.o, frame)) || 0,
+        };
+    };
+}
+
+function createLayerProxy(layer, animationData, frame) {
+    const callable = function (selector) {
+        const next = resolveShapeSelector(layer, selector, frame);
+        return next ? createShapeProxy(next, frame) : {};
+    };
+
+    return new Proxy(callable, {
+        apply(_fn, _thisArg, args) {
+            return callable(args[0]);
+        },
+        get(_fn, prop) {
+            if (prop === 'effect') return createEffectAccessor(layer, animationData, frame);
+            if (prop === 'mask') return createMaskAccessor(layer, frame);
+            if (prop === 'content') {
+                return (name) => {
+                    const match = findShapeByName(layer?.shapes ?? [], name);
+                    return match ? createShapeProxy(match, frame) : {};
+                };
+            }
+            if (prop === 'transform') return createTransformProxy(layer, frame);
+            if (prop === 'toComp') {
+                return (point) => applyMatrixToPoint(evaluateLayerMatrix(layer, animationData, frame), point);
+            }
+            if (prop === 'index') return Number(layer?.ind) || 0;
+            if (prop === 'name') return layer?.nm ?? '';
+            if (prop === 'anchorPoint') return getTransformAnchor(layer?.ks ?? {}, frame);
+            return layer?.[prop];
+        },
+    });
+}
+
 function createPropertyHelpers(rawProperty, frame, frameDuration) {
     const keyframes = isKeyframedProperty(rawProperty) ? rawProperty.k : [];
-    const safeDuration = frameDuration > 0 ? frameDuration : 1 / 60;
+    const safeDuration = frameDuration > 0 ? frameDuration : DEFAULT_FRAME_DURATION;
 
     const key = (index) => {
         const keyframe = keyframes[Math.max(0, Math.min(keyframes.length - 1, Number(index) - 1))];
@@ -261,6 +611,77 @@ function createPropertyHelpers(rawProperty, frame, frameDuration) {
     };
 }
 
+function createEffectGroupAccessor(effect, animationData, frame) {
+    return (paramName) => {
+        const param = effect?.ef?.find((item) => item?.mn === paramName || item?.nm === paramName) ?? null;
+        if (!param) return 0;
+        const value = param.v ? sampleKeyframedProperty(param.v, frame) : clonePropertyValue(param.k ?? 0);
+        if (param.mn === 'ADBE Layer Control-0001') {
+            const layerIndex = Number(value) || 0;
+            const targetLayer = findLayerByIndex(animationData, layerIndex);
+            return targetLayer ? createLayerProxy(targetLayer, animationData, frame) : {};
+        }
+        return value;
+    };
+}
+
+function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, frame, frameDuration, layer, animationData, currentPath) {
+    const effectGroup = rawPropertyContext?.parents?.slice().reverse().find((candidate) => Array.isArray(candidate?.ef)) ?? null;
+    const baseProperty = {
+        numKeys: propertyHelpers.numKeys,
+        key: propertyHelpers.key,
+        nearestKey: propertyHelpers.nearestKey,
+        velocityAtTime: propertyHelpers.velocityAtTime,
+        propertyGroup: (index) => {
+            if (Number(index) === 1 && effectGroup) {
+                return createEffectGroupAccessor(effectGroup, animationData, frame);
+            }
+            return () => 0;
+        },
+        loopOut: (mode = 'cycle') => {
+            if (!rawProperty || !isKeyframedProperty(rawProperty) || propertyHelpers.numKeys <= 1) {
+                return clonePropertyValue(rawProperty?.k ?? 0);
+            }
+            if (mode !== 'cycle') {
+                return sampleKeyframedProperty(rawProperty, frame);
+            }
+            const keyframes = rawProperty.k;
+            const first = Number(keyframes[0]?.t) || 0;
+            const lastKeyframe = keyframes[keyframes.length - 1];
+            const last = Number(lastKeyframe?.t) || first;
+            const duration = last - first;
+            if (duration <= 0 || frame <= last) {
+                return sampleKeyframedProperty(rawProperty, frame);
+            }
+            const loopedFrame = first + ((frame - first) % duration);
+            return sampleKeyframedProperty(rawProperty, loopedFrame);
+        },
+    };
+
+    if (!currentPath) {
+        return baseProperty;
+    }
+
+    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame);
+    const inverseLayerMatrix = invertMatrix(layerMatrix);
+    const currentPathGeometry = {
+        vertices: currentPath.vertices,
+        inTangents: currentPath.inTangents,
+        outTangents: currentPath.outTangents,
+        closed: currentPath.closed,
+    };
+    return {
+        ...baseProperty,
+        points: () => clonePointArray(currentPath.vertices),
+        inTangents: () => clonePointArray(currentPath.inTangents),
+        outTangents: () => clonePointArray(currentPath.outTangents),
+        isClosed: () => !!currentPath.closed,
+        pointOnPath: (progress) => cloneNumberArray(samplePathAtProgress(currentPathGeometry, progress).point),
+        tangentOnPath: (progress) => cloneNumberArray(samplePathAtProgress(currentPathGeometry, progress).tangent),
+        fromCompToSurface: (point) => applyMatrixToPoint(inverseLayerMatrix, point),
+    };
+}
+
 function buildContext({
     expression,
     frame,
@@ -272,8 +693,12 @@ function buildContext({
 }) {
     const fps = Number(playbackMeta?.fps) || Number(animationData?.fr) || DEFAULT_FPS;
     const frameDuration = fps > 0 ? 1 / fps : DEFAULT_FRAME_DURATION;
-    const rawProperty = findPropertyByExpression(layer, expression);
+    const rawPropertyContext = findPropertyContextByExpression(layer, expression);
+    const rawProperty = rawPropertyContext?.property ?? null;
     const propertyHelpers = createPropertyHelpers(rawProperty, frame, frameDuration);
+    const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame);
+    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame);
+    const currentLayerInverseMatrix = invertMatrix(currentLayerMatrix);
 
     return {
         value: clonePropertyValue(value),
@@ -282,22 +707,35 @@ function buildContext({
             frameDuration,
             width: Number(animationData?.w) || 0,
             height: Number(animationData?.h) || 0,
+            layer: (layerRef) => {
+                const matchedLayer = typeof layerRef === 'number'
+                    ? findLayerByIndex(animationData, layerRef)
+                    : animationData?.layers?.find((candidate) => candidate?.nm === layerRef) ?? null;
+                return matchedLayer ? createLayerProxy(matchedLayer, animationData, frame) : {};
+            },
         },
-        thisLayer: layer ?? {},
-        thisProperty: currentPath ? {
-            points: () => clonePointArray(currentPath.vertices),
-            inTangents: () => clonePointArray(currentPath.inTangents),
-            outTangents: () => clonePointArray(currentPath.outTangents),
-            isClosed: () => !!currentPath.closed,
-        } : {},
-        effect: createEffectAccessor(layer, frame),
+        thisLayer: currentLayerProxy,
+        thisProperty: createThisProperty(
+            rawProperty,
+            rawPropertyContext,
+            propertyHelpers,
+            frame,
+            frameDuration,
+            layer,
+            animationData,
+            currentPath,
+        ),
+        effect: createEffectAccessor(layer, animationData, frame),
         numKeys: propertyHelpers.numKeys,
         key: propertyHelpers.key,
         nearestKey: propertyHelpers.nearestKey,
         velocityAtTime: propertyHelpers.velocityAtTime,
         framesToTime: (value) => (Number(value) || 0) * frameDuration,
         timeToFrames: (value) => (Number(value) || 0) / frameDuration,
+        fromCompToSurface: (point) => applyMatrixToPoint(currentLayerInverseMatrix, point),
         createPath,
+        radiansToDegrees: (value) => (Number(value) || 0) * 180 / Math.PI,
+        degreesToRadians: (value) => (Number(value) || 0) * Math.PI / 180,
         clamp: (value, min, max) => Math.min(Math.max(Number(value) || 0, Number(min) || 0), Number(max) || 0),
         sum: (left, right) => binaryOp(left, right, (a, b) => a + b),
         sub: (left, right) => binaryOp(left, right, (a, b) => a - b),
