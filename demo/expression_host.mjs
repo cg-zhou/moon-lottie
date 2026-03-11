@@ -1,5 +1,7 @@
 const expressionFunctionCache = new Map();
 let externalExpressionHost = null;
+const DEFAULT_FPS = 60;
+const DEFAULT_FRAME_DURATION = 1 / DEFAULT_FPS;
 
 function cloneNumberArray(values) {
     return Array.isArray(values) ? values.map((value) => Number(value) || 0) : [];
@@ -37,7 +39,10 @@ function clonePropertyValue(value) {
     if (Array.isArray(value)) {
         return value.map((item) => clonePropertyValue(item));
     }
-    return Number.isFinite(value) ? value : value;
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0;
+    }
+    return value;
 }
 
 function sampleKeyframedProperty(prop, frame) {
@@ -165,6 +170,8 @@ function getExpressionFunction(expression) {
             new Function(
                 'context',
                 `
+// This fallback evaluator is only used by the demo/default host. Production
+// consumers are expected to install their own expression host implementation.
 const {
   value,
   time,
@@ -263,8 +270,8 @@ function buildContext({
     playbackMeta,
     currentPath,
 }) {
-    const fps = Number(playbackMeta?.fps) || Number(animationData?.fr) || 60;
-    const frameDuration = fps > 0 ? 1 / fps : 1 / 60;
+    const fps = Number(playbackMeta?.fps) || Number(animationData?.fr) || DEFAULT_FPS;
+    const frameDuration = fps > 0 ? 1 / fps : DEFAULT_FRAME_DURATION;
     const rawProperty = findPropertyByExpression(layer, expression);
     const propertyHelpers = createPropertyHelpers(rawProperty, frame, frameDuration);
 

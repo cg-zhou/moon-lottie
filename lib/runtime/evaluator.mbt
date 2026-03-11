@@ -181,14 +181,8 @@ fn lerp_vec2_array_with_component_easing(
 }
 
 ///|
-fn clone_double_array(input : Array[Double]) -> Array[Double] {
-  let res = []
-  for value in input {
-    res.push(value)
-  }
-  res
-}
-
+/// Split a serialized expression payload on a single-character delimiter.
+/// Empty input returns an empty array, while trailing segments are preserved.
 fn split_string(input : String, delimiter : Char) -> Array[String] {
   if input.length() == 0 {
     return []
@@ -198,11 +192,11 @@ fn split_string(input : String, delimiter : Char) -> Array[String] {
   let delimiter_code = delimiter.to_int().to_uint16()
   for i = 0; i < input.length(); i = i + 1 {
     if input[i] == delimiter_code {
-      parts.push(input.substring(start=start, end=i))
+      parts.push(input[start:i].to_string())
       start = i + 1
     }
   }
-  parts.push(input.substring(start=start, end=input.length()))
+  parts.push(input[start:input.length()].to_string())
   parts
 }
 
@@ -229,6 +223,8 @@ fn parse_double_array(input : String) -> Array[Double] {
       continue
     }
     let value = (@strconv.parse_double(part)) catch {
+      // Keep the bridge resilient to malformed host payloads and fall back to
+      // moon-lottie's non-expression value for that component.
       _ => 0.0
     }
     result.push(value)
