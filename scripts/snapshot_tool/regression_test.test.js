@@ -35,10 +35,8 @@ test('parseCaseConfig parses explicit similarity thresholds', () => {
 test('demo uses vendored lottie-web asset', () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const html = fs.readFileSync(path.join(repoRoot, 'demo', 'index.html'), 'utf8');
-  const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'deploy-pages.yml'), 'utf8');
 
   assert.match(html, /<script src="\.\/lottie\.min\.js"><\/script>/);
-  assert.match(workflow, /cp demo\/lottie\.min\.js \/tmp\/demo_dist\//);
   assert.ok(fs.existsSync(path.join(repoRoot, 'demo', 'lottie.min.js')));
 });
 

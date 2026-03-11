@@ -155,7 +155,10 @@ async function setAndCaptureFrame(page, filename, frame, outputDir) {
   const diffPath = path.join(outputDir, `${base}_${frame}_diff.png`);
 
   await page.selectOption('#anim-list', filename);
-  await page.waitForSelector('#official-lottie-container canvas', { timeout: 15000, state: 'attached' });
+  await page.waitForSelector('#official-lottie-container svg, #official-lottie-container canvas', {
+    timeout: 15000,
+    state: 'attached',
+  });
 
   await page.evaluate(({ f, pauseButtonText }) => {
     const compareToggle = document.getElementById('compare-toggle');
@@ -176,10 +179,10 @@ async function setAndCaptureFrame(page, filename, frame, outputDir) {
   await page.waitForTimeout(CANVAS_RENDER_DELAY_MS);
 
   const moonCanvas = page.locator('#lottie-canvas');
-  const officialCanvas = page.locator('#official-lottie-container canvas').first();
+  const officialRenderer = page.locator('#official-lottie-container').first();
 
   await moonCanvas.screenshot({ path: moonPath });
-  await officialCanvas.screenshot({ path: officialPath });
+  await officialRenderer.screenshot({ path: officialPath });
 
   const result = await comparePngFiles(officialPath, moonPath, diffPath);
   return { moonPath, officialPath, diffPath, result };
