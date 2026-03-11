@@ -3,6 +3,33 @@ let externalExpressionHost = null;
 const DEFAULT_FPS = 60;
 const DEFAULT_FRAME_DURATION = 1 / DEFAULT_FPS;
 
+// Guard against infinite expression recursion (e.g., A→B→A chains).
+let _expressionCallDepth = 0;
+const MAX_EXPRESSION_CALL_DEPTH = 16;
+
+// CSS cubic-bezier solver used for keyframe easing.
+// Finds t such that BezierX(t) = targetX, then returns BezierY(t).
+// Control points are P0=(0,0), P1=(x1,y1), P2=(x2,y2), P3=(1,1).
+function solveCubicBezierEasing(x1, y1, x2, y2, targetX) {
+    if (targetX <= 0) return 0;
+    if (targetX >= 1) return 1;
+    const cx = 3 * x1;
+    const bx = 3 * (x2 - x1) - cx;
+    const ax = 1 - cx - bx;
+    const cy = 3 * y1;
+    const by = 3 * (y2 - y1) - cy;
+    const ay = 1 - cy - by;
+    // Newton's method to solve ax*t^3 + bx*t^2 + cx*t - targetX = 0
+    let t = targetX;
+    for (let i = 0; i < 8; i++) {
+        const x = ((ax * t + bx) * t + cx) * t - targetX;
+        const dx = (3 * ax * t + 2 * bx) * t + cx;
+        if (Math.abs(dx) < 1e-6) break;
+        t -= x / dx;
+    }
+    return ((ay * t + by) * t + cy) * t;
+}
+
 function cloneNumberArray(values) {
     return Array.isArray(values) ? values.map((value) => Number(value) || 0) : [];
 }
@@ -76,10 +103,21 @@ function sampleKeyframedProperty(prop, frame) {
             }
             const end = clonePropertyValue(current.e ?? next.s ?? start);
             const progress = (frame - currentTime) / (nextTime - currentTime);
-            if (Array.isArray(start) && Array.isArray(end)) {
-                return start.map((value, index) => (Number(value) || 0) + ((Number(end[index]) || 0) - (Number(value) || 0)) * progress);
+            // Apply cubic-bezier easing: CP1 = current.o (out), CP2 = next.i (in).
+            // This matches the standard lottie / lottie-web convention.
+            let easedProgress = progress;
+            const ox = current.o?.x;
+            const oy = current.o?.y;
+            const ix = next.i?.x;
+            const iy = next.i?.y;
+            if (typeof ox === 'number' && typeof oy === 'number' &&
+                typeof ix === 'number' && typeof iy === 'number') {
+                easedProgress = solveCubicBezierEasing(ox, oy, ix, iy, progress);
             }
-            return (Number(start) || 0) + ((Number(end) || 0) - (Number(start) || 0)) * progress;
+            if (Array.isArray(start) && Array.isArray(end)) {
+                return start.map((value, index) => (Number(value) || 0) + ((Number(end[index]) || 0) - (Number(value) || 0)) * easedProgress);
+            }
+            return (Number(start) || 0) + ((Number(end) || 0) - (Number(start) || 0)) * easedProgress;
         }
     }
 
@@ -170,9 +208,13 @@ function coerceExpressionResult(result, fallbackValue) {
     return Number.isFinite(scalar) ? scalar : (Number(fallbackValue) || 0);
 }
 
-function evaluateHostedExpressionValue(expression, frame, layer, value, animationData, currentCompLayers) {
+function evaluateHostedExpressionValue(expression, frame, layer, value, animationData, currentCompLayers, currentPath = null) {
+    if (_expressionCallDepth >= MAX_EXPRESSION_CALL_DEPTH) {
+        return value;
+    }
+    _expressionCallDepth++;
     try {
-        return getExpressionFunction(expression)(
+        const result = getExpressionFunction(expression)(
             buildContext({
                 expression,
                 frame,
@@ -180,10 +222,14 @@ function evaluateHostedExpressionValue(expression, frame, layer, value, animatio
                 value: clonePropertyValue(value),
                 animationData,
                 playbackMeta: { fps: Number(animationData?.fr) || DEFAULT_FPS },
+                currentPath: currentPath ?? null,
                 currentCompLayers,
             }),
         );
+        _expressionCallDepth--;
+        return result;
     } catch (error) {
+        _expressionCallDepth--;
         console.warn('[MoonLottie] expression evaluation failed', error);
         return value;
     }
@@ -421,12 +467,32 @@ function findLayerParent(layer, animationData, compLayers = null) {
     return animationData?.layers?.find((candidate) => Number(candidate?.ind) === Number(layer.parent)) ?? null;
 }
 
-function evaluateLayerMatrix(layer, animationData, frame, compLayers = null) {
+function evaluateLayerMatrix(layer, animationData, frame, compLayers = null, activeExpression = null) {
     const transform = layer?.ks ?? {};
-    const position = getTransformPosition(transform, frame);
-    const anchor = getTransformAnchor(transform, frame);
-    const scale = getTransformScale(transform, frame);
-    const rotation = getTransformRotation(transform, frame);
+
+    // Helper: evaluate a transform property's expression (if any) to get the
+    // final value.  Skips the expression when it matches activeExpression to
+    // prevent direct self-recursion (e.g. the bounce expr reading its own position).
+    const resolveTransformProp = (prop, rawValue) => {
+        if (!prop) return rawValue;
+        const expr = typeof prop.x === 'string' ? prop.x : null;
+        if (!expr || expr === activeExpression) return rawValue;
+        const result = evaluateHostedExpressionValue(expr, frame, layer, rawValue, animationData, compLayers);
+        return coerceExpressionResult(result, rawValue);
+    };
+
+    const rawPosition = getTransformPosition(transform, frame);
+    const rawAnchor   = getTransformAnchor(transform, frame);
+    const rawScale    = getTransformScale(transform, frame);
+    const rawRotation = getTransformRotation(transform, frame);
+
+    // Use split-position property if present, otherwise the combined p property.
+    const positionProp = transform.p?.s === true ? null : transform.p;
+    const position = cloneNumberArray(resolveTransformProp(positionProp, rawPosition));
+    const anchor   = cloneNumberArray(resolveTransformProp(transform.a, rawAnchor));
+    const scale    = cloneNumberArray(resolveTransformProp(transform.s, rawScale));
+    const rotRaw   = resolveTransformProp(transform.r ?? transform.rz, rawRotation);
+    const rotation = typeof rotRaw === 'number' ? rotRaw : unwrapScalarValue(rotRaw);
 
     let matrix = createTranslationMatrix(position[0] ?? 0, position[1] ?? 0);
     matrix = multiplyMatrices(matrix, createRotationMatrix(rotation));
@@ -434,7 +500,7 @@ function evaluateLayerMatrix(layer, animationData, frame, compLayers = null) {
     matrix = multiplyMatrices(matrix, createTranslationMatrix(-(anchor[0] ?? 0), -(anchor[1] ?? 0)));
 
     const parent = findLayerParent(layer, animationData, compLayers);
-    return parent ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame, compLayers), matrix) : matrix;
+    return parent ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame, compLayers, activeExpression), matrix) : matrix;
 }
 
 function cubicPoint(p0, p1, p2, p3, t) {
@@ -589,7 +655,7 @@ function findShapeByName(items, name) {
     return null;
 }
 
-function resolveShapeSelector(target, selector, frame) {
+function resolveShapeSelector(target, selector, frame, animationData = null, compLayers = null, parentLayer = null, activeExpression = null) {
     if (selector == null) return null;
     if (Array.isArray(target)) {
         if (typeof selector === 'number') {
@@ -608,15 +674,49 @@ function resolveShapeSelector(target, selector, frame) {
         return target.it ?? null;
     }
     if (selector === 'ADBE Vector Shape') {
-        return target.ks ? createPathProxy(sampleKeyframedProperty(target.ks, frame)) : null;
+        if (!target.ks) return null;
+        const rawPath = sampleKeyframedProperty(target.ks, frame);
+        // Evaluate the shape path expression so callers (e.g. light-position
+        // expressions) see the expression-modified wire path rather than the
+        // static base path.
+        const pathExpr = typeof target.ks.x === 'string' ? target.ks.x : null;
+        if (pathExpr && pathExpr !== activeExpression && parentLayer && animationData) {
+            try {
+                const { vertices, inTangents, outTangents, closed } = createBezierSegments(rawPath);
+                const currentPath = { vertices, inTangents, outTangents, closed };
+                const result = evaluateHostedExpressionValue(pathExpr, frame, parentLayer, rawPath, animationData, compLayers, currentPath);
+                if (result && Array.isArray(result.vertices) && Array.isArray(result.inTangents) && Array.isArray(result.outTangents)) {
+                    return createPathProxy(result);
+                }
+            } catch (_) {}
+        }
+        return createPathProxy(rawPath);
     }
     return null;
 }
 
-function createShapeProxy(target, frame) {
+function resolveShapePathForProp(ksProperty, frame, animationData, compLayers, parentLayer, activeExpression) {
+    const rawPath = sampleKeyframedProperty(ksProperty, frame);
+    const pathExpr = typeof ksProperty.x === 'string' ? ksProperty.x : null;
+    if (pathExpr && pathExpr !== activeExpression && parentLayer && animationData) {
+        try {
+            // Extract a normalised path geometry (vertices/inTangents/outTangents/closed)
+            // from the raw JSON path so buildContext can populate thisProperty.points() etc.
+            const { vertices, inTangents, outTangents, closed } = createBezierSegments(rawPath);
+            const currentPath = { vertices, inTangents, outTangents, closed };
+            const result = evaluateHostedExpressionValue(pathExpr, frame, parentLayer, rawPath, animationData, compLayers, currentPath);
+            if (result && Array.isArray(result.vertices) && Array.isArray(result.inTangents) && Array.isArray(result.outTangents)) {
+                return createPathProxy(result);
+            }
+        } catch (_) {}
+    }
+    return createPathProxy(rawPath);
+}
+
+function createShapeProxy(target, frame, animationData = null, compLayers = null, parentLayer = null, activeExpression = null) {
     const callable = function (selector) {
-        const next = resolveShapeSelector(target, selector, frame);
-        return next ? createShapeProxy(next, frame) : {};
+        const next = resolveShapeSelector(target, selector, frame, animationData, compLayers, parentLayer, activeExpression);
+        return next ? createShapeProxy(next, frame, animationData, compLayers, parentLayer, activeExpression) : {};
     };
 
     return new Proxy(callable, {
@@ -626,12 +726,14 @@ function createShapeProxy(target, frame) {
         get(_fn, prop) {
             if (prop === 'path') {
                 if (target?.ks) {
-                    return createPathProxy(sampleKeyframedProperty(target.ks, frame));
+                    return resolveShapePathForProp(target.ks, frame, animationData, compLayers, parentLayer, activeExpression);
                 }
                 return undefined;
             }
             if (prop === 'points' || prop === 'inTangents' || prop === 'outTangents' || prop === 'isClosed' || prop === 'pointOnPath' || prop === 'tangentOnPath' || prop === 'vertices' || prop === 'closed') {
-                const pathProxy = target?.ks ? createPathProxy(sampleKeyframedProperty(target.ks, frame)) : target;
+                const pathProxy = target?.ks
+                    ? resolveShapePathForProp(target.ks, frame, animationData, compLayers, parentLayer, activeExpression)
+                    : target;
                 const value = pathProxy?.[prop];
                 return typeof value === 'function' ? value.bind(pathProxy) : value;
             }
@@ -660,8 +762,8 @@ function createMaskAccessor(layer, frame) {
 
 function createLayerProxy(layer, animationData, frame, compLayers = null, activeExpression = null) {
     const callable = function (selector) {
-        const next = resolveShapeSelector(layer, selector, frame);
-        return next ? createShapeProxy(next, frame) : {};
+        const next = resolveShapeSelector(layer, selector, frame, animationData, compLayers, layer, activeExpression);
+        return next ? createShapeProxy(next, frame, animationData, compLayers, layer, activeExpression) : {};
     };
 
     return new Proxy(callable, {
@@ -674,12 +776,14 @@ function createLayerProxy(layer, animationData, frame, compLayers = null, active
             if (prop === 'content') {
                 return (name) => {
                     const match = findShapeByName(layer?.shapes ?? [], name);
-                    return match ? createShapeProxy(match, frame) : {};
+                    return match ? createShapeProxy(match, frame, animationData, compLayers, layer, activeExpression) : {};
                 };
             }
             if (prop === 'transform') return createTransformProxy(layer, animationData, frame, compLayers, activeExpression);
             if (prop === 'toComp') {
-                return (point) => applyMatrixToPoint(evaluateLayerMatrix(layer, animationData, frame, compLayers), point);
+                // Use activeExpression so this layer's own transform expressions are
+                // not re-entered when computing the matrix for toComp.
+                return (point) => applyMatrixToPoint(evaluateLayerMatrix(layer, animationData, frame, compLayers, activeExpression), point);
             }
             if (prop === 'index') return Number(layer?.ind) || 0;
             if (prop === 'name') return layer?.nm ?? '';
@@ -723,7 +827,10 @@ function createPropertyHelpers(rawProperty, frame, frameDuration) {
         const frameCenter = (Number(timeSeconds) || 0) / safeDuration;
         const before = sampleKeyframedProperty(rawProperty, frameCenter - 0.01);
         const after = sampleKeyframedProperty(rawProperty, frameCenter + 0.01);
-        return binaryOp(after, before, (left, right) => (left - right) / 0.02);
+        // Divide by the time delta in SECONDS (0.02 frames * safeDuration s/frame)
+        // so the result is in units-per-second, matching lottie-web's convention.
+        const timeDeltaSeconds = 0.02 * safeDuration;
+        return binaryOp(after, before, (left, right) => (left - right) / timeDeltaSeconds);
     };
 
     return {
@@ -829,7 +936,7 @@ function computeLoopValue(rawProperty, propertyHelpers, frame, frameDuration, di
     return sampledValue;
 }
 
-function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, frame, frameDuration, layer, animationData, currentPath, compLayers = null) {
+function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, frame, frameDuration, layer, animationData, currentPath, compLayers = null, activeExpression = null) {
     const effectGroup = rawPropertyContext?.parents?.slice().reverse().find((candidate) => Array.isArray(candidate?.ef)) ?? null;
     const baseProperty = {
         numKeys: propertyHelpers.numKeys,
@@ -850,7 +957,9 @@ function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, fr
         return baseProperty;
     }
 
-    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, compLayers);
+    // Use the current expression as activeExpression when computing the layer
+    // matrix so the property's own position expression is not re-invoked.
+    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, compLayers, activeExpression);
     const inverseLayerMatrix = invertMatrix(layerMatrix);
     const currentPathGeometry = {
         vertices: currentPath.vertices,
@@ -886,7 +995,9 @@ function buildContext({
     const rawProperty = rawPropertyContext?.property ?? null;
     const propertyHelpers = createPropertyHelpers(rawProperty, frame, frameDuration);
     const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame, currentCompLayers, expression);
-    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, currentCompLayers);
+    // Pass the current expression as activeExpression so the layer's own transform
+    // expressions are not re-entered while computing the matrix / inverse.
+    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, currentCompLayers, expression);
     const currentLayerInverseMatrix = invertMatrix(currentLayerMatrix);
     const thisProperty = createThisProperty(
         rawProperty,
@@ -898,6 +1009,7 @@ function buildContext({
         animationData,
         currentPath,
         currentCompLayers,
+        expression,
     );
 
     return {

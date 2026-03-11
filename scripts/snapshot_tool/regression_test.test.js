@@ -727,3 +727,192 @@ test('default expression host resolves toComp parent matrices inside current pre
 
   assert.deepEqual(result, [15, 27, 0]);
 });
+
+test('velocityAtTime returns pixels per second matching lottie-web units', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  // Layer position goes from y=0 to y=60 over 60 frames (at 60fps = 1 second).
+  // Velocity just before frame 60 should be ~60 px/s, NOT ~1 px/frame.
+  const expression = `var $bm_rt;
+    var n = 0;
+    0 < numKeys && (n = nearestKey(time).index, key(n).time > time && n--);
+    var t = n === 0 ? 0 : time - key(n).time;
+    if (n > 0) {
+      var v = velocityAtTime(sub(key(n).time, div(thisComp.frameDuration, 10)));
+      $bm_rt = v;
+    } else {
+      $bm_rt = value;
+    }`;
+
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 1,
+      nm: 'bouncer',
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [0, 0, 0], e: [0, 60, 0], o: { x: 1, y: 1 }, i: { x: 0, y: 0 } },
+            { t: 60, s: [0, 60, 0], e: [0, 60, 0], o: { x: 0.167, y: 0.167 }, i: { x: 0.833, y: 0.833 } },
+            { t: 120 },
+          ],
+          x: expression,
+        },
+      },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // Evaluate at frame 70 (after keyframe 60). n=1, t≈10/60s.
+  // v = velocity at (key(1).time - frameDuration/10) = velocity near frame 59.9.
+  // The easing used is close to linear (slope ≈ 1), so position y goes 0→60 over
+  // 60 frames at 60fps and dY/dt ≈ 60 px/s.
+  const result = host.evaluateVec(expression, 70, 1, [0, 0, 0]);
+  // The y-component of the velocity should be close to 60 px/s (not 1 px/frame).
+  assert.ok(Array.isArray(result), 'result should be an array');
+  const vyApprox = result[1];
+  assert.ok(
+    Math.abs(vyApprox) > 10,
+    `velocityAtTime y-component should be in px/s (~60), got ${vyApprox}`,
+  );
+});
+
+test('shape path expression is evaluated when accessed from another layer', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  // Wire layer has a path expression that shifts all vertices by +100 in y.
+  const wirePathExpression = `var $bm_rt;
+    var pts = thisProperty.points();
+    var inT = thisProperty.inTangents();
+    var outT = thisProperty.outTangents();
+    for (var i = 0; i < pts.length; i++) { pts[i] = [pts[i][0], pts[i][1] + 100]; }
+    $bm_rt = createPath(pts, inT, outT, false);`;
+
+  // Light layer expression reads the wire's path and returns the midpoint on it.
+  const lightExpression = `var $bm_rt;
+    var wireLayer = thisComp.layer('wire');
+    var path = wireLayer('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape');
+    $bm_rt = wireLayer.toComp(path.pointOnPath(0.5));`;
+
+  const animationData = {
+    fr: 60,
+    w: 800,
+    h: 600,
+    layers: [{
+      ind: 1,
+      nm: 'wire',
+      ks: {
+        p: { a: 0, k: [0, 0, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+      shapes: [{
+        ty: 'gr',
+        it: [{
+          ty: 'sh',
+          ks: {
+            a: 0,
+            k: { v: [[0, 0], [100, 0]], i: [[0, 0], [0, 0]], o: [[0, 0], [0, 0]], c: false },
+            x: wirePathExpression,
+          },
+        }],
+      }],
+    }, {
+      ind: 2,
+      nm: 'light',
+      ks: { p: { a: 0, k: [0, 0, 0], x: lightExpression } },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // The static wire path is at y=0. After the expression, all y values become +100.
+  // The midpoint on path should be at approximately [50, 100] in wire-local space,
+  // which after toComp([0,0] wire position) = [50, 100].
+  const result = host.evaluateVec(lightExpression, 0, 2, [0, 0, 0]);
+  assert.ok(Array.isArray(result), 'result should be an array');
+  // Y should be ≈100 (expression-evaluated path), not 0 (static path).
+  assert.ok(
+    Math.abs(result[1] - 100) < 5,
+    `Expected y ≈ 100 (expression path), got ${result[1]}`,
+  );
+});
+
+test('toComp uses expression-evaluated position when accessing another layer', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  // The null layer has a position expression that overrides to [500, 400].
+  const nullPosExpression = "var $bm_rt; $bm_rt = [500, 400, 0];";
+  // The wire path expression reads the null layer's position via toComp(anchorPoint).
+  const wireExpression = `var $bm_rt;
+    var nullLayer = thisComp.layer('movingNull');
+    var pt = fromCompToSurface(nullLayer.toComp(nullLayer.anchorPoint));
+    $bm_rt = createPath([pt, [200, 0]], [[0,0],[0,0]], [[0,0],[0,0]], false);`;
+
+  const animationData = {
+    fr: 60,
+    w: 800,
+    h: 600,
+    layers: [{
+      ind: 1,
+      nm: 'movingNull',
+      ks: {
+        // Static base position [0, 0] — expression overrides to [500, 400].
+        p: { a: 0, k: [0, 0, 0], x: nullPosExpression },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+    }, {
+      ind: 2,
+      nm: 'wire',
+      ks: {
+        p: { a: 0, k: [0, 0, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+      shapes: [{
+        ty: 'gr',
+        it: [{
+          ty: 'sh',
+          ks: {
+            a: 0,
+            k: { v: [[0, 0], [200, 0]], i: [[0, 0], [0, 0]], o: [[0, 0], [0, 0]], c: false },
+            x: wireExpression,
+          },
+        }],
+      }],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // The wire path expression builds from the null layer's expression-evaluated position
+  // [500, 400].  fromCompToSurface for the wire layer at [0,0] = comp coords directly.
+  // First vertex of wire path should be [500, 400].
+  const rawPath = { v: [[0, 0], [200, 0]], i: [[0, 0], [0, 0]], o: [[0, 0], [0, 0]], c: false };
+  const result = host.evaluatePath(wireExpression, 0, 2, rawPath);
+  assert.ok(result && Array.isArray(result.vertices), 'result should be a path');
+  const firstVertex = result.vertices[0];
+  // If expression-evaluated position was used: [500, 400].  If static [0,0] was used: [0, 0].
+  assert.ok(
+    Math.abs(firstVertex[0] - 500) < 5 && Math.abs(firstVertex[1] - 400) < 5,
+    `Expected first vertex ≈ [500, 400] (expression pos), got [${firstVertex}]`,
+  );
+});
