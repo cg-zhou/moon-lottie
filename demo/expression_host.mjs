@@ -45,6 +45,13 @@ function clonePropertyValue(value) {
     return value;
 }
 
+function unwrapScalarValue(value) {
+    if (Array.isArray(value) && value.length > 0) {
+        return unwrapScalarValue(value[0]);
+    }
+    return Number(value);
+}
+
 function sampleKeyframedProperty(prop, frame) {
     if (!prop) return 0;
     if (!isKeyframedProperty(prop)) {
@@ -76,11 +83,67 @@ function sampleKeyframedProperty(prop, frame) {
         }
     }
 
-    return clonePropertyValue(keyframes[keyframes.length - 1].s ?? 0);
+    const lastKeyframe = keyframes[keyframes.length - 1];
+    if (lastKeyframe?.s != null) {
+        return clonePropertyValue(lastKeyframe.s);
+    }
+    if (keyframes.length >= 2) {
+        const previousKeyframe = keyframes[keyframes.length - 2];
+        if (previousKeyframe?.e != null) {
+            return clonePropertyValue(previousKeyframe.e);
+        }
+        if (previousKeyframe?.s != null) {
+            return clonePropertyValue(previousKeyframe.s);
+        }
+    }
+    return 0;
 }
 
-function findLayerByIndex(animationData, layerIndex) {
-    return animationData?.layers?.find((layer) => Number(layer?.ind) === Number(layerIndex)) ?? null;
+function getLayerCollections(animationData) {
+    const collections = [];
+    if (Array.isArray(animationData?.layers)) {
+        collections.push(animationData.layers);
+    }
+    if (Array.isArray(animationData?.assets)) {
+        for (const asset of animationData.assets) {
+            if (Array.isArray(asset?.layers)) {
+                collections.push(asset.layers);
+            }
+        }
+    }
+    return collections;
+}
+
+function findLayerContextByIndex(animationData, layerIndex, expression = null) {
+    const targetIndex = Number(layerIndex);
+    let fallback = null;
+    for (const layers of getLayerCollections(animationData)) {
+        for (const layer of layers) {
+            if (Number(layer?.ind) !== targetIndex) {
+                continue;
+            }
+            const candidate = { layer, layers };
+            if (!fallback) {
+                fallback = candidate;
+            }
+            if (!expression || findPropertyContextByExpression(layer, expression)) {
+                return candidate;
+            }
+        }
+    }
+    return fallback;
+}
+
+function findLayerByIndex(animationData, layerIndex, expression = null) {
+    return findLayerContextByIndex(animationData, layerIndex, expression)?.layer ?? null;
+}
+
+function findLayerInComp(layers, layerRef) {
+    if (!Array.isArray(layers)) return null;
+    if (typeof layerRef === 'number') {
+        return layers.find((candidate) => Number(candidate?.ind) === Number(layerRef)) ?? null;
+    }
+    return layers.find((candidate) => candidate?.nm === layerRef) ?? null;
 }
 
 function findPropertyContextByExpression(node, expression, parents = []) {
@@ -183,6 +246,8 @@ const {
   key,
   nearestKey,
   velocityAtTime,
+  loopIn,
+  loopOut,
   framesToTime,
   timeToFrames,
   fromCompToSurface,
@@ -205,7 +270,7 @@ return typeof $bm_rt === 'undefined' ? value : $bm_rt;
     return expressionFunctionCache.get(expression);
 }
 
-function createEffectAccessor(layer, animationData, frame) {
+function createEffectAccessor(layer, animationData, frame, compLayers = null) {
     return (effectName) => {
         const effect = layer?.ef?.find((item) => item?.nm === effectName || item?.mn === effectName) ?? null;
         return (paramName) => {
@@ -215,7 +280,7 @@ function createEffectAccessor(layer, animationData, frame) {
                 const value = sampleKeyframedProperty(param.v, frame);
                 if (param.mn === 'ADBE Layer Control-0001') {
                     const layerIndex = Number(value) || 0;
-                    const targetLayer = findLayerByIndex(animationData, layerIndex);
+                    const targetLayer = findLayerInComp(compLayers, layerIndex) ?? findLayerByIndex(animationData, layerIndex);
                     return targetLayer ? createLayerProxy(targetLayer, animationData, frame) : {};
                 }
                 return value;
@@ -611,21 +676,102 @@ function createPropertyHelpers(rawProperty, frame, frameDuration) {
     };
 }
 
-function createEffectGroupAccessor(effect, animationData, frame) {
+function createEffectGroupAccessor(effect, animationData, frame, compLayers = null) {
     return (paramName) => {
         const param = effect?.ef?.find((item) => item?.mn === paramName || item?.nm === paramName) ?? null;
         if (!param) return 0;
         const value = param.v ? sampleKeyframedProperty(param.v, frame) : clonePropertyValue(param.k ?? 0);
         if (param.mn === 'ADBE Layer Control-0001') {
             const layerIndex = Number(value) || 0;
-            const targetLayer = findLayerByIndex(animationData, layerIndex);
+            const targetLayer = findLayerInComp(compLayers, layerIndex) ?? findLayerByIndex(animationData, layerIndex);
             return targetLayer ? createLayerProxy(targetLayer, animationData, frame) : {};
         }
         return value;
     };
 }
 
-function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, frame, frameDuration, layer, animationData, currentPath) {
+function getLoopWindow(rawProperty, propertyHelpers) {
+    if (!rawProperty || !isKeyframedProperty(rawProperty) || propertyHelpers.numKeys <= 1) {
+        return null;
+    }
+    const keyframes = rawProperty.k;
+    const first = Number(keyframes[0]?.t) || 0;
+    const lastKeyframe = keyframes[keyframes.length - 1];
+    const last = Number(lastKeyframe?.t) || first;
+    const duration = last - first;
+    if (duration <= 0) {
+        return null;
+    }
+    return { first, last, duration, keyframes };
+}
+
+function wrappingModulo(value, divisor) {
+    if (!Number.isFinite(value) || !Number.isFinite(divisor) || divisor === 0) {
+        return 0;
+    }
+    return ((value % divisor) + divisor) % divisor;
+}
+
+function computeLoopValue(rawProperty, propertyHelpers, frame, frameDuration, direction, mode = 'cycle') {
+    const loopWindow = getLoopWindow(rawProperty, propertyHelpers);
+    if (!loopWindow) {
+        return clonePropertyValue(rawProperty?.k ?? 0);
+    }
+
+    const normalizedMode = typeof mode === 'string' ? mode.toLowerCase() : 'cycle';
+    const { first, last, duration } = loopWindow;
+    const isOut = direction === 'out';
+    const frameOutsideWindow = isOut ? frame > last : frame < first;
+    if (!frameOutsideWindow) {
+        return sampleKeyframedProperty(rawProperty, frame);
+    }
+
+    const distance = isOut ? frame - last : first - frame;
+    const cycles = Math.floor(distance / duration);
+    const remainder = wrappingModulo(distance, duration);
+    const startValue = sampleKeyframedProperty(rawProperty, first);
+    const endValue = sampleKeyframedProperty(rawProperty, last);
+
+    if (normalizedMode === 'hold') {
+        return isOut ? endValue : startValue;
+    }
+
+    if (normalizedMode === 'continue') {
+        const sampleTime = isOut
+            ? Math.max(first, last - frameDuration / 10)
+            : Math.min(last, first + frameDuration / 10);
+        const velocity = propertyHelpers.velocityAtTime(sampleTime * frameDuration);
+        const baseValue = isOut ? endValue : startValue;
+        const deltaTime = (isOut ? frame - last : frame - first) * frameDuration;
+        return binaryOp(baseValue, velocity, (base, rate) => base + rate * deltaTime);
+    }
+
+    let sampleFrame;
+    if (normalizedMode === 'pingpong') {
+        const progressFrame = remainder === 0 && cycles > 0 ? duration : remainder;
+        const reverse = cycles % 2 === 1;
+        sampleFrame = reverse
+            ? (isOut ? last - progressFrame : first + progressFrame)
+            : (isOut ? first + progressFrame : last - progressFrame);
+    } else {
+        const progressFrame = remainder === 0 && cycles > 0 ? duration : remainder;
+        sampleFrame = isOut ? first + progressFrame : last - progressFrame;
+    }
+
+    let sampledValue = sampleKeyframedProperty(rawProperty, sampleFrame);
+    if (normalizedMode === 'offset') {
+        const cycleDelta = binaryOp(endValue, startValue, (end, start) => end - start);
+        const cycleCount = cycles + (remainder > 0 ? 1 : 0);
+        sampledValue = binaryOp(
+            sampledValue,
+            cycleDelta,
+            (value, delta) => value + delta * (isOut ? cycleCount : -cycleCount),
+        );
+    }
+    return sampledValue;
+}
+
+function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, frame, frameDuration, layer, animationData, currentPath, compLayers = null) {
     const effectGroup = rawPropertyContext?.parents?.slice().reverse().find((candidate) => Array.isArray(candidate?.ef)) ?? null;
     const baseProperty = {
         numKeys: propertyHelpers.numKeys,
@@ -634,28 +780,12 @@ function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, fr
         velocityAtTime: propertyHelpers.velocityAtTime,
         propertyGroup: (index) => {
             if (Number(index) === 1 && effectGroup) {
-                return createEffectGroupAccessor(effectGroup, animationData, frame);
+                return createEffectGroupAccessor(effectGroup, animationData, frame, compLayers);
             }
             return () => 0;
         },
-        loopOut: (mode = 'cycle') => {
-            if (!rawProperty || !isKeyframedProperty(rawProperty) || propertyHelpers.numKeys <= 1) {
-                return clonePropertyValue(rawProperty?.k ?? 0);
-            }
-            if (mode !== 'cycle') {
-                return sampleKeyframedProperty(rawProperty, frame);
-            }
-            const keyframes = rawProperty.k;
-            const first = Number(keyframes[0]?.t) || 0;
-            const lastKeyframe = keyframes[keyframes.length - 1];
-            const last = Number(lastKeyframe?.t) || first;
-            const duration = last - first;
-            if (duration <= 0 || frame <= last) {
-                return sampleKeyframedProperty(rawProperty, frame);
-            }
-            const loopedFrame = first + ((frame - first) % duration);
-            return sampleKeyframedProperty(rawProperty, loopedFrame);
-        },
+        loopOut: (mode = 'cycle') => computeLoopValue(rawProperty, propertyHelpers, frame, frameDuration, 'out', mode),
+        loopIn: (mode = 'cycle') => computeLoopValue(rawProperty, propertyHelpers, frame, frameDuration, 'in', mode),
     };
 
     if (!currentPath) {
@@ -690,6 +820,7 @@ function buildContext({
     animationData,
     playbackMeta,
     currentPath,
+    currentCompLayers,
 }) {
     const fps = Number(playbackMeta?.fps) || Number(animationData?.fr) || DEFAULT_FPS;
     const frameDuration = fps > 0 ? 1 / fps : DEFAULT_FRAME_DURATION;
@@ -699,6 +830,17 @@ function buildContext({
     const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame);
     const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame);
     const currentLayerInverseMatrix = invertMatrix(currentLayerMatrix);
+    const thisProperty = createThisProperty(
+        rawProperty,
+        rawPropertyContext,
+        propertyHelpers,
+        frame,
+        frameDuration,
+        layer,
+        animationData,
+        currentPath,
+        currentCompLayers,
+    );
 
     return {
         value: clonePropertyValue(value),
@@ -708,28 +850,20 @@ function buildContext({
             width: Number(animationData?.w) || 0,
             height: Number(animationData?.h) || 0,
             layer: (layerRef) => {
-                const matchedLayer = typeof layerRef === 'number'
-                    ? findLayerByIndex(animationData, layerRef)
-                    : animationData?.layers?.find((candidate) => candidate?.nm === layerRef) ?? null;
+                const matchedLayer = findLayerInComp(currentCompLayers, layerRef)
+                    ?? findLayerByIndex(animationData, layerRef);
                 return matchedLayer ? createLayerProxy(matchedLayer, animationData, frame) : {};
             },
         },
         thisLayer: currentLayerProxy,
-        thisProperty: createThisProperty(
-            rawProperty,
-            rawPropertyContext,
-            propertyHelpers,
-            frame,
-            frameDuration,
-            layer,
-            animationData,
-            currentPath,
-        ),
-        effect: createEffectAccessor(layer, animationData, frame),
+        thisProperty,
+        effect: createEffectAccessor(layer, animationData, frame, currentCompLayers),
         numKeys: propertyHelpers.numKeys,
         key: propertyHelpers.key,
         nearestKey: propertyHelpers.nearestKey,
         velocityAtTime: propertyHelpers.velocityAtTime,
+        loopIn: (mode = 'cycle') => thisProperty.loopIn(mode),
+        loopOut: (mode = 'cycle') => thisProperty.loopOut(mode),
         framesToTime: (value) => (Number(value) || 0) * frameDuration,
         timeToFrames: (value) => (Number(value) || 0) / frameDuration,
         fromCompToSurface: (point) => applyMatrixToPoint(currentLayerInverseMatrix, point),
@@ -757,7 +891,8 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
     return {
         evaluateDouble(expression, frame, layerIndex, value) {
             const animationData = getAnimationData();
-            const layer = findLayerByIndex(animationData, layerIndex);
+            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression);
+            const layer = layerContext?.layer ?? null;
             try {
                 const result = getExpressionFunction(expression)(
                     buildContext({
@@ -767,9 +902,14 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
                         value,
                         animationData,
                         playbackMeta: getPlaybackMeta(),
+                        currentCompLayers: layerContext?.layers ?? animationData?.layers ?? [],
                     }),
                 );
-                return Number.isFinite(result) ? result : value;
+                if (Number.isFinite(result)) {
+                    return result;
+                }
+                const scalarResult = unwrapScalarValue(result);
+                return Number.isFinite(scalarResult) ? scalarResult : value;
             } catch (error) {
                 console.warn('[MoonLottie] expression evaluateDouble failed', error);
                 return value;
@@ -778,7 +918,8 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
 
         evaluateVec(expression, frame, layerIndex, value) {
             const animationData = getAnimationData();
-            const layer = findLayerByIndex(animationData, layerIndex);
+            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression);
+            const layer = layerContext?.layer ?? null;
             try {
                 const result = getExpressionFunction(expression)(
                     buildContext({
@@ -788,6 +929,7 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
                         value: cloneNumberArray(value),
                         animationData,
                         playbackMeta: getPlaybackMeta(),
+                        currentCompLayers: layerContext?.layers ?? animationData?.layers ?? [],
                     }),
                 );
                 if (Array.isArray(result)) {
@@ -801,7 +943,8 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
 
         evaluatePath(expression, frame, layerIndex, pathValue) {
             const animationData = getAnimationData();
-            const layer = findLayerByIndex(animationData, layerIndex);
+            const layerContext = findLayerContextByIndex(animationData, layerIndex, expression);
+            const layer = layerContext?.layer ?? null;
             try {
                 const result = getExpressionFunction(expression)(
                     buildContext({
@@ -812,6 +955,7 @@ export function createDefaultExpressionHost({ getAnimationData, getPlaybackMeta 
                         animationData,
                         playbackMeta: getPlaybackMeta(),
                         currentPath: pathValue,
+                        currentCompLayers: layerContext?.layers ?? animationData?.layers ?? [],
                     }),
                 );
                 if (result && Array.isArray(result.vertices) && Array.isArray(result.inTangents) && Array.isArray(result.outTangents)) {
