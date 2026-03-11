@@ -332,6 +332,7 @@ struct LayerJson {
   index : Int?
   layer_type : Int
   transform : TransformJson?
+  time_remap : Json?
   in_point : Double?
   out_point : Double?
   start_time : Double?
@@ -356,6 +357,7 @@ struct LayerJson {
       index(rename="ind"),
       layer_type(rename="ty"),
       transform(rename="ks"),
+      time_remap(rename="tm"),
       in_point(rename="ip"),
       out_point(rename="op"),
       start_time(rename="st"),
@@ -1827,6 +1829,10 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
   let name = decoded.name
   let hidden = decoded.hidden
   let parent = decoded.parent
+  let time_remap = match decoded.time_remap {
+    Some(tm_json) => Some(parse_property_double(Some(tm_json)))
+    None => None
+  }
   let masks = match decoded.masks {
     Some(arr) => {
       let res = []
@@ -1882,6 +1888,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
     matte_type~,
     matte_inherit~,
     fill_effect~,
+    time_remap~,
   )
 }
 

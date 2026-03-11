@@ -320,6 +320,55 @@ test "track matte uses composition frame timing" {
   }
 }
 
+test "precomp layer time remap expression drives child frame" {
+  @runtime.install_expression_handlers(
+    (expression, frame, _layer_index, _comp_id, value) =>
+      if expression == "cycle-tm" {
+        if frame >= 10.0 { frame - 10.0 } else { frame }
+      } else {
+        value
+      },
+    (_expression, _frame, _layer_index, _comp_id, value) => value,
+    (_expression, _frame, _layer_index, _comp_id, value) => value,
+  )
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":20,"w":200,"h":100,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":20,"st":0,"ks":{"a":{"k":[0,0]},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":10,"s":[100,0]}]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":20,"sh":20,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":100,"ip":0,"op":20,"st":0,"tm":{"a":0,"k":0,"x":"cycle-tm"},"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => {
+      @runtime.clear_expression_handlers()
+      fail("Failed to parse: \{e}")
+    }
+  }
+
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(15.0)
+  player.render()
+  @runtime.clear_expression_handlers()
+
+  let commands = recorder.get_commands()
+  let mut translate_x : Double? = None
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.e != 0.0 || m.f != 0.0 {
+          translate_x = Some(m.e)
+        }
+      _ => ()
+    }
+  }
+  match translate_x {
+    Some(x) =>
+      if x < 49.999 || x > 50.001 {
+        fail(
+          "Time-remapped precomp should sample child frame 5 at outer frame 15: x=\{x}, expected around 50",
+        )
+      }
+    None => fail("No translated child transform found")
+  }
+}
+
 test "image layers use resolved asset source instead of asset id" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":100,"h":100,"assets":[{"id":"img_0","w":10,"h":20,"u":"data:image/png;base64,","p":"AAAA"}],"layers":[{"ty":2,"ind":1,"refId":"img_0","ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}

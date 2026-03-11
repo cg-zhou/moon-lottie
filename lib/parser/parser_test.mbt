@@ -623,6 +623,33 @@ test "parse_layer_fill_effect" {
 }
 
 ///|
+test "parse_layer_time_remap_expression" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":20.0,\"w\":100,\"h\":100,\"layers\":[{\"ty\":0,\"ind\":1,\"refId\":\"comp_1\",\"w\":100,\"h\":100,\"tm\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0],\"e\":[5]},{\"t\":10,\"s\":[5]}],\"x\":\"var $bm_rt; $bm_rt = loopOut('cycle');\"},\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}],\"assets\":[{\"id\":\"comp_1\",\"layers\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse layer time remap: \{e}")
+  }
+  match ani.layers[0].time_remap {
+    Some(time_remap) => {
+      inspect(time_remap.expression, content="Some(\"var $bm_rt; $bm_rt = loopOut('cycle');\")")
+      match time_remap.value {
+        @model.PropertyValue::Animated(keys) => {
+          assert_eq(keys.length(), 2)
+          assert_eq(keys[0].start_value, 0.0)
+          match keys[0].end_value {
+            Some(v) => assert_eq(v, 5.0)
+            None => fail("time remap keyframe should preserve end value")
+          }
+        }
+        _ => fail("Expected animated time remap property")
+      }
+    }
+    None => fail("Expected layer time remap to be parsed")
+  }
+}
+
+///|
 test "parse_repeater_with_start_end_opacity" {
   let json_str =
     #|{"ty":"rp","c":{"k":4},"o":{"k":0},"m":1,"tr":{"a":{"k":[0,0]},"p":{"k":[50,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"so":{"k":100},"eo":{"k":20}}}

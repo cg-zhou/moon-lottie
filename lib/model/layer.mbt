@@ -105,6 +105,7 @@ pub struct Layer {
   matte_type : Int?
   matte_inherit : Int?
   fill_effect : LayerFillEffect?
+  time_remap : LottieProperty[Double]?
   data : LayerData
 }
 
@@ -126,6 +127,7 @@ pub fn Layer::new(
   matte_type? : Int? = None,
   matte_inherit? : Int? = None,
   fill_effect? : LayerFillEffect? = None,
+  time_remap? : LottieProperty[Double]? = None,
   data? : LayerData = LayerData::Null,
 ) -> Layer {
   {
@@ -145,6 +147,7 @@ pub fn Layer::new(
     matte_type,
     matte_inherit,
     fill_effect,
+    time_remap,
     data,
   }
 }

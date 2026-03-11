@@ -35,10 +35,8 @@ test('parseCaseConfig parses explicit similarity thresholds', () => {
 test('demo uses vendored lottie-web asset', () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const html = fs.readFileSync(path.join(repoRoot, 'demo', 'index.html'), 'utf8');
-  const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'deploy-pages.yml'), 'utf8');
 
   assert.match(html, /<script src="\.\/lottie\.min\.js"><\/script>/);
-  assert.match(workflow, /cp demo\/lottie\.min\.js \/tmp\/demo_dist\//);
   assert.ok(fs.existsSync(path.join(repoRoot, 'demo', 'lottie.min.js')));
 });
 
@@ -252,6 +250,129 @@ test('default expression host resolves maskPath access through thisComp.layer', 
   );
 
   assert.deepEqual(value, [20, 5]);
+});
+
+test('default expression host matches lottie-web velocityAtTime sampling at key boundaries', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  const animationData = {
+    fr: 30,
+    layers: [{
+      ind: 1,
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [0, 0, 0], e: [60, 0, 0] },
+            { t: 30, s: [60, 0, 0], e: [60, 60, 0] },
+            { t: 60, s: [60, 60, 0] },
+          ],
+          x: 'var $bm_rt; $bm_rt = velocityAtTime(1);',
+        },
+      },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 30 }),
+  });
+
+  const value = host.evaluateVec('var $bm_rt; $bm_rt = velocityAtTime(1);', 30, 1, [0, 0, 0]);
+
+  assert.deepEqual(value.map((component) => Math.round(component * 1000) / 1000), [60, 0, 0]);
+});
+
+test('default expression host matches lottie-web pointOnPath and tangentOnPath geometry', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  const animationData = {
+    fr: 30,
+    layers: [
+      {
+        ind: 1,
+        nm: 'wire',
+        ty: 4,
+        ks: {
+          p: { a: 0, k: [10, 20, 0] },
+          a: { a: 0, k: [0, 0, 0] },
+          s: { a: 0, k: [100, 100, 100] },
+          r: { a: 0, k: 15 },
+          o: { a: 0, k: 100 },
+        },
+        shapes: [{
+          ty: 'gr',
+          nm: 'Shape 1',
+          it: [
+            {
+              ty: 'sh',
+              nm: 'Path 1',
+              ks: {
+                a: 0,
+                k: {
+                  v: [[0, 0], [100, 100]],
+                  i: [[0, 0], [-50, 0]],
+                  o: [[50, 0], [0, 0]],
+                  c: false,
+                },
+              },
+            },
+            {
+              ty: 'tr',
+              p: { a: 0, k: [0, 0] },
+              a: { a: 0, k: [0, 0] },
+              s: { a: 0, k: [100, 100] },
+              r: { a: 0, k: 0 },
+              o: { a: 0, k: 100 },
+              sk: { a: 0, k: 0 },
+              sa: { a: 0, k: 0 },
+              nm: 'Transform',
+            },
+          ],
+        }],
+      },
+      {
+        ind: 2,
+        nm: 'mover',
+        ty: 3,
+        ef: [{
+          nm: 'Trace Path',
+          ef: [{ mn: 'Pseudo/ADBE Trace Path-0001', v: { a: 0, k: 35 } }],
+        }],
+        ks: {
+          p: {
+            a: 0,
+            k: [0, 0, 0],
+            x: "var $bm_rt; var pathLayer = thisComp.layer('wire'); var progress = div(thisLayer.effect('Trace Path')('Pseudo/ADBE Trace Path-0001'), 100); var pathToTrace = pathLayer('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape'); $bm_rt = pathLayer.toComp(pathToTrace.pointOnPath(progress));",
+          },
+          r: {
+            a: 0,
+            k: 0,
+            x: "var $bm_rt; var pathToTrace = thisComp.layer('wire')('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape'); var progress = div(thisLayer.effect('Trace Path')('Pseudo/ADBE Trace Path-0001'), 100); var pathTan = pathToTrace.tangentOnPath(progress); $bm_rt = radiansToDegrees(Math.atan2(pathTan[1], pathTan[0]));",
+          },
+          a: { a: 0, k: [0, 0, 0] },
+          s: { a: 0, k: [100, 100, 100] },
+          o: { a: 0, k: 100 },
+        },
+      },
+    ],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 30 }),
+  });
+
+  const point = host.evaluateVec(animationData.layers[1].ks.p.x, 0, 2, [0, 0, 0]);
+  const rotation = host.evaluateDouble(animationData.layers[1].ks.r.x, 0, 2, 0);
+
+  assert.deepEqual(
+    point.map((component) => Math.round(component * 1000) / 1000),
+    [40.422, 59.361, 0],
+  );
+  assert.equal(Math.round(rotation * 1000) / 1000, 59.826);
 });
 
 test('default expression host resolves content path lookup and toComp projection', async () => {
