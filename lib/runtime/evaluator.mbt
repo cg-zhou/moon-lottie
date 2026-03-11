@@ -3,57 +3,25 @@
 fn[T] find_keyframe(
   keyframes : Array[@model.LottieKeyframe[T]],
   frame : Double,
-  expression? : String? = None,
 ) -> (Int, Double) {
   let len = keyframes.length()
   if len == 0 {
     return (-1, 0.0)
   }
 
-  let mut f = frame
-
-  // Simple loopOut('cycle') and loopOut('pingpong') support
-  match expression {
-    Some(e) =>
-      if len > 1 && e.contains("loopOut") {
-        let is_cycle = e.contains("cycle")
-        let is_pingpong = e.contains("pingpong")
-        if is_cycle || is_pingpong {
-          let first = keyframes[0].frame
-          let last = keyframes[len - 1].frame
-          let duration = last - first
-          if f > last && duration > 0.0 {
-            let offset = f - first
-            if is_cycle {
-              f = first + (offset - (offset / duration).floor() * duration)
-            } else if is_pingpong {
-              let cycle = (offset / duration).floor().to_int()
-              let t_in_cycle = offset - (offset / duration).floor() * duration
-              if cycle % 2 == 1 {
-                f = last - t_in_cycle
-              } else {
-                f = first + t_in_cycle
-              }
-            }
-          }
-        }
-      }
-    None => ()
-  }
-
-  if f <= keyframes[0].frame {
+  if frame <= keyframes[0].frame {
     return (0, 0.0)
   }
 
-  if f >= keyframes[len - 1].frame {
+  if frame >= keyframes[len - 1].frame {
     return (len - 1, 0.0)
   }
 
   for i = 0; i < len - 1; i = i + 1 {
     let k1 = keyframes[i]
     let k2 = keyframes[i + 1]
-    if f >= k1.frame && f < k2.frame {
-      let progress = (f - k1.frame) / (k2.frame - k1.frame)
+    if frame >= k1.frame && frame < k2.frame {
+      let progress = (frame - k1.frame) / (k2.frame - k1.frame)
       return (i, progress)
     }
   }
@@ -193,7 +161,6 @@ pub fn evaluate_text_document_property(
       let (idx, _t) = find_keyframe(
         keyframes,
         frame,
-        expression=prop.expression,
       )
       if idx < 0 {
         // Return a dummy document
@@ -221,7 +188,7 @@ pub fn evaluate_double_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
+      let (idx, t) = find_keyframe(keyframes, frame)
       if idx < 0 {
         return 0.0
       }
@@ -337,7 +304,7 @@ pub fn evaluate_vec_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
+      let (idx, t) = find_keyframe(keyframes, frame)
       if idx < 0 {
         return []
       }
@@ -407,7 +374,7 @@ pub fn evaluate_path_property(
   match prop.value {
     Static(v) => v
     Animated(keyframes) => {
-      let (idx, t) = find_keyframe(keyframes, frame, expression=prop.expression)
+      let (idx, t) = find_keyframe(keyframes, frame)
       if idx < 0 {
         return @model.BezierPath::new(vertices=[], in_tangents=[], out_tangents=[], closed=false)
       }
