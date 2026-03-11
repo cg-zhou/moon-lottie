@@ -162,6 +162,33 @@ function findLayerInComp(layers, layerRef) {
     return layers.find((candidate) => candidate?.nm === layerRef) ?? null;
 }
 
+function coerceExpressionResult(result, fallbackValue) {
+    if (Array.isArray(fallbackValue)) {
+        return Array.isArray(result) ? cloneNumberArray(result) : cloneNumberArray(fallbackValue);
+    }
+    const scalar = unwrapScalarValue(result);
+    return Number.isFinite(scalar) ? scalar : (Number(fallbackValue) || 0);
+}
+
+function evaluateHostedExpressionValue(expression, frame, layer, value, animationData, currentCompLayers) {
+    try {
+        return getExpressionFunction(expression)(
+            buildContext({
+                expression,
+                frame,
+                layer,
+                value: clonePropertyValue(value),
+                animationData,
+                playbackMeta: { fps: Number(animationData?.fr) || DEFAULT_FPS },
+                currentCompLayers,
+            }),
+        );
+    } catch (error) {
+        console.warn('[MoonLottie] transform expression proxy evaluation failed', error);
+        return value;
+    }
+}
+
 function findPropertyContextByExpression(node, expression, parents = []) {
     if (!node || typeof node !== 'object') return null;
     if (Array.isArray(node)) {
@@ -286,7 +313,7 @@ return typeof $bm_rt === 'undefined' ? value : $bm_rt;
     return expressionFunctionCache.get(expression);
 }
 
-function createEffectAccessor(layer, animationData, frame, compLayers = null) {
+function createEffectAccessor(layer, animationData, frame, compLayers = null, activeExpression = null) {
     return (effectName) => {
         const effect = layer?.ef?.find((item) => item?.nm === effectName || item?.mn === effectName) ?? null;
         return (paramName) => {
@@ -297,7 +324,7 @@ function createEffectAccessor(layer, animationData, frame, compLayers = null) {
                 if (param.mn === 'ADBE Layer Control-0001') {
                     const layerIndex = Number(value) || 0;
                     const targetLayer = findLayerInComp(compLayers, layerIndex) ?? findLayerByIndex(animationData, layerIndex);
-                    return targetLayer ? createLayerProxy(targetLayer, animationData, frame) : {};
+                    return targetLayer ? createLayerProxy(targetLayer, animationData, frame, compLayers, activeExpression) : {};
                 }
                 return value;
             }
@@ -384,12 +411,16 @@ function invertMatrix(matrix) {
     };
 }
 
-function findLayerParent(layer, animationData) {
+function findLayerParent(layer, animationData, compLayers = null) {
     if (!layer?.parent) return null;
+    const parentInComp = findLayerInComp(compLayers, Number(layer.parent));
+    if (parentInComp) {
+        return parentInComp;
+    }
     return animationData?.layers?.find((candidate) => Number(candidate?.ind) === Number(layer.parent)) ?? null;
 }
 
-function evaluateLayerMatrix(layer, animationData, frame) {
+function evaluateLayerMatrix(layer, animationData, frame, compLayers = null) {
     const transform = layer?.ks ?? {};
     const position = getTransformPosition(transform, frame);
     const anchor = getTransformAnchor(transform, frame);
@@ -401,8 +432,8 @@ function evaluateLayerMatrix(layer, animationData, frame) {
     matrix = multiplyMatrices(matrix, createScaleMatrix((scale[0] ?? 100) / 100, (scale[1] ?? 100) / 100));
     matrix = multiplyMatrices(matrix, createTranslationMatrix(-(anchor[0] ?? 0), -(anchor[1] ?? 0)));
 
-    const parent = findLayerParent(layer, animationData);
-    return parent ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame), matrix) : matrix;
+    const parent = findLayerParent(layer, animationData, compLayers);
+    return parent ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame, compLayers), matrix) : matrix;
 }
 
 function cubicPoint(p0, p1, p2, p3, t) {
@@ -522,14 +553,24 @@ function createPathProxy(pathValue) {
     return proxyTarget;
 }
 
-function createTransformProxy(layer, frame) {
+function createTransformProxy(layer, animationData, frame, compLayers = null, activeExpression = null) {
     const transform = layer?.ks ?? {};
+    const resolveValue = (prop, fallbackValue) => {
+        const expression = typeof prop?.x === 'string' ? prop.x : null;
+        if (!expression || expression === activeExpression) {
+            return clonePropertyValue(fallbackValue);
+        }
+        return coerceExpressionResult(
+            evaluateHostedExpressionValue(expression, frame, layer, fallbackValue, animationData, compLayers),
+            fallbackValue,
+        );
+    };
     return {
-        anchorPoint: getTransformAnchor(transform, frame),
-        position: getTransformPosition(transform, frame),
-        scale: getTransformScale(transform, frame),
-        rotation: getTransformRotation(transform, frame),
-        opacity: Number(sampleKeyframedProperty(transform.o, frame)) || 0,
+        anchorPoint: resolveValue(transform.a, getTransformAnchor(transform, frame)),
+        position: resolveValue(transform.p, getTransformPosition(transform, frame)),
+        scale: resolveValue(transform.s, getTransformScale(transform, frame)),
+        rotation: resolveValue(transform.r ?? transform.rz, getTransformRotation(transform, frame)),
+        opacity: resolveValue(transform.o, Number(sampleKeyframedProperty(transform.o, frame)) || 0),
     };
 }
 
@@ -616,7 +657,7 @@ function createMaskAccessor(layer, frame) {
     };
 }
 
-function createLayerProxy(layer, animationData, frame) {
+function createLayerProxy(layer, animationData, frame, compLayers = null, activeExpression = null) {
     const callable = function (selector) {
         const next = resolveShapeSelector(layer, selector, frame);
         return next ? createShapeProxy(next, frame) : {};
@@ -627,7 +668,7 @@ function createLayerProxy(layer, animationData, frame) {
             return callable(args[0]);
         },
         get(_fn, prop) {
-            if (prop === 'effect') return createEffectAccessor(layer, animationData, frame);
+            if (prop === 'effect') return createEffectAccessor(layer, animationData, frame, compLayers, activeExpression);
             if (prop === 'mask') return createMaskAccessor(layer, frame);
             if (prop === 'content') {
                 return (name) => {
@@ -635,9 +676,9 @@ function createLayerProxy(layer, animationData, frame) {
                     return match ? createShapeProxy(match, frame) : {};
                 };
             }
-            if (prop === 'transform') return createTransformProxy(layer, frame);
+            if (prop === 'transform') return createTransformProxy(layer, animationData, frame, compLayers, activeExpression);
             if (prop === 'toComp') {
-                return (point) => applyMatrixToPoint(evaluateLayerMatrix(layer, animationData, frame), point);
+                return (point) => applyMatrixToPoint(evaluateLayerMatrix(layer, animationData, frame, compLayers), point);
             }
             if (prop === 'index') return Number(layer?.ind) || 0;
             if (prop === 'name') return layer?.nm ?? '';
@@ -700,7 +741,7 @@ function createEffectGroupAccessor(effect, animationData, frame, compLayers = nu
         if (param.mn === 'ADBE Layer Control-0001') {
             const layerIndex = Number(value) || 0;
             const targetLayer = findLayerInComp(compLayers, layerIndex) ?? findLayerByIndex(animationData, layerIndex);
-            return targetLayer ? createLayerProxy(targetLayer, animationData, frame) : {};
+            return targetLayer ? createLayerProxy(targetLayer, animationData, frame, compLayers) : {};
         }
         return value;
     };
@@ -808,7 +849,7 @@ function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, fr
         return baseProperty;
     }
 
-    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame);
+    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, compLayers);
     const inverseLayerMatrix = invertMatrix(layerMatrix);
     const currentPathGeometry = {
         vertices: currentPath.vertices,
@@ -843,8 +884,8 @@ function buildContext({
     const rawPropertyContext = findPropertyContextByExpression(layer, expression);
     const rawProperty = rawPropertyContext?.property ?? null;
     const propertyHelpers = createPropertyHelpers(rawProperty, frame, frameDuration);
-    const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame);
-    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame);
+    const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame, currentCompLayers, expression);
+    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, currentCompLayers);
     const currentLayerInverseMatrix = invertMatrix(currentLayerMatrix);
     const thisProperty = createThisProperty(
         rawProperty,
@@ -868,12 +909,12 @@ function buildContext({
             layer: (layerRef) => {
                 const matchedLayer = findLayerInComp(currentCompLayers, layerRef)
                     ?? findLayerByIndex(animationData, layerRef);
-                return matchedLayer ? createLayerProxy(matchedLayer, animationData, frame) : {};
+                return matchedLayer ? createLayerProxy(matchedLayer, animationData, frame, currentCompLayers, expression) : {};
             },
         },
         thisLayer: currentLayerProxy,
         thisProperty,
-        effect: createEffectAccessor(layer, animationData, frame, currentCompLayers),
+        effect: createEffectAccessor(layer, animationData, frame, currentCompLayers, expression),
         numKeys: propertyHelpers.numKeys,
         key: propertyHelpers.key,
         nearestKey: propertyHelpers.nearestKey,

@@ -638,3 +638,92 @@ test('default expression host uses explicit comp scope for nested thisComp.layer
 
   assert.equal(result, 42);
 });
+
+test('default expression host exposes evaluated transform.position for referenced layers', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const expression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').transform.position;";
+  const traceExpression = "var $bm_rt; $bm_rt = [11, 22, 0];";
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 1,
+      nm: 'traceNull',
+      ks: {
+        p: { a: 0, k: [590, -42, 0], x: traceExpression },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+        o: { a: 0, k: 100 },
+      },
+    }, {
+      ind: 2,
+      nm: 'topDot',
+      ks: {
+        p: { a: 0, k: [20, 105, 0], x: expression },
+      },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const result = host.evaluateVec(expression, 0, 2, [0, 0, 0]);
+
+  assert.deepEqual(result, [11, 22, 0]);
+});
+
+test('default expression host resolves toComp parent matrices inside current precomp scope', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const expression = "var $bm_rt; $bm_rt = thisComp.layer('child').toComp([0, 0, 0]);";
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 1,
+      nm: 'root-parent',
+      ks: {
+        p: { a: 0, k: [999, 999, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+    }],
+    assets: [{
+      id: 'comp_inner',
+      layers: [{
+        ind: 1,
+        nm: 'parent',
+        ks: {
+          p: { a: 0, k: [10, 20, 0] },
+          a: { a: 0, k: [0, 0, 0] },
+          s: { a: 0, k: [100, 100, 100] },
+          r: { a: 0, k: 0 },
+        },
+      }, {
+        ind: 2,
+        nm: 'child',
+        parent: 1,
+        ks: {
+          p: { a: 0, k: [5, 7, 0] },
+          a: { a: 0, k: [0, 0, 0] },
+          s: { a: 0, k: [100, 100, 100] },
+          r: { a: 0, k: 0 },
+        },
+      }],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const result = host.evaluateVec(expression, 0, 2, 'comp_inner', [0, 0, 0]);
+
+  assert.deepEqual(result, [15, 27, 0]);
+});
