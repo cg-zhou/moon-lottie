@@ -1,14 +1,14 @@
-let expression_double_handler : @ref.Ref[
+let expression_double_handler : Ref[
   ((String, Double, Int, String, Double) -> Double)?,
-] = @ref.new(None)
+] = { val: None }
 
-let expression_vec_handler : @ref.Ref[
+let expression_vec_handler : Ref[
   ((String, Double, Int, String, String) -> String)?,
-] = @ref.new(None)
+] = { val: None }
 
-let expression_path_handler : @ref.Ref[
+let expression_path_handler : Ref[
   ((String, Double, Int, String, String) -> String)?,
-] = @ref.new(None)
+] = { val: None }
 
 ///|
 pub fn install_expression_handlers(
@@ -189,14 +189,14 @@ fn split_string(input : String, delimiter : Char) -> Array[String] {
   }
   let parts = []
   let mut start = 0
-  let delimiter_code = delimiter.to_int().to_uint16()
+  let delimiter_uint16 = delimiter.to_int().to_uint16()
   for i = 0; i < input.length(); i = i + 1 {
-    if input[i] == delimiter_code {
-      parts.push(input[start:i].to_string())
+    if input[i] == delimiter_uint16 {
+      parts.push(input.substring(start~, end=i))
       start = i + 1
     }
   }
-  parts.push(input[start:input.length()].to_string())
+  parts.push(input.substring(start~, end=input.length()))
   parts
 }
 
