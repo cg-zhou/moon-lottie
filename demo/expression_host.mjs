@@ -116,22 +116,23 @@ function getLayerCollections(animationData) {
 
 function findLayerContextByIndex(animationData, layerIndex, expression = null) {
     const targetIndex = Number(layerIndex);
-    let fallback = null;
+    const candidates = [];
     for (const layers of getLayerCollections(animationData)) {
         for (const layer of layers) {
             if (Number(layer?.ind) !== targetIndex) {
                 continue;
             }
             const candidate = { layer, layers };
-            if (!fallback) {
-                fallback = candidate;
-            }
+            candidates.push(candidate);
             if (!expression || findPropertyContextByExpression(layer, expression)) {
                 return candidate;
             }
         }
     }
-    return fallback;
+    if (candidates.length === 1) {
+        return candidates[0];
+    }
+    return null;
 }
 
 function findLayerByIndex(animationData, layerIndex, expression = null) {

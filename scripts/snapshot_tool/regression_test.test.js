@@ -557,3 +557,39 @@ test('default expression host resolves thisComp.layer within the current precomp
   assert.deepEqual(point, [110, 20, 0]);
   assert.equal(progress, 42);
 });
+
+test('default expression host does not fall back to a wrong comp when expression context is missing', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const matchedExpression = "var $bm_rt; $bm_rt = thisLayer.name === 'inner-layer' ? 1 : -1;";
+
+  const animationData = {
+    fr: 60,
+    layers: [
+      { ind: 1, nm: 'root-layer' },
+    ],
+    assets: [{
+      id: 'comp_inner',
+      layers: [
+        {
+          ind: 1,
+          nm: 'inner-layer',
+          ks: {
+            o: { a: 0, k: 100, x: matchedExpression },
+          },
+        },
+      ],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const matched = host.evaluateDouble(matchedExpression, 0, 1, 99);
+  const result = host.evaluateDouble('var $bm_rt; $bm_rt = thisLayer.index;', 0, 1, 99);
+
+  assert.equal(matched, 1);
+  assert.equal(result, 0);
+});
