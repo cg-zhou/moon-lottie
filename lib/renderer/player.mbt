@@ -188,6 +188,13 @@ fn[R : Renderer] Player::render_layer(
   }
 
   let layer_frame = comp_frame - layer.start_time
+  let precomp_frame = match layer.time_remap {
+    Some(time_remap) => {
+      let remapped = self.evaluate_double(time_remap, layer_frame)
+      if remapped == layer.out_point { remapped - 1.0 } else { remapped }
+    }
+    None => layer_frame
+  }
   let saved_frame = self.current_frame
   let saved_comp_frame = self.current_comp_frame
   let saved_layer_index = self.current_layer_index
@@ -355,7 +362,7 @@ fn[R : Renderer] Player::render_layer(
   }
 
   // 4. Render Layer Content
-  self.render_layer_content(layer, layer_frame)
+  self.render_layer_content(layer, precomp_frame)
 
   // 5. Restore mask states
   for _ in 0..<mask_restore_count {
