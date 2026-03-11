@@ -1,7 +1,6 @@
 import {
     animationUsesExpressions,
     getAnimationPlaybackMeta,
-    getPreferredRendererMode,
 } from './render_mode.mjs';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
@@ -480,9 +479,9 @@ async function startPlayer(jsonStr) {
     statusMsg.innerText = "初始化渲染引擎...";
     currentAnimationData = animationData;
     currentAnimationMeta = getAnimationPlaybackMeta(animationData);
-    currentRendererMode = getPreferredRendererMode(animationData, {
-        hasLottieWeb: !!(window.lottie && typeof window.lottie.loadAnimation === 'function'),
-    });
+    const usesExpressions = animationUsesExpressions(animationData);
+    const hasLottieWeb = !!(window.lottie && typeof window.lottie.loadAnimation === 'function');
+    currentRendererMode = usesExpressions && hasLottieWeb ? 'official' : 'wasm';
     
     // Stop any existing render loop and reset timing
     if (currentAnimationRequestId) {
@@ -495,7 +494,6 @@ async function startPlayer(jsonStr) {
     destroyOfficialPlayer();
     player = null;
 
-    const usesExpressions = animationUsesExpressions(animationData);
     if (usesExpressions) {
         if (!createOfficialPlayer(animationData)) {
             statusMsg.innerText = "当前动画包含 expressions，但 lottie-web 未就绪，无法播放";
