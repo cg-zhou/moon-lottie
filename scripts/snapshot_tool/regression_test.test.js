@@ -44,7 +44,7 @@ test('demo uses vendored lottie-web asset', () => {
 
 test('expression detection finds string-valued expression fields', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'render_mode.mjs'));
+  const helper = await import(path.join(repoRoot, 'demo', 'render_mode.js'));
 
   assert.equal(helper.animationUsesExpressions({
     ks: {
@@ -59,7 +59,7 @@ test('expression detection finds string-valued expression fields', async () => {
 
 test('expression helper computes playback metadata from animation root', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'render_mode.mjs'));
+  const helper = await import(path.join(repoRoot, 'demo', 'render_mode.js'));
 
   const meta = helper.getAnimationPlaybackMeta({
     v: '5.12.2',
@@ -84,7 +84,7 @@ test('expression helper computes playback metadata from animation root', async (
 
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const animationData = {
     fr: 60,
@@ -129,7 +129,7 @@ test('default expression host evaluates scalar expressions with layer effects co
 
 test('default expression host evaluates vector expressions', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const host = hostModule.createDefaultExpressionHost({
     getAnimationData: () => ({ fr: 30, layers: [{ ind: 2 }] }),
@@ -143,7 +143,7 @@ test('default expression host evaluates vector expressions', async () => {
 
 test('default expression host supports createPath-style path mutations', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const host = hostModule.createDefaultExpressionHost({
     getAnimationData: () => ({ fr: 30, layers: [{ ind: 15 }] }),
@@ -168,7 +168,7 @@ test('default expression host supports createPath-style path mutations', async (
 
 test('default expression host resolves thisComp.layer and thisLayer.effect lookups', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const animationData = {
     fr: 60,
@@ -217,7 +217,7 @@ test('default expression host resolves thisComp.layer and thisLayer.effect looku
 
 test('default expression host resolves maskPath access through thisComp.layer', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const animationData = {
     fr: 30,
@@ -256,7 +256,7 @@ test('default expression host resolves maskPath access through thisComp.layer', 
 
 test('default expression host resolves content path lookup and toComp projection', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const animationData = {
     fr: 60,
@@ -313,7 +313,7 @@ test('default expression host resolves content path lookup and toComp projection
 
 test('default expression host resolves layer control effects and fromCompToSurface in path expressions', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const animationData = {
     fr: 60,
@@ -368,7 +368,7 @@ test('default expression host resolves layer control effects and fromCompToSurfa
 
 test('default expression host exposes bare loopOut helper with cycle semantics', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const expression = "var $bm_rt; $bm_rt = loopOut('cycle');";
   const animationData = {
@@ -399,7 +399,7 @@ test('default expression host exposes bare loopOut helper with cycle semantics',
 
 test('default expression host supports loopOut offset and pingpong modes', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const offsetExpression = "var $bm_rt; $bm_rt = loopOut('offset');";
   const pingPongExpression = "var $bm_rt; $bm_rt = loopOut('pingpong');";
@@ -441,7 +441,7 @@ test('default expression host supports loopOut offset and pingpong modes', async
 
 test('default expression host supports loopIn hold mode', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const expression = "var $bm_rt; $bm_rt = loopIn('hold');";
   const animationData = {
@@ -472,7 +472,7 @@ test('default expression host supports loopIn hold mode', async () => {
 
 test('default expression host resolves thisComp.layer within the current precomp scope', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const barLookupExpression = "var $bm_rt; var barLayer, barPath; barLayer = thisComp.layer('bar'); barPath = barLayer.content('Path 1').path.points(); $bm_rt = barLayer.toComp(barPath[1]);";
   const traceNullExpression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').effect('Trace Path')('Progress');";
@@ -560,7 +560,7 @@ test('default expression host resolves thisComp.layer within the current precomp
 
 test('default expression host does not fall back to a wrong comp when expression context is missing', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
   const matchedExpression = "var $bm_rt; $bm_rt = thisLayer.name === 'inner-layer' ? 1 : -1;";
 
   const animationData = {
@@ -596,7 +596,7 @@ test('default expression host does not fall back to a wrong comp when expression
 
 test('default expression host uses explicit comp scope for nested thisComp.layer effect lookups', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const expression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').effect('Trace Path')('Progress');";
   const animationData = {
@@ -641,7 +641,7 @@ test('default expression host uses explicit comp scope for nested thisComp.layer
 
 test('default expression host exposes evaluated transform.position for referenced layers', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const expression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').transform.position;";
   const traceExpression = "var $bm_rt; $bm_rt = [11, 22, 0];";
@@ -678,7 +678,7 @@ test('default expression host exposes evaluated transform.position for reference
 
 test('default expression host resolves toComp parent matrices inside current precomp scope', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
 
   const expression = "var $bm_rt; $bm_rt = thisComp.layer('child').toComp([0, 0, 0]);";
   const animationData = {
@@ -726,4 +726,193 @@ test('default expression host resolves toComp parent matrices inside current pre
   const result = host.evaluateVec(expression, 0, 2, 'comp_inner', [0, 0, 0]);
 
   assert.deepEqual(result, [15, 27, 0]);
+});
+
+test('velocityAtTime returns pixels per second matching lottie-web units', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  // Layer position goes from y=0 to y=60 over 60 frames (at 60fps = 1 second).
+  // Velocity just before frame 60 should be ~60 px/s, NOT ~1 px/frame.
+  const expression = `var $bm_rt;
+    var n = 0;
+    0 < numKeys && (n = nearestKey(time).index, key(n).time > time && n--);
+    var t = n === 0 ? 0 : time - key(n).time;
+    if (n > 0) {
+      var v = velocityAtTime(sub(key(n).time, div(thisComp.frameDuration, 10)));
+      $bm_rt = v;
+    } else {
+      $bm_rt = value;
+    }`;
+
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 1,
+      nm: 'bouncer',
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [0, 0, 0], e: [0, 60, 0], o: { x: 1, y: 1 }, i: { x: 0, y: 0 } },
+            { t: 60, s: [0, 60, 0], e: [0, 60, 0], o: { x: 0.167, y: 0.167 }, i: { x: 0.833, y: 0.833 } },
+            { t: 120 },
+          ],
+          x: expression,
+        },
+      },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // Evaluate at frame 70 (after keyframe 60). n=1, t≈10/60s.
+  // v = velocity at (key(1).time - frameDuration/10) = velocity near frame 59.9.
+  // The easing used is close to linear (slope ≈ 1), so position y goes 0→60 over
+  // 60 frames at 60fps and dY/dt ≈ 60 px/s.
+  const result = host.evaluateVec(expression, 70, 1, [0, 0, 0]);
+  // The y-component of the velocity should be close to 60 px/s (not 1 px/frame).
+  assert.ok(Array.isArray(result), 'result should be an array');
+  const vyApprox = result[1];
+  assert.ok(
+    Math.abs(vyApprox) > 10,
+    `velocityAtTime y-component should be in px/s (~60), got ${vyApprox}`,
+  );
+});
+
+test('shape path expression is evaluated when accessed from another layer', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  // Wire layer has a path expression that shifts all vertices by +100 in y.
+  const wirePathExpression = `var $bm_rt;
+    var pts = thisProperty.points();
+    var inT = thisProperty.inTangents();
+    var outT = thisProperty.outTangents();
+    for (var i = 0; i < pts.length; i++) { pts[i] = [pts[i][0], pts[i][1] + 100]; }
+    $bm_rt = createPath(pts, inT, outT, false);`;
+
+  // Light layer expression reads the wire's path and returns the midpoint on it.
+  const lightExpression = `var $bm_rt;
+    var wireLayer = thisComp.layer('wire');
+    var path = wireLayer('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape');
+    $bm_rt = wireLayer.toComp(path.pointOnPath(0.5));`;
+
+  const animationData = {
+    fr: 60,
+    w: 800,
+    h: 600,
+    layers: [{
+      ind: 1,
+      nm: 'wire',
+      ks: {
+        p: { a: 0, k: [0, 0, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+      shapes: [{
+        ty: 'gr',
+        it: [{
+          ty: 'sh',
+          ks: {
+            a: 0,
+            k: { v: [[0, 0], [100, 0]], i: [[0, 0], [0, 0]], o: [[0, 0], [0, 0]], c: false },
+            x: wirePathExpression,
+          },
+        }],
+      }],
+    }, {
+      ind: 2,
+      nm: 'light',
+      ks: { p: { a: 0, k: [0, 0, 0], x: lightExpression } },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // The static wire path is at y=0. After the expression, all y values become +100.
+  // The midpoint on path should be at approximately [50, 100] in wire-local space,
+  // which after toComp([0,0] wire position) = [50, 100].
+  const result = host.evaluateVec(lightExpression, 0, 2, [0, 0, 0]);
+  assert.ok(Array.isArray(result), 'result should be an array');
+  // Y should be ≈100 (expression-evaluated path), not 0 (static path).
+  assert.ok(
+    Math.abs(result[1] - 100) < 5,
+    `Expected y ≈ 100 (expression path), got ${result[1]}`,
+  );
+});
+
+test('toComp uses expression-evaluated position when accessing another layer', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  // The null layer has a position expression that overrides to [500, 400].
+  const nullPosExpression = "var $bm_rt; $bm_rt = [500, 400, 0];";
+  // The wire path expression reads the null layer's position via toComp(anchorPoint).
+  const wireExpression = `var $bm_rt;
+    var nullLayer = thisComp.layer('movingNull');
+    var pt = fromCompToSurface(nullLayer.toComp(nullLayer.anchorPoint));
+    $bm_rt = createPath([pt, [200, 0]], [[0,0],[0,0]], [[0,0],[0,0]], false);`;
+
+  const animationData = {
+    fr: 60,
+    w: 800,
+    h: 600,
+    layers: [{
+      ind: 1,
+      nm: 'movingNull',
+      ks: {
+        // Static base position [0, 0] — expression overrides to [500, 400].
+        p: { a: 0, k: [0, 0, 0], x: nullPosExpression },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+    }, {
+      ind: 2,
+      nm: 'wire',
+      ks: {
+        p: { a: 0, k: [0, 0, 0] },
+        a: { a: 0, k: [0, 0, 0] },
+        s: { a: 0, k: [100, 100, 100] },
+        r: { a: 0, k: 0 },
+      },
+      shapes: [{
+        ty: 'gr',
+        it: [{
+          ty: 'sh',
+          ks: {
+            a: 0,
+            k: { v: [[0, 0], [200, 0]], i: [[0, 0], [0, 0]], o: [[0, 0], [0, 0]], c: false },
+            x: wireExpression,
+          },
+        }],
+      }],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // The wire path expression builds from the null layer's expression-evaluated position
+  // [500, 400].  fromCompToSurface for the wire layer at [0,0] = comp coords directly.
+  // First vertex of wire path should be [500, 400].
+  const rawPath = { v: [[0, 0], [200, 0]], i: [[0, 0], [0, 0]], o: [[0, 0], [0, 0]], c: false };
+  const result = host.evaluatePath(wireExpression, 0, 2, rawPath);
+  assert.ok(result && Array.isArray(result.vertices), 'result should be a path');
+  const firstVertex = result.vertices[0];
+  // If expression-evaluated position was used: [500, 400].  If static [0,0] was used: [0, 0].
+  assert.ok(
+    Math.abs(firstVertex[0] - 500) < 5 && Math.abs(firstVertex[1] - 400) < 5,
+    `Expected first vertex ≈ [500, 400] (expression pos), got [${firstVertex}]`,
+  );
 });
