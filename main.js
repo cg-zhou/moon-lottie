@@ -1,3 +1,12 @@
+import {
+    animationUsesExpressions,
+    getAnimationPlaybackMeta,
+} from './render_mode.mjs';
+import {
+    createExpressionModule,
+    setExpressionHost,
+} from './expression_host.mjs';
+
 // MoonLottie UI 2.0 - 现代化播放驱动
 
 const canvas = document.getElementById('lottie-canvas');
@@ -10,6 +19,9 @@ const seekBar = document.getElementById('seek-bar');
 const fileInput = document.getElementById('file-input');
 const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
+const compareToggle = document.getElementById('compare-toggle');
+const officialWrapper = document.getElementById('official-wrapper');
+const officialContainer = document.getElementById('official-lottie-container');
 
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const wasmBuiltinOptions = { builtins: ['js-string'] };
@@ -54,6 +66,8 @@ let currentFileName = "";
 let currentFileSize = 0;
 let imageAssetsByIndex = [];
 let currentAnimationRequestId = null;
+let currentAnimationData = null;
+let currentAnimationMeta = null;
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -62,6 +76,15 @@ const fillRuleStack = [];
 const offscreenStack = [];
 // Stack for two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
 const matteStack = [];
+const expressionModule = createExpressionModule({
+    getAnimationData: () => currentAnimationData,
+    getPlaybackMeta: () => currentAnimationMeta,
+});
+
+window.setMoonLottieExpressionHost = setExpressionHost;
+if (window.__moonLottieExpressionHost) {
+    setExpressionHost(window.__moonLottieExpressionHost);
+}
 
 const importObject = {
   demo: {
@@ -71,6 +94,7 @@ const importObject = {
     }
   },
   _: wasmStringGlobals,
+  expressions: expressionModule,
   spectest: { print_char: (c) => {} },
   canvas: {
     save: () => { ctx.save(); fillRuleStack.push(ctx._currentFillRule || "nonzero"); },
@@ -241,17 +265,6 @@ const importObject = {
         ctx.setTransform(currentTransform);
         ctx.globalCompositeOperation = 'source-over';
     }
-  },
-  expressions: {
-    evaluate_double: (code_ptr, time, val) => {
-        try { return new Function('value', 'time', `"use strict"; return (${code_ptr});`)(val, time); } catch (e) { return val; }
-    },
-    evaluate_vec_into: (code_ptr, time, arr) => {
-        try {
-            const res = new Function('value', 'time', `"use strict"; return (${code_ptr});`)([...arr], time);
-            if (Array.isArray(res)) res.forEach((v, i) => i < arr.length && arr.set(i, v));
-        } catch (e) {}
-    }
   }
 };
 
@@ -293,8 +306,70 @@ async function init() {
   }
 }
 
-function getVersionString(player) {
-    return window.moonLottie.get_version(player);
+function destroyOfficialPlayer() {
+    if (officialPlayer) {
+        officialPlayer.destroy();
+        officialPlayer = null;
+    }
+    officialContainer.innerHTML = '';
+}
+
+function createOfficialPlayer(animationData) {
+    if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
+        return null;
+    }
+
+    destroyOfficialPlayer();
+
+    try {
+        officialPlayer = window.lottie.loadAnimation({
+            container: officialContainer,
+            renderer: 'svg',
+            loop: false,
+            autoplay: false,
+            animationData,
+            rendererSettings: {
+                preserveAspectRatio: 'xMidYMid meet',
+                clearCanvas: true,
+            },
+        });
+        return officialPlayer;
+    } catch (e) {
+        console.warn("Official renderer init failed:", e);
+        officialPlayer = null;
+        return null;
+    }
+}
+
+function renderCurrentFrame() {
+    if (player) {
+        window.moonLottie.update_player(player, currentFrame);
+    }
+
+    if (officialPlayer) {
+        officialPlayer.goToAndStop(currentFrame, true);
+    }
+}
+
+function applyAnimationMetadata(meta) {
+    const { width, height, fps, totalFrames, inPoint, aspectRatio, version } = meta;
+
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.aspectRatio = aspectRatio;
+    officialContainer.style.aspectRatio = aspectRatio;
+
+    document.getElementById('info-filename').innerText = currentFileName || "未知";
+    document.getElementById('info-filesize').innerText = (currentFileSize / 1024).toFixed(2) + " KB";
+    document.getElementById('info-size').innerText = `${width} x ${height}`;
+    document.getElementById('info-fps').innerText = fps.toFixed(2) + " fps";
+    document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
+    document.getElementById('info-duration').innerText = fps > 0 ? (totalFrames / fps).toFixed(2) + "s" : "-";
+    document.getElementById('info-version').innerText = version;
+
+    seekBar.min = inPoint;
+    seekBar.max = inPoint + totalFrames;
+    seekBar.value = inPoint;
 }
 
 async function initAnimList() {
@@ -394,6 +469,9 @@ async function startPlayer(jsonStr) {
 
     console.log(`[MoonLottie] Starting new animation: ${currentFileName}`);
     statusMsg.innerText = "初始化渲染引擎...";
+    currentAnimationData = animationData;
+    currentAnimationMeta = getAnimationPlaybackMeta(animationData);
+    const usesExpressions = animationUsesExpressions(animationData);
     
     // Stop any existing render loop and reset timing
     if (currentAnimationRequestId) {
@@ -402,6 +480,9 @@ async function startPlayer(jsonStr) {
         currentAnimationRequestId = null;
     }
     lastTimestamp = 0; 
+
+    destroyOfficialPlayer();
+    player = null;
 
     await preloadAssets(animationData);
     // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
@@ -415,74 +496,28 @@ async function startPlayer(jsonStr) {
         });
     }
     currentJsonStr = JSON.stringify(wasmAnimationData);
-    
-    const { create_player_from_js, update_player_with_speed, get_frame_count, get_width, get_height, get_fps } = window.moonLottie;
-    
-    player = create_player_from_js();
-    if (!player) { statusMsg.innerText = "动画解析失败"; return; }
-
-    // Official Player Init (if exists)
-    // Update Canvas & Container Styles
-    const w = get_width(player);
-    const h = get_height(player);
-    const aspectRatio = `${w} / ${h}`;
-
-    // Wasm Canvas
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.aspectRatio = aspectRatio;
-
-    // Official Lottie
-    const container = document.getElementById('official-lottie-container');
-    container.style.aspectRatio = aspectRatio;
-    
-    if (officialPlayer) {
-        officialPlayer.destroy();
-        officialPlayer = null;
+    player = window.moonLottie.create_player_from_js();
+    if (!player) {
+        statusMsg.innerText = "动画解析失败";
+        return;
     }
-    
-    const compareEnabled = document.getElementById('compare-toggle').checked;
-    if (compareEnabled && window.lottie && typeof window.lottie.loadAnimation === 'function') {
-        try {
-            officialPlayer = window.lottie.loadAnimation({
-                container: container,
-                renderer: 'svg',
-                loop: false,
-                autoplay: false,
-                animationData: animationData,
-                rendererSettings: {
-                    preserveAspectRatio: 'xMidYMid meet',
-                    clearCanvas: true
-                }
-            });
-        } catch (e) {
-            console.warn("Official renderer init failed:", e);
-            officialPlayer = null;
-        }
+    if (compareToggle.checked) {
+        createOfficialPlayer(animationData);
     }
-
-    // Update File & Metadata
-    document.getElementById('info-filename').innerText = currentFileName || "未知";
-    document.getElementById('info-filesize').innerText = (currentFileSize / 1024).toFixed(2) + " KB";
-    document.getElementById('info-size').innerText = `${w} x ${h}`;
-    
-    const fps = get_fps(player);
-    document.getElementById('info-fps').innerText = fps.toFixed(2) + " fps";
-    const totalFrames = get_frame_count(player);
-    document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
-    document.getElementById('info-duration').innerText = (totalFrames / fps).toFixed(2) + "s";
-    document.getElementById('info-version').innerText = getVersionString(player);
-
-    const inPoint = window.moonLottie.get_in_point(player);
-    seekBar.min = inPoint;
-    seekBar.max = inPoint + totalFrames;
-    seekBar.value = inPoint;
-    currentFrame = inPoint;
+    officialWrapper.style.display = compareToggle.checked ? 'flex' : 'none';
+    viewport.classList.toggle('comparison-mode', compareToggle.checked);
+    applyAnimationMetadata(currentAnimationMeta);
+    currentFrame = currentAnimationMeta.inPoint;
     isPlaying = true;
     lastTimestamp = performance.now();
     updatePlayPauseButton();
-    
-    statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
+    renderCurrentFrame();
+
+    if (usesExpressions) {
+        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过外部 JS 表达式宿主执行表达式，并持续与 lottie-web 对照";
+    } else {
+        statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
+    }
     
     currentAnimationRequestId = requestAnimationFrame(renderLoop);
     console.log(`[MoonLottie] New animation loop started (ID: ${currentAnimationRequestId})`);
@@ -499,19 +534,20 @@ function renderLoop(timestamp) {
         const deltaTime = (timestamp - lastTimestamp) / 1000;
         lastTimestamp = timestamp;
 
-        const fps = window.moonLottie.get_fps(player);
+        const fps = currentAnimationMeta?.fps || 0;
         const speed = parseFloat(document.getElementById('speed').value);
         
         // 基于真实时间计算应该前进的帧数
         // delta_frames = delta_time(s) * fps * speed
         const frameDelta = deltaTime * fps * speed;
         
-        currentFrame = window.moonLottie.update_player_with_speed(player, currentFrame, frameDelta);
+        currentFrame += frameDelta;
         
-        const inPoint = window.moonLottie.get_in_point(player);
-        const totalFrames = window.moonLottie.get_frame_count(player);
+        const inPoint = currentAnimationMeta?.inPoint || 0;
+        const totalFrames = currentAnimationMeta?.totalFrames || 0;
         if (currentFrame >= inPoint + totalFrames) currentFrame = inPoint;
 
+        renderCurrentFrame();
         updateUI();
     } else {
         lastTimestamp = 0;
@@ -521,15 +557,11 @@ function renderLoop(timestamp) {
 }
 
 function updateUI() {
-    const inPoint = window.moonLottie.get_in_point(player);
-    const totalFrames = window.moonLottie.get_frame_count(player);
+    const inPoint = currentAnimationMeta?.inPoint || 0;
+    const totalFrames = currentAnimationMeta?.totalFrames || 0;
     const relativeFrame = currentFrame - inPoint;
     frameInfoEl.innerText = `${Math.floor(relativeFrame)} / ${Math.floor(totalFrames)}`;
     seekBar.value = currentFrame;
-
-    if (officialPlayer) {
-        officialPlayer.goToAndStop(currentFrame, true);
-    }
 }
 
 function updatePlayPauseButton() {
@@ -540,7 +572,7 @@ function updatePlayPauseButton() {
 seekBar.oninput = () => {
     if (!player) return;
     currentFrame = parseFloat(seekBar.value);
-    window.moonLottie.update_player_with_speed(player, currentFrame, 0);
+    renderCurrentFrame();
     updateUI();
 };
 
@@ -567,16 +599,24 @@ document.querySelectorAll('.bg-btn').forEach(btn => {
         document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const bg = btn.dataset.bg;
-        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '') + (document.getElementById('compare-toggle').checked ? ' comparison-mode' : '');
+        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '') + (compareToggle.checked ? ' comparison-mode' : '');
     };
 });
 
 // Comparison Toggle
-document.getElementById('compare-toggle').onchange = (e) => {
-    const isCompare = e.target.checked;
-    document.getElementById('official-wrapper').style.display = isCompare ? 'flex' : 'none';
-    viewport.classList.toggle('comparison-mode', isCompare);
-    if (isCompare) updateUI();
+compareToggle.onchange = (e) => {
+    if (!currentAnimationData) return;
+
+    if (e.target.checked) {
+        createOfficialPlayer(currentAnimationData);
+        renderCurrentFrame();
+    } else {
+        destroyOfficialPlayer();
+    }
+
+    officialWrapper.style.display = e.target.checked ? 'flex' : 'none';
+    viewport.classList.toggle('comparison-mode', e.target.checked);
+    updateUI();
 };
 
 function initDeployTime() {
