@@ -184,7 +184,7 @@ function evaluateHostedExpressionValue(expression, frame, layer, value, animatio
             }),
         );
     } catch (error) {
-        console.warn('[MoonLottie] transform expression proxy evaluation failed', error);
+        console.warn('[MoonLottie] expression evaluation failed', error);
         return value;
     }
 }
@@ -271,13 +271,7 @@ function parsePath(input) {
 
 function getExpressionFunction(expression) {
     if (!expressionFunctionCache.has(expression)) {
-        expressionFunctionCache.set(
-            expression,
-            new Function(
-                'context',
-                `
-// This fallback evaluator is only used by the demo/default host. Production
-// consumers are expected to install their own expression host implementation.
+        const fallbackEvaluatorPrelude = `
 const {
   value,
   time,
@@ -304,6 +298,13 @@ const {
   div,
   Math
 } = context;
+`;
+        expressionFunctionCache.set(
+            expression,
+            new Function(
+                'context',
+                `
+${fallbackEvaluatorPrelude}
 ${expression}
 return typeof $bm_rt === 'undefined' ? value : $bm_rt;
 `,
