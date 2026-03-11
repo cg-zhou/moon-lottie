@@ -1,11 +1,11 @@
 import {
     animationUsesExpressions,
     getAnimationPlaybackMeta,
-} from './render_mode.mjs';
+} from './render_mode.js';
 import {
     createExpressionModule,
     setExpressionHost,
-} from './expression_host.mjs';
+} from './expression_host.js';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
