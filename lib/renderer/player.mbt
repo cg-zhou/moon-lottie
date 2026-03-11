@@ -10,6 +10,7 @@ pub struct Player[R] {
   // and compares against   kf.t - offsetTime,
   // which is equivalent to evaluating at comp.renderedFrame vs raw kf.t.
   mut current_comp_frame : Double
+  mut current_layer_index : Int
   mut current_paths : Array[@model.BezierPath]
   mut debug_enabled : Bool
   mut debug_logs : Array[String]
@@ -25,6 +26,7 @@ pub fn[R] Player::new(animation : @model.Animation, renderer : R) -> Player[R] {
     renderer,
     current_frame: 0.0,
     current_comp_frame: 0.0,
+    current_layer_index: -1,
     current_paths: [],
     debug_enabled: false,
     debug_logs: [],
@@ -32,6 +34,42 @@ pub fn[R] Player::new(animation : @model.Animation, renderer : R) -> Player[R] {
     debug_shape: "",
     debug_property: "",
   }
+}
+
+///|
+fn[R] Player::evaluate_double(
+  self : Player[R],
+  prop : @model.LottieProperty[Double],
+  frame : Double,
+) -> Double {
+  @runtime.evaluate_double_property_with_context(prop, frame, self.current_layer_index)
+}
+
+///|
+fn[R] Player::evaluate_vec(
+  self : Player[R],
+  prop : @model.LottieProperty[Array[Double]],
+  frame : Double,
+) -> Array[Double] {
+  @runtime.evaluate_vec_property_with_context(prop, frame, self.current_layer_index)
+}
+
+///|
+fn[R] Player::evaluate_path(
+  self : Player[R],
+  prop : @model.LottieProperty[@model.BezierPath],
+  frame : Double,
+) -> @model.BezierPath {
+  @runtime.evaluate_path_property_with_context(prop, frame, self.current_layer_index)
+}
+
+///|
+fn[R] Player::evaluate_transform(
+  self : Player[R],
+  transform : @model.Transform,
+  frame : Double,
+) -> @math.Matrix {
+  @runtime.evaluate_transform_with_context(transform, frame, self.current_layer_index)
 }
 
 ///|
@@ -103,7 +141,11 @@ fn[R : Renderer] Player::apply_parent_transform(
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
+      let matrix = @runtime.evaluate_transform_with_context(
+        layer.transform,
+        comp_frame,
+        layer.index,
+      )
       self.renderer.concat_transform(matrix)
       return
     }
@@ -124,12 +166,14 @@ fn[R : Renderer] Player::render_layer(
   let layer_frame = comp_frame - layer.start_time
   let saved_frame = self.current_frame
   let saved_comp_frame = self.current_comp_frame
+  let saved_layer_index = self.current_layer_index
   // Shape properties inside this layer must be evaluated at comp_frame.
   // lottie-web computes: frameNum = comp.renderedFrame - offsetTime
   // and compares against kf.t - offsetTime, which is equivalent to
   // evaluating at comp.renderedFrame (= comp_frame here) vs raw kf.t.
   self.current_comp_frame = comp_frame
   self.current_frame = layer_frame
+  self.current_layer_index = layer.index
   self.debug_layer = match layer.name {
     Some(name) => "\{name}#\{layer.index}"
     None => "#\{layer.index}"
@@ -171,11 +215,11 @@ fn[R : Renderer] Player::render_layer(
   // lottie-web evaluates all layer properties (transforms and shapes) using
   // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
   // comp_frame vs t.
-  let matrix = @runtime.evaluate_transform(layer.transform, comp_frame)
+  let matrix = self.evaluate_transform(layer.transform, comp_frame)
   self.renderer.concat_transform(matrix)
 
   // 2.2 Apply Layer Opacity
-  let opacity = @runtime.evaluate_double_property(
+  let opacity = self.evaluate_double(
     layer.transform.opacity,
     comp_frame,
   )
@@ -206,7 +250,7 @@ fn[R : Renderer] Player::render_layer(
           while i < masks.length() {
             let m = masks[i]
             if m.mode == @model.MaskMode::Add && not(m.inverted) {
-              let path_val = @runtime.evaluate_path_property(
+              let path_val = self.evaluate_path(
                 m.path,
                 self.current_comp_frame,
               )
@@ -237,7 +281,7 @@ fn[R : Renderer] Player::render_layer(
               self.renderer.line_to(-10000.0, 10000.0)
               self.renderer.close_path()
 
-              let path_val = @runtime.evaluate_path_property(
+              let path_val = self.evaluate_path(
                 mask.path,
                 self.current_comp_frame,
               )
@@ -248,7 +292,7 @@ fn[R : Renderer] Player::render_layer(
               // Non-inverted Add was handled in the grouped block
               // Inverted Subtract is same as Add
               self.renderer.begin_path()
-              let path_val = @runtime.evaluate_path_property(
+              let path_val = self.evaluate_path(
                 mask.path,
                 self.current_comp_frame,
               )
@@ -259,7 +303,7 @@ fn[R : Renderer] Player::render_layer(
           }
           @model.MaskMode::Intersect => {
             self.renderer.begin_path()
-            let path_val = @runtime.evaluate_path_property(
+            let path_val = self.evaluate_path(
               mask.path,
               self.current_comp_frame,
             )
@@ -337,6 +381,7 @@ fn[R : Renderer] Player::render_layer(
 
   self.current_frame = saved_frame
   self.current_comp_frame = saved_comp_frame
+  self.current_layer_index = saved_layer_index
 }
 
 ///|
@@ -345,8 +390,8 @@ fn[R : Renderer] Player::apply_layer_fill_effect(
   effect : @model.LayerFillEffect,
   frame : Double,
 ) -> Unit {
-  let color = @runtime.evaluate_vec_property(effect.color, frame)
-  let opacity = @runtime.evaluate_double_property(effect.opacity, frame)
+  let color = self.evaluate_vec(effect.color, frame)
+  let opacity = self.evaluate_double(effect.opacity, frame)
   let (r, g, b) = color_rgb_from_vec(color)
   self.renderer.set_blend_mode("source-atop")
   self.renderer.begin_path()
@@ -640,9 +685,9 @@ fn[R : Renderer] Player::render_shape_items(
         // Trim Paths in lottie-web affect preceding drawable content in the same
         // shape list. Our paint ops and painted groups are deferred for z-order,
         // so we need to also apply this modifier to already collected draw items.
-        let start = @runtime.evaluate_double_property(t.start, self.current_comp_frame)
-        let end = @runtime.evaluate_double_property(t.end, self.current_comp_frame)
-        let offset = @runtime.evaluate_double_property(t.offset, self.current_comp_frame)
+        let start = self.evaluate_double(t.start, self.current_comp_frame)
+        let end = self.evaluate_double(t.end, self.current_comp_frame)
+        let offset = self.evaluate_double(t.offset, self.current_comp_frame)
         for i = 0; i < draw_items.length(); i = i + 1 {
           match draw_items[i].data {
             Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) =>
@@ -730,7 +775,7 @@ pub fn[R : Renderer] Player::render_shape(
       for item in items {
         match item.data {
           Transform(tr) => {
-            group_matrix = @runtime.evaluate_transform(tr, self.current_comp_frame)
+            group_matrix = self.evaluate_transform(tr, self.current_comp_frame)
             self.render_shape(item)
           }
           _ => ()
@@ -755,9 +800,9 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.restore()
     }
     Rect(r) => {
-      let p = @runtime.evaluate_vec_property(r.position, self.current_comp_frame)
-      let s = @runtime.evaluate_vec_property(r.size, self.current_comp_frame)
-      let corner_r = @runtime.evaluate_double_property(r.roundness, self.current_comp_frame)
+      let p = self.evaluate_vec(r.position, self.current_comp_frame)
+      let s = self.evaluate_vec(r.size, self.current_comp_frame)
+      let corner_r = self.evaluate_double(r.roundness, self.current_comp_frame)
       let x = get_vec_at(p, 0, 0.0)
       let y = get_vec_at(p, 1, 0.0)
       let w = get_vec_at(s, 0, 0.0)
@@ -765,8 +810,8 @@ pub fn[R : Renderer] Player::render_shape(
       self.current_paths.push(create_rect_path(x, y, w, h, corner_r, r.direction))
     }
     Ellipse(e) => {
-      let p = @runtime.evaluate_vec_property(e.position, self.current_comp_frame)
-      let s = @runtime.evaluate_vec_property(e.size, self.current_comp_frame)
+      let p = self.evaluate_vec(e.position, self.current_comp_frame)
+      let s = self.evaluate_vec(e.size, self.current_comp_frame)
       let cx = get_vec_at(p, 0, 0.0)
       let cy = get_vec_at(p, 1, 0.0)
       let rx = get_vec_at(s, 0, 0.0) / 2.0
@@ -774,12 +819,12 @@ pub fn[R : Renderer] Player::render_shape(
       self.current_paths.push(create_ellipse_path(cx, cy, rx, ry, e.direction))
     }
     Path(p) => {
-      let path = @runtime.evaluate_path_property(p.path, self.current_comp_frame)
+      let path = self.evaluate_path(p.path, self.current_comp_frame)
       self.current_paths.push(path)
     }
     Fill(f) => {
-      let color_vec = @runtime.evaluate_vec_property(f.color, self.current_comp_frame)
-      let opacity = @runtime.evaluate_double_property(f.opacity, self.current_comp_frame)
+      let color_vec = self.evaluate_vec(f.color, self.current_comp_frame)
+      let opacity = self.evaluate_double(f.opacity, self.current_comp_frame)
       let (r, g, b) = color_rgb_from_vec(color_vec)
       self.renderer.set_fill_rule(if f.fill_rule == 2 { "evenodd" } else { "nonzero" })
       self.renderer.begin_path()
@@ -789,9 +834,9 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.fill(r, g, b, opacity / 100.0)
     }
     Stroke(s) => {
-      let color_vec = @runtime.evaluate_vec_property(s.color, self.current_comp_frame)
-      let opacity = @runtime.evaluate_double_property(s.opacity, self.current_comp_frame)
-      let width = @runtime.evaluate_double_property(s.width, self.current_comp_frame)
+      let color_vec = self.evaluate_vec(s.color, self.current_comp_frame)
+      let opacity = self.evaluate_double(s.opacity, self.current_comp_frame)
+      let width = self.evaluate_double(s.width, self.current_comp_frame)
       let (r, g, b) = color_rgb_from_vec(color_vec)
       self.renderer.begin_path()
       for p in self.current_paths {
@@ -802,7 +847,7 @@ pub fn[R : Renderer] Player::render_shape(
         let dash_array : Array[Double] = []
         let mut dash_offset = 0.0
         for d in s.dashes {
-          let v = @runtime.evaluate_double_property(d.value, self.current_comp_frame)
+          let v = self.evaluate_double(d.value, self.current_comp_frame)
           if d.name == "o" {
             dash_offset = v
           } else {
@@ -818,10 +863,10 @@ pub fn[R : Renderer] Player::render_shape(
       self.renderer.stroke(r, g, b, opacity / 100.0, width)
     }
     GradientFill(f) => {
-      let start_p = @runtime.evaluate_vec_property(f.start_point, self.current_comp_frame)
-      let end_p = @runtime.evaluate_vec_property(f.end_point, self.current_comp_frame)
-      let stops = @runtime.evaluate_vec_property(f.gradient_colors.color_stops, self.current_comp_frame)
-      let opacity = @runtime.evaluate_double_property(f.opacity, self.current_comp_frame)
+      let start_p = self.evaluate_vec(f.start_point, self.current_comp_frame)
+      let end_p = self.evaluate_vec(f.end_point, self.current_comp_frame)
+      let stops = self.evaluate_vec(f.gradient_colors.color_stops, self.current_comp_frame)
+      let opacity = self.evaluate_double(f.opacity, self.current_comp_frame)
       self.renderer.set_fill_rule(if f.fill_rule == 2 { "evenodd" } else { "nonzero" })
       self.renderer.begin_path()
       for p in self.current_paths {
@@ -861,11 +906,11 @@ pub fn[R : Renderer] Player::render_shape(
       }
     }
     GradientStroke(s) => {
-      let start_p = @runtime.evaluate_vec_property(s.start_point, self.current_comp_frame)
-      let end_p = @runtime.evaluate_vec_property(s.end_point, self.current_comp_frame)
-      let stops = @runtime.evaluate_vec_property(s.gradient_colors.color_stops, self.current_comp_frame)
-      let opacity = @runtime.evaluate_double_property(s.opacity, self.current_comp_frame)
-      let width = @runtime.evaluate_double_property(s.width, self.current_comp_frame)
+      let start_p = self.evaluate_vec(s.start_point, self.current_comp_frame)
+      let end_p = self.evaluate_vec(s.end_point, self.current_comp_frame)
+      let stops = self.evaluate_vec(s.gradient_colors.color_stops, self.current_comp_frame)
+      let opacity = self.evaluate_double(s.opacity, self.current_comp_frame)
+      let width = self.evaluate_double(s.width, self.current_comp_frame)
       self.renderer.begin_path()
       for p in self.current_paths {
         self.draw_lottie_path(p)
@@ -907,18 +952,18 @@ pub fn[R : Renderer] Player::render_shape(
       }
     }
     Transform(tr) => {
-      let matrix = @runtime.evaluate_transform(tr, self.current_comp_frame)
+      let matrix = self.evaluate_transform(tr, self.current_comp_frame)
       self.renderer.concat_transform(matrix)
-      let opacity = @runtime.evaluate_double_property(
+      let opacity = self.evaluate_double(
         tr.opacity,
         self.current_comp_frame,
       )
       self.renderer.set_opacity(opacity / 100.0)
     }
     TrimPath(t) => {
-      let start = @runtime.evaluate_double_property(t.start, self.current_comp_frame)
-      let end = @runtime.evaluate_double_property(t.end, self.current_comp_frame)
-      let offset = @runtime.evaluate_double_property(t.offset, self.current_comp_frame)
+      let start = self.evaluate_double(t.start, self.current_comp_frame)
+      let end = self.evaluate_double(t.end, self.current_comp_frame)
+      let offset = self.evaluate_double(t.offset, self.current_comp_frame)
       self.current_paths = apply_trim_path_with_mode(
         self.current_paths,
         start,
@@ -929,11 +974,11 @@ pub fn[R : Renderer] Player::render_shape(
     }
     Polystar(sr) => self.current_paths.push(self.create_polystar_path(sr))
     Repeater(rep) => {
-      let copies = @runtime.evaluate_double_property(rep.copies, self.current_comp_frame).to_int()
-      let offset = @runtime.evaluate_double_property(rep.offset, self.current_comp_frame)
-      let tr_matrix = @runtime.evaluate_transform(rep.transform, self.current_comp_frame)
-      let so = @runtime.evaluate_double_property(rep.start_opacity, self.current_comp_frame)
-      let eo = @runtime.evaluate_double_property(rep.end_opacity, self.current_comp_frame)
+      let copies = self.evaluate_double(rep.copies, self.current_comp_frame).to_int()
+      let offset = self.evaluate_double(rep.offset, self.current_comp_frame)
+      let tr_matrix = self.evaluate_transform(rep.transform, self.current_comp_frame)
+      let so = self.evaluate_double(rep.start_opacity, self.current_comp_frame)
+      let eo = self.evaluate_double(rep.end_opacity, self.current_comp_frame)
 
       let original_paths = self.current_paths
       let new_paths = []
@@ -991,7 +1036,7 @@ pub fn[R : Renderer] Player::render_shape(
       // We match that behavior here and treat MergePaths as a no-op.
       ()
     Rounding(rounding) => {
-      let radius = @runtime.evaluate_double_property(
+      let radius = self.evaluate_double(
         rounding.radius,
         self.current_comp_frame,
       )
@@ -1682,11 +1727,11 @@ fn[R] Player::create_polystar_path(
   self : Player[R],
   sr : @model.PolystarShape,
 ) -> @model.BezierPath {
-  let pt = @runtime.evaluate_double_property(sr.points, self.current_comp_frame)
-  let p = @runtime.evaluate_vec_property(sr.position, self.current_comp_frame)
-  let r = @runtime.evaluate_double_property(sr.rotation, self.current_comp_frame)
-  let or = @runtime.evaluate_double_property(sr.outer_radius, self.current_comp_frame)
-  let or_round = @runtime.evaluate_double_property(
+  let pt = self.evaluate_double(sr.points, self.current_comp_frame)
+  let p = self.evaluate_vec(sr.position, self.current_comp_frame)
+  let r = self.evaluate_double(sr.rotation, self.current_comp_frame)
+  let or = self.evaluate_double(sr.outer_radius, self.current_comp_frame)
+  let or_round = self.evaluate_double(
     sr.outer_roundness,
     self.current_comp_frame,
   )
@@ -1721,8 +1766,8 @@ fn[R] Player::create_polystar_path(
       }
     }
   } else { // Star
-    let ir = @runtime.evaluate_double_property(sr.inner_radius, self.current_comp_frame)
-    let ir_round = @runtime.evaluate_double_property(
+    let ir = self.evaluate_double(sr.inner_radius, self.current_comp_frame)
+    let ir_round = self.evaluate_double(
       sr.inner_roundness,
       self.current_comp_frame,
     )
@@ -2032,7 +2077,7 @@ fn[R : Renderer] Player::emit_glyph_shape_paths(
     }
     match shape.data {
       @model.ShapeData::Path(p) => {
-        let path = @runtime.evaluate_path_property(p.path, self.current_comp_frame)
+        let path = self.evaluate_path(p.path, self.current_comp_frame)
         self.draw_lottie_path(path)
       }
       @model.ShapeData::Group(items) =>
@@ -2175,7 +2220,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       )
       match anim.properties.scale {
         Some(scale_prop) => {
-          let sv = @runtime.evaluate_vec_property(
+          let sv = self.evaluate_vec(
             scale_prop, self.current_comp_frame,
           )
           let sx = if sv.length() > 0 { sv[0] } else { 100.0 }
@@ -2189,7 +2234,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
       match anim.properties.position {
         Some(pos_prop) => {
-          let pv = @runtime.evaluate_vec_property(
+          let pv = self.evaluate_vec(
             pos_prop, self.current_comp_frame,
           )
           let px = if pv.length() > 0 { pv[0] } else { 0.0 }
@@ -2201,7 +2246,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
       match anim.properties.rotation {
         Some(rotation_prop) => {
-          let rv = @runtime.evaluate_double_property(
+          let rv = self.evaluate_double(
             rotation_prop, self.current_comp_frame,
           )
           anim_rotation = anim_rotation + mult * rv
@@ -2210,7 +2255,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
       match anim.properties.fill_color {
         Some(fc_prop) => {
-          let fv = @runtime.evaluate_vec_property(
+          let fv = self.evaluate_vec(
             fc_prop, self.current_comp_frame,
           )
           // fv values are in [0,1] normalized range; blend toward anim color
@@ -2225,7 +2270,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
       match anim.properties.opacity {
         Some(opacity_prop) => {
-          let ov = @runtime.evaluate_double_property(
+          let ov = self.evaluate_double(
             opacity_prop, self.current_comp_frame,
           ) / 100.0
           // Match lottie-web's per-selector opacity blend instead of a plain lerp.
@@ -2235,7 +2280,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
       }
       match anim.properties.tracking {
         Some(tracking_prop) => {
-          let tv = @runtime.evaluate_double_property(
+          let tv = self.evaluate_double(
             tracking_prop, self.current_comp_frame,
           )
           anim_tracking = anim_tracking + mult * tv

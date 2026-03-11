@@ -1,3 +1,33 @@
+let expression_double_handler : @ref.Ref[
+  ((String, Double, Int, Double) -> Double)?,
+] = @ref.new(None)
+
+let expression_vec_handler : @ref.Ref[
+  ((String, Double, Int, String) -> String)?,
+] = @ref.new(None)
+
+let expression_path_handler : @ref.Ref[
+  ((String, Double, Int, String) -> String)?,
+] = @ref.new(None)
+
+///|
+pub fn install_expression_handlers(
+  double_handler : (String, Double, Int, Double) -> Double,
+  vec_handler : (String, Double, Int, String) -> String,
+  path_handler : (String, Double, Int, String) -> String,
+) -> Unit {
+  expression_double_handler.val = Some(double_handler)
+  expression_vec_handler.val = Some(vec_handler)
+  expression_path_handler.val = Some(path_handler)
+}
+
+///|
+pub fn clear_expression_handlers() -> Unit {
+  expression_double_handler.val = None
+  expression_vec_handler.val = None
+  expression_path_handler.val = None
+}
+
 ///|
 /// Find the keyframe for a given frame
 fn[T] find_keyframe(
@@ -151,6 +181,177 @@ fn lerp_vec2_array_with_component_easing(
 }
 
 ///|
+fn clone_double_array(input : Array[Double]) -> Array[Double] {
+  let res = []
+  for value in input {
+    res.push(value)
+  }
+  res
+}
+
+fn split_string(input : String, delimiter : Char) -> Array[String] {
+  if input.length() == 0 {
+    return []
+  }
+  let parts = []
+  let mut start = 0
+  let delimiter_code = delimiter.to_int().to_uint16()
+  for i = 0; i < input.length(); i = i + 1 {
+    if input[i] == delimiter_code {
+      parts.push(input.substring(start=start, end=i))
+      start = i + 1
+    }
+  }
+  parts.push(input.substring(start=start, end=input.length()))
+  parts
+}
+
+///|
+fn serialize_double_array(values : Array[Double]) -> String {
+  let mut result = ""
+  for i = 0; i < values.length(); i = i + 1 {
+    if i > 0 {
+      result = result + ","
+    }
+    result = result + "\{values[i]}"
+  }
+  result
+}
+
+///|
+fn parse_double_array(input : String) -> Array[Double] {
+  if input.length() == 0 {
+    return []
+  }
+  let result = []
+  for part in split_string(input, ',') {
+    if part.length() == 0 {
+      continue
+    }
+    let value = (@strconv.parse_double(part)) catch {
+      _ => 0.0
+    }
+    result.push(value)
+  }
+  result
+}
+
+///|
+fn serialize_vec2_array(values : Array[Array[Double]]) -> String {
+  let mut result = ""
+  for i = 0; i < values.length(); i = i + 1 {
+    if i > 0 {
+      result = result + ";"
+    }
+    result = result + serialize_double_array(values[i])
+  }
+  result
+}
+
+///|
+fn parse_vec2_array(input : String) -> Array[Array[Double]] {
+  if input.length() == 0 {
+    return []
+  }
+  let result = []
+  for part in split_string(input, ';') {
+    result.push(parse_double_array(part))
+  }
+  result
+}
+
+///|
+fn serialize_bezier_path(value : @model.BezierPath) -> String {
+  let closed = if value.closed { 1 } else { 0 }
+  let vertices = serialize_vec2_array(value.vertices)
+  let in_tangents = serialize_vec2_array(value.in_tangents)
+  let out_tangents = serialize_vec2_array(value.out_tangents)
+  "\{closed}|\{vertices}|\{in_tangents}|\{out_tangents}"
+}
+
+///|
+fn parse_bezier_path(input : String, fallback : @model.BezierPath) -> @model.BezierPath {
+  let parts = split_string(input, '|')
+  if parts.length() != 4 {
+    return fallback
+  }
+  @model.BezierPath::new(
+    vertices=parse_vec2_array(parts[1]),
+    in_tangents=parse_vec2_array(parts[2]),
+    out_tangents=parse_vec2_array(parts[3]),
+    closed=parts[0] == "1",
+  )
+}
+
+///|
+fn apply_double_expression(
+  prop : @model.LottieProperty[Double],
+  frame : Double,
+  layer_index : Int,
+  value : Double,
+) -> Double {
+  match prop.expression {
+    Some(expression) =>
+      match expression_double_handler.val {
+        Some(handler) => handler(expression, frame, layer_index, value)
+        None => value
+      }
+    None => value
+  }
+}
+
+///|
+fn apply_vec_expression(
+  prop : @model.LottieProperty[Array[Double]],
+  frame : Double,
+  layer_index : Int,
+  value : Array[Double],
+) -> Array[Double] {
+  match prop.expression {
+    Some(expression) =>
+      match expression_vec_handler.val {
+        Some(handler) =>
+          parse_double_array(
+            handler(
+              expression,
+              frame,
+              layer_index,
+              serialize_double_array(value),
+            ),
+          )
+        None => value
+      }
+    None => value
+  }
+}
+
+///|
+fn apply_path_expression(
+  prop : @model.LottieProperty[@model.BezierPath],
+  frame : Double,
+  layer_index : Int,
+  value : @model.BezierPath,
+) -> @model.BezierPath {
+  match prop.expression {
+    Some(expression) =>
+      match expression_path_handler.val {
+        Some(handler) =>
+          parse_bezier_path(
+            handler(
+              expression,
+              frame,
+              layer_index,
+              serialize_bezier_path(value),
+            ),
+            value,
+          )
+        None => value
+      }
+    None => value
+  }
+}
+
+///|
 pub fn evaluate_text_document_property(
   prop : @model.LottieProperty[@model.TextDocument],
   frame : Double,
@@ -215,6 +416,15 @@ pub fn evaluate_double_property(
       @math.lerp_double(k1.start_value, next_val, eased_t)
     }
   }
+}
+
+///|
+pub fn evaluate_double_property_with_context(
+  prop : @model.LottieProperty[Double],
+  frame : Double,
+  layer_index : Int,
+) -> Double {
+  apply_double_expression(prop, frame, layer_index, evaluate_double_property(prop, frame))
 }
 
 ///|
@@ -367,6 +577,15 @@ pub fn evaluate_vec_property(
 }
 
 ///|
+pub fn evaluate_vec_property_with_context(
+  prop : @model.LottieProperty[Array[Double]],
+  frame : Double,
+  layer_index : Int,
+) -> Array[Double] {
+  apply_vec_expression(prop, frame, layer_index, evaluate_vec_property(prop, frame))
+}
+
+///|
 pub fn evaluate_path_property(
   prop : @model.LottieProperty[@model.BezierPath],
   frame : Double,
@@ -439,6 +658,15 @@ pub fn evaluate_path_property(
 }
 
 ///|
+pub fn evaluate_path_property_with_context(
+  prop : @model.LottieProperty[@model.BezierPath],
+  frame : Double,
+  layer_index : Int,
+) -> @model.BezierPath {
+  apply_path_expression(prop, frame, layer_index, evaluate_path_property(prop, frame))
+}
+
+///|
 pub fn evaluate_transform(
   transform : @model.Transform,
   frame : Double,
@@ -483,5 +711,43 @@ pub fn evaluate_transform(
   let m3 = m2.scale(sx / 100.0, sy / 100.0)
 
   // 4. Anchor offset
+  m3.translate(-ax, -ay)
+}
+
+///|
+pub fn evaluate_transform_with_context(
+  transform : @model.Transform,
+  frame : Double,
+  layer_index : Int,
+) -> @math.Matrix {
+  let a = evaluate_vec_property_with_context(transform.anchor, frame, layer_index)
+  let p = if transform.split == Some(true) {
+    let x = match transform.px {
+      Some(prop) => evaluate_double_property_with_context(prop, frame, layer_index)
+      None => 0.0
+    }
+    let y = match transform.py {
+      Some(prop) => evaluate_double_property_with_context(prop, frame, layer_index)
+      None => 0.0
+    }
+    [x, y]
+  } else {
+    evaluate_vec_property_with_context(transform.position, frame, layer_index)
+  }
+  let s = evaluate_vec_property_with_context(transform.scale, frame, layer_index)
+  let r = evaluate_double_property_with_context(transform.rotation, frame, layer_index)
+
+  let m = @math.Matrix::identity()
+
+  let ax = if a.length() > 0 { a[0] } else { 0.0 }
+  let ay = if a.length() > 1 { a[1] } else { 0.0 }
+  let px = if p.length() > 0 { p[0] } else { 0.0 }
+  let py = if p.length() > 1 { p[1] } else { 0.0 }
+  let sx = if s.length() > 0 { s[0] } else { 100.0 }
+  let sy = if s.length() > 1 { s[1] } else { 100.0 }
+
+  let m1 = m.translate(px, py)
+  let m2 = m1.rotate(r * 3.141592653589793 / 180.0)
+  let m3 = m2.scale(sx / 100.0, sy / 100.0)
   m3.translate(-ax, -ay)
 }

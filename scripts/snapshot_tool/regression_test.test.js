@@ -42,7 +42,7 @@ test('demo uses vendored lottie-web asset', () => {
   assert.ok(fs.existsSync(path.join(repoRoot, 'demo', 'lottie.min.js')));
 });
 
-test('expression animations prefer official frontend renderer', async () => {
+test('expression detection finds string-valued expression fields', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const helper = await import(path.join(repoRoot, 'demo', 'render_mode.mjs'));
 
@@ -55,20 +55,6 @@ test('expression animations prefer official frontend renderer', async () => {
       },
     },
   }), true);
-
-  assert.equal(helper.getPreferredRendererMode({
-    ks: {
-      p: {
-        s: true,
-        x: { a: 0, k: 100 },
-        y: { a: 0, k: 200 },
-      },
-    },
-  }), 'wasm');
-
-  assert.equal(helper.getPreferredRendererMode({
-    shapes: [{ ks: { x: 'loopOut()' } }],
-  }), 'official');
 });
 
 test('expression helper computes playback metadata from animation root', async () => {
@@ -94,4 +80,88 @@ test('expression helper computes playback metadata from animation root', async (
     totalFrames: 180,
     aspectRatio: '512 / 256',
   });
+});
+
+test('default expression host evaluates scalar expressions with layer effects context', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const animationData = {
+    fr: 60,
+    w: 512,
+    h: 512,
+    layers: [{
+      ind: 6,
+      ef: [{
+        nm: 'Position - Overshoot',
+        ef: [{
+          mn: 'ADBE Slider Control-0001',
+          v: { a: 0, k: 20 },
+        }],
+      }],
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [0, 0, 0], e: [60, 0, 0] },
+            { t: 60, s: [60, 0, 0], e: [120, 0, 0] },
+          ],
+          x: "var $bm_rt; $bm_rt = effect('Position - Overshoot')('ADBE Slider Control-0001') + time;",
+        },
+      },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const result = host.evaluateDouble(
+    "var $bm_rt; $bm_rt = effect('Position - Overshoot')('ADBE Slider Control-0001') + time;",
+    30,
+    6,
+    0,
+  );
+
+  assert.equal(result, 20.5);
+});
+
+test('default expression host evaluates vector expressions', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => ({ fr: 30, layers: [{ ind: 2 }] }),
+    getPlaybackMeta: () => ({ fps: 30 }),
+  });
+
+  const value = host.evaluateVec('var $bm_rt; $bm_rt = sum(value, [5, -5, 0]);', 12, 2, [10, 20, 0]);
+
+  assert.deepEqual(value, [15, 15, 0]);
+});
+
+test('default expression host supports createPath-style path mutations', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.mjs'));
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => ({ fr: 30, layers: [{ ind: 15 }] }),
+    getPlaybackMeta: () => ({ fps: 30 }),
+  });
+
+  const pathValue = host.evaluatePath(
+    'var $bm_rt; var pts = thisProperty.points(); pts[1] = [20, 5]; $bm_rt = createPath(pts, thisProperty.inTangents(), thisProperty.outTangents(), true);',
+    0,
+    15,
+    {
+      vertices: [[0, 0], [10, 0]],
+      inTangents: [[0, 0], [0, 0]],
+      outTangents: [[0, 0], [0, 0]],
+      closed: false,
+    },
+  );
+
+  assert.equal(pathValue.closed, true);
+  assert.deepEqual(pathValue.vertices, [[0, 0], [20, 5]]);
 });

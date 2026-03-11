@@ -2,6 +2,10 @@ import {
     animationUsesExpressions,
     getAnimationPlaybackMeta,
 } from './render_mode.mjs';
+import {
+    createExpressionModule,
+    setExpressionHost,
+} from './expression_host.mjs';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
@@ -16,7 +20,6 @@ const fileInput = document.getElementById('file-input');
 const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
 const compareToggle = document.getElementById('compare-toggle');
-const wasmWrapper = document.getElementById('wasm-wrapper');
 const officialWrapper = document.getElementById('official-wrapper');
 const officialContainer = document.getElementById('official-lottie-container');
 
@@ -65,7 +68,6 @@ let imageAssetsByIndex = [];
 let currentAnimationRequestId = null;
 let currentAnimationData = null;
 let currentAnimationMeta = null;
-let currentRendererMode = 'wasm';
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -74,6 +76,15 @@ const fillRuleStack = [];
 const offscreenStack = [];
 // Stack for two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
 const matteStack = [];
+const expressionModule = createExpressionModule({
+    getAnimationData: () => currentAnimationData,
+    getPlaybackMeta: () => currentAnimationMeta,
+});
+
+window.setMoonLottieExpressionHost = setExpressionHost;
+if (window.__moonLottieExpressionHost) {
+    setExpressionHost(window.__moonLottieExpressionHost);
+}
 
 const importObject = {
   demo: {
@@ -83,6 +94,7 @@ const importObject = {
     }
   },
   _: wasmStringGlobals,
+  expressions: expressionModule,
   spectest: { print_char: (c) => {} },
   canvas: {
     save: () => { ctx.save(); fillRuleStack.push(ctx._currentFillRule || "nonzero"); },
@@ -302,26 +314,6 @@ function destroyOfficialPlayer() {
     officialContainer.innerHTML = '';
 }
 
-function setCompareAvailability(enabled, message = '') {
-    compareToggle.disabled = !enabled;
-    compareToggle.title = message;
-}
-
-function syncRendererVisibility() {
-    const showOfficial = currentRendererMode === 'official' || compareToggle.checked;
-    const officialTag = officialWrapper.querySelector('.canvas-tag');
-
-    wasmWrapper.style.display = currentRendererMode === 'official' ? 'none' : 'flex';
-    officialWrapper.style.display = showOfficial ? 'flex' : 'none';
-    viewport.classList.toggle('comparison-mode', currentRendererMode === 'wasm' && compareToggle.checked);
-
-    if (officialTag) {
-        officialTag.textContent = currentRendererMode === 'official'
-            ? 'Official (lottie-web expressions)'
-            : 'Official (lottie-web)';
-    }
-}
-
 function createOfficialPlayer(animationData) {
     if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
         return null;
@@ -350,7 +342,7 @@ function createOfficialPlayer(animationData) {
 }
 
 function renderCurrentFrame() {
-    if (currentRendererMode === 'wasm' && player) {
+    if (player) {
         window.moonLottie.update_player(player, currentFrame);
     }
 
@@ -480,8 +472,6 @@ async function startPlayer(jsonStr) {
     currentAnimationData = animationData;
     currentAnimationMeta = getAnimationPlaybackMeta(animationData);
     const usesExpressions = animationUsesExpressions(animationData);
-    const hasLottieWeb = !!(window.lottie && typeof window.lottie.loadAnimation === 'function');
-    currentRendererMode = usesExpressions && hasLottieWeb ? 'official' : 'wasm';
     
     // Stop any existing render loop and reset timing
     if (currentAnimationRequestId) {
@@ -494,52 +484,47 @@ async function startPlayer(jsonStr) {
     destroyOfficialPlayer();
     player = null;
 
-    if (usesExpressions) {
-        if (!createOfficialPlayer(animationData)) {
-            statusMsg.innerText = "当前动画包含 expressions，但 lottie-web 未就绪，无法播放";
-            return;
-        }
-        setCompareAvailability(false, '包含 expressions 的动画已自动切换为 lottie-web 兼容模式');
-        statusMsg.innerText = "检测到 expressions，已自动切换到 lottie-web 兼容模式: " + (animationData.nm || "未命名动画");
-    } else {
-        setCompareAvailability(true);
-        await preloadAssets(animationData);
-        // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
-        // The actual image data has already been preloaded into imageAssetsByIndex by JS.
-        const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
-        if (wasmAnimationData.assets) {
-            wasmAnimationData.assets.forEach(asset => {
-                if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
-                    asset.p = '';
-                }
-            });
-        }
-        currentJsonStr = JSON.stringify(wasmAnimationData);
-        player = window.moonLottie.create_player_from_js();
-        if (!player) {
-            statusMsg.innerText = "动画解析失败";
-            return;
-        }
-        if (compareToggle.checked) {
-            createOfficialPlayer(animationData);
-        }
-        statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
+    await preloadAssets(animationData);
+    // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
+    // The actual image data has already been preloaded into imageAssetsByIndex by JS.
+    const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
+    if (wasmAnimationData.assets) {
+        wasmAnimationData.assets.forEach(asset => {
+            if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
+                asset.p = '';
+            }
+        });
     }
-
-    syncRendererVisibility();
+    currentJsonStr = JSON.stringify(wasmAnimationData);
+    player = window.moonLottie.create_player_from_js();
+    if (!player) {
+        statusMsg.innerText = "动画解析失败";
+        return;
+    }
+    if (compareToggle.checked) {
+        createOfficialPlayer(animationData);
+    }
+    officialWrapper.style.display = compareToggle.checked ? 'flex' : 'none';
+    viewport.classList.toggle('comparison-mode', compareToggle.checked);
     applyAnimationMetadata(currentAnimationMeta);
     currentFrame = currentAnimationMeta.inPoint;
     isPlaying = true;
     lastTimestamp = performance.now();
     updatePlayPauseButton();
     renderCurrentFrame();
+
+    if (usesExpressions) {
+        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过外部 JS 表达式宿主执行表达式，并持续与 lottie-web 对照";
+    } else {
+        statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
+    }
     
     currentAnimationRequestId = requestAnimationFrame(renderLoop);
     console.log(`[MoonLottie] New animation loop started (ID: ${currentAnimationRequestId})`);
 }
 
 function renderLoop(timestamp) {
-    if (currentRendererMode === 'wasm' && !player) return;
+    if (!player) return;
     
     if (isPlaying) {
         if (!lastTimestamp) {
@@ -585,7 +570,7 @@ function updatePlayPauseButton() {
 
 // UI Event Handlers
 seekBar.oninput = () => {
-    if (currentRendererMode === 'wasm' && !player) return;
+    if (!player) return;
     currentFrame = parseFloat(seekBar.value);
     renderCurrentFrame();
     updateUI();
@@ -614,7 +599,7 @@ document.querySelectorAll('.bg-btn').forEach(btn => {
         document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const bg = btn.dataset.bg;
-        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '') + (currentRendererMode === 'wasm' && compareToggle.checked ? ' comparison-mode' : '');
+        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '') + (compareToggle.checked ? ' comparison-mode' : '');
     };
 });
 
@@ -623,15 +608,14 @@ compareToggle.onchange = (e) => {
     if (!currentAnimationData) return;
 
     if (e.target.checked) {
-        if (currentRendererMode === 'wasm') {
-            createOfficialPlayer(currentAnimationData);
-            renderCurrentFrame();
-        }
+        createOfficialPlayer(currentAnimationData);
+        renderCurrentFrame();
     } else {
         destroyOfficialPlayer();
     }
 
-    syncRendererVisibility();
+    officialWrapper.style.display = e.target.checked ? 'flex' : 'none';
+    viewport.classList.toggle('comparison-mode', e.target.checked);
     updateUI();
 };
 
