@@ -675,12 +675,12 @@ function getPointInSegment(pt1, pt2, pt3, pt4, percent, bezierData) {
     return [x, y];
 }
 
-function pointOnPath(shapePath, progress) {
+function pointOnPath(shapePath, progress, cachedSegmentsLength = null) {
     if (!shapePath || shapePath._length === 0) {
         return [0, 0];
     }
     const clampedProgress = Math.min(Math.max(Number(progress) || 0, 0), 1);
-    const segmentsLength = getSegmentsLength(shapePath);
+    const segmentsLength = cachedSegmentsLength ?? getSegmentsLength(shapePath);
     const lengthPos = segmentsLength.totalLength * clampedProgress;
     let accumulatedLength = 0;
 
@@ -709,7 +709,7 @@ function pointOnPath(shapePath, progress) {
         : [shapePath.v[shapePath._length - 1][0], shapePath.v[shapePath._length - 1][1]];
 }
 
-function vectorOnPath(shapePath, progress, vectorType) {
+function vectorOnPath(shapePath, progress, vectorType, cachedSegmentsLength = null) {
     let normalizedProgress = progress;
     // Match lottie-web's exact endpoint handling.
     if (normalizedProgress == 1) {
@@ -717,8 +717,8 @@ function vectorOnPath(shapePath, progress, vectorType) {
     } else if (normalizedProgress == 0) {
         normalizedProgress = 0.999;
     }
-    const pt1 = pointOnPath(shapePath, normalizedProgress);
-    const pt2 = pointOnPath(shapePath, normalizedProgress + 0.001);
+    const pt1 = pointOnPath(shapePath, normalizedProgress, cachedSegmentsLength);
+    const pt2 = pointOnPath(shapePath, normalizedProgress + 0.001, cachedSegmentsLength);
     const xLength = pt2[0] - pt1[0];
     const yLength = pt2[1] - pt1[1];
     const magnitude = Math.sqrt(xLength ** 2 + yLength ** 2);
@@ -738,7 +738,7 @@ function samplePathAtProgress(pathValue, progress) {
     };
 }
 
-function createPathProxy(pathValue) {
+function createPathProxy(pathValue, lengthSourcePathValue = null) {
     const {
         vertices,
         inTangents: inTangentPoints,
@@ -746,6 +746,8 @@ function createPathProxy(pathValue) {
         closed,
     } = createBezierSegments(pathValue);
     const shapePath = createExpressionShapePath(pathValue);
+    const lengthSourceShapePath = lengthSourcePathValue ? createExpressionShapePath(lengthSourcePathValue) : shapePath;
+    const segmentsLength = getSegmentsLength(lengthSourceShapePath);
     const proxyTarget = {
         vertices,
         inTangentPoints,
@@ -756,8 +758,8 @@ function createPathProxy(pathValue) {
         inTangents: () => clonePointArray(inTangentPoints),
         outTangents: () => clonePointArray(outTangentPoints),
         isClosed: () => closed,
-        pointOnPath: (progress) => cloneNumberArray(pointOnPath(shapePath, progress)),
-        tangentOnPath: (progress) => cloneNumberArray(vectorOnPath(shapePath, progress, 'tangent')),
+        pointOnPath: (progress) => cloneNumberArray(pointOnPath(shapePath, progress, segmentsLength)),
+        tangentOnPath: (progress) => cloneNumberArray(vectorOnPath(shapePath, progress, 'tangent', segmentsLength)),
     };
     proxyTarget.path = proxyTarget;
     return proxyTarget;
@@ -829,7 +831,7 @@ function resolveShapeSelector(target, selector, frame, animationData = null, com
                 const currentPath = { vertices, inTangents, outTangents, closed };
                 const result = evaluateHostedExpressionValue(pathExpr, frame, parentLayer, rawPath, animationData, compLayers, currentPath);
                 if (result && Array.isArray(result.vertices) && Array.isArray(result.inTangents) && Array.isArray(result.outTangents)) {
-                    return createPathProxy(result);
+                    return createPathProxy(result, rawPath);
                 }
             } catch (_) {}
         }
@@ -849,7 +851,7 @@ function resolveShapePathForProp(ksProperty, frame, animationData, compLayers, p
             const currentPath = { vertices, inTangents, outTangents, closed };
             const result = evaluateHostedExpressionValue(pathExpr, frame, parentLayer, rawPath, animationData, compLayers, currentPath);
             if (result && Array.isArray(result.vertices) && Array.isArray(result.inTangents) && Array.isArray(result.outTangents)) {
-                return createPathProxy(result);
+                return createPathProxy(result, rawPath);
             }
         } catch (_) {}
     }
