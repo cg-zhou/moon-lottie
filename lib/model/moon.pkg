@@ -1,2 +1,4 @@
 import {
 }
+
+warnings = "-struct_never_constructed"

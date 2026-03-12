@@ -192,11 +192,11 @@ fn split_string(input : String, delimiter : Char) -> Array[String] {
   let delimiter_uint16 = delimiter.to_int().to_uint16()
   for i = 0; i < input.length(); i = i + 1 {
     if input[i] == delimiter_uint16 {
-      parts.push(input.substring(start~, end=i))
+      parts.push(try! input[start:i].to_string())
       start = i + 1
     }
   }
-  parts.push(input.substring(start~, end=input.length()))
+  parts.push(try! input[start:input.length()].to_string())
   parts
 }
 
