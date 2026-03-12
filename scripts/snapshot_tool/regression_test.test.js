@@ -80,6 +80,52 @@ test('expression helper computes playback metadata from animation root', async (
   });
 });
 
+test('canvas DPR helper scales backing store dimensions', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_dpr.js'));
+  const canvas = { width: 0, height: 0 };
+
+  assert.deepEqual(helper.getCanvasPixelSize(80, 100, 2), {
+    cssWidth: 80,
+    cssHeight: 100,
+    dpr: 2,
+    pixelWidth: 160,
+    pixelHeight: 200,
+  });
+
+  assert.deepEqual(helper.getCanvasPixelSize(80, 100, 0), {
+    cssWidth: 80,
+    cssHeight: 100,
+    dpr: 1,
+    pixelWidth: 80,
+    pixelHeight: 100,
+  });
+
+  assert.deepEqual(helper.resizeCanvasForDpr(canvas, 80, 100, 1.5), {
+    cssWidth: 80,
+    cssHeight: 100,
+    dpr: 1.5,
+    pixelWidth: 120,
+    pixelHeight: 150,
+  });
+  assert.equal(canvas.width, 120);
+  assert.equal(canvas.height, 150);
+});
+
+test('canvas DPR helper applies scaled transform matrices', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_dpr.js'));
+
+  let lastTransform = null;
+  helper.applyDprTransform({
+    setTransform: (...args) => {
+      lastTransform = args;
+    },
+  }, 1, 0, 0, 1, 12, 24, 2.5);
+
+  assert.deepEqual(lastTransform, [2.5, 0, 0, 2.5, 30, 60]);
+});
+
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));

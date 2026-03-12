@@ -6,6 +6,10 @@ import {
     createExpressionModule,
     setExpressionHost,
 } from './expression_host.js';
+import {
+    applyDprTransform,
+    resizeCanvasForDpr,
+} from './canvas_dpr.js';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
@@ -71,6 +75,10 @@ let currentAnimationMeta = null;
 let currentExpressionAnimationData = null;
 let currentExpressionMeta = null;
 
+function readDevicePixelRatio() {
+    return window.devicePixelRatio || 1;
+}
+
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
 let currentDash = [];
@@ -131,7 +139,7 @@ const importObject = {
     clearRect: (x, y, w, h) => ctx.clearRect(x, y, w, h),
     setGlobalAlpha: (a) => { ctx.globalAlpha = a; },
     setOpacity: (a) => { ctx.globalAlpha *= a; },
-    setTransform: (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
+    setTransform: (a, b, c, d, e, f) => applyDprTransform(ctx, a, b, c, d, e, f, readDevicePixelRatio()),
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (assetIndex, w, h) => {
         const img = imageAssetsByIndex[assetIndex] || null;
@@ -368,8 +376,7 @@ function renderCurrentFrame() {
 function applyAnimationMetadata(meta) {
     const { width, height, fps, totalFrames, inPoint, aspectRatio, version } = meta;
 
-    canvas.width = width;
-    canvas.height = height;
+    resizeCanvasForDpr(canvas, width, height, readDevicePixelRatio());
     canvas.style.aspectRatio = aspectRatio;
     officialContainer.style.aspectRatio = aspectRatio;
 
@@ -635,6 +642,12 @@ compareToggle.onchange = (e) => {
     viewport.classList.toggle('comparison-mode', e.target.checked);
     updateUI();
 };
+
+window.addEventListener('resize', () => {
+    if (!currentAnimationMeta) return;
+    applyAnimationMetadata(currentAnimationMeta);
+    renderCurrentFrame();
+});
 
 function initDeployTime() {
     const deployTimeEl = document.getElementById('deploy-time');
