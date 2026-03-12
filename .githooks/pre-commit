@@ -3,10 +3,7 @@
 moon check
 
 echo "Running non-SVG tests..."
-moon test -p cg-zhou/moon-lottie/lib/math \
-          -p cg-zhou/moon-lottie/lib/parser \
-          -p cg-zhou/moon-lottie/lib/renderer \
-          -p cg-zhou/moon-lottie/lib/runtime
+moon test
 TEST_EXIT=$?
 
 if [ $TEST_EXIT -ne 0 ]; then

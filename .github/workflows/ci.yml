@@ -28,10 +28,6 @@ jobs:
         id: tests
         run: |
           OUTPUT=$(moon test \
-            -p cg-zhou/moon-lottie/lib/math \
-            -p cg-zhou/moon-lottie/lib/parser \
-            -p cg-zhou/moon-lottie/lib/renderer \
-            -p cg-zhou/moon-lottie/lib/runtime \
             --enable-coverage \
             2>&1)
           echo "$OUTPUT"
