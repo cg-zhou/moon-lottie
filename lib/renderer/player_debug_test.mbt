@@ -403,17 +403,17 @@ test "path expressions from parsed shape properties are evaluated during render"
   @runtime.clear_expression_handlers()
 
   let commands = recorder.get_commands()
-  let mut first_move : (Double, Double)? = None
+  let mut first_move_command_point : (Double, Double)? = None
   for cmd in commands {
     match cmd {
       MoveTo(x, y) => {
-        first_move = Some((x, y))
+        first_move_command_point = Some((x, y))
         break
       }
       _ => ()
     }
   }
-  assert_eq(first_move, Some((100.0, 0.0)))
+  assert_eq(first_move_command_point, Some((100.0, 0.0)))
 }
 
 test "image layers use resolved asset source instead of asset id" {
