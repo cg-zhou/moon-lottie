@@ -27,6 +27,8 @@ const officialContainer = document.getElementById('official-lottie-container');
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const wasmBuiltinOptions = { builtins: ['js-string'] };
 const wasmJsStringImportModule = 'wasm:js-string';
+const RAD_TO_DEG = 180 / Math.PI;
+const EXPRESSION_PLAYER_LOAD_TIMEOUT_MS = 250;
 const wasmJsStringShim = {
     length: (s) => (typeof s === 'string' ? s.length : 0),
     charCodeAt: (s, i) => {
@@ -348,6 +350,18 @@ function destroyExpressionReferencePlayer() {
     }
 }
 
+function cloneAnimationData(animationData) {
+    if (typeof globalThis.structuredClone !== 'undefined') {
+        return globalThis.structuredClone(animationData);
+    }
+    try {
+        return JSON.parse(JSON.stringify(animationData));
+    } catch (error) {
+        console.warn('[MoonLottie] Falling back to original animation data after clone failure', error);
+        return animationData;
+    }
+}
+
 function createExpressionReferencePlayer(animationData) {
     if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
         return Promise.resolve(null);
@@ -361,7 +375,7 @@ function createExpressionReferencePlayer(animationData) {
         renderer: 'svg',
         loop: false,
         autoplay: false,
-        animationData: JSON.parse(JSON.stringify(animationData)),
+        animationData: cloneAnimationData(animationData),
         rendererSettings: {
             preserveAspectRatio: 'xMidYMid meet',
             clearCanvas: true,
@@ -372,16 +386,26 @@ function createExpressionReferencePlayer(animationData) {
 
     return new Promise((resolve) => {
         let settled = false;
-        const finish = () => {
+        let timeoutId = null;
+        const finish = (value = player) => {
             if (settled) return;
             settled = true;
-            resolve(player);
+            clearTimeout(timeoutId);
+            player.removeEventListener?.('DOMLoaded', finish);
+            player.removeEventListener?.('data_ready', finish);
+            player.removeEventListener?.('loaded_images', finish);
+            player.removeEventListener?.('data_failed', handleError);
+            player.removeEventListener?.('error', handleError);
+            resolve(value);
         };
+        const handleError = () => finish(null);
 
         player.addEventListener?.('DOMLoaded', finish);
         player.addEventListener?.('data_ready', finish);
         player.addEventListener?.('loaded_images', finish);
-        setTimeout(finish, 250);
+        player.addEventListener?.('data_failed', handleError);
+        player.addEventListener?.('error', handleError);
+        timeoutId = setTimeout(finish, EXPRESSION_PLAYER_LOAD_TIMEOUT_MS);
     });
 }
 
@@ -415,6 +439,7 @@ function findShapePropertyByExpression(itemsData, expression) {
 function createOfficialExpressionHost(referencePlayer, fallbackHost) {
     let syncedFrame = null;
     const propertyCache = new Map();
+    const layerCache = new Map();
 
     function syncFrame(frame) {
         if (!referencePlayer || syncedFrame === frame) {
@@ -433,13 +458,26 @@ function createOfficialExpressionHost(referencePlayer, fallbackHost) {
             return propertyCache.get(cacheKey);
         }
 
-        const layerElement = referencePlayer.renderer?.elements?.find(
-            (candidate) => Number(candidate?.data?.ind) === Number(layerIndex),
-        ) ?? null;
+        if (layerCache.size === 0) {
+            for (const element of referencePlayer.renderer?.elements ?? []) {
+                if (element?.data?.ind != null) {
+                    layerCache.set(Number(element.data.ind), element);
+                }
+            }
+        }
+        let layerElement = layerCache.get(layerIndex);
+        if (layerElement === undefined) {
+            layerElement = referencePlayer.renderer?.elements?.find(
+                (candidate) => Number(candidate?.data?.ind) === Number(layerIndex),
+            ) ?? null;
+            layerCache.set(layerIndex, layerElement);
+        }
 
         let match = null;
         const transformProps = layerElement?.finalTransform?.mProp ?? null;
         if (transformProps) {
+            // These are the lottie-web transform property handles we expect expressions
+            // to target on 2D layer transforms.
             for (const key of ['p', 'a', 's', 'r', 'rz', 'o', 'px', 'py', 'pz']) {
                 if (transformProps[key]?.data?.x === expression) {
                     match = { property: transformProps[key], source: key };
@@ -467,11 +505,11 @@ function createOfficialExpressionHost(referencePlayer, fallbackHost) {
             syncFrame(frame);
             const officialValue = match.property.v;
             if (Array.isArray(officialValue) || ArrayBuffer.isView(officialValue)) {
-                return Number(cloneOfficialValue(officialValue)[0]) || Number(value) || 0;
+                return Number(officialValue[0]) || Number(value) || 0;
             }
             const numericValue = Number(officialValue) || Number(value) || 0;
             if (match.source === 'r' || match.source === 'rz') {
-                return numericValue * 180 / Math.PI;
+                return numericValue * RAD_TO_DEG;
             }
             return numericValue;
         },
@@ -650,7 +688,7 @@ async function startPlayer(jsonStr) {
     statusMsg.innerText = "初始化渲染引擎...";
     currentAnimationData = animationData;
     currentAnimationMeta = getAnimationPlaybackMeta(animationData);
-    currentExpressionAnimationData = JSON.parse(jsonStr);
+    currentExpressionAnimationData = cloneAnimationData(animationData);
     currentExpressionMeta = getAnimationPlaybackMeta(currentExpressionAnimationData);
     const usesExpressions = animationUsesExpressions(animationData);
     const fallbackExpressionHost = createDefaultExpressionHost({
@@ -673,7 +711,7 @@ async function startPlayer(jsonStr) {
     await preloadAssets(animationData);
     // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
     // The actual image data has already been preloaded into imageAssetsByIndex by JS.
-    const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
+    const wasmAnimationData = cloneAnimationData(animationData);
     if (wasmAnimationData.assets) {
         wasmAnimationData.assets.forEach(asset => {
             if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
