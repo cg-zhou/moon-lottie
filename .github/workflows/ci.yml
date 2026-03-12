@@ -32,7 +32,7 @@ jobs:
             -p cg-zhou/moon-lottie/lib/parser \
             -p cg-zhou/moon-lottie/lib/renderer \
             -p cg-zhou/moon-lottie/lib/runtime \
-            --coverage \
+            --enable-coverage \
             2>&1)
           echo "$OUTPUT"
           TOTAL=$(echo "$OUTPUT" | grep -E 'Total tests: [0-9]+' | grep -oE '[0-9]+' | head -1)
@@ -45,8 +45,8 @@ jobs:
           # Extract coverage
           COVERAGE_SUMMARY=$(moon coverage report -f summary)
           echo "$COVERAGE_SUMMARY"
-          COVERAGE_PERCENT=$(echo "$COVERAGE_SUMMARY" | tail -1 | awk '{split($2, a, "/"); if (a[2] > 0) printf "%.0f%%", a[1]/a[2]*100; else print "0%"}')
-          echo "coverage=$COVERAGE_PERCENT" >> $GITHUB_OUTPUT
+          COVERAGE_TOTAL=$(echo "$COVERAGE_SUMMARY" | grep -E '^Total: [0-9]+/[0-9]+' | tail -1 | cut -d' ' -f2)
+          echo "coverage=$COVERAGE_TOTAL" >> $GITHUB_OUTPUT
 
       - name: Count code lines
         id: lines
@@ -84,7 +84,7 @@ jobs:
           fi
 
           printf '{"schemaVersion":1,"label":"passed","message":"%s / %s","color":"%s"}\n' "${PASSED:-0}" "${TOTAL:-0}" "${TEST_COLOR}" > badges/tests-passed.json
-          printf '{"schemaVersion":1,"label":"coverage","message":"%s","color":"orange"}\n' "${COVERAGE:-0%}" > badges/coverage.json
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s","color":"orange"}\n' "${COVERAGE:-0/0}" > badges/coverage.json
           printf '{"schemaVersion":1,"label":"total lines","message":"%s","color":"blue"}\n' "${LINES_TOTAL:-0}" > badges/lines-total.json
           printf '{"schemaVersion":1,"label":"source lines","message":"%s","color":"blue"}\n' "${LINES_SOURCE:-0}" > badges/lines-source.json
 
@@ -113,4 +113,3 @@ jobs:
           git add badges/
           git diff --staged --quiet || git commit -m "Update badges [skip ci]"
           git push origin badges
-
