@@ -68,6 +68,8 @@ let imageAssetsByIndex = [];
 let currentAnimationRequestId = null;
 let currentAnimationData = null;
 let currentAnimationMeta = null;
+let currentExpressionAnimationData = null;
+let currentExpressionMeta = null;
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -77,8 +79,8 @@ const offscreenStack = [];
 // Stack for two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
 const matteStack = [];
 const expressionModule = createExpressionModule({
-    getAnimationData: () => currentAnimationData,
-    getPlaybackMeta: () => currentAnimationMeta,
+    getAnimationData: () => currentExpressionAnimationData,
+    getPlaybackMeta: () => currentExpressionMeta,
 });
 
 window.setMoonLottieExpressionHost = setExpressionHost;
@@ -314,6 +316,18 @@ function destroyOfficialPlayer() {
     officialContainer.innerHTML = '';
 }
 
+function cloneAnimationData(animationData) {
+    if (typeof structuredClone !== 'undefined') {
+        return structuredClone(animationData);
+    }
+    try {
+        return JSON.parse(JSON.stringify(animationData));
+    } catch (error) {
+        console.warn('[MoonLottie] Failed to clone animation data for expression isolation; continuing with shared state may reintroduce expression mismatches', error);
+        return animationData;
+    }
+}
+
 function createOfficialPlayer(animationData) {
     if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
         return null;
@@ -471,6 +485,8 @@ async function startPlayer(jsonStr) {
     statusMsg.innerText = "初始化渲染引擎...";
     currentAnimationData = animationData;
     currentAnimationMeta = getAnimationPlaybackMeta(animationData);
+    currentExpressionAnimationData = cloneAnimationData(animationData);
+    currentExpressionMeta = getAnimationPlaybackMeta(currentExpressionAnimationData);
     const usesExpressions = animationUsesExpressions(animationData);
     
     // Stop any existing render loop and reset timing
@@ -487,7 +503,7 @@ async function startPlayer(jsonStr) {
     await preloadAssets(animationData);
     // For embedded image assets, pass id-only metadata to Wasm to avoid copying huge base64 strings.
     // The actual image data has already been preloaded into imageAssetsByIndex by JS.
-    const wasmAnimationData = JSON.parse(JSON.stringify(animationData));
+    const wasmAnimationData = cloneAnimationData(animationData);
     if (wasmAnimationData.assets) {
         wasmAnimationData.assets.forEach(asset => {
             if (asset && asset.e === 1 && typeof asset.p === 'string' && asset.p.startsWith('data:')) {
@@ -504,6 +520,7 @@ async function startPlayer(jsonStr) {
     if (compareToggle.checked) {
         createOfficialPlayer(animationData);
     }
+    setExpressionHost(null);
     officialWrapper.style.display = compareToggle.checked ? 'flex' : 'none';
     viewport.classList.toggle('comparison-mode', compareToggle.checked);
     applyAnimationMetadata(currentAnimationMeta);
@@ -514,7 +531,7 @@ async function startPlayer(jsonStr) {
     renderCurrentFrame();
 
     if (usesExpressions) {
-        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过外部 JS 表达式宿主执行表达式，并持续与 lottie-web 对照";
+        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过内置 JS 表达式宿主执行表达式";
     } else {
         statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
     }
