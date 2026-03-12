@@ -32,6 +32,7 @@ jobs:
             -p cg-zhou/moon-lottie/lib/parser \
             -p cg-zhou/moon-lottie/lib/renderer \
             -p cg-zhou/moon-lottie/lib/runtime \
+            --coverage \
             2>&1)
           echo "$OUTPUT"
           TOTAL=$(echo "$OUTPUT" | grep -E 'Total tests: [0-9]+' | grep -oE '[0-9]+' | head -1)
@@ -40,6 +41,12 @@ jobs:
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "passed=$PASSED" >> $GITHUB_OUTPUT
           echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          
+          # Extract coverage
+          COVERAGE_SUMMARY=$(moon coverage report -f summary)
+          echo "$COVERAGE_SUMMARY"
+          COVERAGE_PERCENT=$(echo "$COVERAGE_SUMMARY" | tail -1 | awk '{split($2, a, "/"); if (a[2] > 0) printf "%.0f%%", a[1]/a[2]*100; else print "0%"}')
+          echo "coverage=$COVERAGE_PERCENT" >> $GITHUB_OUTPUT
 
       - name: Count code lines
         id: lines
@@ -66,6 +73,7 @@ jobs:
           TOTAL="${{ steps.tests.outputs.total }}"
           PASSED="${{ steps.tests.outputs.passed }}"
           FAILED="${{ steps.tests.outputs.failed }}"
+          COVERAGE="${{ steps.tests.outputs.coverage }}"
           LINES_TOTAL="${{ steps.lines.outputs.total }}"
           LINES_SOURCE="${{ steps.lines.outputs.source }}"
 
@@ -75,13 +83,8 @@ jobs:
             TEST_COLOR="red"
           fi
 
-          if [ -n "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
-            COVERAGE=$(echo "$PASSED $TOTAL" | awk '{printf "%.0f%%", $1/$2*100}')
-          else
-            COVERAGE="N/A"
-          fi
-
           printf '{"schemaVersion":1,"label":"passed","message":"%s / %s","color":"%s"}\n' "${PASSED:-0}" "${TOTAL:-0}" "${TEST_COLOR}" > badges/tests-passed.json
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s","color":"orange"}\n' "${COVERAGE:-0%}" > badges/coverage.json
           printf '{"schemaVersion":1,"label":"total lines","message":"%s","color":"blue"}\n' "${LINES_TOTAL:-0}" > badges/lines-total.json
           printf '{"schemaVersion":1,"label":"source lines","message":"%s","color":"blue"}\n' "${LINES_SOURCE:-0}" > badges/lines-source.json
 
