@@ -321,9 +321,13 @@ test "track matte uses composition frame timing" {
 }
 
 test "precomp layer time remap expression drives child frame" {
+  let handler_received_layer_context : Ref[Bool] = { val: false }
   @runtime.install_expression_handlers(
-    (expression, frame, _layer_index, _comp_id, value) =>
+    (expression, frame, layer_index, comp_id, value) =>
       if expression == "cycle-tm" {
+        if layer_index == 1 && comp_id == "" {
+          handler_received_layer_context.val = true
+        }
         if frame >= 10.0 { frame - 10.0 } else { frame }
       } else {
         value
@@ -366,6 +370,9 @@ test "precomp layer time remap expression drives child frame" {
         )
       }
     None => fail("No translated child transform found")
+  }
+  if not(handler_received_layer_context.val) {
+    fail("Time remap expression handler should receive the current layer context")
   }
 }
 

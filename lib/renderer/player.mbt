@@ -190,7 +190,12 @@ fn[R : Renderer] Player::render_layer(
   let layer_frame = comp_frame - layer.start_time
   let precomp_frame = match layer.time_remap {
     Some(time_remap) => {
-      let remapped = self.evaluate_double(time_remap, layer_frame)
+      let remapped = @runtime.evaluate_double_property_with_context(
+        time_remap,
+        layer_frame,
+        layer.index,
+        self.current_comp_id,
+      )
       if remapped == layer.out_point { remapped - 1.0 } else { remapped }
     }
     None => layer_frame
