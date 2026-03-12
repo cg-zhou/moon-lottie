@@ -74,6 +74,7 @@ let currentAnimationData = null;
 let currentAnimationMeta = null;
 let currentExpressionAnimationData = null;
 let currentExpressionMeta = null;
+let pendingCanvasResizeFrame = null;
 
 function readDevicePixelRatio() {
     return window.devicePixelRatio || 1;
@@ -645,8 +646,13 @@ compareToggle.onchange = (e) => {
 
 window.addEventListener('resize', () => {
     if (!currentAnimationMeta) return;
-    applyAnimationMetadata(currentAnimationMeta);
-    renderCurrentFrame();
+    if (pendingCanvasResizeFrame !== null) return;
+    pendingCanvasResizeFrame = requestAnimationFrame(() => {
+        pendingCanvasResizeFrame = null;
+        if (!currentAnimationMeta) return;
+        applyAnimationMetadata(currentAnimationMeta);
+        renderCurrentFrame();
+    });
 });
 
 function initDeployTime() {
