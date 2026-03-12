@@ -23,7 +23,7 @@ async function getCompiledWasmModule(wasmUrl) {
 
 const MoonLottiePlayer = ({ 
     animationData, 
-    wasmUrl = '/renderer.wasm', 
+    wasmUrl = '/main.wasm', 
     autoPlay = true,
     width = 300,
     height = 300,
