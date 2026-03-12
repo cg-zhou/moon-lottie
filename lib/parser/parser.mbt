@@ -1363,6 +1363,7 @@ fn parse_property_bezier(
       match prop {
         Some(prop) => {
           let a_flag = property_animated_flag(prop.animated_flag)
+          let x = prop.expression
           match prop.value {
             Some(k) =>
               if a_flag || is_animated_keyframe_array(k) {
@@ -1421,11 +1422,18 @@ fn parse_property_bezier(
                     }
                   _ => ()
                 }
-                @model.LottieProperty::new_animated(keyframes)
+                @model.LottieProperty::new_animated(keyframes, expression=x)
               } else {
-                @model.LottieProperty::new_static(parse_bezier_path(k, fallback_closed))
+                @model.LottieProperty::new_static(
+                  parse_bezier_path(k, fallback_closed),
+                  expression=x,
+                )
               }
-            None => @model.LottieProperty::new_static(parse_bezier_path(j, fallback_closed))
+            None =>
+              @model.LottieProperty::new_static(
+                parse_bezier_path(j, fallback_closed),
+                expression=x,
+              )
           }
         }
         None => @model.LottieProperty::new_static(parse_bezier_path(j, fallback_closed))

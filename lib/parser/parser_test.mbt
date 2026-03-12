@@ -650,6 +650,34 @@ test "parse_layer_time_remap_expression" {
 }
 
 ///|
+test "parse_shape_path_expression" {
+  let json_str =
+    "{\"ty\":\"sh\",\"ix\":1,\"ks\":{\"a\":0,\"k\":{\"i\":[[0,0],[0,0]],\"o\":[[0,0],[0,0]],\"v\":[[0,0],[10,0]],\"c\":false},\"x\":\"var $bm_rt; $bm_rt = createPath(thisProperty.points(), thisProperty.inTangents(), thisProperty.outTangents(), false);\"}}"
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse shape path expression: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::Path(path_shape) => {
+      inspect(
+        path_shape.path.expression,
+        content=(
+          "Some(\"var $bm_rt; $bm_rt = createPath(thisProperty.points(), thisProperty.inTangents(), thisProperty.outTangents(), false);\")"
+        ),
+      )
+      match path_shape.path.value {
+        @model.PropertyValue::Static(path) => {
+          assert_eq(path.vertices, [[0.0, 0.0], [10.0, 0.0]])
+          assert_eq(path.closed, false)
+        }
+        _ => fail("Expected static path property")
+      }
+    }
+    _ => fail("Expected path shape")
+  }
+}
+
+///|
 test "parse_repeater_with_start_end_opacity" {
   let json_str =
     #|{"ty":"rp","c":{"k":4},"o":{"k":0},"m":1,"tr":{"a":{"k":[0,0]},"p":{"k":[50,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"so":{"k":100},"eo":{"k":20}}}
