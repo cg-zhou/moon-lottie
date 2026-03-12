@@ -376,6 +376,46 @@ test "precomp layer time remap expression drives child frame" {
   }
 }
 
+test "path expressions from parsed shape properties are evaluated during render" {
+  @runtime.install_expression_handlers(
+    (_expression, _frame, _layer_index, _comp_id, value) => value,
+    (_expression, _frame, _layer_index, _comp_id, value) => value,
+    (expression, _frame, layer_index, _comp_id, value) =>
+      if expression == "shift-path" && layer_index == 1 {
+        "1|100,0;110,0;110,10;100,10|0,0;0,0;0,0;0,0|0,0;0,0;0,0;0,0"
+      } else {
+        value
+      },
+  )
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"layers":[{"ty":4,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true},"x":"shift-path"}},{"ty":"fl","c":{"a":0,"k":[1,0,0]},"o":{"a":0,"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => {
+      @runtime.clear_expression_handlers()
+      fail("Failed to parse: \{e}")
+    }
+  }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+  @runtime.clear_expression_handlers()
+
+  let commands = recorder.get_commands()
+  let mut first_move_command_point : (Double, Double)? = None
+  for cmd in commands {
+    match cmd {
+      MoveTo(x, y) => {
+        first_move_command_point = Some((x, y))
+        break
+      }
+      _ => ()
+    }
+  }
+  assert_eq(first_move_command_point, Some((100.0, 0.0)))
+}
+
 test "image layers use resolved asset source instead of asset id" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":100,"h":100,"assets":[{"id":"img_0","w":10,"h":20,"u":"data:image/png;base64,","p":"AAAA"}],"layers":[{"ty":2,"ind":1,"refId":"img_0","ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
