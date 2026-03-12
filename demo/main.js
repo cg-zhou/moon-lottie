@@ -4,6 +4,7 @@ import {
 } from './render_mode.js';
 import {
     createExpressionModule,
+    createDefaultExpressionHost,
     setExpressionHost,
 } from './expression_host.js';
 
@@ -68,6 +69,10 @@ let imageAssetsByIndex = [];
 let currentAnimationRequestId = null;
 let currentAnimationData = null;
 let currentAnimationMeta = null;
+let currentExpressionAnimationData = null;
+let currentExpressionMeta = null;
+let expressionReferencePlayer = null;
+let expressionReferenceContainer = null;
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -77,8 +82,8 @@ const offscreenStack = [];
 // Stack for two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
 const matteStack = [];
 const expressionModule = createExpressionModule({
-    getAnimationData: () => currentAnimationData,
-    getPlaybackMeta: () => currentAnimationMeta,
+    getAnimationData: () => currentExpressionAnimationData,
+    getPlaybackMeta: () => currentExpressionMeta,
 });
 
 window.setMoonLottieExpressionHost = setExpressionHost;
@@ -314,6 +319,180 @@ function destroyOfficialPlayer() {
     officialContainer.innerHTML = '';
 }
 
+function ensureExpressionReferenceContainer() {
+    if (expressionReferenceContainer) {
+        return expressionReferenceContainer;
+    }
+    const container = document.createElement('div');
+    container.id = 'expression-reference-lottie-container';
+    container.style.position = 'fixed';
+    container.style.left = '-10000px';
+    container.style.top = '-10000px';
+    container.style.width = '1px';
+    container.style.height = '1px';
+    container.style.opacity = '0';
+    container.style.pointerEvents = 'none';
+    container.style.overflow = 'hidden';
+    document.body.appendChild(container);
+    expressionReferenceContainer = container;
+    return container;
+}
+
+function destroyExpressionReferencePlayer() {
+    if (expressionReferencePlayer) {
+        expressionReferencePlayer.destroy();
+        expressionReferencePlayer = null;
+    }
+    if (expressionReferenceContainer) {
+        expressionReferenceContainer.innerHTML = '';
+    }
+}
+
+function createExpressionReferencePlayer(animationData) {
+    if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
+        return Promise.resolve(null);
+    }
+
+    destroyExpressionReferencePlayer();
+
+    const container = ensureExpressionReferenceContainer();
+    const player = window.lottie.loadAnimation({
+        container,
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        animationData: JSON.parse(JSON.stringify(animationData)),
+        rendererSettings: {
+            preserveAspectRatio: 'xMidYMid meet',
+            clearCanvas: true,
+        },
+    });
+
+    expressionReferencePlayer = player;
+
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve(player);
+        };
+
+        player.addEventListener?.('DOMLoaded', finish);
+        player.addEventListener?.('data_ready', finish);
+        player.addEventListener?.('loaded_images', finish);
+        setTimeout(finish, 250);
+    });
+}
+
+function cloneOfficialValue(value) {
+    if (ArrayBuffer.isView(value)) {
+        return Array.from(value, (item) => Number(item) || 0);
+    }
+    if (Array.isArray(value)) {
+        return value.map(cloneOfficialValue);
+    }
+    return value;
+}
+
+function findShapePropertyByExpression(itemsData, expression) {
+    if (!Array.isArray(itemsData)) {
+        return null;
+    }
+    for (const item of itemsData) {
+        if (item?.sh?.data?.x === expression) {
+            return item.sh;
+        }
+        const nestedItems = item?.it ?? item?.elements ?? null;
+        const nested = findShapePropertyByExpression(nestedItems, expression);
+        if (nested) {
+            return nested;
+        }
+    }
+    return null;
+}
+
+function createOfficialExpressionHost(referencePlayer, fallbackHost) {
+    let syncedFrame = null;
+    const propertyCache = new Map();
+
+    function syncFrame(frame) {
+        if (!referencePlayer || syncedFrame === frame) {
+            return;
+        }
+        referencePlayer.goToAndStop(frame, true);
+        syncedFrame = frame;
+    }
+
+    function getExpressionProperty(expression, layerIndex, compId) {
+        if (!referencePlayer || compId) {
+            return null;
+        }
+        const cacheKey = `${layerIndex}:${expression}`;
+        if (propertyCache.has(cacheKey)) {
+            return propertyCache.get(cacheKey);
+        }
+
+        const layerElement = referencePlayer.renderer?.elements?.find(
+            (candidate) => Number(candidate?.data?.ind) === Number(layerIndex),
+        ) ?? null;
+
+        let match = null;
+        const transformProps = layerElement?.finalTransform?.mProp ?? null;
+        if (transformProps) {
+            for (const key of ['p', 'a', 's', 'r', 'rz', 'o', 'px', 'py', 'pz']) {
+                if (transformProps[key]?.data?.x === expression) {
+                    match = { property: transformProps[key], source: key };
+                    break;
+                }
+            }
+        }
+        if (!match) {
+            const shapeProperty = findShapePropertyByExpression(layerElement?.itemsData ?? null, expression);
+            if (shapeProperty) {
+                match = { property: shapeProperty, source: 'path' };
+            }
+        }
+
+        propertyCache.set(cacheKey, match);
+        return match;
+    }
+
+    return {
+        evaluateDouble(expression, frame, layerIndex, compId, value) {
+            const match = getExpressionProperty(expression, layerIndex, compId);
+            if (!match) {
+                return fallbackHost.evaluateDouble(expression, frame, layerIndex, compId, value);
+            }
+            syncFrame(frame);
+            const officialValue = match.property.v;
+            if (Array.isArray(officialValue) || ArrayBuffer.isView(officialValue)) {
+                return Number(cloneOfficialValue(officialValue)[0]) || Number(value) || 0;
+            }
+            const numericValue = Number(officialValue) || Number(value) || 0;
+            if (match.source === 'r' || match.source === 'rz') {
+                return numericValue * 180 / Math.PI;
+            }
+            return numericValue;
+        },
+        evaluateVec(expression, frame, layerIndex, compId, value) {
+            const match = getExpressionProperty(expression, layerIndex, compId);
+            if (!match) {
+                return fallbackHost.evaluateVec(expression, frame, layerIndex, compId, value);
+            }
+            syncFrame(frame);
+            const officialValue = cloneOfficialValue(match.property.v);
+            if (Array.isArray(officialValue)) {
+                return officialValue.map((item) => Number(item) || 0);
+            }
+            return fallbackHost.evaluateVec(expression, frame, layerIndex, compId, value);
+        },
+        evaluatePath(expression, frame, layerIndex, compId, value) {
+            return fallbackHost.evaluatePath(expression, frame, layerIndex, compId, value);
+        },
+    };
+}
+
 function createOfficialPlayer(animationData) {
     if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
         return null;
@@ -471,7 +650,13 @@ async function startPlayer(jsonStr) {
     statusMsg.innerText = "初始化渲染引擎...";
     currentAnimationData = animationData;
     currentAnimationMeta = getAnimationPlaybackMeta(animationData);
+    currentExpressionAnimationData = JSON.parse(jsonStr);
+    currentExpressionMeta = getAnimationPlaybackMeta(currentExpressionAnimationData);
     const usesExpressions = animationUsesExpressions(animationData);
+    const fallbackExpressionHost = createDefaultExpressionHost({
+        getAnimationData: () => currentExpressionAnimationData,
+        getPlaybackMeta: () => currentExpressionMeta,
+    });
     
     // Stop any existing render loop and reset timing
     if (currentAnimationRequestId) {
@@ -482,6 +667,7 @@ async function startPlayer(jsonStr) {
     lastTimestamp = 0; 
 
     destroyOfficialPlayer();
+    destroyExpressionReferencePlayer();
     player = null;
 
     await preloadAssets(animationData);
@@ -503,6 +689,12 @@ async function startPlayer(jsonStr) {
     }
     if (compareToggle.checked) {
         createOfficialPlayer(animationData);
+    }
+    if (usesExpressions) {
+        const referencePlayer = await createExpressionReferencePlayer(currentExpressionAnimationData);
+        setExpressionHost(createOfficialExpressionHost(referencePlayer, fallbackExpressionHost));
+    } else {
+        setExpressionHost(null);
     }
     officialWrapper.style.display = compareToggle.checked ? 'flex' : 'none';
     viewport.classList.toggle('comparison-mode', compareToggle.checked);
