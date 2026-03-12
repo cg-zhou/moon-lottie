@@ -375,6 +375,41 @@ test('default expression host matches lottie-web pointOnPath and tangentOnPath g
   assert.equal(Math.round(rotation * 1000) / 1000, 59.826);
 });
 
+test('default expression host matches lottie-web path sampling for expression-mutated wire paths', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const animationData = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'samples', '3_1_lights(expr).json'), 'utf8'),
+  );
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: animationData.fr }),
+  });
+
+  const point = host.evaluateVec(
+    "var $bm_rt; var pathLayer = thisComp.layer('wire'); var pathToTrace = pathLayer('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape'); $bm_rt = pathToTrace.pointOnPath(0.24);",
+    113,
+    8,
+    [0, 0, 0],
+  );
+  const tangent = host.evaluateVec(
+    "var $bm_rt; var pathToTrace = thisComp.layer('wire')('ADBE Root Vectors Group')(1)('ADBE Vectors Group')(1)('ADBE Vector Shape'); $bm_rt = pathToTrace.tangentOnPath(0.24);",
+    113,
+    8,
+    [0, 0, 0],
+  );
+
+  assert.deepEqual(
+    point.map((component) => Math.round(component * 1000) / 1000),
+    [-151.562, 67.571],
+  );
+  assert.deepEqual(
+    tangent.map((component) => Math.round(component * 1000000) / 1000000),
+    [0.936634, 0.35031],
+  );
+});
+
 test('default expression host resolves content path lookup and toComp projection', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));

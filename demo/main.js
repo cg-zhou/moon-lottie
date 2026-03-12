@@ -4,7 +4,6 @@ import {
 } from './render_mode.js';
 import {
     createExpressionModule,
-    createDefaultExpressionHost,
     setExpressionHost,
 } from './expression_host.js';
 
@@ -27,8 +26,6 @@ const officialContainer = document.getElementById('official-lottie-container');
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const wasmBuiltinOptions = { builtins: ['js-string'] };
 const wasmJsStringImportModule = 'wasm:js-string';
-const RAD_TO_DEG = 180 / Math.PI;
-const EXPRESSION_PLAYER_LOAD_TIMEOUT_MS = 250;
 const wasmJsStringShim = {
     length: (s) => (typeof s === 'string' ? s.length : 0),
     charCodeAt: (s, i) => {
@@ -73,8 +70,6 @@ let currentAnimationData = null;
 let currentAnimationMeta = null;
 let currentExpressionAnimationData = null;
 let currentExpressionMeta = null;
-let expressionReferencePlayer = null;
-let expressionReferenceContainer = null;
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
 let currentGradient = null;
@@ -321,214 +316,16 @@ function destroyOfficialPlayer() {
     officialContainer.innerHTML = '';
 }
 
-function ensureExpressionReferenceContainer() {
-    if (expressionReferenceContainer) {
-        return expressionReferenceContainer;
-    }
-    const container = document.createElement('div');
-    container.id = 'expression-reference-lottie-container';
-    container.style.position = 'fixed';
-    container.style.left = '-10000px';
-    container.style.top = '-10000px';
-    container.style.width = '1px';
-    container.style.height = '1px';
-    container.style.opacity = '0';
-    container.style.pointerEvents = 'none';
-    container.style.overflow = 'hidden';
-    document.body.appendChild(container);
-    expressionReferenceContainer = container;
-    return container;
-}
-
-function destroyExpressionReferencePlayer() {
-    if (expressionReferencePlayer) {
-        expressionReferencePlayer.destroy();
-        expressionReferencePlayer = null;
-    }
-    if (expressionReferenceContainer) {
-        expressionReferenceContainer.innerHTML = '';
-    }
-}
-
 function cloneAnimationData(animationData) {
-    if (typeof globalThis.structuredClone !== 'undefined') {
-        return globalThis.structuredClone(animationData);
+    if (typeof structuredClone !== 'undefined') {
+        return structuredClone(animationData);
     }
     try {
         return JSON.parse(JSON.stringify(animationData));
     } catch (error) {
-        console.warn('[MoonLottie] Falling back to original animation data after clone failure', error);
+        console.warn('[MoonLottie] Failed to clone animation data for expression isolation; continuing with shared state may reintroduce expression mismatches', error);
         return animationData;
     }
-}
-
-function createExpressionReferencePlayer(animationData) {
-    if (!window.lottie || typeof window.lottie.loadAnimation !== 'function') {
-        return Promise.resolve(null);
-    }
-
-    destroyExpressionReferencePlayer();
-
-    const container = ensureExpressionReferenceContainer();
-    const player = window.lottie.loadAnimation({
-        container,
-        renderer: 'svg',
-        loop: false,
-        autoplay: false,
-        animationData: cloneAnimationData(animationData),
-        rendererSettings: {
-            preserveAspectRatio: 'xMidYMid meet',
-            clearCanvas: true,
-        },
-    });
-
-    expressionReferencePlayer = player;
-
-    return new Promise((resolve) => {
-        let settled = false;
-        let timeoutId = null;
-        const finish = (value = player) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timeoutId);
-            player.removeEventListener?.('DOMLoaded', finish);
-            player.removeEventListener?.('data_ready', finish);
-            player.removeEventListener?.('loaded_images', finish);
-            player.removeEventListener?.('data_failed', handleError);
-            player.removeEventListener?.('error', handleError);
-            resolve(value);
-        };
-        const handleError = () => finish(null);
-
-        player.addEventListener?.('DOMLoaded', finish);
-        player.addEventListener?.('data_ready', finish);
-        player.addEventListener?.('loaded_images', finish);
-        player.addEventListener?.('data_failed', handleError);
-        player.addEventListener?.('error', handleError);
-        timeoutId = setTimeout(finish, EXPRESSION_PLAYER_LOAD_TIMEOUT_MS);
-    });
-}
-
-function cloneOfficialValue(value) {
-    if (ArrayBuffer.isView(value)) {
-        return Array.from(value, (item) => Number(item) || 0);
-    }
-    if (Array.isArray(value)) {
-        return value.map(cloneOfficialValue);
-    }
-    return value;
-}
-
-function findShapePropertyByExpression(itemsData, expression) {
-    if (!Array.isArray(itemsData)) {
-        return null;
-    }
-    for (const item of itemsData) {
-        if (item?.sh?.data?.x === expression) {
-            return item.sh;
-        }
-        const nestedItems = item?.it ?? item?.elements ?? null;
-        const nested = findShapePropertyByExpression(nestedItems, expression);
-        if (nested) {
-            return nested;
-        }
-    }
-    return null;
-}
-
-function createOfficialExpressionHost(referencePlayer, fallbackHost) {
-    let syncedFrame = null;
-    const propertyCache = new Map();
-    const layerCache = new Map();
-
-    function syncFrame(frame) {
-        if (!referencePlayer || syncedFrame === frame) {
-            return;
-        }
-        referencePlayer.goToAndStop(frame, true);
-        syncedFrame = frame;
-    }
-
-    function getExpressionProperty(expression, layerIndex, compId) {
-        if (!referencePlayer || compId) {
-            return null;
-        }
-        const cacheKey = `${layerIndex}:${expression}`;
-        if (propertyCache.has(cacheKey)) {
-            return propertyCache.get(cacheKey);
-        }
-
-        if (layerCache.size === 0) {
-            for (const element of referencePlayer.renderer?.elements ?? []) {
-                if (element?.data?.ind != null) {
-                    layerCache.set(Number(element.data.ind), element);
-                }
-            }
-        }
-        let layerElement = layerCache.get(layerIndex);
-        if (layerElement === undefined) {
-            layerElement = referencePlayer.renderer?.elements?.find(
-                (candidate) => Number(candidate?.data?.ind) === Number(layerIndex),
-            ) ?? null;
-            layerCache.set(layerIndex, layerElement);
-        }
-
-        let match = null;
-        const transformProps = layerElement?.finalTransform?.mProp ?? null;
-        if (transformProps) {
-            // These are the lottie-web transform property handles we expect expressions
-            // to target on 2D layer transforms.
-            for (const key of ['p', 'a', 's', 'r', 'rz', 'o', 'px', 'py', 'pz']) {
-                if (transformProps[key]?.data?.x === expression) {
-                    match = { property: transformProps[key], source: key };
-                    break;
-                }
-            }
-        }
-        if (!match) {
-            const shapeProperty = findShapePropertyByExpression(layerElement?.itemsData ?? null, expression);
-            if (shapeProperty) {
-                match = { property: shapeProperty, source: 'path' };
-            }
-        }
-
-        propertyCache.set(cacheKey, match);
-        return match;
-    }
-
-    return {
-        evaluateDouble(expression, frame, layerIndex, compId, value) {
-            const match = getExpressionProperty(expression, layerIndex, compId);
-            if (!match) {
-                return fallbackHost.evaluateDouble(expression, frame, layerIndex, compId, value);
-            }
-            syncFrame(frame);
-            const officialValue = match.property.v;
-            if (Array.isArray(officialValue) || ArrayBuffer.isView(officialValue)) {
-                return Number(officialValue[0]) || Number(value) || 0;
-            }
-            const numericValue = Number(officialValue) || Number(value) || 0;
-            if (match.source === 'r' || match.source === 'rz') {
-                return numericValue * RAD_TO_DEG;
-            }
-            return numericValue;
-        },
-        evaluateVec(expression, frame, layerIndex, compId, value) {
-            const match = getExpressionProperty(expression, layerIndex, compId);
-            if (!match) {
-                return fallbackHost.evaluateVec(expression, frame, layerIndex, compId, value);
-            }
-            syncFrame(frame);
-            const officialValue = cloneOfficialValue(match.property.v);
-            if (Array.isArray(officialValue)) {
-                return officialValue.map((item) => Number(item) || 0);
-            }
-            return fallbackHost.evaluateVec(expression, frame, layerIndex, compId, value);
-        },
-        evaluatePath(expression, frame, layerIndex, compId, value) {
-            return fallbackHost.evaluatePath(expression, frame, layerIndex, compId, value);
-        },
-    };
 }
 
 function createOfficialPlayer(animationData) {
@@ -691,10 +488,6 @@ async function startPlayer(jsonStr) {
     currentExpressionAnimationData = cloneAnimationData(animationData);
     currentExpressionMeta = getAnimationPlaybackMeta(currentExpressionAnimationData);
     const usesExpressions = animationUsesExpressions(animationData);
-    const fallbackExpressionHost = createDefaultExpressionHost({
-        getAnimationData: () => currentExpressionAnimationData,
-        getPlaybackMeta: () => currentExpressionMeta,
-    });
     
     // Stop any existing render loop and reset timing
     if (currentAnimationRequestId) {
@@ -705,7 +498,6 @@ async function startPlayer(jsonStr) {
     lastTimestamp = 0; 
 
     destroyOfficialPlayer();
-    destroyExpressionReferencePlayer();
     player = null;
 
     await preloadAssets(animationData);
@@ -728,12 +520,7 @@ async function startPlayer(jsonStr) {
     if (compareToggle.checked) {
         createOfficialPlayer(animationData);
     }
-    if (usesExpressions) {
-        const referencePlayer = await createExpressionReferencePlayer(currentExpressionAnimationData);
-        setExpressionHost(createOfficialExpressionHost(referencePlayer, fallbackExpressionHost));
-    } else {
-        setExpressionHost(null);
-    }
+    setExpressionHost(null);
     officialWrapper.style.display = compareToggle.checked ? 'flex' : 'none';
     viewport.classList.toggle('comparison-mode', compareToggle.checked);
     applyAnimationMetadata(currentAnimationMeta);
@@ -744,7 +531,7 @@ async function startPlayer(jsonStr) {
     renderCurrentFrame();
 
     if (usesExpressions) {
-        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过外部 JS 表达式宿主执行表达式，并持续与 lottie-web 对照";
+        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过内置 JS 表达式宿主执行表达式";
     } else {
         statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
     }
