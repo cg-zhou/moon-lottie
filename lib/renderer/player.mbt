@@ -693,10 +693,13 @@ fn[R : Renderer] Player::render_shape_items(
   // Groups WITHOUT paint ops contribute paths (like plain path shapes),
   // so they must be processed here so their paths are available when
   // subsequent fills/strokes take a snapshot.
-  let draw_items : Array[@model.Shape] = []
-  let draw_path_snapshots : Array[Array[@model.BezierPath]] = []
-  let draw_item_path_modifiers : Array[Array[@model.Shape]] = []
-  for item in items {
+  let mut draw_items : Array[@model.Shape] = []
+  let mut draw_path_snapshots : Array[Array[@model.BezierPath]] = []
+  let mut draw_item_path_modifiers : Array[Array[@model.Shape]] = []
+  let mut draw_item_matrices : Array[@math.Matrix] = []
+  let mut draw_item_opacities : Array[Double] = []
+  for item_idx = 0; item_idx < items.length(); item_idx = item_idx + 1 {
+    let item = items[item_idx]
     match item.data {
       Transform(_) => ()
       Group(nested) =>
@@ -709,6 +712,8 @@ fn[R : Renderer] Player::render_shape_items(
           draw_items.push(item)
           draw_path_snapshots.push([])
           draw_item_path_modifiers.push([])
+          draw_item_matrices.push(@math.Matrix::identity())
+          draw_item_opacities.push(1.0)
         }
       Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
         draw_items.push(item)
@@ -719,6 +724,8 @@ fn[R : Renderer] Player::render_shape_items(
         }
         draw_path_snapshots.push(snapshot)
         draw_item_path_modifiers.push([])
+        draw_item_matrices.push(@math.Matrix::identity())
+        draw_item_opacities.push(1.0)
       }
       TrimPath(t) => {
         // Keep existing behavior for currently accumulated (non-deferred) paths.
@@ -744,6 +751,61 @@ fn[R : Renderer] Player::render_shape_items(
           }
         }
       }
+      Repeater(rep) => {
+        let repeater_source_items = []
+        for source_idx = 0; source_idx < item_idx; source_idx = source_idx + 1 {
+          repeater_source_items.push(items[source_idx])
+        }
+        if shape_group_has_paint(repeater_source_items) {
+          self.current_paths = []
+          draw_items = []
+          draw_path_snapshots = []
+          draw_item_path_modifiers = []
+          draw_item_matrices = []
+          draw_item_opacities = []
+
+          let copies = self.evaluate_double(rep.copies, self.current_comp_frame).to_int()
+          let offset = self.evaluate_double(rep.offset, self.current_comp_frame)
+          let tr_matrix = self.evaluate_transform(rep.transform, self.current_comp_frame)
+          let so = self.evaluate_double(rep.start_opacity, self.current_comp_frame)
+          let eo = self.evaluate_double(rep.end_opacity, self.current_comp_frame)
+          let needs_opacity = (so - eo).abs() > shape_epsilon ||
+            (so - 100.0).abs() > shape_epsilon
+          let repeated_group = @model.Shape::new(
+            shape_type="gr",
+            data=@model.ShapeData::new_group(repeater_source_items),
+          )
+          let start_idx = if rep.composite == 1 { 0 } else { copies - 1 }
+          let end_idx = if rep.composite == 1 { copies } else { -1 }
+          let step = if rep.composite == 1 { 1 } else { -1 }
+          let mut copy_idx = start_idx
+          while (if step == 1 { copy_idx < end_idx } else { copy_idx > end_idx }) {
+            let mut m = @math.Matrix::identity()
+            let total_steps = copy_idx.to_double() + offset
+            for _step = 0; _step < total_steps.to_int(); _step = _step + 1 {
+              m = m.multiply(tr_matrix)
+            }
+            let opacity = if needs_opacity {
+              let t = if copies > 1 {
+                copy_idx.to_double() / (copies - 1).to_double()
+              } else {
+                0.0
+              }
+              (so + (eo - so) * t) / 100.0
+            } else {
+              1.0
+            }
+            draw_items.push(repeated_group)
+            draw_path_snapshots.push([])
+            draw_item_path_modifiers.push([])
+            draw_item_matrices.push(m)
+            draw_item_opacities.push(opacity)
+            copy_idx = copy_idx + step
+          }
+        } else {
+          self.render_shape(item)
+        }
+      }
       _ => self.render_shape(item) // path shapes, modifiers, etc.
     }
   }
@@ -757,6 +819,17 @@ fn[R : Renderer] Player::render_shape_items(
   // This keeps sibling painted groups and sibling paint styles in one shared z-order,
   // matching lottie-web behavior.
   for i = draw_items.length() - 1; i >= 0; i = i - 1 {
+    let draw_matrix = draw_item_matrices[i]
+    let draw_opacity = draw_item_opacities[i]
+    let needs_wrapper = draw_opacity < repeater_opacity_threshold ||
+      draw_matrix != @math.Matrix::identity()
+    if needs_wrapper {
+      self.renderer.save()
+      self.renderer.concat_transform(draw_matrix)
+      if draw_opacity < repeater_opacity_threshold {
+        self.renderer.set_opacity(draw_opacity)
+      }
+    }
     match draw_items[i].data {
       Fill(_) | Stroke(_) | GradientFill(_) | GradientStroke(_) => {
         self.current_paths = draw_path_snapshots[i]
@@ -782,6 +855,9 @@ fn[R : Renderer] Player::render_shape_items(
         }
       }
       _ => ()
+    }
+    if needs_wrapper {
+      self.renderer.restore()
     }
   }
 
@@ -1358,6 +1434,13 @@ let glyph_fallback_advance_ratio = 0.6
 ///|
 /// Small epsilon for floating-point comparisons in shape modifiers
 let shape_epsilon = 0.001
+
+///|
+/// Threshold for deciding whether an opacity multiplier differs enough from 1.0
+/// to require an extra repeater wrapper on the renderer stack. Values within
+/// 1e-6 of full opacity are treated as 1.0 to avoid redundant save/restore
+/// wrappers from floating-point interpolation noise.
+let repeater_opacity_threshold = 0.999999
 
 ///|
 pub fn apply_trim_path(
