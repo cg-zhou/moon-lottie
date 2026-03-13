@@ -49,6 +49,8 @@ const MoonLottiePlayer = ({
     });
     const animationFrameIdRef = useRef(null);
     const [error, setError] = useState(null);
+    const resolvedWidth = width ?? '100%';
+    const resolvedHeight = height ?? '100%';
 
     useEffect(() => {
         playbackRef.current = {
@@ -196,19 +198,26 @@ const MoonLottiePlayer = ({
                 playerHandle: undefined,
             };
         };
-    }, [animationData, wasmUrl]);
+    }, [animationData, wasmUrl, width, height]);
 
     if (error) return <div className="text-red-500 text-xs p-2 border border-red-500">Error: {error}</div>;
 
     return (
-        <div className={`relative flex items-center justify-center overflow-hidden rounded-lg bg-black/5 ${className}`} style={{ width: '100%', height: '100%' }}>
+        <div
+            className={`relative flex items-center justify-center overflow-hidden rounded-lg bg-black/5 ${className}`}
+            style={{
+                width: resolvedWidth,
+                height: resolvedHeight,
+                maxWidth: '100%',
+                maxHeight: '100%',
+            }}
+        >
             <canvas 
                 ref={canvasRef} 
                 style={{ 
                     width: '100%', 
                     height: '100%', 
                     objectFit: 'contain',
-                    imageRendering: 'pixelated' // 保持清晰度
                 }}
             />
         </div>
