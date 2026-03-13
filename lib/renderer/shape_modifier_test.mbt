@@ -257,6 +257,99 @@ test "repeater/uniform_opacity_no_extra_commands" {
 }
 
 ///|
+test "repeater/painted_group_is_repeated" {
+  let anim = @model.Animation::new(
+    version="5.5.0",
+    frame_rate=30.0,
+    in_point=0.0,
+    out_point=10.0,
+    width=100,
+    height=100,
+    layers=[
+      @model.Layer::new(
+        index=1,
+        layer_type=4,
+        transform=@model.Transform::new_default(),
+        in_point=0.0,
+        out_point=10.0,
+        start_time=0.0,
+        data=@model.LayerData::Shape(
+          [
+            @model.Shape::new(
+              shape_type="gr",
+              data=@model.ShapeData::new_group(
+                [
+                  @model.Shape::new(
+                    shape_type="rc",
+                    data=@model.ShapeData::new_rect(
+                      @model.RectShape::new(
+                        position=@model.LottieProperty::new_static([0.0, 0.0]),
+                        size=@model.LottieProperty::new_static([10.0, 10.0]),
+                        roundness=@model.LottieProperty::new_static(0.0),
+                      ),
+                    ),
+                  ),
+                  @model.Shape::new(
+                    shape_type="fl",
+                    data=@model.ShapeData::new_fill(
+                      @model.FillShape::new(
+                        color=@model.LottieProperty::new_static([1.0, 0.0, 0.0]),
+                        opacity=@model.LottieProperty::new_static(100.0),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            @model.Shape::new(
+              shape_type="rp",
+              data=@model.ShapeData::new_repeater(
+                @model.Repeater::new(
+                  copies=@model.LottieProperty::new_static(3.0),
+                  offset=@model.LottieProperty::new_static(0.0),
+                  composite=1,
+                  transform=@model.Transform::new(
+                    anchor=@model.LottieProperty::new_static([0.0, 0.0]),
+                    position=@model.LottieProperty::new_static([20.0, 0.0]),
+                    scale=@model.LottieProperty::new_static([100.0, 100.0]),
+                    rotation=@model.LottieProperty::new_static(0.0),
+                    opacity=@model.LottieProperty::new_static(100.0),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  )
+  let recorder = CommandRecorder::new()
+  let player = Player::new(anim, recorder)
+  player.set_frame(0.0)
+  player.render()
+  let cmds = recorder.get_commands()
+  let mut fill_count = 0
+  let mut translated_groups = 0
+  for cmd in cmds {
+    match cmd {
+      Fill(255, 0, 0, opacity) => {
+        if (opacity - 1.0).abs() > 0.001 {
+          fail("Unexpected fill opacity: \{opacity}")
+        }
+        fill_count = fill_count + 1
+      }
+      ConcatTransform(m) =>
+        if (m.e - 20.0).abs() < 0.001 || (m.e - 40.0).abs() < 0.001 {
+          translated_groups = translated_groups + 1
+        }
+      _ => ()
+    }
+  }
+  inspect(fill_count, content="3")
+  inspect(translated_groups, content="2")
+}
+
+///|
 test "dash_stroke/rendering" {
   // Test that dash stroke emits SetLineDash command
   let anim = @model.Animation::new(

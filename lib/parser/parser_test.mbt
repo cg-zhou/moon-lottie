@@ -730,6 +730,30 @@ test "parse_repeater_without_opacity_defaults" {
 }
 
 ///|
+test "parse_animation_preserves_repeater_without_transform_opacity" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":20,"w":100,"h":100,"layers":[{"ty":4,"ind":1,"ks":{"a":{"k":[0,0,0]},"p":{"k":[0,0,0]},"s":{"k":[100,100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"gr","it":[{"ty":"rc","p":{"k":[0,0]},"s":{"k":[10,10]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0,1]},"o":{"k":100}},{"ty":"tr","a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}]},{"ty":"rp","c":{"k":12},"o":{"k":0},"m":1,"tr":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":30},"so":{"k":100},"eo":{"k":100}}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with repeater transform defaults: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Shape(shapes) => {
+      inspect(shapes.length(), content="2")
+      match shapes[1].data {
+        @model.ShapeData::Repeater(rp) =>
+          match rp.transform.opacity.value {
+            @model.PropertyValue::Static(v) => inspect(v, content="100")
+            _ => fail("repeater transform opacity should default to static 100")
+          }
+        _ => fail("second shape should be repeater")
+      }
+    }
+    _ => fail("layer should be shape")
+  }
+}
+
+///|
 test "parse_stroke_with_dashes" {
   let json_str =
     #|{"ty":"st","c":{"k":[1,0,0]},"o":{"k":100},"w":{"k":2},"lc":2,"lj":2,"ml":4,"d":[{"n":"d","v":{"k":10}},{"n":"g","v":{"k":5}},{"n":"o","v":{"k":0}}]}

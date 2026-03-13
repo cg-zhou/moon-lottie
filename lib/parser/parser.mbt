@@ -1275,8 +1275,12 @@ fn parse_transform_from_decoded(
         }
         None => false
       }
-      let anchor = parse_property_vec(transform_json.anchor)
-      let position = parse_property_vec(transform_json.position)
+      let anchor = parse_property_vec(transform_json.anchor) catch {
+        _ => @model.LottieProperty::new_static([0.0, 0.0])
+      }
+      let position = parse_property_vec(transform_json.position) catch {
+        _ => @model.LottieProperty::new_static([0.0, 0.0])
+      }
       let px = if split {
         Some(parse_property_double(transform_json.position_x)) catch {
           _ => None
@@ -1291,9 +1295,15 @@ fn parse_transform_from_decoded(
       } else {
         None
       }
-      let scale = parse_property_vec(transform_json.scale)
-      let rotation = parse_property_double(transform_json.rotation)
-      let opacity = parse_property_double(transform_json.opacity)
+      let scale = parse_property_vec(transform_json.scale) catch {
+        _ => @model.LottieProperty::new_static([100.0, 100.0])
+      }
+      let rotation = parse_property_double(transform_json.rotation) catch {
+        _ => @model.LottieProperty::new_static(0.0)
+      }
+      let opacity = parse_property_double(transform_json.opacity) catch {
+        _ => @model.LottieProperty::new_static(100.0)
+      }
       let skew = try {
         Some(parse_property_double(transform_json.skew))
       } catch {
