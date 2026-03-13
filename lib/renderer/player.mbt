@@ -821,11 +821,12 @@ fn[R : Renderer] Player::render_shape_items(
   for i = draw_items.length() - 1; i >= 0; i = i - 1 {
     let draw_matrix = draw_item_matrices[i]
     let draw_opacity = draw_item_opacities[i]
-    let needs_wrapper = draw_opacity < 0.999999 || draw_matrix != @math.Matrix::identity()
+    let needs_wrapper = draw_opacity < repeater_opacity_threshold ||
+      draw_matrix != @math.Matrix::identity()
     if needs_wrapper {
       self.renderer.save()
       self.renderer.concat_transform(draw_matrix)
-      if draw_opacity < 0.999999 {
+      if draw_opacity < repeater_opacity_threshold {
         self.renderer.set_opacity(draw_opacity)
       }
     }
@@ -1433,6 +1434,13 @@ let glyph_fallback_advance_ratio = 0.6
 ///|
 /// Small epsilon for floating-point comparisons in shape modifiers
 let shape_epsilon = 0.001
+
+///|
+/// Threshold for deciding whether an opacity multiplier differs enough from 1.0
+/// to require an extra repeater wrapper on the renderer stack. Values within
+/// 1e-6 of full opacity are treated as 1.0 to avoid redundant save/restore
+/// wrappers from floating-point interpolation noise.
+let repeater_opacity_threshold = 0.999999
 
 ///|
 pub fn apply_trim_path(
