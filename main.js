@@ -7,7 +7,6 @@ import {
     setExpressionHost,
 } from './expression_host.js';
 import {
-    applyDprTransform,
     resizeCanvasForDpr,
 } from './canvas_dpr.js';
 
@@ -75,9 +74,36 @@ let currentAnimationMeta = null;
 let currentExpressionAnimationData = null;
 let currentExpressionMeta = null;
 let pendingCanvasResizeFrame = null;
+const viewportTransform = {
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+    dpr: 1,
+};
 
 function readDevicePixelRatio() {
     return window.devicePixelRatio || 1;
+}
+
+function updateViewportTransform(meta) {
+    const animWidth = meta?.width || canvas.width || 1;
+    const animHeight = meta?.height || canvas.height || 1;
+    const dpr = readDevicePixelRatio();
+    const rect = canvas.getBoundingClientRect();
+    const viewportWidth = rect.width > 0 ? rect.width : animWidth;
+    const viewportHeight = rect.height > 0 ? rect.height : animHeight;
+    const scale = Math.min(viewportWidth / animWidth, viewportHeight / animHeight) || 1;
+
+    viewportTransform.scale = scale;
+    viewportTransform.offsetX = (viewportWidth - animWidth * scale) / 2;
+    viewportTransform.offsetY = (viewportHeight - animHeight * scale) / 2;
+    viewportTransform.dpr = dpr;
+
+    return {
+        width: viewportWidth,
+        height: viewportHeight,
+        dpr,
+    };
 }
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
@@ -140,7 +166,17 @@ const importObject = {
     clearRect: (x, y, w, h) => ctx.clearRect(x, y, w, h),
     setGlobalAlpha: (a) => { ctx.globalAlpha = a; },
     setOpacity: (a) => { ctx.globalAlpha *= a; },
-    setTransform: (a, b, c, d, e, f) => applyDprTransform(ctx, a, b, c, d, e, f, readDevicePixelRatio()),
+    setTransform: (a, b, c, d, e, f) => {
+        const { scale, offsetX, offsetY, dpr } = viewportTransform;
+        ctx.setTransform(
+            a * scale * dpr,
+            b * scale * dpr,
+            c * scale * dpr,
+            d * scale * dpr,
+            (e * scale + offsetX) * dpr,
+            (f * scale + offsetY) * dpr,
+        );
+    },
     transform: (a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f),
     drawImage: (assetIndex, w, h) => {
         const img = imageAssetsByIndex[assetIndex] || null;
@@ -366,7 +402,11 @@ function createOfficialPlayer(animationData) {
 
 function renderCurrentFrame() {
     if (player) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         window.moonLottie.update_player(player, currentFrame);
+        ctx.restore();
     }
 
     if (officialPlayer) {
@@ -377,9 +417,11 @@ function renderCurrentFrame() {
 function applyAnimationMetadata(meta) {
     const { width, height, fps, totalFrames, inPoint, aspectRatio, version } = meta;
 
-    resizeCanvasForDpr(canvas, width, height, readDevicePixelRatio());
     canvas.style.aspectRatio = aspectRatio;
     officialContainer.style.aspectRatio = aspectRatio;
+
+    const viewportSize = updateViewportTransform(meta);
+    resizeCanvasForDpr(canvas, viewportSize.width, viewportSize.height, viewportSize.dpr);
 
     document.getElementById('info-filename').innerText = currentFileName || "未知";
     document.getElementById('info-filesize').innerText = (currentFileSize / 1024).toFixed(2) + " KB";
