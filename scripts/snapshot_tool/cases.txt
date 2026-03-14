@@ -14,5 +14,5 @@
 3_1_lights(expr).json sim=0.97 75 113 150 225
 3_2_monster(expr).json sim=0.12 73 146 219
 3_3_navidad(expr).json sim=0.85 31 62 93
-3_4_ripple(expr).json sim=0.98 90 180 270
+3_4_ripple(expr).json sim=0.98 90 180 270 354
 3_5_starfish(expr).json sim=0.96 75 150 225

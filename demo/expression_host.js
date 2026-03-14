@@ -80,6 +80,45 @@ function unwrapScalarValue(value) {
     return Number(value);
 }
 
+function bezierValueLength(value) {
+    if (Array.isArray(value)) {
+        return value.length;
+    }
+    return Number.isFinite(Number(value)) ? 1 : 0;
+}
+
+function bezierComponent(value, index) {
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return 0;
+        }
+        const safeIndex = index >= 0 && index < value.length ? index : 0;
+        return Number(value[safeIndex]) || 0;
+    }
+    return Number(value) || 0;
+}
+
+function solvePropertyEasing(current, next, progress, component = 0) {
+    const outTangent = current?.o;
+    const inTangent = current?.i ?? next?.i;
+    if (!outTangent || !inTangent) {
+        return progress;
+    }
+
+    const outLength = Math.max(bezierValueLength(outTangent.x), bezierValueLength(outTangent.y));
+    const inLength = Math.max(bezierValueLength(inTangent.x), bezierValueLength(inTangent.y));
+    const dimensions = Math.max(outLength, inLength);
+    const easedComponent = dimensions <= 1 ? 0 : Math.min(Math.max(component, 0), dimensions - 1);
+
+    return solveCubicBezierEasing(
+        bezierComponent(outTangent.x, easedComponent),
+        bezierComponent(outTangent.y, easedComponent),
+        bezierComponent(inTangent.x, easedComponent),
+        bezierComponent(inTangent.y, easedComponent),
+        progress,
+    );
+}
+
 function sampleKeyframedProperty(prop, frame) {
     if (!prop) return 0;
     if (!isKeyframedProperty(prop)) {
@@ -104,20 +143,13 @@ function sampleKeyframedProperty(prop, frame) {
             }
             const end = clonePropertyValue(current.e ?? next.s ?? start);
             const progress = (frame - currentTime) / (nextTime - currentTime);
-            // Apply cubic-bezier easing: CP1 = current.o (out), CP2 = next.i (in).
-            // This matches the standard lottie / lottie-web convention.
-            let easedProgress = progress;
-            const ox = current.o?.x;
-            const oy = current.o?.y;
-            const ix = next.i?.x;
-            const iy = next.i?.y;
-            if (typeof ox === 'number' && typeof oy === 'number' &&
-                typeof ix === 'number' && typeof iy === 'number') {
-                easedProgress = solveCubicBezierEasing(ox, oy, ix, iy, progress);
-            }
             if (Array.isArray(start) && Array.isArray(end)) {
-                return start.map((value, index) => (Number(value) || 0) + ((Number(end[index]) || 0) - (Number(value) || 0)) * easedProgress);
+                return start.map((value, index) => {
+                    const easedProgress = solvePropertyEasing(current, next, progress, index);
+                    return (Number(value) || 0) + ((Number(end[index]) || 0) - (Number(value) || 0)) * easedProgress;
+                });
             }
+            const easedProgress = solvePropertyEasing(current, next, progress, 0);
             return (Number(start) || 0) + ((Number(end) || 0) - (Number(start) || 0)) * easedProgress;
         }
     }
