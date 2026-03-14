@@ -2,6 +2,7 @@ const expressionFunctionCache = new Map();
 let externalExpressionHost = null;
 const DEFAULT_FPS = 60;
 const DEFAULT_FRAME_DURATION = 1 / DEFAULT_FPS;
+const layerExpressionContextCache = new WeakMap();
 
 // Guard against infinite expression recursion (e.g., A→B→A chains).
 let _expressionCallDepth = 0;
@@ -200,6 +201,34 @@ function findLayerInComp(layers, layerRef) {
     return layers.find((candidate) => candidate?.nm === layerRef) ?? null;
 }
 
+function findCompAsset(animationData, compRef) {
+    if (!compRef || !Array.isArray(animationData?.assets)) {
+        return null;
+    }
+    const normalizedRef = String(compRef);
+    return animationData.assets.find((candidate) =>
+        Array.isArray(candidate?.layers)
+        && (candidate.id === normalizedRef
+            || candidate.nm === normalizedRef
+            || candidate.p === normalizedRef),
+    ) ?? null;
+}
+
+function getCachedPropertyContextByExpression(layer, expression) {
+    if (!layer || typeof layer !== 'object' || !expression) {
+        return null;
+    }
+    let expressionCache = layerExpressionContextCache.get(layer);
+    if (!expressionCache) {
+        expressionCache = new Map();
+        layerExpressionContextCache.set(layer, expressionCache);
+    }
+    if (!expressionCache.has(expression)) {
+        expressionCache.set(expression, findPropertyContextByExpression(layer, expression));
+    }
+    return expressionCache.get(expression) ?? null;
+}
+
 function coerceExpressionResult(result, fallbackValue) {
     if (Array.isArray(fallbackValue)) {
         return Array.isArray(result) ? cloneNumberArray(result) : cloneNumberArray(fallbackValue);
@@ -321,6 +350,7 @@ function getExpressionFunction(expression) {
 const {
   value,
   time,
+    comp,
   thisComp,
   thisLayer,
   thisProperty,
@@ -467,7 +497,7 @@ function findLayerParent(layer, animationData, compLayers = null) {
     return animationData?.layers?.find((candidate) => Number(candidate?.ind) === Number(layer.parent)) ?? null;
 }
 
-function evaluateLayerMatrix(layer, animationData, frame, compLayers = null, activeExpression = null) {
+function evaluateLayerMatrix(layer, animationData, frame, compLayers = null, activeExpression = null, evaluateExpressions = true) {
     const transform = layer?.ks ?? {};
 
     // Helper: evaluate a transform property's expression (if any) to get the
@@ -476,7 +506,7 @@ function evaluateLayerMatrix(layer, animationData, frame, compLayers = null, act
     const resolveTransformProp = (prop, rawValue) => {
         if (!prop) return rawValue;
         const expr = typeof prop.x === 'string' ? prop.x : null;
-        if (!expr || expr === activeExpression) return rawValue;
+        if (!evaluateExpressions || !expr || expr === activeExpression) return rawValue;
         const result = evaluateHostedExpressionValue(expr, frame, layer, rawValue, animationData, compLayers);
         return coerceExpressionResult(result, rawValue);
     };
@@ -500,7 +530,9 @@ function evaluateLayerMatrix(layer, animationData, frame, compLayers = null, act
     matrix = multiplyMatrices(matrix, createTranslationMatrix(-(anchor[0] ?? 0), -(anchor[1] ?? 0)));
 
     const parent = findLayerParent(layer, animationData, compLayers);
-    return parent ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame, compLayers, activeExpression), matrix) : matrix;
+    return parent
+        ? multiplyMatrices(evaluateLayerMatrix(parent, animationData, frame, compLayers, activeExpression, evaluateExpressions), matrix)
+        : matrix;
 }
 
 function cubicPoint(p0, p1, p2, p3, t) {
@@ -1102,7 +1134,7 @@ function createThisProperty(rawProperty, rawPropertyContext, propertyHelpers, fr
 
     // Use the current expression as activeExpression when computing the layer
     // matrix so the property's own position expression is not re-invoked.
-    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, compLayers, activeExpression);
+    const layerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, compLayers, activeExpression, false);
     const inverseLayerMatrix = invertMatrix(layerMatrix);
     const currentPathGeometry = {
         vertices: currentPath.vertices,
@@ -1134,13 +1166,13 @@ function buildContext({
 }) {
     const fps = Number(playbackMeta?.fps) || Number(animationData?.fr) || DEFAULT_FPS;
     const frameDuration = fps > 0 ? 1 / fps : DEFAULT_FRAME_DURATION;
-    const rawPropertyContext = findPropertyContextByExpression(layer, expression);
+    const rawPropertyContext = getCachedPropertyContextByExpression(layer, expression);
     const rawProperty = rawPropertyContext?.property ?? null;
     const propertyHelpers = createPropertyHelpers(rawProperty, frame, frameDuration);
     const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame, currentCompLayers, expression);
     // Pass the current expression as activeExpression so the layer's own transform
     // expressions are not re-entered while computing the matrix / inverse.
-    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, currentCompLayers, expression);
+    const currentLayerMatrix = evaluateLayerMatrix(layer ?? {}, animationData, frame, currentCompLayers, expression, false);
     const currentLayerInverseMatrix = invertMatrix(currentLayerMatrix);
     const thisProperty = createThisProperty(
         rawProperty,
@@ -1155,9 +1187,28 @@ function buildContext({
         expression,
     );
 
+    const createCompProxy = (compRef) => {
+        const assetComp = findCompAsset(animationData, compRef);
+        const compLayers = Array.isArray(assetComp?.layers)
+            ? assetComp.layers
+            : (Array.isArray(currentCompLayers) ? currentCompLayers : animationData?.layers ?? []);
+        return {
+            name: assetComp?.nm ?? String(compRef ?? ''),
+            width: Number(assetComp?.w) || Number(animationData?.w) || 0,
+            height: Number(assetComp?.h) || Number(animationData?.h) || 0,
+            frameDuration,
+            layer: (layerRef) => {
+                const matchedLayer = findLayerInComp(compLayers, layerRef)
+                    ?? findLayerByIndex(animationData, layerRef);
+                return matchedLayer ? createLayerProxy(matchedLayer, animationData, frame, compLayers, expression) : {};
+            },
+        };
+    };
+
     return {
         value: clonePropertyValue(value),
         time: frame * frameDuration,
+        comp: (compRef) => createCompProxy(compRef),
         thisComp: {
             frameDuration,
             width: Number(animationData?.w) || 0,

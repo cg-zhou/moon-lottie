@@ -37,44 +37,44 @@ const ComparisonModal = ({ isOpen, onClose, animationData, sampleLabel }) => {
     if (!isOpen) return null;
 
     const bgClasses = {
-        dark: 'bg-[#0f172a]',
+        dark: 'bg-[#1d1d1f]',
         light: 'bg-white',
-        grid: 'bg-[#1e293b] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]'
+        grid: 'bg-[#f5f5f7] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]'
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-700 w-full max-w-6xl max-h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white border border-[#e5e5e7] w-full max-w-6xl max-h-[90vh] rounded-xl overflow-hidden flex flex-col shadow-2xl">
                 
                 {/* Header */}
-                <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <div className="p-4 border-b border-[#e5e5e7] flex items-center justify-between bg-white">
                     <div>
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            <Monitor className="w-5 h-5 text-blue-400" />
+                        <h2 className="text-lg font-semibold text-[#1d1d1f] flex items-center gap-2">
+                            <Monitor className="w-5 h-5 text-[#007aff]" />
                             Render Comparison
                         </h2>
-                        <p className="text-slate-400 text-sm mt-1 font-mono uppercase tracking-tighter">
+                        <p className="text-[#86868b] text-xs mt-0.5">
                             {sampleLabel} • {fr} FPS • {totalFrames} Frames
                         </p>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-800 rounded-full text-slate-400 transition"
+                        className="p-2 hover:bg-[#f5f5f7] rounded-full text-[#86868b] transition"
                     >
-                        <X className="w-6 h-6" />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Main Viewport */}
-                <div className="flex-1 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden">
+                <div className="flex-1 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[#e5e5e7] overflow-hidden">
                     
                     {/* Left: MoonLottie (WASM) */}
                     <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="p-3 bg-blue-600/10 border-b border-blue-500/20 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-blue-400 tracking-widest uppercase flex items-center gap-1">
+                        <div className="p-2.5 bg-[#007aff]/5 border-b border-[#007aff]/10 flex items-center justify-between">
+                            <span className="text-[10px] font-semibold text-[#007aff] uppercase flex items-center gap-1">
                                 <Zap className="w-3 h-3 fill-current" /> MoonLottie (WASM-GC)
                             </span>
-                            <span className="text-[10px] bg-blue-500/20 px-2 py-0.5 rounded text-blue-300">EXPERIMENTAL</span>
+                            <span className="text-[10px] bg-[#007aff]/10 px-1.5 py-0.5 rounded text-[#007aff]">EXPERIMENTAL</span>
                         </div>
                         <div className={`flex-1 flex items-center justify-center p-8 ${bgClasses[background]}`}>
                             <MoonLottiePlayer 
@@ -83,18 +83,17 @@ const ComparisonModal = ({ isOpen, onClose, animationData, sampleLabel }) => {
                                 height={400}
                                 currentFrameControlled={currentTime}
                                 autoPlay={false}
-                                className="drop-shadow-2xl"
                             />
                         </div>
                     </div>
 
                     {/* Right: Official (JS) */}
                     <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="p-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">
+                        <div className="p-2.5 bg-[#f5f5f7] border-b border-[#e5e5e7] flex items-center justify-between">
+                            <span className="text-[10px] font-semibold text-[#86868b] uppercase">
                                 Official Lottie-Web (JS)
                             </span>
-                            <span className="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">STABLE</span>
+                            <span className="text-[10px] bg-[#e5e5e7] px-1.5 py-0.5 rounded text-[#86868b]">STABLE</span>
                         </div>
                         <div className={`flex-1 flex items-center justify-center p-8 ${bgClasses[background]}`}>
                             <OfficialPlayer 
@@ -102,18 +101,17 @@ const ComparisonModal = ({ isOpen, onClose, animationData, sampleLabel }) => {
                                 width={500}
                                 height={400}
                                 currentFrame={currentTime}
-                                className="drop-shadow-2xl"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-6 bg-slate-900 border-t border-slate-800">
+                <div className="p-6 bg-white border-t border-[#e5e5e7]">
                     <div className="flex flex-col gap-4">
                         {/* Timeline */}
                         <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-mono text-slate-500 w-12">{currentTime.toFixed(0)} F</span>
+                            <span className="text-[10px] font-mono text-[#86868b] w-12">{currentTime.toFixed(0)} F</span>
                             <input 
                                 type="range" 
                                 min={ip} 
@@ -124,27 +122,27 @@ const ComparisonModal = ({ isOpen, onClose, animationData, sampleLabel }) => {
                                     setIsPlaying(false);
                                     setCurrentTime(parseFloat(e.target.value));
                                 }}
-                                className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                className="flex-1 h-1 bg-[#e5e5e7] rounded-lg appearance-none cursor-pointer accent-[#007aff]"
                             />
-                            <span className="text-[10px] font-mono text-slate-500 w-12">{op.toFixed(0)} F</span>
+                            <span className="text-[10px] font-mono text-[#86868b] w-12">{op.toFixed(0)} F</span>
                         </div>
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <button 
                                     onClick={() => setIsPlaying(!isPlaying)}
-                                    className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition"
+                                    className="p-2.5 bg-[#007aff] hover:bg-[#0070e0] text-white rounded-lg transition shadow-sm"
                                 >
-                                    {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                                    {isPlaying ? <Pause size={18} /> : <Play size={18} />}
                                 </button>
                                 <button 
                                     onClick={() => {
                                         startTimeRef.current = Date.now();
                                         setCurrentTime(ip);
                                     }}
-                                    className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition"
+                                    className="p-2.5 bg-[#f5f5f7] hover:bg-[#e5e5e7] text-[#1d1d1f] rounded-lg transition border border-[#e5e5e7]"
                                 >
-                                    <RotateCcw size={20} />
+                                    <RotateCcw size={18} />
                                 </button>
                             </div>
 

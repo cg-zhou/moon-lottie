@@ -53,28 +53,28 @@ const App = () => {
   }, [searchTerm, activeTag, activeSource, samples]);
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f]">
       {/* Header Area */}
-      <div className="bg-slate-900/50 border-b border-slate-800/80 sticky top-0 z-10 backdrop-blur-md">
+      <div className="bg-white/80 border-b border-[#e5e5e7] sticky top-0 z-10 backdrop-blur-md">
         <div className="max-w-7xl mx-auto p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent italic flex items-center gap-3">
-                <LayoutGrid className="w-8 h-8 text-blue-500" />
-                MOON-LOTTIE 2.0
+              <h1 className="text-2xl font-semibold text-[#1d1d1f] flex items-center gap-3">
+                <LayoutGrid className="w-6 h-6 text-[#007aff]" />
+                Moon Lottie
               </h1>
-              <p className="text-slate-500 text-sm mt-1 font-medium">
+              <p className="text-[#86868b] text-sm mt-1">
                 WASM-powered Lottie rendering engine • {samples.length} animations
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b] w-4 h-4" />
                 <input 
                   type="text" 
                   placeholder="Search..." 
-                  className="bg-slate-950/50 border border-slate-700/50 rounded-lg py-1.5 pl-9 pr-4 text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none w-48 lg:w-64"
+                  className="bg-[#f5f5f7] border border-[#e5e5e7] rounded-md py-1.5 pl-9 pr-4 text-sm focus:ring-1 focus:ring-[#007aff] focus:outline-none w-48 lg:w-64"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -87,13 +87,13 @@ const App = () => {
               <button
                 key={tag}
                 onClick={() => setActiveTag(tag)}
-                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition duration-200 ${
+                className={`px-3 py-1 rounded-full text-[11px] font-medium transition duration-200 ${
                   activeTag === tag 
-                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.2)]' 
-                    : 'bg-slate-800/40 text-slate-500 border border-slate-700/30 hover:bg-slate-700/50'
+                    ? 'bg-[#007aff] text-white shadow-sm' 
+                    : 'bg-white text-[#86868b] border border-[#e5e5e7] hover:bg-[#f5f5f7]'
                 }`}
               >
-                #{tag}
+                {tag}
               </button>
             ))}
           </div>
@@ -103,8 +103,8 @@ const App = () => {
       <main className="max-w-7xl mx-auto p-6 pb-24">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4">
-            <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-            <p className="text-slate-500 font-medium">Initializing WASM Playground...</p>
+            <div className="w-8 h-8 border-2 border-[#007aff]/30 border-t-[#007aff] rounded-full animate-spin" />
+            <p className="text-[#86868b] font-medium">Initializing WASM Playground...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -163,11 +163,11 @@ const LottieCard = ({ sample, onInspect }) => {
   return (
     <div 
       ref={cardRef}
-      className={`group bg-slate-800/30 rounded-2xl border transition-all duration-300 overflow-hidden flex flex-col ${
-        isIntersecting ? 'border-slate-800/80' : 'border-slate-800/20'
-      } hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10`}
+      className={`group bg-white rounded-lg border transition-all duration-300 overflow-hidden flex flex-col ${
+        isIntersecting ? 'border-[#e5e5e7]' : 'border-transparent'
+      } hover:border-[#007aff]/30 hover:shadow-lg`}
     >
-      <div className="aspect-[4/3] flex items-center justify-center bg-slate-900/40 relative">
+      <div className="aspect-[4/3] flex items-center justify-center bg-[#fbfbfd] relative">
         {animationData ? (
           <>
             <MoonLottiePlayer 
@@ -179,31 +179,31 @@ const LottieCard = ({ sample, onInspect }) => {
               className="w-full h-full"
             />
             {/* Hover Actions */}
-            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-950/40 transition-all duration-300 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-300 flex items-center justify-center">
                <button 
                 onClick={onInspect}
-                className="opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl hover:bg-blue-50"
+                className="opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all bg-white text-[#1d1d1f] px-3 py-1.5 rounded-md text-xs font-medium shadow-sm flex items-center gap-2 hover:bg-[#f5f5f7]"
                >
                  <Eye size={14} /> Compare
                </button>
             </div>
           </>
         ) : (
-          <div className="w-10 h-10 border-2 border-slate-700 border-t-slate-500 rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#e5e5e7] border-t-[#007aff] rounded-full animate-spin" />
         )}
       </div>
       
-      <div className="p-4 flex flex-col gap-2">
+      <div className="p-3 flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-slate-300 truncate text-sm flex-1">{sample.label}</h3>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-500 uppercase font-mono">
+          <h3 className="font-medium text-[#1d1d1f] truncate text-sm flex-1">{sample.label}</h3>
+          <span className="text-[10px] px-1.2 py-0.5 rounded bg-[#f5f5f7] text-[#86868b] font-mono">
             {sample.source}
           </span>
         </div>
         
         <div className="flex flex-wrap gap-1">
           {sample.tags?.map(tag => (
-            <span key={tag} className="text-[10px] text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-400/20">
+            <span key={tag} className="text-[10px] text-[#007aff] bg-[#007aff]/5 px-1.5 py-0.5 rounded border border-[#007aff]/10">
               {tag}
             </span>
           ))}
