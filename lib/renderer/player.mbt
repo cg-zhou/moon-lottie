@@ -1391,15 +1391,107 @@ fn create_rect_path(
   r : Double,
   direction : Int,
 ) -> @model.BezierPath {
-  let _ = r
-  // lottie-web: `if (this.d === 2 || this.d === 1)` produces CW; else (d=3) CCW.
-  if direction == 3 {
-    // Counter-clockwise: top-right → top-left → bottom-left → bottom-right
-    @model.BezierPath::new_rect_ccw(x, y, w, h)
+  let half_w = w.abs() / 2.0
+  let half_h = h.abs() / 2.0
+  let max_r = if half_w < half_h { half_w } else { half_h }
+  let radius = if r < 0.0 {
+    0.0
+  } else if r > max_r {
+    max_r
   } else {
-    @model.BezierPath::new_rect(x, y, w, h)
+    r
+  }
+  if radius <= 0.0 {
+    // lottie-web: `if (this.d === 2 || this.d === 1)` produces CW; else (d=3) CCW.
+    if direction == shape_direction_ccw {
+      // Counter-clockwise: top-right → top-left → bottom-left → bottom-right
+      return @model.BezierPath::new_rect_ccw(x, y, w, h)
+    } else {
+      return @model.BezierPath::new_rect(x, y, w, h)
+    }
+  }
+  let left = x - w / 2.0
+  let right = x + w / 2.0
+  let top = y - h / 2.0
+  let bottom = y + h / 2.0
+  // 4 * (sqrt(2) - 1) / 3 ≈ 0.5522847498307936: standard cubic Bézier approximation factor for
+  // quarter-circle arcs, matching lottie-web rounded-rectangle corners.
+  let kappa = 0.5522847498307936
+  let cp = radius * kappa
+  // lottie-web: `if (this.d === 2 || this.d === 1)` produces CW; else (d=3) CCW.
+  if direction == shape_direction_ccw {
+    @model.BezierPath::new(
+      vertices=[
+        [right - radius, top],
+        [left + radius, top],
+        [left, top + radius],
+        [left, bottom - radius],
+        [left + radius, bottom],
+        [right - radius, bottom],
+        [right, bottom - radius],
+        [right, top + radius],
+      ],
+      in_tangents=[
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+        [0.0, 0.0],
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+      ],
+      out_tangents=[
+        [0.0, 0.0],
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+      ],
+      closed=true,
+    )
+  } else {
+    @model.BezierPath::new(
+      vertices=[
+        [left + radius, top],
+        [right - radius, top],
+        [right, top + radius],
+        [right, bottom - radius],
+        [right - radius, bottom],
+        [left + radius, bottom],
+        [left, bottom - radius],
+        [left, top + radius],
+      ],
+      in_tangents=[
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+        [0.0, 0.0],
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+      ],
+      out_tangents=[
+        [0.0, 0.0],
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+      ],
+      closed=true,
+    )
   }
 }
+
+///|
+let shape_direction_ccw = 3
 
 ///|
 fn create_ellipse_path(
@@ -1414,7 +1506,7 @@ fn create_ellipse_path(
   let oy = ry * kappa
   // lottie-web: `_cw = this.d !== 3` — d=3 produces counter-clockwise winding,
   // any other value (including 1, 2) produces clockwise winding.
-  if direction != 3 {
+  if direction != shape_direction_ccw {
     // Clockwise: top → right → bottom → left
     @model.BezierPath::new(
       vertices=[[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]],

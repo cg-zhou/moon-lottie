@@ -129,6 +129,45 @@ struct SplitPositionJson {
 } derive(FromJson(fields(split(rename="s"))))
 
 ///|
+fn parse_split_position_flag(json : Json?) -> Bool {
+  match json {
+    Some(Object(fields)) =>
+      match fields.get("s") {
+        Some(True) => true
+        Some(Number(n, ..)) => n == 1.0
+        _ => false
+      }
+    Some(position_json) => {
+      let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
+        _ => { split: None }
+      }
+      match split_json.split {
+        Some(True) => true
+        Some(Number(n, ..)) => n == 1.0
+        _ => false
+      }
+    }
+    None => false
+  }
+}
+
+///|
+fn get_split_position_axis(json : Json?, axis : String) -> Json? {
+  match json {
+    Some(Object(fields)) => fields.get(axis)
+    _ => None
+  }
+}
+
+///|
+fn first_some(primary : Json?, fallback : Json?) -> Json? {
+  match primary {
+    Some(v) => Some(v)
+    None => fallback
+  }
+}
+
+///|
 struct ShapeJson {
   shape_type : String
   name : String?
@@ -1265,33 +1304,24 @@ fn parse_transform_from_decoded(
 ) -> @model.Transform raise LottieError {
   match decoded {
     Some(transform_json) => {
-      let split = match transform_json.position {
-        Some(position_json) => {
-          let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
-            _ => { split: None }
-          }
-          match split_json.split {
-            Some(True) => true
-            _ => false
-          }
-        }
-        None => false
-      }
+      let split = parse_split_position_flag(transform_json.position)
       let anchor = parse_property_vec(transform_json.anchor) catch {
         _ => @model.LottieProperty::new_static([0.0, 0.0])
       }
       let position = parse_property_vec(transform_json.position) catch {
         _ => @model.LottieProperty::new_static([0.0, 0.0])
       }
+      let nested_position_x = get_split_position_axis(transform_json.position, "x")
+      let nested_position_y = get_split_position_axis(transform_json.position, "y")
       let px = if split {
-        Some(parse_property_double(transform_json.position_x)) catch {
+        Some(parse_property_double(first_some(nested_position_x, transform_json.position_x))) catch {
           _ => None
         }
       } else {
         None
       }
       let py = if split {
-        Some(parse_property_double(transform_json.position_y)) catch {
+        Some(parse_property_double(first_some(nested_position_y, transform_json.position_y))) catch {
           _ => None
         }
       } else {
@@ -1779,7 +1809,10 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     Some("i") => @model.MaskMode::Intersect
     Some("l") => @model.MaskMode::Lighten
     Some("d") => @model.MaskMode::Darken
-    Some("f") => @model.MaskMode::Difference
+    // lottie-web canvas/SVG renderers treat legacy "f" mask mode as a normal
+    // additive mask (anything except "n" participates in clipping, with only
+    // "s"/"i" getting special handling for subtract/intersect-style compositing).
+    Some("f") => @model.MaskMode::Add
     _ => @model.MaskMode::None
   }
   @model.Mask::new(inverted~, path~, opacity~, mode~, name=decoded.name)
