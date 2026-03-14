@@ -454,7 +454,14 @@ function createEffectAccessor(layer, animationData, frame, compLayers = null, ac
             const param = effect?.ef?.find((item) => item?.mn === paramName || item?.nm === paramName) ?? null;
             if (!param) return 0;
             if (param.v) {
-                const value = sampleKeyframedProperty(param.v, frame);
+                const baseValue = sampleKeyframedProperty(param.v, frame);
+                const expression = typeof param.v.x === 'string' ? param.v.x : null;
+                const value = (expression && expression !== activeExpression)
+                    ? coerceExpressionResult(
+                        evaluateHostedExpressionValue(expression, frame, layer, baseValue, animationData, compLayers),
+                        baseValue,
+                    )
+                    : baseValue;
                 if (param.mn === 'ADBE Layer Control-0001') {
                     const layerIndex = Number(value) || 0;
                     const targetLayer = findLayerInComp(compLayers, layerIndex) ?? findLayerByIndex(animationData, layerIndex);
