@@ -1118,3 +1118,86 @@ test('toComp uses expression-evaluated position when accessing another layer', a
     `Expected first vertex ≈ [500, 400] (expression pos), got [${firstVertex}]`,
   );
 });
+
+test('default expression host evaluates loopOut expression on effect parameter (ripple animation fix)', async () => {
+  // Regression test for 3_4_ripple(expr).json: after frame 90 of the root comp the
+  // animation appeared frozen because createEffectAccessor called sampleKeyframedProperty
+  // directly without evaluating the `x` expression on the effect parameter value.
+  // The Progress slider has a loopOut('cycle') expression that must cycle the value
+  // beyond the last keyframe instead of clamping.
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  // Minimal reproduction of the ripple's traceNull layer:
+  //   - layer ind=1 is a null layer with a "Trace Path" effect
+  //   - The Progress parameter has keyframes 0→100 (frames 0-60) and 100→0 (frames 60-120)
+  //   - A loopOut('cycle') expression makes it cycle beyond frame 120
+  //   - A boolean "Loop" parameter (k=1) enables the loop
+  const loopOutExpr = [
+    'var $bm_rt;',
+    "if (thisProperty.propertyGroup(1)('Pseudo/ADBE Trace Path-0002') == true && thisProperty.numKeys > 1) {",
+    "    $bm_rt = thisProperty.loopOut('cycle');",
+    '} else {',
+    '    $bm_rt = value;',
+    '}',
+  ].join('\n');
+
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 1,
+      nm: 'traceNull',
+      ef: [{
+        nm: 'Trace Path',
+        mn: 'Pseudo/ADBE Trace Path',
+        ef: [
+          {
+            mn: 'Pseudo/ADBE Trace Path-0001',
+            nm: 'Progress',
+            v: {
+              a: 1,
+              k: [
+                { t: 0, s: [0], e: [100] },
+                { t: 60, s: [100], e: [0] },
+                { t: 120 },
+              ],
+              x: loopOutExpr,
+            },
+          },
+          {
+            mn: 'Pseudo/ADBE Trace Path-0002',
+            nm: 'Loop',
+            v: { a: 0, k: 1 },
+          },
+        ],
+      }],
+      ks: { p: { a: 0, k: [0, 0, 0] } },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  // The expression that accesses the effect's Progress parameter (as used in the ripple animation)
+  const accessExpr = "var $bm_rt; $bm_rt = thisLayer.effect('Trace Path')('Pseudo/ADBE Trace Path-0001');";
+
+  // At frame 30 (within range): Progress = 50, no loopOut needed
+  const at30 = host.evaluateDouble(accessExpr, 30, 1, 0);
+  assert.ok(Math.abs(at30 - 50) < 2, `Expected ~50 at frame 30, got ${at30}`);
+
+  // At frame 150 (beyond last keyframe 120 by 30 frames): loopOut('cycle') should sample
+  // at frame 150-120=30, which is within the first half (0→100) giving ~50
+  const at150 = host.evaluateDouble(accessExpr, 150, 1, 0);
+  assert.ok(Math.abs(at150 - 50) < 2, `Expected ~50 at frame 150 (loopOut cycle), got ${at150}`);
+
+  // At frame 180 (beyond last keyframe by 60 frames): samples at frame 60 → Progress = 100
+  const at180 = host.evaluateDouble(accessExpr, 180, 1, 0);
+  assert.ok(Math.abs(at180 - 100) < 2, `Expected ~100 at frame 180 (loopOut cycle), got ${at180}`);
+
+  // Without the fix, frames > 120 would be clamped to the last keyframe value (0).
+  // Verify the value is NOT frozen at 0 for frames beyond the keyframe range.
+  assert.ok(at150 > 1, `loopOut should not return frozen value 0 at frame 150, got ${at150}`);
+  assert.ok(at180 > 1, `loopOut should not return frozen value 0 at frame 180, got ${at180}`);
+});
