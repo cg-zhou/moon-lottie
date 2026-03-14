@@ -1201,3 +1201,69 @@ test('default expression host evaluates loopOut expression on effect parameter (
   assert.ok(at150 > 1, `loopOut should not return frozen value 0 at frame 150, got ${at150}`);
   assert.ok(at180 > 1, `loopOut should not return frozen value 0 at frame 180, got ${at180}`);
 });
+
+test('default expression host preserves keyframe easing for effect parameters with array tangents', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+
+  const solveCubicBezierEasing = (x1, y1, x2, y2, targetX) => {
+    if (targetX <= 0) return 0;
+    if (targetX >= 1) return 1;
+    const cx = 3 * x1;
+    const bx = 3 * (x2 - x1) - cx;
+    const ax = 1 - cx - bx;
+    const cy = 3 * y1;
+    const by = 3 * (y2 - y1) - cy;
+    const ay = 1 - cy - by;
+    let t = targetX;
+    for (let index = 0; index < 8; index += 1) {
+      const x = ((ax * t + bx) * t + cx) * t - targetX;
+      const dx = (3 * ax * t + 2 * bx) * t + cx;
+      if (Math.abs(dx) < 1e-6) break;
+      t -= x / dx;
+    }
+    return ((ay * t + by) * t + cy) * t;
+  };
+
+  const animationData = {
+    fr: 60,
+    layers: [{
+      ind: 1,
+      nm: 'traceNull',
+      ef: [{
+        nm: 'Trace Path',
+        mn: 'Pseudo/ADBE Trace Path',
+        ef: [{
+          mn: 'Pseudo/ADBE Trace Path-0001',
+          nm: 'Progress',
+          v: {
+            a: 1,
+            k: [
+              { t: 0, s: [0], e: [100], i: { x: [0.6], y: [1] }, o: { x: [0.4], y: [0] } },
+              { t: 60, s: [100], e: [0], i: { x: [0.6], y: [1] }, o: { x: [0.4], y: [0] } },
+              { t: 120 },
+            ],
+          },
+        }],
+      }],
+      ks: { p: { a: 0, k: [0, 0, 0] } },
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 60 }),
+  });
+
+  const accessExpr = "var $bm_rt; $bm_rt = thisLayer.effect('Trace Path')('Pseudo/ADBE Trace Path-0001');";
+  const at84 = host.evaluateDouble(accessExpr, 84, 1, 0);
+  const at114 = host.evaluateDouble(accessExpr, 114, 1, 0);
+
+  const expectedAt84 = 100 * (1 - solveCubicBezierEasing(0.4, 0, 0.6, 1, (84 - 60) / 60));
+  const expectedAt114 = 100 * (1 - solveCubicBezierEasing(0.4, 0, 0.6, 1, (114 - 60) / 60));
+
+  assert.ok(Math.abs(at84 - expectedAt84) < 0.5, `Expected eased value ~${expectedAt84} at frame 84, got ${at84}`);
+  assert.ok(Math.abs(at114 - expectedAt114) < 0.5, `Expected eased value ~${expectedAt114} at frame 114, got ${at114}`);
+  assert.ok(Math.abs(at84 - 60) > 3, `Expected frame 84 to be eased, not linear 60, got ${at84}`);
+  assert.ok(Math.abs(at114 - 10) > 3, `Expected frame 114 to be eased, not linear 10, got ${at114}`);
+});
