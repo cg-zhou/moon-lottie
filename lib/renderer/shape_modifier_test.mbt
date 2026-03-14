@@ -432,6 +432,178 @@ test "dash_stroke/rendering" {
 }
 
 ///|
+test "gradient_dash_stroke/rendering" {
+  let anim = @model.Animation::new(
+    version="5.5.0",
+    frame_rate=30.0,
+    in_point=0.0,
+    out_point=10.0,
+    width=100,
+    height=100,
+    layers=[
+      @model.Layer::new(
+        index=1,
+        layer_type=4,
+        transform=@model.Transform::new_default(),
+        in_point=0.0,
+        out_point=10.0,
+        start_time=0.0,
+        data=@model.LayerData::Shape(
+          [
+            @model.Shape::new(
+              shape_type="rc",
+              data=@model.ShapeData::new_rect(
+                @model.RectShape::new(
+                  position=@model.LottieProperty::new_static([50.0, 50.0]),
+                  size=@model.LottieProperty::new_static([80.0, 80.0]),
+                  roundness=@model.LottieProperty::new_static(0.0),
+                ),
+              ),
+            ),
+            @model.Shape::new(
+              shape_type="gs",
+              data=@model.ShapeData::new_gradient_stroke(
+                @model.GradientStrokeShape::new(
+                  gradient_type=1,
+                  opacity=@model.LottieProperty::new_static(100.0),
+                  start_point=@model.LottieProperty::new_static([0.0, 0.0]),
+                  end_point=@model.LottieProperty::new_static([100.0, 0.0]),
+                  gradient_colors=@model.GradientColors::new(
+                    color_count=2,
+                    color_stops=@model.LottieProperty::new_static([
+                      0.0,
+                      1.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                    ]),
+                  ),
+                  width=@model.LottieProperty::new_static(2.0),
+                  dashes=[
+                    @model.DashItem::new(
+                      name="d",
+                      value=@model.LottieProperty::new_static(10.0),
+                    ),
+                    @model.DashItem::new(
+                      name="g",
+                      value=@model.LottieProperty::new_static(5.0),
+                    ),
+                    @model.DashItem::new(
+                      name="o",
+                      value=@model.LottieProperty::new_static(3.0),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  )
+  let recorder = CommandRecorder::new()
+  let player = Player::new(anim, recorder)
+  player.set_frame(0.0)
+  player.render()
+  let cmds = recorder.get_commands()
+  let mut found_dash = false
+  for cmd in cmds {
+    match cmd {
+      SetLineDash(arr, offset) => {
+        found_dash = true
+        inspect(arr.length(), content="2")
+        inspect(arr[0], content="10")
+        inspect(arr[1], content="5")
+        inspect(offset, content="3")
+      }
+      _ => ()
+    }
+  }
+  if not(found_dash) { fail("SetLineDash command should be emitted for gradient stroke") }
+}
+
+///|
+test "gradient_stroke_without_dashes_resets_canvas_dash" {
+  let anim = @model.Animation::new(
+    version="5.5.0",
+    frame_rate=30.0,
+    in_point=0.0,
+    out_point=10.0,
+    width=120,
+    height=100,
+    layers=[
+      @model.Layer::new(
+        index=1,
+        layer_type=4,
+        transform=@model.Transform::new_default(),
+        in_point=0.0,
+        out_point=10.0,
+        start_time=0.0,
+        data=@model.LayerData::Shape(
+          [
+            @model.Shape::new(
+              shape_type="rc",
+              data=@model.ShapeData::new_rect(
+                @model.RectShape::new(
+                  position=@model.LottieProperty::new_static([50.0, 50.0]),
+                  size=@model.LottieProperty::new_static([80.0, 80.0]),
+                  roundness=@model.LottieProperty::new_static(0.0),
+                ),
+              ),
+            ),
+            @model.Shape::new(
+              shape_type="gs",
+              data=@model.ShapeData::new_gradient_stroke(
+                @model.GradientStrokeShape::new(
+                  gradient_type=1,
+                  opacity=@model.LottieProperty::new_static(100.0),
+                  start_point=@model.LottieProperty::new_static([0.0, 0.0]),
+                  end_point=@model.LottieProperty::new_static([100.0, 0.0]),
+                  gradient_colors=@model.GradientColors::new(
+                    color_count=2,
+                    color_stops=@model.LottieProperty::new_static([
+                      0.0,
+                      1.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                    ]),
+                  ),
+                  width=@model.LottieProperty::new_static(2.0),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  )
+  let recorder = CommandRecorder::new()
+  let player = Player::new(anim, recorder)
+  player.set_frame(0.0)
+  player.render()
+  let cmds = recorder.get_commands()
+
+  let dash_commands : Array[(Int, Double)] = []
+  for cmd in cmds {
+    match cmd {
+      SetLineDash(arr, offset) => dash_commands.push((arr.length(), offset))
+      _ => ()
+    }
+  }
+
+  inspect(dash_commands.length(), content="1")
+  inspect(dash_commands[0].0, content="0")
+  inspect(dash_commands[0].1, content="0")
+}
+
+///|
 test "merge_paths/noop" {
   // lottie-web ignores MergePaths (ty="mm") in both SVG and canvas renderers.
   // The fill-rule is determined by the fill shape's own `r` property (1=nonzero,

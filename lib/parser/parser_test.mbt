@@ -799,3 +799,34 @@ test "parse_stroke_without_dashes" {
     _ => fail("shape should be stroke")
   }
 }
+
+///|
+test "parse_gradient_stroke_with_dashes" {
+  let json_str =
+    #|{"ty":"gs","o":{"k":100},"w":{"k":2},"g":{"p":2,"k":{"k":[0,1,0,0,1,0,0,1]}},"s":{"k":[0,0]},"e":{"k":[100,0]},"t":1,"lc":2,"lj":2,"ml":4,"d":[{"n":"d","v":{"k":10}}, {"n":"g","v":{"k":5}}, {"n":"o","v":{"k":3}}]}
+  let json = @json.parse(json_str)
+  let shape = @parser.parse_shape(json) catch {
+    e => fail("Failed to parse gradient stroke with dashes: \{e}")
+  }
+  match shape.data {
+    @model.ShapeData::GradientStroke(s) => {
+      inspect(s.dashes.length(), content="3")
+      inspect(s.dashes[0].name, content="d")
+      match s.dashes[0].value.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="10")
+        _ => fail("gradient dash value should be static")
+      }
+      inspect(s.dashes[1].name, content="g")
+      match s.dashes[1].value.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="5")
+        _ => fail("gradient gap value should be static")
+      }
+      inspect(s.dashes[2].name, content="o")
+      match s.dashes[2].value.value {
+        @model.PropertyValue::Static(v) => inspect(v, content="3")
+        _ => fail("gradient offset value should be static")
+      }
+    }
+    _ => fail("shape should be gradient stroke")
+  }
+}

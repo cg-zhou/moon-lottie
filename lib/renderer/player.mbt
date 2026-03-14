@@ -1033,6 +1033,21 @@ pub fn[R : Renderer] Player::render_shape(
         self.draw_lottie_path(p)
       }
       self.renderer.set_stroke_style(s.line_cap, s.line_join, s.miter_limit)
+      if s.dashes.length() > 0 {
+        let dash_array : Array[Double] = []
+        let mut dash_offset = 0.0
+        for d in s.dashes {
+          let v = self.evaluate_double(d.value, self.current_comp_frame)
+          if d.name == "o" {
+            dash_offset = v
+          } else {
+            dash_array.push(v)
+          }
+        }
+        self.renderer.set_line_dash(dash_array, dash_offset)
+      } else {
+        self.renderer.set_line_dash([], 0.0)
+      }
       match s.gradient_type {
         Linear =>
           self.renderer.stroke_linear_gradient(

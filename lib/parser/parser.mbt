@@ -244,6 +244,7 @@ struct ShapeGradientStrokeJson {
   line_join : Int?
   miter_limit : Double?
   gradient : Json?
+  dashes : Array[Json]?
 } derive(
   FromJson(
     fields(
@@ -256,6 +257,7 @@ struct ShapeGradientStrokeJson {
       line_join(rename="lj"),
       miter_limit(rename="ml"),
       gradient(rename="g"),
+      dashes(rename="d"),
     ),
   ),
 )
@@ -1614,6 +1616,7 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
       let line_cap = decoded.line_cap.unwrap_or(1)
       let line_join = decoded.line_join.unwrap_or(1)
       let miter_limit = decoded.miter_limit.unwrap_or(4.0)
+      let dashes = parse_dash_items(decoded.dashes)
       let g_json = match decoded.gradient {
         Some(j) => j
         None => raise MissingKey("g in gs")
@@ -1636,6 +1639,7 @@ pub fn parse_shape(json : Json) -> @model.Shape raise LottieError {
           line_cap~,
           line_join~,
           miter_limit~,
+          dashes~,
         ),
       )
     }

@@ -554,6 +554,48 @@ test "trim path uses composition frame timing for layer with non-zero st" {
   }
 }
 
+test "gradient stroke with trim path emits visible stroke commands" {
+  let json_str =
+    #|{"v":"4.7.1","fr":60,"ip":0,"op":82,"w":200,"h":200,"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"Shape Layer 1","ip":0,"op":180,"st":0,"ks":{"o":{"a":0,"k":100},"r":{"a":0,"k":0},"p":{"a":0,"k":[100,100,0]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"ao":0,"shapes":[{"ty":"gr","it":[{"d":1,"ty":"el","s":{"a":0,"k":[150,150]},"p":{"a":0,"k":[0,0]},"nm":"Ellipse Path 1"},{"ty":"gs","o":{"a":0,"k":100},"w":{"a":0,"k":10},"g":{"p":7,"k":{"a":0,"k":[0,0.918,0.263,0.208,0.167,0.951,0.5,0.114,0.333,0.984,0.737,0.02,0.5,0.594,0.698,0.173,0.666,0.204,0.659,0.325,0.833,0.231,0.59,0.641,1,0.259,0.522,0.957]}},"s":{"a":0,"k":[-57.125,-53.25]},"e":{"a":0,"k":[53.625,58.75]},"t":1,"lc":2,"lj":1,"ml":4,"nm":"Gradient Stroke 1"},{"ty":"tr","p":{"a":0,"k":[0,0]},"a":{"a":0,"k":[0,0]},"s":{"a":0,"k":[100,100]},"r":{"a":0,"k":0},"o":{"a":0,"k":100},"sk":{"a":0,"k":0},"sa":{"a":0,"k":0},"nm":"Transform"}],"nm":"Ellipse 1"},{"ty":"tm","s":{"a":1,"k":[{"t":0,"s":[0],"e":[0]},{"t":10,"s":[0],"e":[99]},{"t":81}],"x":"var $bm_rt;\n$bm_rt = loopOut('Cycle');"},"e":{"a":1,"k":[{"t":0,"s":[1],"e":[100]},{"t":71,"s":[100],"e":[100]},{"t":81}],"x":"var $bm_rt;\n$bm_rt = loopOut('Cycle');"},"o":{"a":1,"k":[{"t":0,"s":[0],"e":[360]},{"t":81}],"x":"var $bm_rt;\n$bm_rt = loopOut('Cycle');"},"m":1,"nm":"Trim Paths 1"}]}]}
+  #|
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut saw_gradient_stroke = false
+  let mut saw_path_command = false
+  for cmd in commands {
+    match cmd {
+      MoveTo(_, _) | LineTo(_, _) | CubicTo(_, _, _, _, _, _) =>
+        saw_path_command = true
+      StrokeLinearGradient(_, _, _, _, _, _, opacity, width) => {
+        saw_gradient_stroke = true
+        if opacity <= 0.0 {
+          fail("Expected positive gradient stroke opacity, got \{opacity}")
+        }
+        if width <= 0.0 {
+          fail("Expected positive gradient stroke width, got \{width}")
+        }
+      }
+      _ => ()
+    }
+  }
+
+  if not(saw_path_command) {
+    fail("Expected visible trimmed ellipse path commands before gradient stroke")
+  }
+  if not(saw_gradient_stroke) {
+    fail("Expected StrokeLinearGradient command for gradient stroke sample")
+  }
+}
+
 test "layer fill effect applies source-atop color overlay" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":20,"w":100,"h":100,"layers":[{"ty":4,"ind":1,"ip":0,"op":20,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"ef":[{"ty":21,"mn":"ADBE Fill","en":1,"ef":[{"mn":"ADBE Fill-0002","v":{"a":1,"k":[{"t":0,"s":[1,0,0,1]},{"t":10,"s":[0,1,0,1]}]}},{"mn":"ADBE Fill-0005","v":{"k":50}}]}],"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[0,0,1]},"o":{"k":100}}]}]}
