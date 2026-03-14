@@ -167,7 +167,7 @@ function findLayerContextByIndex(animationData, layerIndex, expression = null, c
             }
             const candidate = { layer, layers };
             candidates.push(candidate);
-            if (!expression || findPropertyContextByExpression(layer, expression)) {
+            if (!expression || getCachedPropertyContextsByExpression(layer, expression).length > 0) {
                 return candidate;
             }
         }
@@ -214,9 +214,68 @@ function findCompAsset(animationData, compRef) {
     ) ?? null;
 }
 
-function getCachedPropertyContextByExpression(layer, expression) {
+function flattenPropertyMatchValue(value, result = []) {
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            flattenPropertyMatchValue(item, result);
+        }
+        return result;
+    }
+    if (value && typeof value === 'object') {
+        if (Array.isArray(value.vertices)) {
+            flattenPropertyMatchValue(value.vertices, result);
+            flattenPropertyMatchValue(value.inTangents, result);
+            flattenPropertyMatchValue(value.outTangents, result);
+            result.push(value.closed ? 1 : 0);
+        }
+        return result;
+    }
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+        result.push(numeric);
+    }
+    return result;
+}
+
+function scorePropertyContextMatch(property, frame, value) {
+    const expected = flattenPropertyMatchValue(value);
+    const sampled = flattenPropertyMatchValue(sampleKeyframedProperty(property, frame));
+    if (expected.length === 0 && sampled.length === 0) {
+        return 0;
+    }
+    if (expected.length === 0 || sampled.length === 0) {
+        return Number.POSITIVE_INFINITY;
+    }
+    let score = Math.abs(expected.length - sampled.length) * 1000;
+    const length = Math.min(expected.length, sampled.length);
+    for (let index = 0; index < length; index++) {
+        score += Math.abs(expected[index] - sampled[index]);
+    }
+    return score;
+}
+
+function findPropertyContextsByExpression(node, expression, parents = [], matches = []) {
+    if (!node || typeof node !== 'object' || !expression) {
+        return matches;
+    }
+    if (Array.isArray(node)) {
+        for (const item of node) {
+            findPropertyContextsByExpression(item, expression, parents, matches);
+        }
+        return matches;
+    }
+    if (node.x === expression) {
+        matches.push({ property: node, parents });
+    }
+    for (const value of Object.values(node)) {
+        findPropertyContextsByExpression(value, expression, [...parents, node], matches);
+    }
+    return matches;
+}
+
+function getCachedPropertyContextsByExpression(layer, expression) {
     if (!layer || typeof layer !== 'object' || !expression) {
-        return null;
+        return [];
     }
     let expressionCache = layerExpressionContextCache.get(layer);
     if (!expressionCache) {
@@ -224,9 +283,26 @@ function getCachedPropertyContextByExpression(layer, expression) {
         layerExpressionContextCache.set(layer, expressionCache);
     }
     if (!expressionCache.has(expression)) {
-        expressionCache.set(expression, findPropertyContextByExpression(layer, expression));
+        expressionCache.set(expression, findPropertyContextsByExpression(layer, expression));
     }
-    return expressionCache.get(expression) ?? null;
+    return expressionCache.get(expression) ?? [];
+}
+
+function resolvePropertyContextByExpression(layer, expression, frame, value) {
+    const contexts = getCachedPropertyContextsByExpression(layer, expression);
+    if (contexts.length <= 1) {
+        return contexts[0] ?? null;
+    }
+    let bestContext = contexts[0] ?? null;
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (const context of contexts) {
+        const score = scorePropertyContextMatch(context.property, frame, value);
+        if (score < bestScore) {
+            bestScore = score;
+            bestContext = context;
+        }
+    }
+    return bestContext;
 }
 
 function coerceExpressionResult(result, fallbackValue) {
@@ -262,25 +338,6 @@ function evaluateHostedExpressionValue(expression, frame, layer, value, animatio
         console.warn('[MoonLottie] expression evaluation failed', error);
         return value;
     }
-}
-
-function findPropertyContextByExpression(node, expression, parents = []) {
-    if (!node || typeof node !== 'object') return null;
-    if (Array.isArray(node)) {
-        for (const item of node) {
-            const match = findPropertyContextByExpression(item, expression, parents);
-            if (match) return match;
-        }
-        return null;
-    }
-    if (node.x === expression) {
-        return { property: node, parents };
-    }
-    for (const value of Object.values(node)) {
-        const match = findPropertyContextByExpression(value, expression, [...parents, node]);
-        if (match) return match;
-    }
-    return null;
 }
 
 function toVector(value) {
@@ -1166,7 +1223,7 @@ function buildContext({
 }) {
     const fps = Number(playbackMeta?.fps) || Number(animationData?.fr) || DEFAULT_FPS;
     const frameDuration = fps > 0 ? 1 / fps : DEFAULT_FRAME_DURATION;
-    const rawPropertyContext = getCachedPropertyContextByExpression(layer, expression);
+    const rawPropertyContext = resolvePropertyContextByExpression(layer, expression, frame, value);
     const rawProperty = rawPropertyContext?.property ?? null;
     const propertyHelpers = createPropertyHelpers(rawProperty, frame, frameDuration);
     const currentLayerProxy = createLayerProxy(layer ?? {}, animationData, frame, currentCompLayers, expression);
