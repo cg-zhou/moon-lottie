@@ -1216,7 +1216,7 @@ test('default expression host preserves keyframe easing for effect parameters wi
     const by = 3 * (y2 - y1) - cy;
     const ay = 1 - cy - by;
     let t = targetX;
-    for (let index = 0; index < 8; index += 1) {
+    for (let iteration = 0; iteration < 8; iteration += 1) {
       const x = ((ax * t + bx) * t + cx) * t - targetX;
       const dx = (3 * ax * t + 2 * bx) * t + cx;
       if (Math.abs(dx) < 1e-6) break;
