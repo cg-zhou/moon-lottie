@@ -1391,13 +1391,100 @@ fn create_rect_path(
   r : Double,
   direction : Int,
 ) -> @model.BezierPath {
-  let _ = r
+  let half_w = w.abs() / 2.0
+  let half_h = h.abs() / 2.0
+  let max_r = if half_w < half_h { half_w } else { half_h }
+  let radius = if r < 0.0 {
+    0.0
+  } else if r > max_r {
+    max_r
+  } else {
+    r
+  }
+  if radius <= 0.0 {
+    // lottie-web: `if (this.d === 2 || this.d === 1)` produces CW; else (d=3) CCW.
+    if direction == 3 {
+      // Counter-clockwise: top-right → top-left → bottom-left → bottom-right
+      return @model.BezierPath::new_rect_ccw(x, y, w, h)
+    } else {
+      return @model.BezierPath::new_rect(x, y, w, h)
+    }
+  }
+  let left = x - w / 2.0
+  let right = x + w / 2.0
+  let top = y - h / 2.0
+  let bottom = y + h / 2.0
+  let kappa = 0.5522847498307936
+  let cp = radius * kappa
   // lottie-web: `if (this.d === 2 || this.d === 1)` produces CW; else (d=3) CCW.
   if direction == 3 {
-    // Counter-clockwise: top-right → top-left → bottom-left → bottom-right
-    @model.BezierPath::new_rect_ccw(x, y, w, h)
+    @model.BezierPath::new(
+      vertices=[
+        [right - radius, top],
+        [left + radius, top],
+        [left, top + radius],
+        [left, bottom - radius],
+        [left + radius, bottom],
+        [right - radius, bottom],
+        [right, bottom - radius],
+        [right, top + radius],
+      ],
+      in_tangents=[
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+        [0.0, 0.0],
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+      ],
+      out_tangents=[
+        [0.0, 0.0],
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+      ],
+      closed=true,
+    )
   } else {
-    @model.BezierPath::new_rect(x, y, w, h)
+    @model.BezierPath::new(
+      vertices=[
+        [left + radius, top],
+        [right - radius, top],
+        [right, top + radius],
+        [right, bottom - radius],
+        [right - radius, bottom],
+        [left + radius, bottom],
+        [left, bottom - radius],
+        [left, top + radius],
+      ],
+      in_tangents=[
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+        [0.0, 0.0],
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+      ],
+      out_tangents=[
+        [0.0, 0.0],
+        [cp, 0.0],
+        [0.0, 0.0],
+        [0.0, cp],
+        [0.0, 0.0],
+        [-cp, 0.0],
+        [0.0, 0.0],
+        [0.0, -cp],
+      ],
+      closed=true,
+    )
   }
 }
 

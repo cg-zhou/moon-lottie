@@ -143,6 +143,23 @@ test "parse_mask_with_subtract_mode" {
 }
 
 ///|
+test "parse_mask_with_legacy_f_mode_treated_as_add" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]],\"c\":true}},\"o\":{\"k\":100},\"mode\":\"f\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with legacy mask mode: \{e}")
+  }
+  match ani.layers[0].masks {
+    Some(masks) =>
+      if masks[0].mode != @model.MaskMode::Add {
+        fail("legacy mask mode f should be treated as Add")
+      }
+    None => fail("masks should be parsed")
+  }
+}
+
+///|
 test "parse_mask_path_closed_from_mask_cl_flag" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"cl\":true,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]]}},\"o\":{\"k\":100},\"mode\":\"a\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
@@ -418,6 +435,34 @@ test "parse_position_keyframe_infra_fields" {
       }
     }
     _ => fail("position should be animated")
+  }
+}
+
+///|
+test "parse_transform_split_position_with_x_and_y_fields" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":3,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"s\":true,\"x\":{\"k\":25},\"y\":{\"k\":40}},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse split position transform: \{e}")
+  }
+  let tr = ani.layers[0].transform
+  assert_eq(tr.split, Some(true))
+  match tr.px {
+    Some(px) =>
+      match px.value {
+        @model.PropertyValue::Static(v) => assert_eq(v, 25.0)
+        _ => fail("split x should be static")
+      }
+    None => fail("split x should be parsed")
+  }
+  match tr.py {
+    Some(py) =>
+      match py.value {
+        @model.PropertyValue::Static(v) => assert_eq(v, 40.0)
+        _ => fail("split y should be static")
+      }
+    None => fail("split y should be parsed")
   }
 }
 

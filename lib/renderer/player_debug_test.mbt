@@ -72,6 +72,44 @@ test "sibling groups with own fill should not leak paths to next group" {
   assert_eq(second_fill_path_move_count, Some(1))
 }
 
+test "rounded rectangle path preserves roundness in rendered commands" {
+  let json_str = "{\"v\":\"5.5.2\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"nm\":\"rounded-rect-test\",\"ddd\":0,\"assets\":[],\"layers\":[{\"ty\":4,\"ind\":1,\"nm\":\"rounded-rect-layer\",\"ip\":0,\"op\":10,\"st\":0,\"ks\":{\"p\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100},\"a\":{\"a\":0,\"k\":[0,0]}},\"shapes\":[{\"ty\":\"rc\",\"nm\":\"rect-rounded\",\"s\":{\"a\":0,\"k\":[80,40]},\"p\":{\"a\":0,\"k\":[50,50]},\"r\":{\"a\":0,\"k\":10}},{\"ty\":\"fl\",\"nm\":\"fill-rounded\",\"c\":{\"a\":0,\"k\":[1,0,0]},\"o\":{\"a\":0,\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut saw_curved_corner = false
+  let mut current_x = 0.0
+  let mut current_y = 0.0
+  for command in commands {
+    match command {
+      MoveTo(x, y) => {
+        current_x = x
+        current_y = y
+      }
+      CubicTo(cp1x, cp1y, cp2x, cp2y, x, y) => {
+        if (cp1x - current_x).abs() > 0.01 ||
+          (cp1y - current_y).abs() > 0.01 ||
+          (cp2x - x).abs() > 0.01 ||
+          (cp2y - y).abs() > 0.01 {
+          saw_curved_corner = true
+        }
+        current_x = x
+        current_y = y
+      }
+      _ => ()
+    }
+  }
+  assert_true(
+    saw_curved_corner,
+    "rounded rectangle should render cubic curve segments for rounded corners",
+  )
+}
+
 test "svg-exported layer renders top-level groups in reverse order" {
   let json_str = "{\"v\":\"5.5.2\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"nm\":\"shape-order-test\",\"ddd\":0,\"assets\":[],\"layers\":[{\"ty\":4,\"ind\":1,\"nm\":\"Shape Layer - SVG\",\"ip\":0,\"op\":10,\"st\":0,\"ks\":{\"p\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100},\"a\":{\"a\":0,\"k\":[0,0]}},\"shapes\":[{\"ty\":\"gr\",\"nm\":\"foreground-red\",\"it\":[{\"ty\":\"rc\",\"s\":{\"a\":0,\"k\":[20,20]},\"p\":{\"a\":0,\"k\":[10,10]},\"r\":{\"a\":0,\"k\":0}},{\"ty\":\"fl\",\"c\":{\"a\":0,\"k\":[1,0,0]},\"o\":{\"a\":0,\"k\":100}},{\"ty\":\"tr\",\"p\":{\"a\":0,\"k\":[0,0]},\"a\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}}]},{\"ty\":\"gr\",\"nm\":\"background-blue\",\"it\":[{\"ty\":\"rc\",\"s\":{\"a\":0,\"k\":[100,100]},\"p\":{\"a\":0,\"k\":[0,0]},\"r\":{\"a\":0,\"k\":0}},{\"ty\":\"fl\",\"c\":{\"a\":0,\"k\":[0,0,1]},\"o\":{\"a\":0,\"k\":100}},{\"ty\":\"tr\",\"p\":{\"a\":0,\"k\":[0,0]},\"a\":{\"a\":0,\"k\":[0,0]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}}]}]}]}"
   let json = @json.parse(json_str)
@@ -462,6 +500,38 @@ test "image layers preserve matched asset index for wasm bridge" {
     }
   }
   assert_eq(image_info, Some(("data:image/png;base64,BBBB", 1)))
+}
+
+test "image layer honors split position transform" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":100,"h":100,"assets":[{"id":"img_0","w":10,"h":20,"u":"data:image/png;base64,","p":"AAAA"}],"layers":[{"ty":2,"ind":1,"refId":"img_0","ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"s":true,"x":{"k":30},"y":{"k":40}},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut image_transform : @math.Matrix? = None
+  let mut latest_transform : @math.Matrix? = None
+  for i = 0; i < commands.length(); i = i + 1 {
+    match commands[i] {
+      ConcatTransform(m) => latest_transform = Some(m)
+      DrawImage(_, _, _, _) => {
+        image_transform = latest_transform
+        break
+      }
+      _ => ()
+    }
+  }
+  match image_transform {
+    Some(m) => {
+      assert_eq(m.e, 30.0)
+      assert_eq(m.f, 40.0)
+    }
+    None => fail("expected image layer transform before DrawImage")
+  }
 }
 
 test "fill color accepts byte-range channels without rescaling" {

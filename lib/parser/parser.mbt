@@ -1266,12 +1266,19 @@ fn parse_transform_from_decoded(
   match decoded {
     Some(transform_json) => {
       let split = match transform_json.position {
+        Some(Object(fields)) =>
+          match fields.get("s") {
+            Some(True) => true
+            Some(Number(n, ..)) => n == 1.0
+            _ => false
+          }
         Some(position_json) => {
           let split_json : SplitPositionJson = (@json.from_json(position_json)) catch {
             _ => { split: None }
           }
           match split_json.split {
             Some(True) => true
+            Some(Number(n, ..)) => n == 1.0
             _ => false
           }
         }
@@ -1283,15 +1290,29 @@ fn parse_transform_from_decoded(
       let position = parse_property_vec(transform_json.position) catch {
         _ => @model.LottieProperty::new_static([0.0, 0.0])
       }
+      let nested_position_x = match transform_json.position {
+        Some(Object(fields)) => fields.get("x")
+        _ => None
+      }
+      let nested_position_y = match transform_json.position {
+        Some(Object(fields)) => fields.get("y")
+        _ => None
+      }
       let px = if split {
-        Some(parse_property_double(transform_json.position_x)) catch {
+        Some(parse_property_double(match nested_position_x {
+          Some(v) => Some(v)
+          None => transform_json.position_x
+        })) catch {
           _ => None
         }
       } else {
         None
       }
       let py = if split {
-        Some(parse_property_double(transform_json.position_y)) catch {
+        Some(parse_property_double(match nested_position_y {
+          Some(v) => Some(v)
+          None => transform_json.position_y
+        })) catch {
           _ => None
         }
       } else {
@@ -1779,7 +1800,10 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     Some("i") => @model.MaskMode::Intersect
     Some("l") => @model.MaskMode::Lighten
     Some("d") => @model.MaskMode::Darken
-    Some("f") => @model.MaskMode::Difference
+    // lottie-web canvas/SVG renderers treat legacy "f" mask mode as a normal
+    // additive mask (anything except "n" participates in clipping, with only
+    // "s"/"i" getting special handling).
+    Some("f") => @model.MaskMode::Add
     _ => @model.MaskMode::None
   }
   @model.Mask::new(inverted~, path~, opacity~, mode~, name=decoded.name)
