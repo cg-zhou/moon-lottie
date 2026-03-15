@@ -228,7 +228,7 @@ test "evaluate_vec_property_spatial_bezier_arc_length_parameterization" {
 }
 
 ///|
-test "evaluate_path_property_multidimensional_easing_components" {
+test "evaluate_path_property_uses_single_eased_scalar_for_all_components" {
   let ot = @model.Bezier::new(
     @model.BezierValue::new_multi([0.0, 0.1]),
     @model.BezierValue::new_multi([0.0, 1.0]),
@@ -262,10 +262,10 @@ test "evaluate_path_property_multidimensional_easing_components" {
   let vx = get_pt_at(v.vertices, 0, 0)
   let vy = get_pt_at(v.vertices, 0, 1)
   if (vx - 50.0).abs() > 0.001 {
-    fail("Path x component should follow linear easing component")
+    fail("Path x component should follow the shared eased scalar")
   }
-  if vy <= 50.0 {
-    fail("Path y component should follow its own easing curve")
+  if (vy - 50.0).abs() > 0.001 {
+    fail("Path y component should use the same eased scalar as x")
   }
 }
 

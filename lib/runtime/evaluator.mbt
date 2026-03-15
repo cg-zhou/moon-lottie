@@ -154,33 +154,6 @@ fn lerp_array_with_optional_component_easing(
   }
 }
 
-///|
-fn lerp_vec2_array_with_component_easing(
-  a : Array[Array[Double]],
-  b : Array[Array[Double]],
-  out_tangent : @model.Bezier,
-  in_tangent : @model.Bezier,
-  t : Double,
-) -> Array[Array[Double]] {
-  let len = if a.length() < b.length() { a.length() } else { b.length() }
-  let res = []
-  for i = 0; i < len; i = i + 1 {
-    let inner_len = if a[i].length() < b[i].length() {
-      a[i].length()
-    } else {
-      b[i].length()
-    }
-    let inner = []
-    for j = 0; j < inner_len; j = j + 1 {
-      let eased_t = solve_eased_t_for_component(out_tangent, in_tangent, t, j)
-      inner.push(a[i][j] + (b[i][j] - a[i][j]) * eased_t)
-    }
-    res.push(inner)
-  }
-  res
-}
-
-///|
 /// Split a serialized expression payload on a single-character delimiter.
 /// Empty input returns an empty array, while trailing segments are preserved.
 fn split_string(input : String, delimiter : Char) -> Array[String] {
@@ -637,30 +610,11 @@ pub fn evaluate_path_property(
         return kf.start_value
       }
 
-      let (res_v, res_i, res_o) = match (kf.out_tangent, kf.in_tangent) {
-        (Some(ot), Some(it)) => (
-          lerp_vec2_array_with_component_easing(start_v, end_v, ot, it, t),
-          lerp_vec2_array_with_component_easing(
-            kf.start_value.in_tangents,
-            next_val.in_tangents,
-            ot,
-            it,
-            t,
-          ),
-          lerp_vec2_array_with_component_easing(
-            kf.start_value.out_tangents,
-            next_val.out_tangents,
-            ot,
-            it,
-            t,
-          ),
-        )
-        _ => (
-          @math.lerp_vec2_array(start_v, end_v, eased_t),
-          @math.lerp_vec2_array(kf.start_value.in_tangents, next_val.in_tangents, eased_t),
-          @math.lerp_vec2_array(kf.start_value.out_tangents, next_val.out_tangents, eased_t),
-        )
-      }
+      // Match lottie-web ShapeProperty.interpolateShape: a single eased scalar
+      // percentage is applied to every vertex and tangent component.
+      let res_v = @math.lerp_vec2_array(start_v, end_v, eased_t)
+      let res_i = @math.lerp_vec2_array(kf.start_value.in_tangents, next_val.in_tangents, eased_t)
+      let res_o = @math.lerp_vec2_array(kf.start_value.out_tangents, next_val.out_tangents, eased_t)
       @model.BezierPath::new(vertices=res_v, in_tangents=res_i, out_tangents=res_o, closed=kf.start_value.closed)
     }
   }
