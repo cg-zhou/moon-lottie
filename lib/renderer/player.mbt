@@ -236,6 +236,10 @@ fn[R : Renderer] Player::render_layer(
   // 0.1 prepareLayer (lottie-web pattern): called BEFORE save() and transforms.
   // Saves background to buffer[0], captures base transform, clears canvas.
   match matte_source {
+    Some(_) => self.renderer.begin_layer()
+    None => ()
+  }
+  match matte_source {
     Some(_) => self.renderer.prepare_matte_layer()
     None => ()
   }
@@ -413,6 +417,10 @@ fn[R : Renderer] Player::render_layer(
       }
       self.renderer.end_matte_exit(matte_type)
     }
+    None => ()
+  }
+  match matte_source {
+    Some(_) => self.renderer.end_layer("source-over")
     None => ()
   }
 

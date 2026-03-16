@@ -1081,3 +1081,63 @@ test "matte source render resets transform to identity during matte exit" {
   }
   assert_eq(saw_identity_set_transform, true)
 }
+
+test "track matte target renders inside an isolated layer before matte buffers" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":200,"layers":[{"ty":1,"ind":1,"td":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[10,10]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":80,"sh":80,"sc":"#ffffff"},{"ty":1,"ind":2,"tt":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[60,20]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":120,"sh":120,"sc":"#ff0000"}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut begin_layer_index : Int? = None
+  let mut prepare_matte_layer_index : Int? = None
+  let mut end_matte_exit_index : Int? = None
+  let mut end_layer_index : Int? = None
+  for i = 0; i < commands.length(); i = i + 1 {
+    match commands[i] {
+      BeginLayer =>
+        if begin_layer_index is None {
+          begin_layer_index = Some(i)
+        }
+      PrepareMatteLayer =>
+        if prepare_matte_layer_index is None {
+          prepare_matte_layer_index = Some(i)
+        }
+      EndMatteExit(_) =>
+        if end_matte_exit_index is None {
+          end_matte_exit_index = Some(i)
+        }
+      EndLayer("source-over") =>
+        if end_layer_index is None {
+          end_layer_index = Some(i)
+        }
+      _ => ()
+    }
+  }
+
+  match (
+    begin_layer_index,
+    prepare_matte_layer_index,
+    end_matte_exit_index,
+    end_layer_index,
+  ) {
+    (Some(begin_i), Some(matte_i), Some(end_matte_i), Some(end_layer_i)) => {
+      assert_true(
+        begin_i < matte_i,
+        "track matte isolation should start before matte buffers are prepared",
+      )
+      assert_true(
+        end_layer_i > end_matte_i,
+        "isolated track matte layer should composite back after matte exit completes",
+      )
+    }
+    _ =>
+      fail(
+        "Expected BeginLayer, PrepareMatteLayer, EndMatteExit, and EndLayer commands. Commands: \{commands}",
+      )
+  }
+}
