@@ -7,8 +7,15 @@ export function cloneActiveCanvas(documentRef, ctx, fallbackCanvas = null) {
     const buffer = documentRef.createElement('canvas');
     buffer.width = sourceCanvas?.width || 0;
     buffer.height = sourceCanvas?.height || 0;
+    if (!sourceCanvas) {
+        return {
+            buffer,
+            width: 0,
+            height: 0,
+        };
+    }
     const bufferCtx = buffer.getContext('2d');
-    if (bufferCtx && sourceCanvas) {
+    if (bufferCtx) {
         bufferCtx.drawImage(sourceCanvas, 0, 0);
     }
     return {

@@ -182,6 +182,30 @@ test('canvas matte helper clones and clears the active offscreen canvas', async 
   ]);
 });
 
+test('canvas matte helper falls back to the root canvas when ctx has no canvas', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_matte.js'));
+
+  const rootCanvas = { id: 'root', width: 640, height: 480 };
+  let clonedSource = null;
+  const documentRef = {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => ({
+        drawImage: (source) => {
+          clonedSource = source;
+        },
+      }),
+    }),
+  };
+
+  const { width, height } = helper.cloneActiveCanvas(documentRef, {}, rootCanvas);
+  assert.equal(clonedSource, rootCanvas);
+  assert.equal(width, 640);
+  assert.equal(height, 480);
+});
+
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
