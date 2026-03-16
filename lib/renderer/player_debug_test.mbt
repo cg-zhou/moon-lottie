@@ -1094,8 +1094,8 @@ test "track matte target renders inside an isolated layer before matte buffers" 
 
   let commands = recorder.get_commands()
   let mut begin_layer_index : Int? = None
-  let mut prepare_matte_index : Int? = None
-  let mut end_matte_index : Int? = None
+  let mut prepare_matte_layer_index : Int? = None
+  let mut end_matte_exit_index : Int? = None
   let mut end_layer_index : Int? = None
   for i = 0; i < commands.length(); i = i + 1 {
     match commands[i] {
@@ -1104,12 +1104,12 @@ test "track matte target renders inside an isolated layer before matte buffers" 
           begin_layer_index = Some(i)
         }
       PrepareMatteLayer =>
-        if prepare_matte_index is None {
-          prepare_matte_index = Some(i)
+        if prepare_matte_layer_index is None {
+          prepare_matte_layer_index = Some(i)
         }
       EndMatteExit(_) =>
-        if end_matte_index is None {
-          end_matte_index = Some(i)
+        if end_matte_exit_index is None {
+          end_matte_exit_index = Some(i)
         }
       EndLayer("source-over") =>
         if end_layer_index is None {
@@ -1119,7 +1119,12 @@ test "track matte target renders inside an isolated layer before matte buffers" 
     }
   }
 
-  match (begin_layer_index, prepare_matte_index, end_matte_index, end_layer_index) {
+  match (
+    begin_layer_index,
+    prepare_matte_layer_index,
+    end_matte_exit_index,
+    end_layer_index,
+  ) {
     (Some(begin_i), Some(matte_i), Some(end_matte_i), Some(end_layer_i)) => {
       assert_true(
         begin_i < matte_i,
