@@ -126,6 +126,86 @@ test('canvas DPR helper applies scaled transform matrices', async () => {
   assert.deepEqual(lastTransform, [2.5, 0, 0, 2.5, 30, 60]);
 });
 
+test('canvas matte helper clones and clears the active offscreen canvas', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_matte.js'));
+
+  const rootCanvas = { id: 'root', width: 640, height: 480 };
+  const offscreenCanvas = { id: 'offscreen', width: 320, height: 240 };
+  let clonedSource = null;
+  let clonedBuffer = null;
+  const documentRef = {
+    createElement: (tag) => {
+      assert.equal(tag, 'canvas');
+      clonedBuffer = {
+        width: 0,
+        height: 0,
+        getContext: () => ({
+          drawImage: (source) => {
+            clonedSource = source;
+          },
+        }),
+      };
+      return clonedBuffer;
+    },
+  };
+
+  const transformCalls = [];
+  const clearCalls = [];
+  const currentTransform = { a: 1, d: 1, e: 12, f: 24 };
+  const ctx = {
+    canvas: offscreenCanvas,
+    setTransform: (...args) => {
+      transformCalls.push(args);
+    },
+    clearRect: (...args) => {
+      clearCalls.push(args);
+    },
+  };
+
+  const { buffer, width, height } = helper.cloneActiveCanvas(documentRef, ctx, rootCanvas);
+  assert.equal(buffer, clonedBuffer);
+  assert.equal(clonedSource, offscreenCanvas);
+  assert.equal(width, 320);
+  assert.equal(height, 240);
+  assert.equal(buffer.width, 320);
+  assert.equal(buffer.height, 240);
+
+  assert.deepEqual(helper.clearActiveCanvas(ctx, currentTransform, rootCanvas), {
+    width: 320,
+    height: 240,
+  });
+  assert.deepEqual(clearCalls, [[0, 0, 320, 240]]);
+  assert.deepEqual(transformCalls, [
+    [1, 0, 0, 1, 0, 0],
+    [currentTransform],
+  ]);
+});
+
+test('canvas matte helper falls back to the root canvas when ctx has no canvas', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_matte.js'));
+
+  const rootCanvas = { id: 'root', width: 640, height: 480 };
+  let clonedSource = null;
+  const documentRef = {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => ({
+        drawImage: (source) => {
+          clonedSource = source;
+        },
+      }),
+    }),
+  };
+
+  const { width, height } = helper.cloneActiveCanvas(documentRef, {}, rootCanvas);
+  assert.equal(clonedSource, rootCanvas);
+  assert.equal(width, 640);
+  assert.equal(height, 480);
+});
+
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
