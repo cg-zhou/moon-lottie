@@ -9,6 +9,10 @@ import {
 import {
     resizeCanvasForDpr,
 } from './canvas_dpr.js';
+import {
+    clearActiveCanvas,
+    cloneActiveCanvas,
+} from './canvas_matte.js';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
@@ -271,15 +275,9 @@ const importObject = {
     // Called before save() and layer transforms: saves background to buffer[0],
     // captures currentTransform, clears canvas.
     prepareMatteLayer: () => {
-        const buf0 = document.createElement('canvas');
-        buf0.width = canvas.width;
-        buf0.height = canvas.height;
-        const buf0Ctx = buf0.getContext('2d');
-        buf0Ctx.drawImage(canvas, 0, 0);
         const currentTransform = ctx.getTransform();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.setTransform(currentTransform);
+        const { buffer: buf0 } = cloneActiveCanvas(document, ctx, canvas);
+        clearActiveCanvas(ctx, currentTransform, canvas);
         matteStack.push({ buf0, buf1: null, currentTransform });
     },
     // Called after restore(): saves layer content to buffer[1],
@@ -287,15 +285,9 @@ const importObject = {
     beginMatteExit: () => {
         if (matteStack.length === 0) return;
         const state = matteStack[matteStack.length - 1];
-        const buf1 = document.createElement('canvas');
-        buf1.width = canvas.width;
-        buf1.height = canvas.height;
-        const buf1Ctx = buf1.getContext('2d');
-        buf1Ctx.drawImage(canvas, 0, 0);
+        const { buffer: buf1 } = cloneActiveCanvas(document, ctx, canvas);
         state.buf1 = buf1;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.setTransform(state.currentTransform);
+        clearActiveCanvas(ctx, state.currentTransform, canvas);
     },
     // Called after matte source has been rendered on canvas.
     // Composites: source-in(layer content, matte), destination-over(background), restore.

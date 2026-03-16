@@ -2,7 +2,7 @@
 1_2_3D_Customization.json sim=0.98 19 39 59
 1_3_Businessman_flies_up_with_rocket.json sim=0.91 30 60 90
 1_4_Cat_Fishing_On_Moon.json sim=0.88 37 75 112
-1_5_Crypto.json sim=0.16 111 222 333
+1_5_Crypto.json sim=0.89 95 111 222 333
 1_6_Designer.json sim=0.94 52 105 157
 1_7_Keyboard_Typing.json sim=0.96 36 73 109
 2_1_adrock.json sim=0.99 5 10 15
