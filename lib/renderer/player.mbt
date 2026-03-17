@@ -344,7 +344,9 @@ fn[R : Renderer] Player::render_layer(
     Some(_) => true
     None => false
   }
-  let needs_layer_isolation = use_mask_composite || has_fill_effect || has_matte_source
+  let needs_layer_isolation = (
+    use_mask_composite || has_fill_effect
+  ) || has_matte_source
   if needs_layer_isolation {
     self.renderer.begin_layer()
   }

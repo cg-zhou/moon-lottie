@@ -283,7 +283,13 @@ const importObject = {
         const offCtx = offscreen.getContext('2d');
         const t = ctx.getTransform();
         offCtx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-        offscreenStack.push({ savedCtx: ctx, offscreen, savedOpacity: ctx.globalAlpha, matteContent: null, maskState: null });
+        offscreenStack.push({
+            savedCtx: ctx,
+            offscreen,
+            savedOpacity: ctx.globalAlpha,
+            matteContent: null,
+            maskState: null,
+        });
         ctx = offCtx;
         ctx.globalAlpha = 1.0;
     },
