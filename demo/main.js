@@ -370,10 +370,21 @@ const importObject = {
             }
             state.hasMask = true;
         } else {
-            const compositeOp = mode === 1 ? 'source-over'
-                : mode === 2 ? 'destination-out'
-                    : mode === 3 ? 'destination-in'
-                        : null;
+            let compositeOp = null;
+            switch (mode) {
+                case 1:
+                    compositeOp = 'source-over';
+                    break;
+                case 2:
+                    compositeOp = 'destination-out';
+                    break;
+                case 3:
+                    compositeOp = 'destination-in';
+                    break;
+                default:
+                    compositeOp = null;
+                    break;
+            }
             if (compositeOp) {
                 state.maskCtx.globalCompositeOperation = compositeOp;
                 state.maskCtx.globalAlpha = 1.0;

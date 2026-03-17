@@ -104,9 +104,10 @@ test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
     }
     _ => fail("Expected Fill and BeginMaskComposite commands. Commands: \{commands}")
   }
-  // JSON mask order is Add -> Intersect -> Subtract, and the new mask
-  // compositor preserves that exact SVG-style accumulation sequence using the
-  // shared renderer constants (1=Add, 3=Intersect, 2=Subtract).
+  // The JSON mask modes appear in the order `a` -> `i` -> `s`
+  // (Add -> Intersect -> Subtract), and the new mask compositor preserves that
+  // exact SVG-style accumulation sequence using the shared renderer constants
+  // (1=Add, 3=Intersect, 2=Subtract).
   inspect(mask_modes, content="[1, 3, 2]")
 }
 
