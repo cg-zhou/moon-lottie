@@ -135,6 +135,18 @@ pub trait Renderer {
   begin_matte_exit(self : Self) -> Unit
   // Called after matte source has been rendered: source-in composite, destination-over background, restore
   end_matte_exit(self : Self, matte_type : Int) -> Unit
+
+  // SVG-style layer mask compositing on an isolated content buffer.
+  supports_mask_composite(self : Self) -> Bool
+  begin_mask_composite(self : Self) -> Unit
+  begin_mask_path(self : Self) -> Unit
+  apply_mask_path(
+    self : Self,
+    mode : Int,
+    opacity : Double,
+    inverted : Bool,
+  ) -> Unit
+  end_mask_composite(self : Self) -> Unit
 }
 
 ///| DrawCommand representing a single drawing operation.
@@ -201,6 +213,10 @@ pub enum DrawCommand {
   PrepareMatteLayer
   BeginMatteExit
   EndMatteExit(Int)
+  BeginMaskComposite
+  BeginMaskPath
+  ApplyMaskPath(Int, Double, Bool)
+  EndMaskComposite
 } derive(Show, Eq)
 
 ///|
@@ -499,4 +515,43 @@ pub impl Renderer for CommandRecorder with end_matte_exit(
   matte_type : Int,
 ) {
   self.commands.push(EndMatteExit(matte_type))
+}
+
+///|
+pub impl Renderer for CommandRecorder with supports_mask_composite(
+  self : CommandRecorder,
+) -> Bool {
+  let _ = self
+  true
+}
+
+///|
+pub impl Renderer for CommandRecorder with begin_mask_composite(
+  self : CommandRecorder,
+) {
+  self.commands.push(BeginMaskComposite)
+}
+
+///|
+pub impl Renderer for CommandRecorder with begin_mask_path(
+  self : CommandRecorder,
+) {
+  self.commands.push(BeginMaskPath)
+}
+
+///|
+pub impl Renderer for CommandRecorder with apply_mask_path(
+  self : CommandRecorder,
+  mode : Int,
+  opacity : Double,
+  inverted : Bool,
+) {
+  self.commands.push(ApplyMaskPath(mode, opacity, inverted))
+}
+
+///|
+pub impl Renderer for CommandRecorder with end_mask_composite(
+  self : CommandRecorder,
+) {
+  self.commands.push(EndMaskComposite)
 }

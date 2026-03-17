@@ -127,6 +127,17 @@ if (window.__moonLottieExpressionHost) {
     setExpressionHost(window.__moonLottieExpressionHost);
 }
 
+function createBlankCanvasLike(documentRef, sourceCanvas) {
+    const buffer = documentRef.createElement('canvas');
+    buffer.width = sourceCanvas?.width || 0;
+    buffer.height = sourceCanvas?.height || 0;
+    return buffer;
+}
+
+function getCurrentOffscreenEntry() {
+    return offscreenStack.length > 0 ? offscreenStack[offscreenStack.length - 1] : null;
+}
+
 const importObject = {
   demo: {
     get_json_string: () => currentJsonStr,
@@ -192,6 +203,7 @@ const importObject = {
         const aligns = ["left", "right", "center"]; ctx.textAlign = aligns[justify] || "left";
         ctx.fillText(text, 0, 0); ctx.restore();
     },
+    supportsMaskComposite: () => true,
     setGlobalCompositeOperation: (mode) => {
         const modeStr = mode;
         // Alpha matte (tt=1) fix: match lottie-web's buffer approach exactly.
@@ -255,7 +267,7 @@ const importObject = {
         const offCtx = offscreen.getContext('2d');
         const t = ctx.getTransform();
         offCtx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-        offscreenStack.push({ savedCtx: ctx, offscreen, savedOpacity: ctx.globalAlpha, matteContent: null });
+        offscreenStack.push({ savedCtx: ctx, offscreen, savedOpacity: ctx.globalAlpha, matteContent: null, maskState: null });
         ctx = offCtx;
         ctx.globalAlpha = 1.0;
     },
@@ -270,6 +282,120 @@ const importObject = {
         savedCtx.drawImage(offscreen, 0, 0);
         savedCtx.restore();
         ctx = savedCtx;
+    },
+    beginMaskComposite: () => {
+        const entry = getCurrentOffscreenEntry();
+        if (!entry || entry.maskState) return;
+        const sourceCanvas = ctx?.canvas || entry.offscreen;
+        const maskCanvas = createBlankCanvasLike(document, sourceCanvas);
+        const pathCanvas = createBlankCanvasLike(document, sourceCanvas);
+        entry.maskState = {
+            contentCtx: ctx,
+            maskCanvas,
+            maskCtx: maskCanvas.getContext('2d'),
+            pathCanvas,
+            pathCtx: pathCanvas.getContext('2d'),
+            hasMask: false,
+        };
+    },
+    beginMaskPath: () => {
+        const entry = getCurrentOffscreenEntry();
+        const state = entry?.maskState;
+        if (!state || !state.pathCtx) return;
+        const contentCtx = state.contentCtx || ctx;
+        const currentTransform = contentCtx.getTransform();
+        const fillRule = contentCtx._currentFillRule || "nonzero";
+        state.contentCtx = contentCtx;
+        state.pathCtx.setTransform(1, 0, 0, 1, 0, 0);
+        state.pathCtx.clearRect(0, 0, state.pathCanvas.width, state.pathCanvas.height);
+        state.pathCtx.setTransform(
+            currentTransform.a,
+            currentTransform.b,
+            currentTransform.c,
+            currentTransform.d,
+            currentTransform.e,
+            currentTransform.f,
+        );
+        state.pathCtx.globalAlpha = 1.0;
+        state.pathCtx.globalCompositeOperation = 'source-over';
+        state.pathCtx._currentFillRule = fillRule;
+        ctx = state.pathCtx;
+    },
+    applyMaskPath: (mode, opacity, inverted) => {
+        const entry = getCurrentOffscreenEntry();
+        const state = entry?.maskState;
+        if (!state || !state.pathCtx || !state.maskCtx) return;
+        const rule = state.pathCtx._currentFillRule || "nonzero";
+        const alpha = Math.max(0, Math.min(1, opacity));
+
+        if (inverted) {
+            state.pathCtx.save();
+            state.pathCtx.setTransform(1, 0, 0, 1, 0, 0);
+            state.pathCtx.globalCompositeOperation = 'source-over';
+            state.pathCtx.globalAlpha = alpha;
+            state.pathCtx.fillStyle = '#ffffff';
+            state.pathCtx.fillRect(0, 0, state.pathCanvas.width, state.pathCanvas.height);
+            state.pathCtx.restore();
+
+            state.pathCtx.save();
+            state.pathCtx.globalCompositeOperation = 'destination-out';
+            state.pathCtx.globalAlpha = 1.0;
+            state.pathCtx.fillStyle = '#ffffff';
+            state.pathCtx.fill(rule);
+            state.pathCtx.restore();
+        } else {
+            state.pathCtx.save();
+            state.pathCtx.globalCompositeOperation = 'source-over';
+            state.pathCtx.globalAlpha = alpha;
+            state.pathCtx.fillStyle = '#ffffff';
+            state.pathCtx.fill(rule);
+            state.pathCtx.restore();
+        }
+
+        state.maskCtx.save();
+        state.maskCtx.setTransform(1, 0, 0, 1, 0, 0);
+        if (!state.hasMask) {
+            state.maskCtx.clearRect(0, 0, state.maskCanvas.width, state.maskCanvas.height);
+            if (mode === 2) {
+                state.maskCtx.globalCompositeOperation = 'source-over';
+                state.maskCtx.globalAlpha = 1.0;
+                state.maskCtx.fillStyle = '#ffffff';
+                state.maskCtx.fillRect(0, 0, state.maskCanvas.width, state.maskCanvas.height);
+                state.maskCtx.globalCompositeOperation = 'destination-out';
+                state.maskCtx.drawImage(state.pathCanvas, 0, 0);
+            } else {
+                state.maskCtx.globalCompositeOperation = 'source-over';
+                state.maskCtx.globalAlpha = 1.0;
+                state.maskCtx.drawImage(state.pathCanvas, 0, 0);
+            }
+            state.hasMask = true;
+        } else {
+            const compositeOp = mode === 1 ? 'source-over'
+                : mode === 2 ? 'destination-out'
+                    : mode === 3 ? 'destination-in'
+                        : null;
+            if (compositeOp) {
+                state.maskCtx.globalCompositeOperation = compositeOp;
+                state.maskCtx.globalAlpha = 1.0;
+                state.maskCtx.drawImage(state.pathCanvas, 0, 0);
+            }
+        }
+        state.maskCtx.restore();
+        ctx = state.contentCtx;
+    },
+    endMaskComposite: () => {
+        const entry = getCurrentOffscreenEntry();
+        const state = entry?.maskState;
+        if (!state || !state.contentCtx) return;
+        if (state.hasMask) {
+            state.contentCtx.save();
+            state.contentCtx.setTransform(1, 0, 0, 1, 0, 0);
+            state.contentCtx.globalCompositeOperation = 'destination-in';
+            state.contentCtx.drawImage(state.maskCanvas, 0, 0);
+            state.contentCtx.restore();
+        }
+        entry.maskState = null;
+        ctx = state.contentCtx;
     },
     // Two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern).
     // Called before save() and layer transforms: saves background to buffer[0],
