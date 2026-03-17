@@ -114,6 +114,21 @@ function updateViewportTransform(meta) {
 let currentGradient = null;
 let currentDash = [];
 const fillRuleStack = [];
+/**
+ * @typedef {Object} OffscreenEntry
+ * @property {CanvasRenderingContext2D} savedCtx
+ * @property {HTMLCanvasElement} offscreen
+ * @property {number} savedOpacity
+ * @property {HTMLCanvasElement|null} matteContent
+ * @property {{
+ *   contentCtx: CanvasRenderingContext2D,
+ *   maskCanvas: HTMLCanvasElement,
+ *   maskCtx: CanvasRenderingContext2D,
+ *   pathCanvas: HTMLCanvasElement,
+ *   pathCtx: CanvasRenderingContext2D,
+ *   hasMask: boolean,
+ * } | null} maskState
+ */
 const offscreenStack = [];
 // Stack for two-buffer track matte compositing (lottie-web prepareLayer/exitLayer pattern)
 const matteStack = [];
@@ -127,13 +142,14 @@ if (window.__moonLottieExpressionHost) {
     setExpressionHost(window.__moonLottieExpressionHost);
 }
 
-function createBlankCanvasLike(documentRef, sourceCanvas) {
-    const buffer = documentRef.createElement('canvas');
+function createBlankCanvasLike(doc, sourceCanvas) {
+    const buffer = doc.createElement('canvas');
     buffer.width = sourceCanvas?.width || 0;
     buffer.height = sourceCanvas?.height || 0;
     return buffer;
 }
 
+/** @returns {OffscreenEntry|null} */
 function getCurrentOffscreenEntry() {
     return offscreenStack.length > 0 ? offscreenStack[offscreenStack.length - 1] : null;
 }

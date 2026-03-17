@@ -118,7 +118,9 @@ fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
   }
 }
 
-///|
+///| Whether a mask mode can participate in the SVG-style composite pipeline.
+///| `None` is treated as supported so mixed stacks containing disabled masks can
+///| still use the composite path while simply skipping those entries.
 fn mask_mode_supported_by_composite(mode : @model.MaskMode) -> Bool {
   match mode {
     @model.MaskMode::Add | @model.MaskMode::Subtract | @model.MaskMode::Intersect |
@@ -127,7 +129,8 @@ fn mask_mode_supported_by_composite(mode : @model.MaskMode) -> Bool {
   }
 }
 
-///|
+///| Returns true when every mask in the layer can be executed by the composite
+///| renderer path instead of falling back to the legacy clip approximation.
 fn layer_masks_support_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
     if not(mask_mode_supported_by_composite(mask.mode)) {
@@ -137,7 +140,8 @@ fn layer_masks_support_composite(masks : Array[@model.Mask]) -> Bool {
   true
 }
 
-///|
+///| Mixed/inverted stacks need the SVG-style composite pipeline; plain add-only
+///| masks can stay on the existing clip fast path to avoid unnecessary churn.
 fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
     if mask.inverted ||
@@ -168,7 +172,9 @@ fn mask_mode_to_composite_code(mode : @model.MaskMode) -> Int {
   }
 }
 
-///|
+///| Replays the layer's mask list into the renderer's SVG-style mask
+///| compositor, which accumulates add/subtract/intersect mask alpha on a
+///| dedicated mask buffer before applying it back to the isolated layer.
 fn[R : Renderer] Player::apply_layer_mask_composite(
   self : Player[R],
   masks : Array[@model.Mask],
