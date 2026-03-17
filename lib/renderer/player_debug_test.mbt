@@ -366,7 +366,7 @@ test "precomp layer time remap expression drives child frame" {
         if layer_index == 1 && comp_id == "" {
           handler_received_layer_context.val = true
         }
-        if frame >= 10.0 { frame - 10.0 } else { frame }
+        if frame >= 10.0 { (frame - 10.0) / 30.0 } else { frame / 30.0 }
       } else {
         value
       },
@@ -411,6 +411,41 @@ test "precomp layer time remap expression drives child frame" {
   }
   if not(handler_received_layer_context.val) {
     fail("Time remap expression handler should receive the current layer context")
+  }
+}
+
+test "precomp layer time remap values are interpreted as seconds" {
+  let json_str =
+    #|{"v":"5.5.0","fr":25,"ip":0,"op":20,"w":200,"h":100,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":20,"st":0,"ks":{"a":{"k":[0,0]},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":10,"s":[100,0]}]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":20,"sh":20,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":100,"ip":0,"op":20,"st":0,"tm":{"a":0,"k":0.4},"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut translate_x : Double? = None
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.e != 0.0 || m.f != 0.0 {
+          translate_x = Some(m.e)
+        }
+      _ => ()
+    }
+  }
+  match translate_x {
+    Some(x) =>
+      if x < 99.999 || x > 100.001 {
+        fail(
+          "Time-remapped precomp should convert constant 0.4 seconds at 25fps into child frame 10: x=\{x}, expected around 100",
+        )
+      }
+    None => fail("No translated child transform found")
   }
 }
 
