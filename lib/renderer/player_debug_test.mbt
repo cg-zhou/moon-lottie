@@ -360,13 +360,14 @@ test "track matte uses composition frame timing" {
 
 test "precomp layer time remap expression drives child frame" {
   let handler_received_layer_context : Ref[Bool] = { val: false }
+  let frame_rate = 30.0
   @runtime.install_expression_handlers(
     (expression, frame, layer_index, comp_id, value) =>
       if expression == "cycle-tm" {
         if layer_index == 1 && comp_id == "" {
           handler_received_layer_context.val = true
         }
-        if frame >= 10.0 { (frame - 10.0) / 30.0 } else { frame / 30.0 }
+        (if frame >= 10.0 { frame - 10.0 } else { frame }) / frame_rate
       } else {
         value
       },
@@ -415,6 +416,8 @@ test "precomp layer time remap expression drives child frame" {
 }
 
 test "precomp layer time remap values are interpreted as seconds" {
+  let expected_x = 100.0
+  let tolerance = 0.001
   let json_str =
     #|{"v":"5.5.0","fr":25,"ip":0,"op":20,"w":200,"h":100,"assets":[{"id":"comp_1","layers":[{"ty":1,"ind":1,"ip":0,"op":20,"st":0,"ks":{"a":{"k":[0,0]},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":10,"s":[100,0]}]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"sw":20,"sh":20,"sc":"#ff0000"}]}],"layers":[{"ty":0,"ind":1,"refId":"comp_1","w":200,"h":100,"ip":0,"op":20,"st":0,"tm":{"a":0,"k":0.4},"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}}}]}
   let json = @json.parse(json_str)
@@ -440,9 +443,9 @@ test "precomp layer time remap values are interpreted as seconds" {
   }
   match translate_x {
     Some(x) =>
-      if x < 99.999 || x > 100.001 {
+      if x < expected_x - tolerance || x > expected_x + tolerance {
         fail(
-          "Time-remapped precomp should convert constant 0.4 seconds at 25fps into child frame 10: x=\{x}, expected around 100",
+          "Time-remapped precomp should map constant 0.4 seconds at 25fps to child frame 10, where the child animation's x translation should be about 100: x=\{x}",
         )
       }
     None => fail("No translated child transform found")
