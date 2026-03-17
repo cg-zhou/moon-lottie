@@ -149,12 +149,21 @@ fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
   false
 }
 
+///| Renderer op code for additive mask accumulation.
+let mask_compose_add = 1
+
+///| Renderer op code for subtractive mask accumulation.
+let mask_compose_subtract = 2
+
+///| Renderer op code for intersecting mask accumulation.
+let mask_compose_intersect = 3
+
 ///|
 fn mask_mode_to_composite_code(mode : @model.MaskMode) -> Int {
   match mode {
-    @model.MaskMode::Add => 1
-    @model.MaskMode::Subtract => 2
-    @model.MaskMode::Intersect => 3
+    @model.MaskMode::Add => mask_compose_add
+    @model.MaskMode::Subtract => mask_compose_subtract
+    @model.MaskMode::Intersect => mask_compose_intersect
     _ => 0
   }
 }
@@ -178,7 +187,9 @@ fn[R : Renderer] Player::apply_layer_mask_composite(
     self.renderer.begin_path()
     let path_val = self.evaluate_path(mask.path, self.current_comp_frame)
     self.draw_lottie_path(path_val)
-    let opacity = self.evaluate_double(mask.opacity, self.current_comp_frame) / 100.0
+    let opacity = (
+      self.evaluate_double(mask.opacity, self.current_comp_frame) / 100.0
+    ).max(0.0).min(1.0)
     self.renderer.apply_mask_path(
       mask_mode_to_composite_code(mask.mode),
       opacity,
