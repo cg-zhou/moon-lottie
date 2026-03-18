@@ -68,6 +68,7 @@ struct MaskJson {
   closed : Bool?
   path : Json?
   opacity : Json?
+  expansion : Json?
   mode : String?
   name : String?
 } derive(
@@ -77,6 +78,7 @@ struct MaskJson {
         closed(rename="cl"),
         path(rename="pt"),
         opacity(rename="o"),
+        expansion(rename="x"),
         name(rename="nm"),
       ),
   ),
@@ -1803,6 +1805,9 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
   let opacity = parse_property_double(decoded.opacity) catch {
     _ => @model.LottieProperty::new_static(100.0)
   }
+  let expansion = parse_property_double(decoded.expansion) catch {
+    _ => @model.LottieProperty::new_static(0.0)
+  }
   let mode = match decoded.mode {
     Some("a") => @model.MaskMode::Add
     Some("s") => @model.MaskMode::Subtract
@@ -1815,7 +1820,14 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     Some("f") => @model.MaskMode::Add
     _ => @model.MaskMode::None
   }
-  @model.Mask::new(inverted~, path~, opacity~, mode~, name=decoded.name)
+  @model.Mask::new(
+    inverted~,
+    path~,
+    opacity~,
+    expansion~,
+    mode~,
+    name=decoded.name,
+  )
 }
 
 ///|

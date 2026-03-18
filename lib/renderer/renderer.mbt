@@ -145,6 +145,7 @@ pub trait Renderer {
     mode : Int,
     opacity : Double,
     inverted : Bool,
+    expansion : Double,
   ) -> Unit
   end_mask_composite(self : Self) -> Unit
 }
@@ -215,7 +216,7 @@ pub enum DrawCommand {
   EndMatteExit(Int)
   BeginMaskComposite
   BeginMaskPath
-  ApplyMaskPath(Int, Double, Bool)
+  ApplyMaskPath(Int, Double, Bool, Double)
   EndMaskComposite
 } derive(Show, Eq)
 
@@ -545,8 +546,9 @@ pub impl Renderer for CommandRecorder with apply_mask_path(
   mode : Int,
   opacity : Double,
   inverted : Bool,
+  expansion : Double,
 ) {
-  self.commands.push(ApplyMaskPath(mode, opacity, inverted))
+  self.commands.push(ApplyMaskPath(mode, opacity, inverted, expansion))
 }
 
 ///|

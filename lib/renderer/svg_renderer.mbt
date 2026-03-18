@@ -315,11 +315,13 @@ pub impl Renderer for SvgRenderer with apply_mask_path(
   mode : Int,
   opacity : Double,
   inverted : Bool,
+  expansion : Double,
 ) -> Unit {
   let _ = self
   let _ = mode
   let _ = opacity
   let _ = inverted
+  let _ = expansion
 }
 
 ///|

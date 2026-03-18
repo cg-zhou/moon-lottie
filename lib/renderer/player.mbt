@@ -156,20 +156,39 @@ fn mask_opacity_can_use_clip_fast_path(
   }
 }
 
+///| lottie-web/SVG only keeps masks on the clipPath fast path when expansion
+///| is a literal zero. Animated or expression-driven expansion always uses
+///| `<mask>` semantics instead of clipPath.
+fn mask_expansion_can_use_clip_fast_path(
+  expansion : @model.LottieProperty[Double],
+) -> Bool {
+  match expansion.expression {
+    Some(_) => false
+    None =>
+      match expansion.value {
+        @model.PropertyValue::Static(value) => value == 0.0
+        @model.PropertyValue::Animated(_) => false
+      }
+  }
+}
+
 ///| Returns true only for the narrow lottie-web/SVG clipPath fast path:
-///| additive masks with no inversion and a static 100% opacity.
+///| additive masks with no inversion, a static 100% opacity, and literal zero
+///| expansion.
 fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
   match mask.mode {
     @model.MaskMode::None => true
     @model.MaskMode::Add =>
-      not(mask.inverted) && mask_opacity_can_use_clip_fast_path(mask.opacity)
+      not(mask.inverted) &&
+      mask_opacity_can_use_clip_fast_path(mask.opacity) &&
+      mask_expansion_can_use_clip_fast_path(mask.expansion)
     _ => false
   }
 }
 
-///| Mixed stacks, inverted masks, and additive masks with non-static/non-100
-///| opacity all need the SVG-style composite pipeline instead of clip-only
-///| approximation.
+///| Mixed stacks, inverted masks, additive masks with non-static/non-100
+///| opacity, and any mask using expansion all need the SVG-style composite
+///| pipeline instead of clip-only approximation.
 fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
     if not(mask_can_use_clip_fast_path(mask)) {
@@ -222,10 +241,12 @@ fn[R : Renderer] Player::apply_layer_mask_composite(
     let opacity = (
       self.evaluate_double(mask.opacity, self.current_comp_frame) / 100.0
     ).max(0.0).min(1.0)
+    let expansion = self.evaluate_double(mask.expansion, self.current_comp_frame)
     self.renderer.apply_mask_path(
       mask_mode_to_composite_code(mask.mode),
       opacity,
       mask.inverted,
+      expansion,
     )
   }
   if has_effective_mask {

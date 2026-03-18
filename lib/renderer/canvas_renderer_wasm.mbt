@@ -563,6 +563,7 @@ fn canvas_apply_mask_path(
   mode : Int,
   opacity : Double,
   inverted : Bool,
+  expansion : Double,
 ) = "canvas" "applyMaskPath"
 
 ///|
@@ -631,9 +632,10 @@ pub impl Renderer for CanvasRenderer with apply_mask_path(
   mode : Int,
   opacity : Double,
   inverted : Bool,
+  expansion : Double,
 ) {
   let _ = self
-  canvas_apply_mask_path(mode, opacity, inverted)
+  canvas_apply_mask_path(mode, opacity, inverted, expansion)
 }
 
 ///|

@@ -13,6 +13,9 @@ import {
     clearActiveCanvas,
     cloneActiveCanvas,
 } from './canvas_matte.js';
+import {
+    rasterizeMaskPath,
+} from './canvas_mask_expansion.js';
 
 // MoonLottie UI 2.0 - 现代化播放驱动
 
@@ -311,12 +314,15 @@ const importObject = {
         const sourceCanvas = ctx?.canvas || entry.offscreen;
         const maskCanvas = createBlankCanvasLike(document, sourceCanvas);
         const pathCanvas = createBlankCanvasLike(document, sourceCanvas);
+        const workCanvas = createBlankCanvasLike(document, sourceCanvas);
         entry.maskState = {
             contentCtx: ctx,
             maskCanvas,
             maskCtx: maskCanvas.getContext('2d'),
             pathCanvas,
             pathCtx: pathCanvas.getContext('2d'),
+            workCanvas,
+            workCtx: workCanvas.getContext('2d'),
             hasMask: false,
         };
     },
@@ -343,36 +349,12 @@ const importObject = {
         state.pathCtx._currentFillRule = fillRule;
         ctx = state.pathCtx;
     },
-    applyMaskPath: (mode, opacity, inverted) => {
+    applyMaskPath: (mode, opacity, inverted, expansion) => {
         const entry = getCurrentOffscreenEntry();
         const state = entry?.maskState;
-        if (!state || !state.pathCtx || !state.maskCtx) return;
+        if (!state || !state.pathCtx || !state.maskCtx || !state.workCtx) return;
         const rule = state.pathCtx._currentFillRule || "nonzero";
-        const alpha = Math.max(0, Math.min(1, opacity));
-
-        if (inverted) {
-            state.pathCtx.save();
-            state.pathCtx.setTransform(1, 0, 0, 1, 0, 0);
-            state.pathCtx.globalCompositeOperation = 'source-over';
-            state.pathCtx.globalAlpha = alpha;
-            state.pathCtx.fillStyle = '#ffffff';
-            state.pathCtx.fillRect(0, 0, state.pathCanvas.width, state.pathCanvas.height);
-            state.pathCtx.restore();
-
-            state.pathCtx.save();
-            state.pathCtx.globalCompositeOperation = 'destination-out';
-            state.pathCtx.globalAlpha = 1.0;
-            state.pathCtx.fillStyle = '#ffffff';
-            state.pathCtx.fill(rule);
-            state.pathCtx.restore();
-        } else {
-            state.pathCtx.save();
-            state.pathCtx.globalCompositeOperation = 'source-over';
-            state.pathCtx.globalAlpha = alpha;
-            state.pathCtx.fillStyle = '#ffffff';
-            state.pathCtx.fill(rule);
-            state.pathCtx.restore();
-        }
+        rasterizeMaskPath(state.pathCtx, state.workCtx, rule, opacity, inverted, expansion);
 
         state.maskCtx.save();
         state.maskCtx.setTransform(1, 0, 0, 1, 0, 0);

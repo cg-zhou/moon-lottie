@@ -88,7 +88,7 @@ test "snapshot_render_add_mask_with_partial_opacity_uses_mask_composite" {
     .iter()
     .any(fn(c) {
       match c {
-        ApplyMaskPath(1, 0.5, false) => true
+        ApplyMaskPath(1, 0.5, false, 0) => true
         _ => false
       }
     })
@@ -126,7 +126,7 @@ test "snapshot_render_add_mask_with_animated_opacity_uses_mask_composite" {
     .iter()
     .any(fn(c) {
       match c {
-        ApplyMaskPath(1, 0.25, false) => true
+        ApplyMaskPath(1, 0.25, false, 0) => true
         _ => false
       }
     })
@@ -166,7 +166,7 @@ test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
         if begin_mask_index is None {
           begin_mask_index = Some(i)
         }
-      ApplyMaskPath(mode, _, _) => mask_modes.push(mode)
+      ApplyMaskPath(mode, _, _, _) => mask_modes.push(mode)
       _ => ()
     }
   }
@@ -185,6 +185,82 @@ test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
   // exact SVG-style accumulation sequence using the shared renderer constants
   // (1=Add, 3=Intersect, 2=Subtract).
   inspect(mask_modes, content="[1, 3, 2]")
+}
+
+///|
+test "snapshot_render_add_mask_with_expansion_uses_mask_composite" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-20,-20],[20,-20],[20,20],[-20,20]],\"c\":true}},\"o\":{\"k\":100},\"x\":{\"k\":10}}],\"shapes\":[{\"ty\":\"rc\",\"s\":{\"k\":[120,120]},\"p\":{\"k\":[0,0]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let has_clip = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        Clip => true
+        _ => false
+      }
+    })
+  let has_expanded_add_mask = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        ApplyMaskPath(1, 1, false, 10) => true
+        _ => false
+      }
+    })
+  if has_clip || not(has_expanded_add_mask) {
+    fail(
+      "Add mask with expansion should use SVG-style mask compositing. Commands: \{commands}",
+    )
+  }
+}
+
+///|
+test "snapshot_render_add_mask_with_animated_zero_expansion_still_uses_mask_composite" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-20,-20],[20,-20],[20,20],[-20,20]],\"c\":true}},\"o\":{\"k\":100},\"x\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0]},{\"t\":10,\"s\":[0]}]}}],\"shapes\":[{\"ty\":\"rc\",\"s\":{\"k\":[120,120]},\"p\":{\"k\":[0,0]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let has_clip = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        Clip => true
+        _ => false
+      }
+    })
+  let has_composite_mask = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        ApplyMaskPath(1, 1, false, 0) => true
+        _ => false
+      }
+    })
+  if has_clip || not(has_composite_mask) {
+    fail(
+      "Animated mask expansion should force SVG-style mask compositing even at zero. Commands: \{commands}",
+    )
+  }
 }
 
 ///|

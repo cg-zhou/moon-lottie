@@ -206,6 +206,45 @@ test('canvas matte helper falls back to the root canvas when ctx has no canvas',
   assert.equal(height, 480);
 });
 
+test('canvas mask expansion helper dilates alpha neighborhoods', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+
+  const source = new Uint8ClampedArray(3 * 3 * 4);
+  source[(1 * 3 + 1) * 4 + 3] = 255;
+  const morphed = helper.applyAlphaMorphology(source, 3, 3, 1, 'dilate');
+  const alphas = [];
+  for (let i = 0; i < morphed.length; i += 4) {
+    alphas.push(morphed[i + 3]);
+  }
+  assert.deepEqual(alphas, [
+    255, 255, 255,
+    255, 255, 255,
+    255, 255, 255,
+  ]);
+});
+
+test('canvas mask expansion helper erodes alpha neighborhoods', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+
+  const source = new Uint8ClampedArray(3 * 3 * 4);
+  for (let i = 0; i < source.length; i += 4) {
+    source[i + 3] = 255;
+  }
+  source[(1 * 3 + 1) * 4 + 3] = 0;
+  const morphed = helper.applyAlphaMorphology(source, 3, 3, 1, 'erode');
+  const alphas = [];
+  for (let i = 0; i < morphed.length; i += 4) {
+    alphas.push(morphed[i + 3]);
+  }
+  assert.deepEqual(alphas, [
+    0, 0, 0,
+    0, 0, 0,
+    0, 0, 0,
+  ]);
+});
+
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
