@@ -118,6 +118,142 @@ fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
   }
 }
 
+///| Whether a mask mode can participate in the SVG-style composite pipeline.
+///| `None` is treated as supported so mixed stacks containing disabled masks can
+///| still use the composite path while simply skipping those entries.
+fn mask_mode_supported_by_composite(mode : @model.MaskMode) -> Bool {
+  match mode {
+    @model.MaskMode::Add | @model.MaskMode::Subtract | @model.MaskMode::Intersect |
+    @model.MaskMode::None => true
+    _ => false
+  }
+}
+
+///| Returns true when every mask in the layer can be executed by the composite
+///| renderer path instead of falling back to the legacy clip approximation.
+fn layer_masks_support_composite(masks : Array[@model.Mask]) -> Bool {
+  for mask in masks {
+    if not(mask_mode_supported_by_composite(mask.mode)) {
+      return false
+    }
+  }
+  true
+}
+
+///| lottie-web/SVG only keeps masks on the clipPath fast path when they are
+///| plain non-inverted additive masks with a static 100% opacity. Any other
+///| supported stack needs the SVG-style composite pipeline instead.
+fn mask_opacity_can_use_clip_fast_path(
+  opacity : @model.LottieProperty[Double],
+) -> Bool {
+  match opacity.expression {
+    Some(_) => false
+    None =>
+      match opacity.value {
+        @model.PropertyValue::Static(value) => value == 100.0
+        @model.PropertyValue::Animated(_) => false
+      }
+  }
+}
+
+///| lottie-web/SVG only keeps masks on the clipPath fast path when expansion
+///| is a literal zero. Animated or expression-driven expansion always uses
+///| `<mask>` semantics instead of clipPath.
+fn mask_expansion_can_use_clip_fast_path(
+  expansion : @model.LottieProperty[Double],
+) -> Bool {
+  match expansion.expression {
+    Some(_) => false
+    None =>
+      match expansion.value {
+        @model.PropertyValue::Static(value) => value == 0.0
+        @model.PropertyValue::Animated(_) => false
+      }
+  }
+}
+
+///| Returns true only for the narrow lottie-web/SVG clipPath fast path:
+///| additive masks with no inversion, a static 100% opacity, and literal zero
+///| expansion.
+fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
+  match mask.mode {
+    @model.MaskMode::None => true
+    @model.MaskMode::Add =>
+      not(mask.inverted) &&
+      mask_opacity_can_use_clip_fast_path(mask.opacity) &&
+      mask_expansion_can_use_clip_fast_path(mask.expansion)
+    _ => false
+  }
+}
+
+///| Mixed stacks, inverted masks, additive masks with non-static/non-100
+///| opacity, and any mask using expansion all need the SVG-style composite
+///| pipeline instead of clip-only approximation.
+fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
+  for mask in masks {
+    if not(mask_can_use_clip_fast_path(mask)) {
+      return true
+    }
+  }
+  false
+}
+
+///| Renderer op code for additive mask accumulation.
+let mask_compose_add = 1
+
+///| Renderer op code for subtractive mask accumulation.
+let mask_compose_subtract = 2
+
+///| Renderer op code for intersecting mask accumulation.
+let mask_compose_intersect = 3
+
+///|
+fn mask_mode_to_composite_code(mode : @model.MaskMode) -> Int {
+  match mode {
+    @model.MaskMode::Add => mask_compose_add
+    @model.MaskMode::Subtract => mask_compose_subtract
+    @model.MaskMode::Intersect => mask_compose_intersect
+    _ => 0
+  }
+}
+
+///| Replays the layer's mask list into the renderer's SVG-style mask
+///| compositor, which accumulates add/subtract/intersect mask alpha on a
+///| dedicated mask buffer before applying it back to the isolated layer.
+fn[R : Renderer] Player::apply_layer_mask_composite(
+  self : Player[R],
+  masks : Array[@model.Mask],
+) -> Unit {
+  let mut has_effective_mask = false
+  for mask in masks {
+    if mask.mode == @model.MaskMode::None {
+      continue
+    }
+    if not(has_effective_mask) {
+      self.renderer.begin_mask_composite()
+      has_effective_mask = true
+    }
+    self.renderer.begin_mask_path()
+    self.renderer.set_fill_rule("nonzero")
+    self.renderer.begin_path()
+    let path_val = self.evaluate_path(mask.path, self.current_comp_frame)
+    self.draw_lottie_path(path_val)
+    let opacity = (
+      self.evaluate_double(mask.opacity, self.current_comp_frame) / 100.0
+    ).max(0.0).min(1.0)
+    let expansion = self.evaluate_double(mask.expansion, self.current_comp_frame)
+    self.renderer.apply_mask_path(
+      mask_mode_to_composite_code(mask.mode),
+      opacity,
+      mask.inverted,
+      expansion,
+    )
+  }
+  if has_effective_mask {
+    self.renderer.end_mask_composite()
+  }
+}
+
 ///|
 pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
   if self.debug_enabled || self.debug_logs.length() > 0 {
@@ -234,11 +370,32 @@ fn[R : Renderer] Player::render_layer(
     _ => ()
   }
 
+  let mut use_mask_composite = false
+  match layer.masks {
+    Some(masks) =>
+      if self.renderer.supports_mask_composite() &&
+        layer_masks_support_composite(masks) &&
+        layer_masks_require_composite(masks) {
+        use_mask_composite = true
+      }
+    None => ()
+  }
+
   // 0.1 prepareLayer (lottie-web pattern): called BEFORE save() and transforms.
   // Saves background to buffer[0], captures base transform, clears canvas.
-  match matte_source {
-    Some(_) => self.renderer.begin_layer()
-    None => ()
+  let has_fill_effect = match layer.fill_effect {
+    Some(_) => true
+    None => false
+  }
+  let has_matte_source = match matte_source {
+    Some(_) => true
+    None => false
+  }
+  let needs_layer_isolation = (
+    use_mask_composite || has_fill_effect
+  ) || has_matte_source
+  if needs_layer_isolation {
+    self.renderer.begin_layer()
   }
   match matte_source {
     Some(_) => self.renderer.prepare_matte_layer()
@@ -267,20 +424,11 @@ fn[R : Renderer] Player::render_layer(
   )
   self.renderer.set_opacity(opacity / 100.0)
 
-  // 2.5 Begin isolated compositing layer for fill effects only.
-  // Track matte now uses the two-buffer prepareLayer/exitLayer pattern instead.
-  let needs_fill_isolation = match layer.fill_effect {
-    Some(_) => true
-    None => false
-  }
-  if needs_fill_isolation {
-    self.renderer.begin_layer()
-  }
-
   // 3. Apply Layer Masks
   let mut mask_restore_count = 0
-  match layer.masks {
-    Some(masks) => {
+  match (layer.masks, use_mask_composite) {
+    (Some(_), true) => ()
+    (Some(masks), false) => {
       let mut i = 0
       while i < masks.length() {
         let mask = masks[i]
@@ -368,13 +516,13 @@ fn[R : Renderer] Player::render_layer(
         i = i + 1
       }
     }
-    None => ()
+    (None, _) => ()
   }
 
   // 4. Render Layer Content
   self.render_layer_content(layer, precomp_frame)
 
-  // 5. Restore mask states
+  // 5. Restore clip-based mask states
   for _ in 0..<mask_restore_count {
     self.renderer.restore()
   }
@@ -385,13 +533,15 @@ fn[R : Renderer] Player::render_layer(
     None => ()
   }
 
-  if needs_fill_isolation {
-    self.renderer.end_layer("source-over")
+  // 7. Apply SVG-style layer mask compositing on the isolated layer content.
+  match (layer.masks, use_mask_composite) {
+    (Some(masks), true) => self.apply_layer_mask_composite(masks)
+    _ => ()
   }
 
   self.renderer.restore()
 
-  // 7. Apply Track Matte using lottie-web's exitLayer two-buffer pattern.
+  // 8. Apply Track Matte using lottie-web's exitLayer two-buffer pattern.
   // This runs AFTER restore() so the canvas is back at the base transform,
   // matching lottie-web's exitLayer() which is called after restore().
   match matte_source {
@@ -420,9 +570,8 @@ fn[R : Renderer] Player::render_layer(
     }
     None => ()
   }
-  match matte_source {
-    Some(_) => self.renderer.end_layer("source-over")
-    None => ()
+  if needs_layer_isolation {
+    self.renderer.end_layer("source-over")
   }
 
   self.current_frame = saved_frame
@@ -430,7 +579,6 @@ fn[R : Renderer] Player::render_layer(
   self.current_layer_index = saved_layer_index
   self.current_comp_id = saved_comp_id
 }
-
 ///|
 fn[R : Renderer] Player::apply_layer_fill_effect(
   self : Player[R],

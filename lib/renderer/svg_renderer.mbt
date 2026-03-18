@@ -288,6 +288,50 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
 }
 
 ///|
+pub impl Renderer for SvgRenderer with supports_mask_composite(
+  self : SvgRenderer,
+) -> Bool {
+  let _ = self
+  false
+}
+
+///|
+pub impl Renderer for SvgRenderer with begin_mask_composite(
+  self : SvgRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
+pub impl Renderer for SvgRenderer with begin_mask_path(
+  self : SvgRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
+pub impl Renderer for SvgRenderer with apply_mask_path(
+  self : SvgRenderer,
+  mode : Int,
+  opacity : Double,
+  inverted : Bool,
+  expansion : Double,
+) -> Unit {
+  let _ = self
+  let _ = mode
+  let _ = opacity
+  let _ = inverted
+  let _ = expansion
+}
+
+///|
+pub impl Renderer for SvgRenderer with end_mask_composite(
+  self : SvgRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
 pub impl Renderer for SvgRenderer with clear_rect(
   self : SvgRenderer,
   x : Double,

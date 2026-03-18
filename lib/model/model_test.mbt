@@ -352,6 +352,7 @@ test "Shape and transform/layer/mask/animation constructors" {
     inverted=false,
     path=@model.LottieProperty::new_static(path2),
     opacity=static_double(100.0),
+    expansion=static_double(0.0),
     mode=@model.MaskMode::Add,
     name=Some("m"),
   )

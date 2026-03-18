@@ -15,6 +15,7 @@ pub struct Mask {
   inverted : Bool
   path : LottieProperty[BezierPath]
   opacity : LottieProperty[Double]
+  expansion : LottieProperty[Double]
   mode : MaskMode
 }
 
@@ -23,8 +24,9 @@ pub fn Mask::new(
   inverted~ : Bool,
   path~ : LottieProperty[BezierPath],
   opacity~ : LottieProperty[Double],
+  expansion~ : LottieProperty[Double],
   mode~ : MaskMode,
   name? : String? = None,
 ) -> Mask {
-  { name, inverted, path, opacity, mode }
+  { name, inverted, path, opacity, expansion, mode }
 }

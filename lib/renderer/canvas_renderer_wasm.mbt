@@ -547,6 +547,31 @@ fn canvas_end_matte_exit(matte_type : Int) = "canvas" "endMatteExit"
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_supports_mask_composite() -> Bool = "canvas" "supportsMaskComposite"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_begin_mask_composite() = "canvas" "beginMaskComposite"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_begin_mask_path() = "canvas" "beginMaskPath"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_apply_mask_path(
+  mode : Int,
+  opacity : Double,
+  inverted : Bool,
+  expansion : Double,
+) = "canvas" "applyMaskPath"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+fn canvas_end_mask_composite() = "canvas" "endMaskComposite"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 pub impl Renderer for CanvasRenderer with prepare_matte_layer(
   self : CanvasRenderer,
 ) {
@@ -571,4 +596,53 @@ pub impl Renderer for CanvasRenderer with end_matte_exit(
 ) {
   let _ = self
   canvas_end_matte_exit(matte_type)
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with supports_mask_composite(
+  self : CanvasRenderer,
+) -> Bool {
+  let _ = self
+  canvas_supports_mask_composite()
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with begin_mask_composite(
+  self : CanvasRenderer,
+) {
+  let _ = self
+  canvas_begin_mask_composite()
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with begin_mask_path(
+  self : CanvasRenderer,
+) {
+  let _ = self
+  canvas_begin_mask_path()
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with apply_mask_path(
+  self : CanvasRenderer,
+  mode : Int,
+  opacity : Double,
+  inverted : Bool,
+  expansion : Double,
+) {
+  let _ = self
+  canvas_apply_mask_path(mode, opacity, inverted, expansion)
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with end_mask_composite(
+  self : CanvasRenderer,
+) {
+  let _ = self
+  canvas_end_mask_composite()
 }

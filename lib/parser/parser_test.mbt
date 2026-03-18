@@ -181,6 +181,24 @@ test "parse_mask_path_closed_from_mask_cl_flag" {
 }
 
 ///|
+test "parse_mask_with_expansion_property" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]],\"c\":true}},\"o\":{\"k\":100},\"x\":{\"k\":2},\"mode\":\"a\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with mask expansion: \{e}")
+  }
+  match ani.layers[0].masks {
+    Some(masks) =>
+      match masks[0].expansion.value {
+        @model.PropertyValue::Static(v) => assert_eq(v, 2.0)
+        _ => fail("Mask expansion should be parsed as a static property")
+      }
+    None => fail("masks should be parsed")
+  }
+}
+
+///|
 test "parse_shape_layer" {
   // ... (existing test code)
 }
