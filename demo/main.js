@@ -390,6 +390,8 @@ const importObject = {
                     break;
             }
             if (compositeOp) {
+                // Known follow-up: inverted masks in the composite path are not
+                // fully aligned with lottie-web yet (e.g. 4_cactus.json frame 8).
                 state.maskCtx.globalCompositeOperation = compositeOp;
                 state.maskCtx.globalAlpha = 1.0;
                 state.maskCtx.drawImage(state.pathCanvas, 0, 0);
