@@ -140,13 +140,39 @@ fn layer_masks_support_composite(masks : Array[@model.Mask]) -> Bool {
   true
 }
 
-///| Mixed/inverted stacks need the SVG-style composite pipeline; plain add-only
-///| masks can stay on the existing clip fast path to avoid unnecessary churn.
+///| lottie-web/SVG only keeps masks on the clipPath fast path when they are
+///| plain non-inverted additive masks with a static 100% opacity. Any other
+///| supported stack needs the SVG-style composite pipeline instead.
+fn mask_opacity_can_use_clip_fast_path(
+  opacity : @model.LottieProperty[Double],
+) -> Bool {
+  match opacity.expression {
+    Some(_) => false
+    None =>
+      match opacity.value {
+        @model.PropertyValue::Static(value) => value == 100.0
+        @model.PropertyValue::Animated(_) => false
+      }
+  }
+}
+
+///| Returns true only for the narrow lottie-web/SVG clipPath fast path:
+///| additive masks with no inversion and a static 100% opacity.
+fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
+  match mask.mode {
+    @model.MaskMode::None => true
+    @model.MaskMode::Add =>
+      not(mask.inverted) && mask_opacity_can_use_clip_fast_path(mask.opacity)
+    _ => false
+  }
+}
+
+///| Mixed stacks, inverted masks, and additive masks with non-static/non-100
+///| opacity all need the SVG-style composite pipeline instead of clip-only
+///| approximation.
 fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
-    if mask.inverted ||
-      mask.mode == @model.MaskMode::Subtract ||
-      mask.mode == @model.MaskMode::Intersect {
+    if not(mask_can_use_clip_fast_path(mask)) {
       return true
     }
   }

@@ -62,6 +62,82 @@ test "snapshot_render_simple_add_mask_keeps_clip_fast_path" {
 }
 
 ///|
+test "snapshot_render_add_mask_with_partial_opacity_uses_mask_composite" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0]],\"o\":[[0,0],[0,0]],\"v\":[[0,0],[100,100]],\"c\":true}},\"o\":{\"k\":50}}],\"shapes\":[{\"ty\":\"el\",\"nm\":\"circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let has_clip = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        Clip => true
+        _ => false
+      }
+    })
+  let has_partial_add_mask = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        ApplyMaskPath(1, 0.5, false) => true
+        _ => false
+      }
+    })
+  if has_clip || not(has_partial_add_mask) {
+    fail(
+      "Add mask with partial opacity should use SVG-style mask compositing. Commands: \{commands}",
+    )
+  }
+}
+
+///|
+test "snapshot_render_add_mask_with_animated_opacity_uses_mask_composite" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0]],\"o\":[[0,0],[0,0]],\"v\":[[0,0],[100,100]],\"c\":true}},\"o\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[25]},{\"t\":10,\"s\":[25]}]}}],\"shapes\":[{\"ty\":\"el\",\"nm\":\"circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let has_clip = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        Clip => true
+        _ => false
+      }
+    })
+  let has_animated_add_mask = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        ApplyMaskPath(1, 0.25, false) => true
+        _ => false
+      }
+    })
+  if has_clip || not(has_animated_add_mask) {
+    fail(
+      "Animated add mask opacity should use SVG-style mask compositing. Commands: \{commands}",
+    )
+  }
+}
+
+///|
 test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":1,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":200,\"sh\":200,\"sc\":\"#00ff00\",\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-80,-80],[80,-80],[80,80],[-80,80]],\"c\":true}},\"o\":{\"k\":100}},{\"inv\":false,\"mode\":\"i\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-60,-60],[60,-60],[60,60],[-60,60]],\"c\":true}},\"o\":{\"k\":100}},{\"inv\":false,\"mode\":\"s\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-20,-20],[20,-20],[20,20],[-20,20]],\"c\":true}},\"o\":{\"k\":100}}]}]}"
