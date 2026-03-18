@@ -78,6 +78,10 @@ export function rasterizeMaskPath(pathCtx, workCtx, fillRule, opacity, inverted,
         pathCtx.lineCap = 'butt';
         pathCtx.lineJoin = 'miter';
         pathCtx.miterLimit = 4;
+        // lottie-web's SVG mask source keeps a stroked path for any non-zero
+        // expansion. Positive values widen that stroke to 2*x, while negative
+        // values erode the default 1px stroked source graphic via
+        // feMorphology(operator="erode").
         pathCtx.lineWidth = normalizedExpansion > 0 ? normalizedExpansion * 2 : 1;
         pathCtx.stroke();
     }
