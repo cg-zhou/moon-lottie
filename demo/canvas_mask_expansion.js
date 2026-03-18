@@ -73,12 +73,12 @@ export function rasterizeMaskPath(pathCtx, workCtx, fillRule, opacity, inverted,
     pathCtx.globalAlpha = alpha;
     pathCtx.fillStyle = '#ffffff';
     pathCtx.fill(fillRule);
-    if (normalizedExpansion > 0) {
+    if (normalizedExpansion !== 0) {
         pathCtx.strokeStyle = '#ffffff';
         pathCtx.lineCap = 'butt';
         pathCtx.lineJoin = 'miter';
         pathCtx.miterLimit = 4;
-        pathCtx.lineWidth = normalizedExpansion * 2;
+        pathCtx.lineWidth = normalizedExpansion > 0 ? normalizedExpansion * 2 : 1;
         pathCtx.stroke();
     }
     pathCtx.restore();

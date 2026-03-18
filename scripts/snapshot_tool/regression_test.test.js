@@ -245,6 +245,67 @@ test('canvas mask expansion helper erodes alpha neighborhoods', async () => {
   ]);
 });
 
+test('canvas mask expansion helper keeps a 1px source stroke before negative erosion', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+
+  const imageData = { data: new Uint8ClampedArray(4 * 4 * 4) };
+  const strokeWidths = [];
+  const pathCtx = {
+    canvas: { width: 4, height: 4 },
+    save() {},
+    restore() {},
+    fill() {},
+    stroke() {},
+    getImageData: () => imageData,
+    putImageData: () => {},
+    set globalCompositeOperation(_) {},
+    set globalAlpha(_) {},
+    set fillStyle(_) {},
+    set strokeStyle(_) {},
+    set lineCap(_) {},
+    set lineJoin(_) {},
+    set miterLimit(_) {},
+    set lineWidth(value) {
+      strokeWidths.push(value);
+    },
+  };
+
+  helper.rasterizeMaskPath(pathCtx, {}, 'nonzero', 1, false, -2);
+
+  assert.deepEqual(strokeWidths, [1]);
+});
+
+test('canvas mask expansion helper uses 2x width for positive expansion strokes', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+
+  const strokeWidths = [];
+  const pathCtx = {
+    canvas: { width: 4, height: 4 },
+    save() {},
+    restore() {},
+    fill() {},
+    stroke() {},
+    getImageData: () => ({ data: new Uint8ClampedArray(4 * 4 * 4) }),
+    putImageData: () => {},
+    set globalCompositeOperation(_) {},
+    set globalAlpha(_) {},
+    set fillStyle(_) {},
+    set strokeStyle(_) {},
+    set lineCap(_) {},
+    set lineJoin(_) {},
+    set miterLimit(_) {},
+    set lineWidth(value) {
+      strokeWidths.push(value);
+    },
+  };
+
+  helper.rasterizeMaskPath(pathCtx, {}, 'nonzero', 1, false, 3);
+
+  assert.deepEqual(strokeWidths, [6]);
+});
+
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
