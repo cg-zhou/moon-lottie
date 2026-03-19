@@ -44,43 +44,12 @@ jobs:
         working-directory: demo
         run: npm run build
 
-      - name: Prepare demo for deployment
-        run: |
-          mkdir -p /tmp/demo_dist
-          DEPLOY_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          
-          # 1. Copy Vite build artifacts (React portal assets)
-          cp -r demo/dist/* /tmp/demo_dist/
-          
-          # 2. Copy static helper JS files (Playground dependencies)
-          cp demo/playground.html /tmp/demo_dist/
-          cp demo/main.js /tmp/demo_dist/
-          cp demo/render_mode.js /tmp/demo_dist/
-          cp demo/expression_host.js /tmp/demo_dist/
-          cp demo/canvas_dpr.js /tmp/demo_dist/
-          cp demo/canvas_mask_expansion.js /tmp/demo_dist/
-          cp demo/canvas_matte.js /tmp/demo_dist/
-          cp demo/lottie.min.js /tmp/demo_dist/
-          
-          # 3. Inject deployment timestamp and copy metadata
-          sed -i "s/data-utc=\"\"/data-utc=\"$DEPLOY_TIME\"/g" /tmp/demo_dist/playground.html
-          cp demo/sample_index.json /tmp/demo_dist/
-          
-          # 4. Copy Wasm binary (from MoonBit release build)
-          # Note: path is relative to the release/ directory when using moon build --release
-          cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
-          
-          # 5. Copy animation samples library
-          cp -r samples /tmp/demo_dist/
-
       - name: Deploy to demo branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Use stash to handle any local changes (like generated sample_index.json) before checkout
-          git stash || true
           
+          # Fetch and checkout (or create) demo branch
           git fetch origin demo 2>/dev/null || true
           if git rev-parse --verify origin/demo 2>/dev/null; then
             git checkout -B demo origin/demo
@@ -88,9 +57,9 @@ jobs:
             git checkout --orphan demo
           fi
 
+          # Clean the branch and replace with Vite dist content
           git rm -rf . 2>/dev/null || true
-
-          cp -r /tmp/demo_dist/* .
+          cp -r demo/dist/* .
 
           git add .
           git diff --staged --quiet || git commit -m "Deploy demo [skip ci]"

@@ -1,23 +1,34 @@
+# Runtime Assets (Synced by scripts, do not commit)
+demo/public/main.wasm
+demo/public/samples/
+demo/public/sample_index.json
+
+# Build and local files
 .DS_Store
 target/
 _build/
+node_modules
+demo/node_modules
+/package-lock.json
+
+# Toolchain
 .moonc/
 .mooncakes/
 .moonagent/
-*.wasm
 *.core
 *.mi
 
-node_modules
-3rd_repos
-package-lock.json
-
+# Comparison tools and temporary scripts
 scripts/snapshot_tool/frame_compare_result/
 scripts/snapshot_tool/test_lottie_shadow.js
 
-demo/dist
-demo/samples
-
-demo-v2/dist
-demo-v2/samples
+# Demo dist folders
+demo/dist/
+demo-v2/dist/
 demo-v2/public/samples
+demo-v2/node_modules/
+
+# Third party
+3rd_repos/
+
+*.wasm

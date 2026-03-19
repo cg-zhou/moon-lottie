@@ -1,18 +1,19 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-// 源目录和目标目录
-const WASM_SOURCE = path.join('..', '_build', 'wasm-gc', 'debug', 'build', 'cmd', 'main', 'main.wasm');
-const SAMPLES_SOURCE = path.join('..', 'samples');
-const TARGET_DIR = './';
+const WASM_SOURCE_DEBUG = path.join("..", "_build", "wasm-gc", "debug", "build", "cmd", "main", "main.wasm");
+const WASM_SOURCE_RELEASE = path.join("..", "_build", "wasm-gc", "release", "build", "cmd", "main", "main.wasm");
+const SAMPLES_SOURCE = path.join("..", "samples");
+const TARGET_DIR = "./public";
 
 function copyFileSync(src, dest) {
   try {
     if (fs.existsSync(src)) {
+      if (!fs.existsSync(path.dirname(dest))) {
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+      }
       fs.copyFileSync(src, dest);
       console.log(`[Sync] Copied: ${src} -> ${dest}`);
-    } else {
-      console.warn(`[Sync] Source not found: ${src}`);
     }
   } catch (err) {
     console.error(`[Sync] Error copying ${src}:`, err.message);
@@ -21,38 +22,22 @@ function copyFileSync(src, dest) {
 
 function copyFolderSync(src, dest) {
   try {
-    if (!fs.existsSync(src)) {
-      console.warn(`[Sync] Source folder not found: ${src}`);
-      return;
-    }
-    if (!fs.existsSync(dest)) {
-      fs.mkdirSync(dest, { recursive: true });
-    }
-
+    if (!fs.existsSync(src)) return;
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
     const entries = fs.readdirSync(src, { withFileTypes: true });
     for (let entry of entries) {
       const srcPath = path.join(src, entry.name);
       const destPath = path.join(dest, entry.name);
-
-      if (entry.isDirectory()) {
-        copyFolderSync(srcPath, destPath);
-      } else if (entry.isFile() && entry.name.endsWith('.json')) {
-        fs.copyFileSync(srcPath, destPath);
-      }
+      if (entry.isDirectory()) copyFolderSync(srcPath, destPath);
+      else if (entry.isFile() && entry.name.endsWith(".json")) fs.copyFileSync(srcPath, destPath);
     }
-    console.log(`[Sync] Synced JSON samples from ${src}`);
   } catch (err) {
     console.error(`[Sync] Error syncing folder ${src}:`, err.message);
   }
 }
 
-// 执行同步
-console.log('[Sync] Starting assets synchronization...');
-
-// 1. 同步 WASM
-copyFileSync(WASM_SOURCE, path.join(TARGET_DIR, 'main.wasm'));
-
-// 2. 同步 Samples (JSON 文件)
-copyFolderSync(SAMPLES_SOURCE, path.join(TARGET_DIR, 'samples'));
-
-console.log('[Sync] Finished.');
+console.log("[Sync] Starting...");
+if (fs.existsSync(WASM_SOURCE_RELEASE)) copyFileSync(WASM_SOURCE_RELEASE, path.join(TARGET_DIR, "main.wasm"));
+else copyFileSync(WASM_SOURCE_DEBUG, path.join(TARGET_DIR, "main.wasm"));
+copyFolderSync(SAMPLES_SOURCE, path.join(TARGET_DIR, "samples"));
+console.log("[Sync] Finished.");

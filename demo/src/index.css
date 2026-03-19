@@ -311,12 +311,56 @@ main {
 .roadmap-card,
 .risk-item,
 .diagram-card,
-.playground-frame,
-.site-footer {
+.playground-frame {
   border: 1px solid rgba(229, 229, 231, 0.92);
   background: var(--panel);
   backdrop-filter: blur(14px);
   box-shadow: var(--shadow);
+}
+
+.site-footer {
+  margin-top: 80px;
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+
+.footer-content {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.footer-credits {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-divider {
+  opacity: 0.3;
+  margin: 0 4px;
+}
+
+.footer-powered-text {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.footer-credits .moonbit-link {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-credits .moonbit-link:hover {
+  color: var(--primary);
 }
 
 .hero {
@@ -334,10 +378,10 @@ main {
 
 .hero__copy h1 {
   margin: 10px 0 16px;
-  font-size: clamp(2.2rem, 4vw, 4.3rem);
+  font-size: clamp(2.2rem, 3vw, 4.3rem);
   line-height: 1.02;
   letter-spacing: -0.04em;
-  max-width: 820px;
+  max-width: 800px;
 }
 
 .hero__lead,
