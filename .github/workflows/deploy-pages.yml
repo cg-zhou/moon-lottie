@@ -38,7 +38,7 @@ jobs:
 
       - name: Install demo dependencies
         working-directory: demo
-        run: npm install
+        run: npm ci
 
       - name: Build React demo shell
         working-directory: demo
