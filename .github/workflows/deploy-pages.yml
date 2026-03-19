@@ -49,17 +49,24 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
+          # Move build output to temporary location outside git project
+          mkdir -p /tmp/demo-dist
+          cp -r demo/dist/* /tmp/demo-dist/
+
           # Fetch and checkout (or create) demo branch
           git fetch origin demo 2>/dev/null || true
           if git rev-parse --verify origin/demo 2>/dev/null; then
             git checkout -B demo origin/demo
           else
             git checkout --orphan demo
+            git rm -rf .
           fi
 
-          # Clean the branch and replace with Vite dist content
+          # Clean everything in the branch
           git rm -rf . 2>/dev/null || true
-          cp -r demo/dist/* .
+          
+          # Copy from temporary location back to root
+          cp -r /tmp/demo-dist/* .
 
           git add .
           git diff --staged --quiet || git commit -m "Deploy demo [skip ci]"
