@@ -452,7 +452,9 @@ const importObject = {
 
 async function init() {
   try {
-    const wasmPath = isProd ? 'main.wasm' : '../_build/wasm-gc/debug/build/cmd/main/main.wasm';
+    // 始终使用当前目录下的 main.wasm，由 package.json 中的脚本自动从 _build 同步
+    const wasmPath = 'main.wasm';
+    console.log(`[MoonLottie] Fetching WASM from: ${wasmPath}`);
     const response = await fetch(wasmPath, { cache: 'no-store' });
     if (!response.ok) throw new Error("WASM not found");
     
@@ -617,10 +619,11 @@ function loadSample() {
 }
 
 function loadRemoteAnimation(filename) {
-    // Encode filename to handle spaces and special characters correctly in URLs
+    // 始终从本地 samples 目录加载，该目录由 sync-assets.js 自动从根目录同步
     const encodedName = encodeURIComponent(filename);
-    const path = isProd ? `samples/${encodedName}` : `../samples/${encodedName}`;
+    const path = `samples/${encodedName}`;
     
+    console.log(`[MoonLottie] Fetching animation from: ${path}`);
     fetch(path, { cache: 'no-store' }).then(r => {
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         currentFileName = filename;

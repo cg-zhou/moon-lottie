@@ -1,0 +1,22 @@
+{
+  "name": "moon-lottie-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run sync && vite",
+    "build": "npm run sync && vite build",
+    "preview": "vite preview",
+    "sync": "node sync-assets.js"
+  },
+  "dependencies": {
+    "mermaid": "^11.13.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "iconify-icon": "^3.0.2",
+    "vite": "^8.0.0"
+  }
+}

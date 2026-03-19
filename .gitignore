@@ -15,6 +15,9 @@ package-lock.json
 scripts/snapshot_tool/frame_compare_result/
 scripts/snapshot_tool/test_lottie_shadow.js
 
+demo/dist
+demo/samples
+
 demo-v2/dist
 demo-v2/samples
 demo-v2/public/samples

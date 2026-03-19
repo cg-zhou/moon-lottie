@@ -20,6 +20,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Set up MoonBit
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
@@ -31,15 +36,41 @@ jobs:
       - name: Build Wasm
         run: moon build --target wasm-gc --release
 
+      - name: Install demo dependencies
+        working-directory: demo
+        run: npm install
+
+      - name: Build React demo shell
+        working-directory: demo
+        run: npm run build
+
       - name: Prepare demo for deployment
         run: |
           mkdir -p /tmp/demo_dist
           DEPLOY_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          sed "s/data-utc=\"\"/data-utc=\"$DEPLOY_TIME\"/g" demo/index.html > /tmp/demo_dist/index.html
-          cp demo/*.js /tmp/demo_dist/
+          
+          # 1. Copy Vite build artifacts (React portal assets)
+          cp -r demo/dist/* /tmp/demo_dist/
+          
+          # 2. Copy static helper JS files (Playground dependencies)
+          cp demo/playground.html /tmp/demo_dist/
+          cp demo/main.js /tmp/demo_dist/
+          cp demo/render_mode.js /tmp/demo_dist/
+          cp demo/expression_host.js /tmp/demo_dist/
+          cp demo/canvas_dpr.js /tmp/demo_dist/
+          cp demo/canvas_mask_expansion.js /tmp/demo_dist/
+          cp demo/canvas_matte.js /tmp/demo_dist/
+          cp demo/lottie.min.js /tmp/demo_dist/
+          
+          # 3. Inject deployment timestamp and copy metadata
+          sed -i "s/data-utc=\"\"/data-utc=\"$DEPLOY_TIME\"/g" /tmp/demo_dist/playground.html
           cp demo/sample_index.json /tmp/demo_dist/
+          
+          # 4. Copy Wasm binary (from MoonBit release build)
+          # Note: path is relative to the release/ directory when using moon build --release
           cp _build/wasm-gc/release/build/cmd/main/main.wasm /tmp/demo_dist/
-          # Copy samples
+          
+          # 5. Copy animation samples library
           cp -r samples /tmp/demo_dist/
 
       - name: Deploy to demo branch
