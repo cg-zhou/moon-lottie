@@ -22,16 +22,39 @@ import {
 const canvas = document.getElementById('lottie-canvas');
 let ctx = canvas.getContext('2d');
 const statusDot = document.getElementById('status-dot');
-const statusMsg = document.getElementById('status-msg');
 const frameInfoEl = document.getElementById('frame-info');
 const playPauseBtn = document.getElementById('play-pause');
 const seekBar = document.getElementById('seek-bar');
 const fileInput = document.getElementById('file-input');
-const dropZone = document.getElementById('drop-zone');
 const viewport = document.getElementById('viewport');
+const currentFileNameEl = document.getElementById('current-file-name');
 const compareToggle = document.getElementById('compare-toggle');
+const wasmWrapper = document.getElementById('wasm-wrapper');
 const officialWrapper = document.getElementById('official-wrapper');
+const wasmStage = wasmWrapper.querySelector('.canvas-stage');
+const officialStage = officialWrapper.querySelector('.canvas-stage');
 const officialContainer = document.getElementById('official-lottie-container');
+const infoRuntimeEl = document.getElementById('info-runtime');
+const openFileBtn = document.getElementById('open-file-btn');
+const prevAnimationBtn = document.getElementById('prev-animation');
+const nextAnimationBtn = document.getElementById('next-animation');
+const prevFrameBtn = document.getElementById('prev-frame');
+const nextFrameBtn = document.getElementById('next-frame');
+const speedInput = document.getElementById('speed-input');
+const speedButtons = Array.from(document.querySelectorAll('.speed-btn'));
+const bgButtons = Array.from(document.querySelectorAll('.bg-btn'));
+const runtimeButtons = Array.from(document.querySelectorAll('.runtime-btn'));
+const playlistDrawer = document.getElementById('playlist-drawer');
+const playlistBackdrop = document.getElementById('playlist-backdrop');
+const playlistToggle = document.getElementById('playlist-toggle');
+const playlistClose = document.getElementById('playlist-close');
+const playlistSearch = document.getElementById('playlist-search');
+const playlistList = document.getElementById('playlist-list');
+const detailsPanel = document.getElementById('details-panel');
+const detailsToggle = document.getElementById('details-toggle');
+const detailsClose = document.getElementById('details-close');
+const panelBackdrop = document.getElementById('panel-backdrop');
+const dropOverlay = document.getElementById('drop-overlay');
 
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const wasmBuiltinOptions = { builtins: ['js-string'] };
@@ -77,12 +100,18 @@ let currentFileSize = 0;
 let imageAssetsByIndex = [];
 let moonLottieRuntime = null;
 let moonLottieBackend = "uninitialized";
+let runtimePreference = 'auto';
+let compareEnabled = true;
+let currentSpeed = 1;
+let currentBackground = 'grid';
 let currentAnimationRequestId = null;
 let currentAnimationData = null;
 let currentAnimationMeta = null;
 let currentExpressionAnimationData = null;
 let currentExpressionMeta = null;
+let sampleEntries = [];
 let pendingCanvasResizeFrame = null;
+let viewportResizeObserver = null;
 const viewportTransform = {
     scale: 1,
     offsetX: 0,
@@ -112,17 +141,311 @@ function describeRuntimePreference(preference) {
     return 'Auto';
 }
 
+function setStatusMessage(message) {
+    console.log(`[Status] ${message}`);
+}
+
+function updateCurrentFileLabel() {
+    currentFileNameEl.innerText = currentFileName || '选择一个样例或打开本地 JSON';
+}
+
+function updateRuntimeBadges() {
+    const actual = moonLottieBackend === 'uninitialized'
+        ? '未初始化'
+        : (moonLottieBackend === 'wasm' ? 'Wasm' : 'JS');
+    infoRuntimeEl.innerText = actual;
+    runtimeButtons.forEach((button) => {
+        button.classList.toggle('is-active', button.dataset.runtime === runtimePreference);
+    });
+}
+
+function applyBackgroundSelection() {
+    viewport.classList.remove('bg-white', 'bg-black');
+    if (currentBackground === 'white') {
+        viewport.classList.add('bg-white');
+    } else if (currentBackground === 'black') {
+        viewport.classList.add('bg-black');
+    }
+    bgButtons.forEach((button) => {
+        button.classList.toggle('is-active', button.dataset.bg === currentBackground);
+    });
+}
+
+function updateCompareUI() {
+    compareToggle.classList.toggle('is-active', compareEnabled);
+    compareToggle.setAttribute('aria-pressed', compareEnabled ? 'true' : 'false');
+    officialWrapper.style.display = compareEnabled ? 'flex' : 'none';
+    scheduleViewportRefresh();
+}
+
+function normalizeSpeed(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+        return currentSpeed;
+    }
+    return Math.min(4, Math.max(0.1, Math.round(parsed * 10) / 10));
+}
+
+function updateSpeedInput() {
+    speedInput.value = currentSpeed.toFixed(1);
+    speedButtons.forEach(btn => {
+        btn.classList.toggle('is-active', Math.abs(Number(btn.dataset.speed) - currentSpeed) < 0.01);
+    });
+}
+
+function getCurrentSampleIndex() {
+    return sampleEntries.findIndex((entry) => entry.file === currentFileName);
+}
+
+function stepAnimation(direction) {
+    if (sampleEntries.length === 0) {
+        return;
+    }
+
+    const currentIndex = getCurrentSampleIndex();
+    const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = (baseIndex + direction + sampleEntries.length) % sampleEntries.length;
+    const nextEntry = sampleEntries[nextIndex];
+    localStorage.setItem('moon-lottie-last-anim', nextEntry.file);
+    loadRemoteAnimation(nextEntry.file);
+}
+
+function openPlaylistDrawer() {
+    document.body.classList.add('drawer-open');
+    playlistDrawer.classList.add('is-open');
+    playlistBackdrop.classList.add('is-open');
+    playlistDrawer.setAttribute('aria-hidden', 'false');
+}
+
+function closePlaylistDrawer() {
+    playlistDrawer.classList.remove('is-open');
+    playlistBackdrop.classList.remove('is-open');
+    playlistDrawer.setAttribute('aria-hidden', 'true');
+    if (!detailsPanel.classList.contains('is-open')) {
+        document.body.classList.remove('drawer-open');
+    }
+}
+
+function openDetailsPanel() {
+    document.body.classList.add('drawer-open');
+    detailsPanel.classList.add('is-open');
+    panelBackdrop.classList.add('is-open');
+    detailsPanel.setAttribute('aria-hidden', 'false');
+    detailsToggle.classList.add('is-active');
+}
+
+function closeDetailsPanel() {
+    detailsPanel.classList.remove('is-open');
+    panelBackdrop.classList.remove('is-open');
+    detailsPanel.setAttribute('aria-hidden', 'true');
+    detailsToggle.classList.remove('is-active');
+    if (!playlistDrawer.classList.contains('is-open')) {
+        document.body.classList.remove('drawer-open');
+    }
+}
+
+function renderPlaylist() {
+    const query = (playlistSearch.value || '').trim().toLowerCase();
+    const filtered = sampleEntries.filter((entry) => {
+        const searchText = `${entry.label} ${entry.file}`.toLowerCase();
+        return !query || searchText.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        playlistList.innerHTML = '<div class="playlist-empty">没有匹配的样例。</div>';
+        return;
+    }
+
+    playlistList.innerHTML = '';
+    filtered.forEach((entry) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'playlist-item';
+        if (entry.file === currentFileName) {
+            button.classList.add('is-active');
+        }
+        button.innerHTML = `<span class="playlist-item__title">${entry.label}</span><span class="playlist-item__meta">${entry.file}</span>`;
+        button.onclick = () => {
+            localStorage.setItem('moon-lottie-last-anim', entry.file);
+            closePlaylistDrawer();
+            loadRemoteAnimation(entry.file);
+        };
+        playlistList.appendChild(button);
+    });
+}
+
+async function restartCurrentAnimation() {
+    if (!currentJsonStr && !currentAnimationData) {
+        return;
+    }
+    const source = currentAnimationData ? JSON.stringify(currentAnimationData) : currentJsonStr;
+    await startPlayer(source);
+}
+
+async function switchRuntime(preference) {
+    if (preference !== 'auto' && preference !== 'wasm' && preference !== 'js') {
+        return;
+    }
+    if (runtimePreference === preference && moonLottieRuntime) {
+        return;
+    }
+
+    runtimePreference = preference;
+    localStorage.setItem('moon-lottie-runtime', preference);
+    updateRuntimeBadges();
+    setStatusMessage(`切换运行时到 ${describeRuntimePreference(preference)}...`);
+
+    try {
+        if (preference === 'js') {
+            const runtime = await loadJsRuntime();
+            setActiveMoonLottieRuntime(runtime, 'js');
+        } else if (preference === 'wasm') {
+            const runtime = await loadWasmRuntime();
+            setActiveMoonLottieRuntime(runtime, 'wasm');
+        } else {
+            try {
+                const runtime = await loadWasmRuntime();
+                setActiveMoonLottieRuntime(runtime, 'wasm');
+            } catch (wasmErr) {
+                console.warn('[MoonLottie] WASM runtime init failed during runtime switch, switching to JS runtime', wasmErr);
+                const runtime = await loadJsRuntime();
+                setActiveMoonLottieRuntime(runtime, 'js');
+            }
+        }
+
+        updateRuntimeBadges();
+        if (currentAnimationData) {
+            await restartCurrentAnimation();
+        } else {
+            setStatusMessage(`已切换到 ${moonLottieBackend === 'wasm' ? 'Wasm' : 'JS'} 后端`);
+        }
+    } catch (error) {
+        statusDot.style.background = '#ff3b30';
+        setStatusMessage(`运行时切换失败: ${error.message}`);
+    }
+}
+
 function readDevicePixelRatio() {
     return window.devicePixelRatio || 1;
 }
 
-function updateViewportTransform(meta) {
+function parsePixelValue(value) {
+    const parsed = Number.parseFloat(value || '0');
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getWrapperChromeHeight(wrapper) {
+    const head = wrapper.querySelector('.canvas-head');
+    const wrapperStyle = window.getComputedStyle(wrapper);
+    const gap = parsePixelValue(wrapperStyle.rowGap || wrapperStyle.gap);
+    return Math.ceil((head?.offsetHeight || 0) + gap);
+}
+
+function fitStage(maxWidth, maxHeight, aspectRatio) {
+    if (maxWidth <= 0 || maxHeight <= 0 || aspectRatio <= 0) {
+        return { width: 0, height: 0, area: 0 };
+    }
+
+    const width = Math.min(maxWidth, maxHeight * aspectRatio);
+    const height = width / aspectRatio;
+
+    return {
+        width,
+        height,
+        area: width * height,
+    };
+}
+
+function applyWrapperLayout(wrapper, stage, width, height) {
+    if (!wrapper || !stage) {
+        return;
+    }
+
+    const chromeHeight = getWrapperChromeHeight(wrapper);
+    wrapper.style.flex = '0 0 auto';
+    wrapper.style.width = `${Math.max(0, width)}px`;
+    wrapper.style.height = `${Math.max(0, chromeHeight + height)}px`;
+    stage.style.width = `${Math.max(0, width)}px`;
+    stage.style.height = `${Math.max(0, height)}px`;
+}
+
+function resetWrapperLayout(wrapper, stage) {
+    if (!wrapper || !stage) {
+        return;
+    }
+
+    wrapper.style.flex = '';
+    wrapper.style.width = '';
+    wrapper.style.height = '';
+    stage.style.width = '';
+    stage.style.height = '';
+}
+
+function layoutViewport(meta) {
     const animWidth = meta?.width || canvas.width || 1;
     const animHeight = meta?.height || canvas.height || 1;
+    const aspectRatio = animWidth / animHeight;
+    const viewportStyle = window.getComputedStyle(viewport);
+    const horizontalPadding = parsePixelValue(viewportStyle.paddingLeft) + parsePixelValue(viewportStyle.paddingRight);
+    const verticalPadding = parsePixelValue(viewportStyle.paddingTop) + parsePixelValue(viewportStyle.paddingBottom);
+    const gap = parsePixelValue(viewportStyle.columnGap || viewportStyle.gap);
+    const availableWidth = Math.max(0, viewport.clientWidth - horizontalPadding);
+    const availableHeight = Math.max(0, viewport.clientHeight - verticalPadding);
+    const compareActive = compareEnabled;
+    const wasmChrome = getWrapperChromeHeight(wasmWrapper);
+    const officialChrome = compareActive ? getWrapperChromeHeight(officialWrapper) : 0;
+    const chromeHeight = Math.max(wasmChrome, officialChrome);
+
+    let direction = 'row';
+    let stageSize = fitStage(availableWidth, availableHeight - chromeHeight, aspectRatio);
+
+    if (compareActive) {
+        const rowStage = fitStage(
+            (availableWidth - gap) / 2,
+            availableHeight - chromeHeight,
+            aspectRatio,
+        );
+        const columnStage = fitStage(
+            availableWidth,
+            (availableHeight - gap) / 2 - chromeHeight,
+            aspectRatio,
+        );
+
+        if (columnStage.area > rowStage.area) {
+            direction = 'column';
+            stageSize = columnStage;
+        } else {
+            direction = 'row';
+            stageSize = rowStage;
+        }
+    }
+
+    viewport.style.flexDirection = direction;
+
+    applyWrapperLayout(wasmWrapper, wasmStage, stageSize.width, stageSize.height);
+    canvas.style.width = `${Math.max(0, stageSize.width)}px`;
+    canvas.style.height = `${Math.max(0, stageSize.height)}px`;
+
+    if (compareActive) {
+        applyWrapperLayout(officialWrapper, officialStage, stageSize.width, stageSize.height);
+        officialContainer.style.width = `${Math.max(0, stageSize.width)}px`;
+        officialContainer.style.height = `${Math.max(0, stageSize.height)}px`;
+    } else {
+        resetWrapperLayout(officialWrapper, officialStage);
+        officialContainer.style.width = '';
+        officialContainer.style.height = '';
+    }
+
+    return stageSize;
+}
+
+function updateViewportTransform(meta) {
+    const animWidth = meta?.width || canvas.width || 100;
+    const animHeight = meta?.height || canvas.height || 100;
+    const stageSize = layoutViewport(meta);
     const dpr = readDevicePixelRatio();
-    const rect = canvas.getBoundingClientRect();
-    const viewportWidth = rect.width > 0 ? rect.width : animWidth;
-    const viewportHeight = rect.height > 0 ? rect.height : animHeight;
+    const viewportWidth = stageSize.width > 0 ? stageSize.width : animWidth;
+    const viewportHeight = stageSize.height > 0 ? stageSize.height : animHeight;
     const scale = Math.min(viewportWidth / animWidth, viewportHeight / animHeight) || 1;
 
     viewportTransform.scale = scale;
@@ -135,6 +458,23 @@ function updateViewportTransform(meta) {
         height: viewportHeight,
         dpr,
     };
+}
+
+let lastMetadata = null;
+
+function scheduleViewportRefresh() {
+    if (!lastMetadata || pendingCanvasResizeFrame !== null) {
+        return;
+    }
+
+    pendingCanvasResizeFrame = requestAnimationFrame(() => {
+        pendingCanvasResizeFrame = null;
+        if (!lastMetadata) {
+            return;
+        }
+        applyAnimationMetadata(lastMetadata);
+        renderCurrentFrame();
+    });
 }
 
 // Canvas FFI implementation (省略大部分不变的渲染逻辑，直接进入业务逻辑控制)
@@ -524,8 +864,13 @@ async function loadJsRuntime() {
 
 async function init() {
   try {
-    const runtimePreference = getRuntimePreference();
-        statusMsg.innerText = '初始化 MoonLottie 运行时...';
+        runtimePreference = getRuntimePreference();
+        updateCurrentFileLabel();
+        applyBackgroundSelection();
+        updateCompareUI();
+        updateSpeedInput();
+        updateRuntimeBadges();
+        setStatusMessage('初始化 MoonLottie 运行时...');
     console.log(`[MoonLottie] Runtime preference: ${describeRuntimePreference(runtimePreference)}`);
 
     if (runtimePreference === 'js') {
@@ -546,15 +891,16 @@ async function init() {
         }
 
     statusDot.style.background = "#34c759"; // Green
-    statusMsg.innerText = moonLottieBackend === 'wasm'
-        ? `已就绪，请上传 Lottie JSON (${describeRuntimePreference(runtimePreference)})`
-        : `已就绪，当前使用 JS 兼容后端 (${describeRuntimePreference(runtimePreference)})`;
+        updateRuntimeBadges();
+        setStatusMessage(moonLottieBackend === 'wasm'
+            ? `已就绪，请打开 Lottie JSON (${describeRuntimePreference(runtimePreference)})`
+            : `已就绪，当前使用 JS 兼容后端 (${describeRuntimePreference(runtimePreference)})`);
     
     // 动态加载动画列表
     await initAnimList();
   } catch (err) {
     statusDot.style.background = "#ff3b30"; // Red
-    statusMsg.innerText = "错误: " + err.message;
+        setStatusMessage("错误: " + err.message);
   }
 }
 
@@ -621,9 +967,11 @@ function renderCurrentFrame() {
 }
 
 function applyAnimationMetadata(meta) {
+    lastMetadata = meta;
     const { width, height, fps, totalFrames, inPoint, aspectRatio, version } = meta;
 
-    canvas.style.aspectRatio = aspectRatio;
+    wasmStage.style.aspectRatio = aspectRatio;
+    officialStage.style.aspectRatio = aspectRatio;
     officialContainer.style.aspectRatio = aspectRatio;
 
     const viewportSize = updateViewportTransform(meta);
@@ -636,6 +984,7 @@ function applyAnimationMetadata(meta) {
     document.getElementById('info-total-frames').innerText = Math.floor(totalFrames);
     document.getElementById('info-duration').innerText = fps > 0 ? (totalFrames / fps).toFixed(2) + "s" : "-";
     document.getElementById('info-version').innerText = version;
+    updateCurrentFileLabel();
 
     seekBar.min = inPoint;
     seekBar.max = inPoint + totalFrames;
@@ -643,7 +992,6 @@ function applyAnimationMetadata(meta) {
 }
 
 async function initAnimList() {
-    const listEl = document.getElementById('anim-list');
     try {
         const response = await fetch('sample_index.json');
         
@@ -654,27 +1002,21 @@ async function initAnimList() {
             console.warn("sample_index.json not found, using default fallback");
             entries = [{ file: '1-1 Super Mario.json', label: '1-1 Super Mario' }];
         }
-        
-        listEl.innerHTML = '';
-        entries.forEach(entry => {
+
+        sampleEntries = entries.map((entry) => {
             const file = typeof entry === 'object' ? entry.file : entry;
             const label = (typeof entry === 'object' ? (entry.label || entry.file) : entry).replace(/\.json$/i, '');
-            
-            const opt = document.createElement('option');
-            opt.value = file;
-            opt.innerText = label;
-            listEl.appendChild(opt);
+            return { file, label };
         });
+        renderPlaylist();
         
         const lastSelected = localStorage.getItem('moon-lottie-last-anim');
-        const hasLastInList = lastSelected && entries.some(e => (typeof e === 'object' ? e.file : e) === lastSelected);
+        const hasLastInList = lastSelected && sampleEntries.some((entry) => entry.file === lastSelected);
         
         if (hasLastInList) {
-            listEl.value = lastSelected;
             loadRemoteAnimation(lastSelected);
-        } else if (entries.length > 0) {
-            const firstFile = typeof entries[0] === 'object' ? entries[0].file : entries[0];
-            loadRemoteAnimation(firstFile);
+        } else if (sampleEntries.length > 0) {
+            loadRemoteAnimation(sampleEntries[0].file);
         }
     } catch (e) {
         console.error("Failed to initialize animation list:", e);
@@ -696,6 +1038,8 @@ function loadRemoteAnimation(filename) {
     fetch(path, { cache: 'no-store' }).then(r => {
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         currentFileName = filename;
+        updateCurrentFileLabel();
+        renderPlaylist();
         return r.blob();
     }).then(blob => {
         currentFileSize = blob.size;
@@ -715,7 +1059,7 @@ function resolveAssetSrc(asset) {
 
 async function preloadAssets(json) {
     if (!json.assets) return;
-    statusMsg.innerText = "正在加载资源文件...";
+    setStatusMessage("正在加载资源文件...");
     imageAssetsByIndex = new Array(json.assets.length).fill(null);
     const promises = json.assets.map((asset, index) => {
         if (asset.p) {
@@ -739,12 +1083,12 @@ async function startPlayer(jsonStr) {
     try { animationData = JSON.parse(jsonStr); } catch (e) { alert("无效的 JSON 文件"); return; }
     const runtime = getActiveMoonLottieRuntime();
     if (!runtime) {
-        statusMsg.innerText = "运行时尚未初始化";
+        setStatusMessage("运行时尚未初始化");
         return;
     }
 
     console.log(`[MoonLottie] Starting new animation: ${currentFileName}`);
-    statusMsg.innerText = "初始化渲染引擎...";
+    setStatusMessage("初始化渲染引擎...");
     currentAnimationData = animationData;
     currentAnimationMeta = getAnimationPlaybackMeta(animationData);
     currentExpressionAnimationData = cloneAnimationData(animationData);
@@ -776,15 +1120,14 @@ async function startPlayer(jsonStr) {
     currentJsonStr = JSON.stringify(wasmAnimationData);
     player = runtime.create_player_from_js();
     if (!player) {
-        statusMsg.innerText = "动画解析失败";
+        setStatusMessage("动画解析失败");
         return;
     }
-    if (compareToggle.checked) {
+    if (compareEnabled) {
         createOfficialPlayer(animationData);
     }
     setExpressionHost(null);
-    officialWrapper.style.display = compareToggle.checked ? 'flex' : 'none';
-    viewport.classList.toggle('comparison-mode', compareToggle.checked);
+    updateCompareUI();
     applyAnimationMetadata(currentAnimationMeta);
     currentFrame = currentAnimationMeta.inPoint;
     isPlaying = true;
@@ -793,11 +1136,12 @@ async function startPlayer(jsonStr) {
     renderCurrentFrame();
 
     if (usesExpressions) {
-        statusMsg.innerText = "检测到 expressions，moon-lottie 将通过内置 JS 表达式宿主执行表达式";
+        setStatusMessage("检测到 expressions，moon-lottie 将通过内置 JS 表达式宿主执行表达式");
     } else {
         const backendLabel = moonLottieBackend === 'wasm' ? 'Wasm' : 'JS';
-        statusMsg.innerText = `正在播放 (${backendLabel}): ` + (animationData.nm || "未命名动画");
+        setStatusMessage(`正在播放 (${backendLabel}): ` + (animationData.nm || "未命名动画"));
     }
+    renderPlaylist();
     
     currentAnimationRequestId = requestAnimationFrame(renderLoop);
     console.log(`[MoonLottie] New animation loop started (ID: ${currentAnimationRequestId})`);
@@ -815,7 +1159,7 @@ function renderLoop(timestamp) {
         lastTimestamp = timestamp;
 
         const fps = currentAnimationMeta?.fps || 0;
-        const speed = parseFloat(document.getElementById('speed').value);
+        const speed = currentSpeed;
         
         // 基于真实时间计算应该前进的帧数
         // delta_frames = delta_time(s) * fps * speed
@@ -848,6 +1192,13 @@ function updatePlayPauseButton() {
     playPauseBtn.innerText = isPlaying ? "‖" : "▶";
 }
 
+function isEditableTarget(target) {
+    return target instanceof HTMLInputElement
+        || target instanceof HTMLTextAreaElement
+        || target instanceof HTMLSelectElement
+        || target?.isContentEditable;
+}
+
 // UI Event Handlers
 seekBar.oninput = () => {
     if (!player) return;
@@ -861,54 +1212,133 @@ playPauseBtn.onclick = () => {
     updatePlayPauseButton();
 };
 
+prevFrameBtn.onclick = () => {
+    if (!player || !currentAnimationMeta) return;
+    isPlaying = false;
+    currentFrame = Math.max(currentAnimationMeta.inPoint, currentFrame - 1);
+    renderCurrentFrame();
+    updateUI();
+    updatePlayPauseButton();
+};
+
+nextFrameBtn.onclick = () => {
+    if (!player || !currentAnimationMeta) return;
+    isPlaying = false;
+    const endFrame = currentAnimationMeta.inPoint + currentAnimationMeta.totalFrames;
+    currentFrame = Math.min(endFrame, currentFrame + 1);
+    renderCurrentFrame();
+    updateUI();
+    updatePlayPauseButton();
+};
+
+prevAnimationBtn.onclick = () => {
+    stepAnimation(-1);
+};
+
+nextAnimationBtn.onclick = () => {
+    stepAnimation(1);
+};
+
 window.addEventListener('keydown', (e) => {
+    if (isEditableTarget(e.target)) {
+        return;
+    }
+
     if (e.code === 'Space') {
         isPlaying = !isPlaying;
         updatePlayPauseButton();
         e.preventDefault();
+    } else if (e.code === 'Escape') {
+        closePlaylistDrawer();
+        closeDetailsPanel();
+    } else if (e.code === 'ArrowLeft') {
+        prevFrameBtn.click();
+        e.preventDefault();
+    } else if (e.code === 'ArrowRight') {
+        nextFrameBtn.click();
+        e.preventDefault();
+    } else if (e.code === 'ArrowUp') {
+        prevAnimationBtn.click();
+        e.preventDefault();
+    } else if (e.code === 'ArrowDown') {
+        nextAnimationBtn.click();
+        e.preventDefault();
     }
 });
 
-document.getElementById('speed').oninput = (e) => {
-    document.getElementById('speed-val').innerText = e.target.value;
+speedInput.onchange = () => {
+    currentSpeed = normalizeSpeed(speedInput.value);
+    updateSpeedInput();
 };
 
-// Bg Switcher
-document.querySelectorAll('.bg-btn').forEach(btn => {
+speedInput.onblur = () => {
+    currentSpeed = normalizeSpeed(speedInput.value);
+    updateSpeedInput();
+};
+
+// Speed Shortcuts
+speedButtons.forEach((btn) => {
     btn.onclick = () => {
-        document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const bg = btn.dataset.bg;
-        viewport.className = 'viewport-container' + (bg !== 'grid' ? ' bg-' + bg : '') + (compareToggle.checked ? ' comparison-mode' : '');
+        currentSpeed = parseFloat(btn.dataset.speed);
+        updateSpeedInput();
+    };
+});
+
+// Bg Switcher
+bgButtons.forEach((btn) => {
+    btn.onclick = () => {
+        currentBackground = btn.dataset.bg || 'grid';
+        applyBackgroundSelection();
     };
 });
 
 // Comparison Toggle
-compareToggle.onchange = (e) => {
+compareToggle.onclick = () => {
+    compareEnabled = !compareEnabled;
+    updateCompareUI();
+
     if (!currentAnimationData) return;
 
-    if (e.target.checked) {
+    if (compareEnabled) {
         createOfficialPlayer(currentAnimationData);
-        renderCurrentFrame();
     } else {
         destroyOfficialPlayer();
     }
-
-    officialWrapper.style.display = e.target.checked ? 'flex' : 'none';
-    viewport.classList.toggle('comparison-mode', e.target.checked);
+    renderCurrentFrame();
     updateUI();
 };
 
-window.addEventListener('resize', () => {
-    if (!currentAnimationMeta) return;
-    if (pendingCanvasResizeFrame !== null) return;
-    pendingCanvasResizeFrame = requestAnimationFrame(() => {
-        pendingCanvasResizeFrame = null;
-        if (!currentAnimationMeta) return;
-        applyAnimationMetadata(currentAnimationMeta);
-        renderCurrentFrame();
-    });
+runtimeButtons.forEach((button) => {
+    button.onclick = () => {
+        switchRuntime(button.dataset.runtime);
+    };
 });
+
+playlistToggle.onclick = openPlaylistDrawer;
+playlistClose.onclick = closePlaylistDrawer;
+playlistBackdrop.onclick = closePlaylistDrawer;
+playlistSearch.oninput = () => renderPlaylist();
+
+detailsToggle.onclick = () => {
+    if (detailsPanel.classList.contains('is-open')) {
+        closeDetailsPanel();
+    } else {
+        openDetailsPanel();
+    }
+};
+detailsClose.onclick = closeDetailsPanel;
+panelBackdrop.onclick = closeDetailsPanel;
+
+openFileBtn.onclick = () => fileInput.click();
+
+window.addEventListener('resize', scheduleViewportRefresh);
+
+if (typeof ResizeObserver === 'function') {
+    viewportResizeObserver = new ResizeObserver(() => {
+        scheduleViewportRefresh();
+    });
+    viewportResizeObserver.observe(viewport);
+}
 
 function initDeployTime() {
     const deployTimeEl = document.getElementById('deploy-time');
@@ -922,31 +1352,39 @@ function initDeployTime() {
     }
 }
 
-// Animation list change
-document.getElementById('anim-list').onchange = (e) => {
-    localStorage.setItem('moon-lottie-last-anim', e.target.value);
-    loadRemoteAnimation(e.target.value);
-};
-
-// Drag & Drop
-dropZone.onclick = () => fileInput.click();
 fileInput.onchange = (e) => {
     const file = e.target.files[0];
     if (file) handleFile(file);
+    fileInput.value = '';
 };
 
-dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-dropZone.ondrop = (e) => {
+window.addEventListener('dragover', (e) => {
     e.preventDefault();
-    dropZone.classList.remove('dragover');
+    dropOverlay.classList.add('is-open');
+    dropOverlay.setAttribute('aria-hidden', 'false');
+});
+
+window.addEventListener('dragleave', (e) => {
+    if (e.clientX === 0 && e.clientY === 0) {
+        dropOverlay.classList.remove('is-open');
+        dropOverlay.setAttribute('aria-hidden', 'true');
+    }
+});
+
+window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropOverlay.classList.remove('is-open');
+    dropOverlay.setAttribute('aria-hidden', 'true');
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
-};
+});
 
 function handleFile(file) {
     currentFileName = file.name;
     currentFileSize = file.size;
+    updateCurrentFileLabel();
+    renderPlaylist();
+    closePlaylistDrawer();
     const reader = new FileReader();
     reader.onload = (e) => startPlayer(e.target.result);
     reader.readAsText(file);

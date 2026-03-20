@@ -46,7 +46,7 @@ export const translations = {
       title: "在线演示",
       subtitle: (
         <>
-          直观感受 <MoonBitLink /> Wasm 引擎的渲染性能，支持与官方 lottie-web 进行像素级无缝对比。
+          直观感受 Moon Lottie 引擎的渲染性能，支持与官方 lottie-web 进行对比。
         </>
       ),
     },
@@ -55,8 +55,7 @@ export const translations = {
       title: "特性支持矩阵",
       subtitle: (
         <>
-          本表遵循 Airbnb 官方 Supported Features 标准，对比 7 个主流平台与{" "}
-          <MoonBitLink /> 核心实现的性能表现。
+          本表遵循 Airbnb 官方 Supported Features 标准，对比 7 个主流平台与 Moon Lottie 实现的特性支持情况。
         </>
       ),
       audit: "数据同步自 Airbnb 官方 Lottie 规范 v24+。",
@@ -142,21 +141,20 @@ export const translations = {
       title: "Interactive Sandbox",
       subtitle: (
         <>
-          Experience <MoonBitLink /> Wasm rendering performance against official lottie-web in real-time.
+          Experience Moon Lottie engine rendering performance against official lottie-web in real-time.
         </>
       ),
     },
     features: {
-      eyebrow: "Supported Features",
+      eyebrow: "Compatibility",
       title: "Capability Matrix",
       subtitle: (
         <>
-          This table mirrors the official Airbnb Supported Features matrix, comparing <MoonBitLink />{" "}
-          implementation with other major platforms.
+          This table follows the official Airbnb Supported Features standard, comparing implemented features across 7 major platforms and Moon Lottie.
         </>
       ),
-      audit: "Audit is based on Airbnb's official Lottie specification v24+.",
-      source: "Open official matrix",
+      audit: "Data synchronized from Airbnb's official Lottie specification v24+.",
+      source: "View official matrix",
       columns: {
         feature: "Feature",
         moon: "Moon Lottie",
