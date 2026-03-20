@@ -492,7 +492,7 @@ function installJsRuntimeGlobals() {
 }
 
 async function loadWasmRuntime() {
-        const wasmPath = 'main.wasm';
+    const wasmPath = 'runtime/wasm/moon-lottie-runtime.wasm';
         console.log(`[MoonLottie] Fetching WASM from: ${wasmPath}`);
         const response = await fetch(wasmPath, { cache: 'no-store' });
         if (!response.ok) throw new Error("WASM not found");
@@ -517,7 +517,7 @@ async function loadWasmRuntime() {
 
 async function loadJsRuntime() {
         installJsRuntimeGlobals();
-        const moduleUrl = new URL('./moonbit-js/main.js', import.meta.url);
+    const moduleUrl = new URL('./runtime/js/moon-lottie-runtime.js', import.meta.url);
         console.warn(`[MoonLottie] Falling back to JS runtime: ${moduleUrl.href}`);
         return import(moduleUrl.href);
 }

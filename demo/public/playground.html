@@ -389,7 +389,7 @@
             </div>
 
             <div class="section" id="status-msg" style="font-size: 12px; color: var(--secondary-text);">
-                等待 WebAssembly 初始化...
+                等待运行时初始化...
             </div>
             <div class="section" style="font-size: 11px; color: var(--secondary-text); margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 12px;">
                 <div class="info-row">
@@ -403,7 +403,7 @@
     <main>
         <div class="viewport-container" id="viewport">
             <div class="canvas-wrapper" id="wasm-wrapper">
-                <div class="canvas-tag">MoonLottie (Wasm)</div>
+                <div class="canvas-tag">MoonLottie Runtime</div>
                 <canvas id="lottie-canvas" width="500" height="500"></canvas>
             </div>
             <div class="canvas-wrapper" id="official-wrapper">
@@ -426,6 +426,6 @@
         </div>
     </main>
 
-    <script type="module" src="./main.js"></script>
+    <script type="module" src="./playground-app.js"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-const WASM_SOURCE_DEBUG = path.join("..", "_build", "wasm-gc", "debug", "build", "cmd", "main", "main.wasm");
-const WASM_SOURCE_RELEASE = path.join("..", "_build", "wasm-gc", "release", "build", "cmd", "main", "main.wasm");
-const JS_SOURCE_DEBUG = path.join("..", "_build", "js", "debug", "build", "cmd", "main", "main.js");
-const JS_SOURCE_RELEASE = path.join("..", "_build", "js", "release", "build", "cmd", "main", "main.js");
+const WASM_SOURCE_DEBUG = path.join("..", "_build", "wasm-gc", "debug", "build", "cmd", "player_runtime", "player_runtime.wasm");
+const WASM_SOURCE_RELEASE = path.join("..", "_build", "wasm-gc", "release", "build", "cmd", "player_runtime", "player_runtime.wasm");
+const JS_SOURCE_DEBUG = path.join("..", "_build", "js", "debug", "build", "cmd", "player_runtime", "player_runtime.js");
+const JS_SOURCE_RELEASE = path.join("..", "_build", "js", "release", "build", "cmd", "player_runtime", "player_runtime.js");
 const SAMPLES_SOURCE = path.join("..", "samples");
 const TARGET_DIR = "./public";
 
@@ -39,9 +39,9 @@ function copyFolderSync(src, dest) {
 }
 
 console.log("[Sync] Starting...");
-if (fs.existsSync(WASM_SOURCE_RELEASE)) copyFileSync(WASM_SOURCE_RELEASE, path.join(TARGET_DIR, "main.wasm"));
-else copyFileSync(WASM_SOURCE_DEBUG, path.join(TARGET_DIR, "main.wasm"));
-if (fs.existsSync(JS_SOURCE_RELEASE)) copyFileSync(JS_SOURCE_RELEASE, path.join(TARGET_DIR, "moonbit-js", "main.js"));
-else copyFileSync(JS_SOURCE_DEBUG, path.join(TARGET_DIR, "moonbit-js", "main.js"));
+if (fs.existsSync(WASM_SOURCE_RELEASE)) copyFileSync(WASM_SOURCE_RELEASE, path.join(TARGET_DIR, "runtime", "wasm", "moon-lottie-runtime.wasm"));
+else copyFileSync(WASM_SOURCE_DEBUG, path.join(TARGET_DIR, "runtime", "wasm", "moon-lottie-runtime.wasm"));
+if (fs.existsSync(JS_SOURCE_RELEASE)) copyFileSync(JS_SOURCE_RELEASE, path.join(TARGET_DIR, "runtime", "js", "moon-lottie-runtime.js"));
+else copyFileSync(JS_SOURCE_DEBUG, path.join(TARGET_DIR, "runtime", "js", "moon-lottie-runtime.js"));
 copyFolderSync(SAMPLES_SOURCE, path.join(TARGET_DIR, "samples"));
 console.log("[Sync] Finished.");

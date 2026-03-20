@@ -52,7 +52,7 @@ function parseCaseConfig(content) {
 }
 
 function ensureWasmBuilt(repoRoot) {
-  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/main/main.wasm');
+  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/player_runtime/player_runtime.wasm');
   if (fs.existsSync(wasmPath)) {
     return;
   }

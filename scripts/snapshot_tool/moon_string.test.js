@@ -8,7 +8,7 @@ const wasmCompileOptions = { builtins: ['js-string'] };
 const wasmJsStringImportModule = 'wasm:js-string';
 
 function ensureWasmBuilt(repoRoot) {
-  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/main/main.wasm');
+  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/player_runtime/player_runtime.wasm');
   if (fs.existsSync(wasmPath)) return;
 
   const result = spawnSync('moon', ['build', '--target', 'wasm-gc'], {
@@ -41,7 +41,7 @@ test('wasm-gc demo passes strings directly between JS and MoonBit', async () => 
   const repoRoot = path.resolve(__dirname, '../..');
   ensureWasmBuilt(repoRoot);
 
-  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/main/main.wasm');
+  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/player_runtime/player_runtime.wasm');
   const jsonPath = path.join(repoRoot, 'samples', '1_1_Super_Mario.json');
   const currentJsonStr = fs.readFileSync(jsonPath, 'utf8');
   const wasmBuffer = fs.readFileSync(wasmPath);
@@ -63,7 +63,7 @@ test('wasm-gc build imports the wasm:js-string builtin module name', async () =>
   const repoRoot = path.resolve(__dirname, '../..');
   ensureWasmBuilt(repoRoot);
 
-  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/main/main.wasm');
+  const wasmPath = path.join(repoRoot, '_build/wasm-gc/debug/build/cmd/player_runtime/player_runtime.wasm');
   const wasmBuffer = fs.readFileSync(wasmPath);
 
   const module = await WebAssembly.compile(wasmBuffer);

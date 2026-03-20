@@ -1,5 +1,5 @@
 # Runtime Assets (Synced by scripts, do not commit)
-demo/public/main.wasm
+demo/public/runtime/
 demo/public/samples/
 demo/public/sample_index.json
 
@@ -29,4 +29,3 @@ demo/dist/
 3rd_repos/
 
 *.wasm
-demo/public/moonbit-js/main.js
