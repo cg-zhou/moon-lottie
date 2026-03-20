@@ -9,6 +9,19 @@ import {
 options(
   "is-main": true,
   link: {
+    "js": {
+      "exports": [
+        "create_player_from_js",
+        "update_player",
+        "update_player_with_speed",
+        "get_frame_count",
+        "get_in_point",
+        "get_width",
+        "get_height",
+        "get_fps",
+        "get_version",
+      ],
+    },
     "wasm-gc": {
       "use-js-builtin-string": true,
       "exports": [

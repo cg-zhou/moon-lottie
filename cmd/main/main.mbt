@@ -1,10 +1,31 @@
 ///|
+#cfg(target="js")
+extern "js" fn js_get_json_string() -> String = "demo.get_json_string"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 extern "wasm" fn js_get_json_string() -> String = "demo" "get_json_string"
 
 ///|
+#cfg(target="js")
+extern "js" fn js_log_frame(frame : Double) -> Unit = "demo.log_frame"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 extern "wasm" fn js_log_frame(frame : Double) -> Unit = "demo" "log_frame"
 
 ///|
+#cfg(target="js")
+extern "js" fn js_evaluate_expression_double(
+  expression : String,
+  frame : Double,
+  layer_index : Int,
+  comp_id : String,
+  value : Double,
+) -> Double = "expressions.evaluate_double"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 extern "wasm" fn js_evaluate_expression_double(
   expression : String,
   frame : Double,
@@ -14,6 +35,17 @@ extern "wasm" fn js_evaluate_expression_double(
 ) -> Double = "expressions" "evaluate_double"
 
 ///|
+#cfg(target="js")
+extern "js" fn js_evaluate_expression_vec(
+  expression : String,
+  frame : Double,
+  layer_index : Int,
+  comp_id : String,
+  value : String,
+) -> String = "expressions.evaluate_vec"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 extern "wasm" fn js_evaluate_expression_vec(
   expression : String,
   frame : Double,
@@ -23,6 +55,17 @@ extern "wasm" fn js_evaluate_expression_vec(
 ) -> String = "expressions" "evaluate_vec"
 
 ///|
+#cfg(target="js")
+extern "js" fn js_evaluate_expression_path(
+  expression : String,
+  frame : Double,
+  layer_index : Int,
+  comp_id : String,
+  value : String,
+) -> String = "expressions.evaluate_path"
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 extern "wasm" fn js_evaluate_expression_path(
   expression : String,
   frame : Double,

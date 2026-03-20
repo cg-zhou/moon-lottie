@@ -75,6 +75,8 @@ let currentJsonStr = "";
 let currentFileName = "";
 let currentFileSize = 0;
 let imageAssetsByIndex = [];
+let moonLottieRuntime = null;
+let moonLottieBackend = "uninitialized";
 let currentAnimationRequestId = null;
 let currentAnimationData = null;
 let currentAnimationMeta = null;
@@ -87,6 +89,28 @@ const viewportTransform = {
     offsetY: 0,
     dpr: 1,
 };
+
+function getRuntimePreference() {
+    const searchParams = new URLSearchParams(window.location.search);
+    const runtimeParam = searchParams.get('runtime');
+    if (runtimeParam === 'js' || runtimeParam === 'wasm' || runtimeParam === 'auto') {
+        localStorage.setItem('moon-lottie-runtime', runtimeParam);
+        return runtimeParam;
+    }
+
+    const storedPreference = localStorage.getItem('moon-lottie-runtime');
+    if (storedPreference === 'js' || storedPreference === 'wasm' || storedPreference === 'auto') {
+        return storedPreference;
+    }
+
+    return 'auto';
+}
+
+function describeRuntimePreference(preference) {
+    if (preference === 'js') return 'JS';
+    if (preference === 'wasm') return 'Wasm';
+    return 'Auto';
+}
 
 function readDevicePixelRatio() {
     return window.devicePixelRatio || 1;
@@ -450,37 +474,81 @@ const importObject = {
   }
 };
 
+function getActiveMoonLottieRuntime() {
+        return moonLottieRuntime || window.moonLottie || null;
+}
+
+function setActiveMoonLottieRuntime(runtime, backend) {
+        moonLottieRuntime = runtime;
+        moonLottieBackend = backend;
+        window.moonLottie = runtime;
+        window.moonLottieBackend = backend;
+}
+
+function installJsRuntimeGlobals() {
+        window.demo = importObject.demo;
+        window.canvas = importObject.canvas;
+        window.expressions = expressionModule;
+}
+
+async function loadWasmRuntime() {
+        const wasmPath = 'main.wasm';
+        console.log(`[MoonLottie] Fetching WASM from: ${wasmPath}`);
+        const response = await fetch(wasmPath, { cache: 'no-store' });
+        if (!response.ok) throw new Error("WASM not found");
+
+        const buffer = await response.arrayBuffer();
+        const finalImportObject = {
+            ...importObject,
+            [wasmJsStringImportModule]: wasmJsStringShim,
+        };
+
+        try {
+            const module = await WebAssembly.compile(buffer, wasmBuiltinOptions);
+            const instance = await WebAssembly.instantiate(module, importObject, wasmBuiltinOptions);
+            return instance.exports;
+        } catch (builtinErr) {
+            console.warn('[MoonLottie] Wasm builtin string path failed, retrying with shim fallback', builtinErr);
+            const module = await WebAssembly.compile(buffer);
+            const instance = await WebAssembly.instantiate(module, finalImportObject);
+            return instance.exports;
+        }
+}
+
+async function loadJsRuntime() {
+        installJsRuntimeGlobals();
+        const moduleUrl = new URL('./moonbit-js/main.js', import.meta.url);
+        console.warn(`[MoonLottie] Falling back to JS runtime: ${moduleUrl.href}`);
+        return import(moduleUrl.href);
+}
+
 async function init() {
   try {
-    // 始终使用当前目录下的 main.wasm，由 package.json 中的脚本自动从 _build 同步
-    const wasmPath = 'main.wasm';
-    console.log(`[MoonLottie] Fetching WASM from: ${wasmPath}`);
-    const response = await fetch(wasmPath, { cache: 'no-store' });
-    if (!response.ok) throw new Error("WASM not found");
-    
-    const buffer = await response.arrayBuffer();
-    
-    // 我们总是先提供 shim，除非浏览器明确支持并要求使用 builtins 选项
-    const finalImportObject = {
-      ...importObject,
-      [wasmJsStringImportModule]: wasmJsStringShim,
-    };
+    const runtimePreference = getRuntimePreference();
+        statusMsg.innerText = '初始化 MoonLottie 运行时...';
+    console.log(`[MoonLottie] Runtime preference: ${describeRuntimePreference(runtimePreference)}`);
 
-    let instance;
-    try {
-      // 尝试在支持环境下优化启动
-      const module = await WebAssembly.compile(buffer, wasmBuiltinOptions);
-      instance = await WebAssembly.instantiate(module, importObject, wasmBuiltinOptions);
-    } catch (builtinErr) {
-      // 降级启动：如果上面的代码报错（例如在 iOS 微信或旧安卓下），则使用标准实例化
-      // 注意：这里不再调用 WebAssembly.Module.imports 以避免在某些环境中触发新错误
-      const module = await WebAssembly.compile(buffer);
-      instance = await WebAssembly.instantiate(module, finalImportObject);
-    }
-    
-    window.moonLottie = instance.exports;
+    if (runtimePreference === 'js') {
+        const runtime = await loadJsRuntime();
+        setActiveMoonLottieRuntime(runtime, 'js');
+    } else if (runtimePreference === 'wasm') {
+        const runtime = await loadWasmRuntime();
+        setActiveMoonLottieRuntime(runtime, 'wasm');
+    } else {
+        try {
+            const runtime = await loadWasmRuntime();
+            setActiveMoonLottieRuntime(runtime, 'wasm');
+        } catch (wasmErr) {
+            console.warn('[MoonLottie] WASM runtime init failed, switching to JS runtime', wasmErr);
+            const runtime = await loadJsRuntime();
+            setActiveMoonLottieRuntime(runtime, 'js');
+        }
+        }
+
     statusDot.style.background = "#34c759"; // Green
-    statusMsg.innerText = "已就绪，请上传 Lottie JSON";
+    statusMsg.innerText = moonLottieBackend === 'wasm'
+        ? `已就绪，请上传 Lottie JSON (${describeRuntimePreference(runtimePreference)})`
+        : `已就绪，当前使用 JS 兼容后端 (${describeRuntimePreference(runtimePreference)})`;
     
     // 动态加载动画列表
     await initAnimList();
@@ -538,11 +606,12 @@ function createOfficialPlayer(animationData) {
 }
 
 function renderCurrentFrame() {
-    if (player) {
+    const runtime = getActiveMoonLottieRuntime();
+    if (player && runtime) {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        window.moonLottie.update_player(player, currentFrame);
+        runtime.update_player(player, currentFrame);
         ctx.restore();
     }
 
@@ -668,6 +737,11 @@ async function preloadAssets(json) {
 async function startPlayer(jsonStr) {
     let animationData;
     try { animationData = JSON.parse(jsonStr); } catch (e) { alert("无效的 JSON 文件"); return; }
+    const runtime = getActiveMoonLottieRuntime();
+    if (!runtime) {
+        statusMsg.innerText = "运行时尚未初始化";
+        return;
+    }
 
     console.log(`[MoonLottie] Starting new animation: ${currentFileName}`);
     statusMsg.innerText = "初始化渲染引擎...";
@@ -700,7 +774,7 @@ async function startPlayer(jsonStr) {
         });
     }
     currentJsonStr = JSON.stringify(wasmAnimationData);
-    player = window.moonLottie.create_player_from_js();
+    player = runtime.create_player_from_js();
     if (!player) {
         statusMsg.innerText = "动画解析失败";
         return;
@@ -721,7 +795,8 @@ async function startPlayer(jsonStr) {
     if (usesExpressions) {
         statusMsg.innerText = "检测到 expressions，moon-lottie 将通过内置 JS 表达式宿主执行表达式";
     } else {
-        statusMsg.innerText = "正在播放: " + (animationData.nm || "未命名动画");
+        const backendLabel = moonLottieBackend === 'wasm' ? 'Wasm' : 'JS';
+        statusMsg.innerText = `正在播放 (${backendLabel}): ` + (animationData.nm || "未命名动画");
     }
     
     currentAnimationRequestId = requestAnimationFrame(renderLoop);

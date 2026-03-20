@@ -24,11 +24,9 @@ scripts/snapshot_tool/test_lottie_shadow.js
 
 # Demo dist folders
 demo/dist/
-demo-v2/dist/
-demo-v2/public/samples
-demo-v2/node_modules/
 
 # Third party
 3rd_repos/
 
 *.wasm
+demo/public/moonbit-js/main.js

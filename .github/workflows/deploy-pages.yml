@@ -36,6 +36,9 @@ jobs:
       - name: Build Wasm
         run: moon build --target wasm-gc --release
 
+      - name: Build JS runtime
+        run: moon build --target js --release
+
       - name: Install demo dependencies
         working-directory: demo
         run: npm ci
