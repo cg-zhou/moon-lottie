@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon Lottie Element Preview</title>
+    <style>
+        :root {
+            --bg: #eef2f7;
+            --panel: rgba(255, 255, 255, 0.92);
+            --panel-border: rgba(148, 163, 184, 0.28);
+            --text: #0f172a;
+            --muted: #64748b;
+            --accent: #0f766e;
+            --accent-strong: #115e59;
+            --shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 28%),
+                radial-gradient(circle at right center, rgba(14, 165, 233, 0.12), transparent 24%),
+                linear-gradient(180deg, #f8fafc 0%, var(--bg) 100%);
+        }
+
+        main {
+            width: min(1100px, calc(100vw - 32px));
+            margin: 0 auto;
+            padding: 32px 0 40px;
+        }
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .eyebrow {
+            margin: 0;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent-strong);
+            font-weight: 700;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(28px, 4vw, 48px);
+            letter-spacing: -0.03em;
+        }
+
+        .subtitle {
+            margin: 0;
+            max-width: 720px;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+        }
+
+        .stage-panel {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stage-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .stage-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .stage-note {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .player-shell {
+            min-height: 520px;
+            padding: 14px;
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.18)),
+                rgba(226, 232, 240, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        moon-lottie {
+            width: 100%;
+            height: 100%;
+            min-height: 490px;
+            display: block;
+        }
+
+        .controls {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button,
+        select,
+        input {
+            min-height: 38px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.34);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text);
+            padding: 0 14px;
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .stat-card {
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(248, 250, 252, 0.86);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .footer-note {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        a {
+            color: var(--accent-strong);
+        }
+
+        @media (max-width: 880px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .player-shell {
+                min-height: 360px;
+            }
+
+            moon-lottie {
+                min-height: 330px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="hero">
+            <p class="eyebrow">Web Component</p>
+            <h1>moon-lottie 元素预览</h1>
+            <p class="subtitle">这个页面直接使用新的 moon-lottie 自定义元素，不经过 playground 的比较壳层。它的目标是验证底层 browser player 已经可以被独立消费，并为后续 React wrapper 提供稳定宿主。</p>
+        </section>
+
+        <section class="layout">
+            <article class="panel stage-panel">
+                <div class="stage-head">
+                    <div>
+                        <p class="stage-title">元素实例</p>
+                        <p class="stage-note">当前展示的是独立元素，不包含官方 lottie-web 对比视图。</p>
+                    </div>
+                    <a href="./playground.html">返回 Playground</a>
+                </div>
+                <div class="player-shell">
+                    <moon-lottie id="preview-player" src="samples/1_1_Super_Mario.json" autoplay speed="1" background="grid"></moon-lottie>
+                </div>
+            </article>
+
+            <aside class="panel controls">
+                <div class="control-group">
+                    <label for="sample-select">样例</label>
+                    <select id="sample-select">
+                        <option value="samples/1_1_Super_Mario.json">1_1_Super_Mario.json</option>
+                        <option value="samples/2_3_banner.json">2_3_banner.json</option>
+                        <option value="samples/4_Boat_Loader.json">4_Boat_Loader.json</option>
+                        <option value="samples/4_fireworks.json">4_fireworks.json</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>播放控制</label>
+                    <div class="control-row">
+                        <button id="play-btn" class="primary" type="button">播放</button>
+                        <button id="pause-btn" type="button">暂停</button>
+                        <button id="stop-btn" type="button">停止</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="speed-input">速度</label>
+                    <input id="speed-input" type="number" min="0.1" max="4" step="0.1" value="1.0">
+                </div>
+
+                <div class="control-group">
+                    <label for="background-select">背景</label>
+                    <select id="background-select">
+                        <option value="grid">Grid</option>
+                        <option value="white">White</option>
+                        <option value="black">Black</option>
+                    </select>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Runtime</span>
+                        <span id="runtime-value" class="stat-value">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Frame</span>
+                        <span id="frame-value" class="stat-value">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Status</span>
+                        <span id="status-value" class="stat-value">加载中</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Source</span>
+                        <span id="source-value" class="stat-value">1_1_Super_Mario.json</span>
+                    </div>
+                </div>
+
+                <p class="footer-note">实现入口来自 ./player/moon-lottie-element.js。这里的用途不是 UI 包装，而是验证 MoonBit core + browser player + custom element 这一层已经可以独立运行。</p>
+            </aside>
+        </section>
+    </main>
+
+    <script type="module">
+        import { defineMoonLottieElement } from './player/index.js';
+
+        defineMoonLottieElement();
+
+        const player = document.getElementById('preview-player');
+        const sampleSelect = document.getElementById('sample-select');
+        const speedInput = document.getElementById('speed-input');
+        const backgroundSelect = document.getElementById('background-select');
+        const runtimeValue = document.getElementById('runtime-value');
+        const frameValue = document.getElementById('frame-value');
+        const statusValue = document.getElementById('status-value');
+        const sourceValue = document.getElementById('source-value');
+        const playBtn = document.getElementById('play-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+
+        sampleSelect.addEventListener('change', () => {
+            const src = sampleSelect.value;
+            sourceValue.textContent = src.replace('samples/', '');
+            statusValue.textContent = '加载中';
+            player.setAttribute('src', src);
+        });
+
+        speedInput.addEventListener('change', () => {
+            const speed = Number(speedInput.value) || 1;
+            player.setSpeed(speed);
+        });
+
+        backgroundSelect.addEventListener('change', () => {
+            player.setAttribute('background', backgroundSelect.value);
+        });
+
+        playBtn.addEventListener('click', () => player.play());
+        pauseBtn.addEventListener('click', () => player.pause());
+        stopBtn.addEventListener('click', () => player.stop());
+
+        player.addEventListener('runtimechange', (event) => {
+            runtimeValue.textContent = event.detail.backend || '-';
+        });
+
+        player.addEventListener('enterframe', (event) => {
+            const frame = event.detail.currentFrame;
+            frameValue.textContent = Number.isFinite(frame) ? frame.toFixed(1) : '-';
+        });
+
+        player.addEventListener('play', () => {
+            statusValue.textContent = '播放中';
+        });
+
+        player.addEventListener('pause', () => {
+            statusValue.textContent = '已暂停';
+        });
+
+        player.addEventListener('load', () => {
+            statusValue.textContent = '已加载';
+        });
+
+        player.addEventListener('error', (event) => {
+            console.error(event.detail.error);
+            statusValue.textContent = '加载失败';
+        });
+    </script>
+</body>
+</html>
