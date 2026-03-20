@@ -661,6 +661,75 @@ tbody tr:last-child td {
   background: white;
 }
 
+.react-player-card {
+  margin-top: 20px;
+}
+
+.react-player-card__header h3 {
+  margin: 0;
+}
+
+.react-player-card__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.react-player-stage {
+  min-height: 360px;
+  padding: 14px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.18)),
+    rgba(226, 232, 240, 0.68);
+  border: 1px solid rgba(229, 231, 235, 0.96);
+}
+
+.moon-lottie-react-player {
+  width: 100%;
+  min-height: 330px;
+  height: 100%;
+}
+
+.react-player-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.react-player-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.react-player-controls select,
+.react-player-controls input {
+  min-height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(209, 213, 219, 0.95);
+  padding: 0 12px;
+  font: inherit;
+  color: #111827;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.react-player-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.96);
+  color: #334155;
+  font-size: 0.83rem;
+}
+
 .usage-card--wide {
   grid-column: 1 / -1;
 }
@@ -841,5 +910,17 @@ tbody tr:last-child td {
 
   .playground-frame {
     border-radius: 22px;
+  }
+
+  .react-player-card__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .react-player-stage {
+    min-height: 300px;
+  }
+
+  .moon-lottie-react-player {
+    min-height: 270px;
   }
 }
