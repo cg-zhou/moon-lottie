@@ -4,7 +4,7 @@
   "preferred-target": "wasm-gc",
   "readme": "README.mbt.md",
   "repository": "https://github.com/cg-zhou/moon-lottie",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "deps": {
     "cg-zhou/bezier-easing": "0.2.0"
   },
