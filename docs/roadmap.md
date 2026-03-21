@@ -53,7 +53,7 @@
 	- `viewport-presenter.js`
 	- `create-player.js`
 	- `canvas-runtime-bridge.js`
-- `playground-app.js` 已不再单独维护一套画布/运行时桥接逻辑，而是复用共享的 `createCanvasRuntimeBridge(...)` 与 `createPlayer(...)`。
+- 主站 Playground 已迁移到 `demo/src/components/PlaygroundWorkbench.jsx`，复用共享的 `createCanvasRuntimeBridge(...)` 与 `createPlayer(...)`。
 - 为多实例场景补上了 Wasm 模块缓存，避免反复从原始字节重复 instantiate 导致内存压力过大。这一点对后续 Web Component、React 多实例和预览卡片都很关键。
 
 #### 已落地的封装层雏形
@@ -97,7 +97,7 @@
 	- 然后再决定是否把现有实现拆成真正独立发布的包
 - 如果需要快速恢复上下文，可以优先看这几个位置：
 	- `demo/public/player/`
-	- `demo/public/playground-app.js`
+	- `demo/src/components/PlaygroundWorkbench.jsx`
 	- `demo/src/components/MoonLottiePlayer.jsx`
 	- `demo/src/App.jsx`
 

@@ -10,19 +10,48 @@ function normalizeDirection(value) {
   return Number(value) < 0 ? -1 : 1
 }
 
+function getSourceOptions({ src, path, animationData, name }) {
+  if (animationData) {
+    return {
+      animationData,
+      name: name || "animation.json",
+    }
+  }
+
+  const resolvedPath = path || src
+  if (!resolvedPath) {
+    return null
+  }
+
+  return {
+    path: resolvedPath,
+    name: name || resolvedPath,
+  }
+}
+
 const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
   {
     src,
+    path,
+    animationData,
+    name,
+    lottieRef,
     autoplay = true,
     loop = true,
     speed = 1,
     direction = 1,
     background = "transparent",
+    renderer = "canvas",
+    rendererSettings,
+    initialSegment,
     className = "",
     onLoad,
     onError,
+    onDestroy,
     onRuntimeChange,
     onEnterFrame,
+    onComplete,
+    onLoopComplete,
     onPlay,
     onPause,
   },
@@ -34,20 +63,44 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
   const [isReady, setIsReady] = useState(false)
 
   useImperativeHandle(ref, () => ({
+    whenReady: () => playerRef.current?.whenReady(),
+    loadAnimation: (options) => playerRef.current?.loadAnimation(options),
+    load: (options) => playerRef.current?.load(options),
     play: () => playerRef.current?.play(),
     pause: () => playerRef.current?.pause(),
     stop: () => playerRef.current?.stop(),
+    destroy: () => playerRef.current?.destroy(),
     setSpeed: (value) => playerRef.current?.setSpeed(value),
     setDirection: (value) => playerRef.current?.setDirection(value),
     setLoop: (value) => playerRef.current?.setLoop(value),
     setBackground: (value) => playerRef.current?.setBackground(value),
+    goToAndStop: (value, isFrame = false) => playerRef.current?.goToAndStop(value, isFrame),
+    goToAndPlay: (value, isFrame = false) => playerRef.current?.goToAndPlay(value, isFrame),
+    playSegments: (segments, forceFlag = false) => playerRef.current?.playSegments(segments, forceFlag),
+    setSubframe: (value) => playerRef.current?.setSubframe(value),
+    resize: () => playerRef.current?.resize(),
+    addEventListener: (type, listener) => playerRef.current?.addEventListener(type, listener),
+    removeEventListener: (type, listener) => playerRef.current?.removeEventListener(type, listener),
     getCurrentFrame: () => playerRef.current?.getCurrentFrame() ?? 0,
     getDuration: (inFrames = false) => playerRef.current?.getDuration(inFrames) ?? 0,
     getPlayer: () => playerRef.current,
   }), [])
 
   useEffect(() => {
+    if (!lottieRef) return
+    if (typeof lottieRef === "function") {
+      lottieRef(playerRef.current)
+      return () => lottieRef(null)
+    }
+    lottieRef.current = playerRef.current
+    return () => {
+      lottieRef.current = null
+    }
+  }, [lottieRef, isReady])
+
+  useEffect(() => {
     let disposed = false
+    const sourceOptions = getSourceOptions({ src, path, animationData, name })
 
     async function mountPlayer() {
       if (!containerRef.current) return
@@ -58,20 +111,25 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
 
       const player = mod.loadAnimation({
         container: containerRef.current,
-        path: src,
+        ...sourceOptions,
         autoplay,
         loop,
         speed: normalizeSpeed(speed),
         direction: normalizeDirection(direction),
         background,
+        renderer,
+        rendererSettings,
+        initialSegment,
       })
 
       playerRef.current = player
+      await player.whenReady?.()
+      if (disposed) return
+      setIsReady(true)
 
       const cleanups = [
         player.addEventListener("load", (event) => {
           onLoad?.(event)
-          setIsReady(true)
         }),
         player.addEventListener("error", (event) => {
           onError?.(event.error || event)
@@ -82,11 +140,20 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
         player.addEventListener("enterframe", (event) => {
           onEnterFrame?.(event)
         }),
+        player.addEventListener("complete", (event) => {
+          onComplete?.(event)
+        }),
+        player.addEventListener("loopComplete", (event) => {
+          onLoopComplete?.(event)
+        }),
         player.addEventListener("play", (event) => {
           onPlay?.(event)
         }),
         player.addEventListener("pause", (event) => {
           onPause?.(event)
+        }),
+        player.addEventListener("destroy", (event) => {
+          onDestroy?.(event)
         }),
       ]
 
@@ -107,7 +174,7 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
       playerRef.current = null
       setIsReady(false)
     }
-  }, [src])
+  }, [src, path, animationData, name, renderer, rendererSettings, initialSegment])
 
   useEffect(() => {
     if (!playerRef.current || !isReady) return

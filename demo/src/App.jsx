@@ -5,106 +5,7 @@ import { supportSections, platformColumns, statusSymbols } from "./supportMatrix
 import { architectureDiagram, renderPipelineDiagram } from "./techDesign"
 import { roadmapPhases, aboutCards } from "./constants"
 import MermaidDiagram from "./MermaidDiagram"
-import MoonLottiePlayer from "./components/MoonLottiePlayer.jsx"
-
-function ReactPlayerPreviewCard() {
-  const [sample, setSample] = useState("samples/1_1_Super_Mario.json")
-  const [speed, setSpeed] = useState(1)
-  const [direction, setDirection] = useState(1)
-  const [loop, setLoop] = useState(true)
-  const [background, setBackground] = useState("grid")
-  const [status, setStatus] = useState("加载中")
-  const [runtime, setRuntime] = useState("-")
-  const [frame, setFrame] = useState("-")
-  const [duration, setDuration] = useState("-")
-
-  return (
-    <article className="react-player-card info-card">
-      <div className="react-player-card__header">
-        <div>
-          <p className="eyebrow">React Wrapper</p>
-          <h3>React Thin Wrapper Preview</h3>
-          <p className="diagram-card__meta">这个预览直接通过 React 组件消费 public/player 中的 browser player API。</p>
-        </div>
-      </div>
-      <div className="react-player-card__layout">
-        <div className="react-player-stage">
-          <MoonLottiePlayer
-            src={sample}
-            autoplay={true}
-            loop={loop}
-            speed={speed}
-            direction={direction}
-            background={background}
-            onLoad={(event) => {
-              setStatus("已加载")
-              const meta = event?.state?.currentAnimationMeta
-              if (meta?.fps > 0) {
-                setDuration(`${(meta.totalFrames / meta.fps).toFixed(2)}s`)
-              } else {
-                setDuration("-")
-              }
-            }}
-            onRuntimeChange={(event) => {
-              setRuntime(event.backend || "-")
-            }}
-            onEnterFrame={(event) => {
-              const nextFrame = event.currentFrame
-              setFrame(Number.isFinite(nextFrame) ? nextFrame.toFixed(1) : "-")
-            }}
-            onPlay={() => setStatus("播放中")}
-            onPause={() => setStatus("已暂停")}
-            onError={() => setStatus("加载失败")}
-          />
-        </div>
-        <div className="react-player-controls">
-          <label>
-            <span>Sample</span>
-            <select value={sample} onChange={(event) => setSample(event.target.value)}>
-              <option value="samples/1_1_Super_Mario.json">1_1_Super_Mario.json</option>
-              <option value="samples/2_3_banner.json">2_3_banner.json</option>
-              <option value="samples/4_Boat_Loader.json">4_Boat_Loader.json</option>
-              <option value="samples/4_fireworks.json">4_fireworks.json</option>
-            </select>
-          </label>
-          <label>
-            <span>Speed</span>
-            <input type="number" min="0.1" max="4" step="0.1" value={speed} onChange={(event) => setSpeed(Number(event.target.value) || 1)} />
-          </label>
-          <label>
-            <span>Direction</span>
-            <select value={direction} onChange={(event) => setDirection(Number(event.target.value) || 1)}>
-              <option value={1}>Forward</option>
-              <option value={-1}>Reverse</option>
-            </select>
-          </label>
-          <label>
-            <span>Loop</span>
-            <select value={String(loop)} onChange={(event) => setLoop(event.target.value === "true")}>
-              <option value="true">On</option>
-              <option value="false">Off</option>
-            </select>
-          </label>
-          <label>
-            <span>Background</span>
-            <select value={background} onChange={(event) => setBackground(event.target.value)}>
-              <option value="grid">Grid</option>
-              <option value="white">White</option>
-              <option value="black">Black</option>
-              <option value="transparent">Transparent</option>
-            </select>
-          </label>
-          <div className="react-player-stats">
-            <div><strong>Status:</strong> {status}</div>
-            <div><strong>Runtime:</strong> {runtime}</div>
-            <div><strong>Frame:</strong> {frame}</div>
-            <div><strong>Duration:</strong> {duration}</div>
-          </div>
-        </div>
-      </div>
-    </article>
-  )
-}
+import PlaygroundWorkbench from "./components/PlaygroundWorkbench.jsx"
 
 function normalizeStatusCell(value) {
   if (typeof value === "string") return { status: value, detail: "" }
@@ -211,20 +112,15 @@ function PlaygroundPage({ t }) {
           <p className="eyebrow">{t.playground.eyebrow}</p>
           <h2>{t.playground.title}</h2>
           <p className="section-subtitle">{t.playground.subtitle}</p>
-          <p className="section-subtitle">
-            <a className="inline-link" href="./moon-lottie-element-preview.html" target="_blank" rel="noreferrer">
-              Web Component Preview
-            </a>
-            {" · "}
-            <a className="inline-link" href="./browser-player-preview.html" target="_blank" rel="noreferrer">
-              Browser Player Preview
-            </a>
+        </div>
+        <article className="info-card">
+          <h3>Playground Scope</h3>
+          <p>
+            这里嵌入的是主站正式 Playground。动画列表、工具栏、控制栏和信息面板都属于主站 UI，
+            不属于 Web Component、Browser Player 或 React Wrapper 的通用交付面。
           </p>
-        </div>
-        <div className="playground-frame">
-          <iframe title="Moon Lottie Playground" src="./playground.html" loading="lazy" />
-        </div>
-        <ReactPlayerPreviewCard />
+        </article>
+        <PlaygroundWorkbench />
       </section>
     </div>
   )

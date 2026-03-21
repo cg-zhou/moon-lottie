@@ -133,6 +133,8 @@ export function createBrowserPlayer(options = {}) {
         container,
         animationData = null,
         path = null,
+        src = null,
+        name = null,
         autoplay = true,
         loop = true,
         speed = 1,
@@ -140,6 +142,7 @@ export function createBrowserPlayer(options = {}) {
         background = 'transparent',
         renderer = 'canvas',
         rendererSettings = {},
+        initialSegment = null,
         onError = () => {},
     } = options;
 
@@ -164,6 +167,7 @@ export function createBrowserPlayer(options = {}) {
     let currentBackground = background;
     let readyPromise = null;
     let resizeObserver = null;
+    let currentAutoplay = autoplay !== false;
 
     applyBackground(dom.viewport, currentBackground);
 
@@ -233,6 +237,20 @@ export function createBrowserPlayer(options = {}) {
         },
     });
 
+    const internalListenerCleanups = [
+        internalPlayer.addEventListener('enterFrame', (detail) => {
+            emitter.dispatchEvent('enterFrame', detail);
+            emitter.dispatchEvent('enterframe', detail);
+        }),
+        internalPlayer.addEventListener('loopComplete', (detail) => {
+            emitter.dispatchEvent('loopComplete', detail);
+            emitter.dispatchEvent('loopcomplete', detail);
+        }),
+        internalPlayer.addEventListener('complete', (detail) => {
+            emitter.dispatchEvent('complete', detail);
+        }),
+    ];
+
     async function ensureReady() {
         if (!readyPromise) {
             readyPromise = internalPlayer.initialize();
@@ -243,11 +261,13 @@ export function createBrowserPlayer(options = {}) {
     async function loadSource(loadOptions = {}) {
         await ensureReady();
 
-        const nextAutoplay = loadOptions.autoplay ?? autoplay;
+        const nextAutoplay = loadOptions.autoplay ?? currentAutoplay;
+        const nextPath = loadOptions.path || loadOptions.src || null;
         currentLoop = loadOptions.loop ?? currentLoop;
         currentSpeed = normalizeSpeed(loadOptions.speed ?? currentSpeed);
         currentDirection = normalizeDirection(loadOptions.direction ?? currentDirection);
         currentBackground = loadOptions.background ?? currentBackground;
+        currentAutoplay = nextAutoplay !== false;
         applyBackground(dom.viewport, currentBackground);
 
         let state;
@@ -255,9 +275,9 @@ export function createBrowserPlayer(options = {}) {
             state = await internalPlayer.loadFromText(JSON.stringify(loadOptions.animationData), {
                 filename: loadOptions.name || currentState?.currentFileName || 'animation.json',
             });
-        } else if (loadOptions.path) {
-            state = await internalPlayer.loadFromUrl(loadOptions.path, {
-                filename: loadOptions.name || loadOptions.path,
+        } else if (nextPath) {
+            state = await internalPlayer.loadFromUrl(nextPath, {
+                filename: loadOptions.name || nextPath,
             });
         } else {
             throw new Error('loadAnimation requires animationData or path');
@@ -280,6 +300,9 @@ export function createBrowserPlayer(options = {}) {
     const player = {
         whenReady: () => ensureReady(),
         loadAnimation: (loadOptions = {}) => loadSource(loadOptions),
+        load: (loadOptions = {}) => (typeof loadOptions === 'string'
+            ? loadSource({ path: loadOptions, name: loadOptions })
+            : loadSource(loadOptions)),
         render: () => internalPlayer.render(),
         play: () => internalPlayer.play(),
         pause: () => internalPlayer.pause(),
@@ -314,6 +337,8 @@ export function createBrowserPlayer(options = {}) {
             internalPlayer.seek(frame);
             internalPlayer.play();
         },
+        playSegments: (segments, forceFlag = false) => internalPlayer.playSegments(segments, forceFlag),
+        setSubframe: (value) => internalPlayer.setSubframe(value),
         getDuration: (inFrames = false) => {
             const meta = currentState?.currentAnimationMeta;
             if (!meta) {
@@ -323,14 +348,24 @@ export function createBrowserPlayer(options = {}) {
         },
         resize: () => internalPlayer.scheduleViewportRefresh(),
         getCurrentFrame: () => internalPlayer.getCurrentFrame(),
+        getSpeed: () => currentSpeed,
+        getDirection: () => currentDirection,
+        getLoop: () => currentLoop,
+        getBackground: () => currentBackground,
+        getSubframe: () => internalPlayer.getSubframe(),
+        isLoaded: () => Boolean(currentState?.nativePlayer),
+        isPaused: () => !internalPlayer.isPlaying(),
         getState: () => currentState,
         getContainer: () => container,
         getCanvas: () => dom.canvas,
         addEventListener: (type, listener) => emitter.addEventListener(type, listener),
         removeEventListener: (type, listener) => emitter.removeEventListener(type, listener),
+        on: (type, listener) => emitter.addEventListener(type, listener),
+        off: (type, listener) => emitter.removeEventListener(type, listener),
         destroy: () => {
             resizeObserver?.disconnect();
             resizeObserver = null;
+            internalListenerCleanups.forEach((cleanup) => cleanup?.());
             internalPlayer.destroy();
             container.innerHTML = '';
             emitter.dispatchEvent('destroy', {});
@@ -346,14 +381,17 @@ export function createBrowserPlayer(options = {}) {
     }
 
     ensureReady().then(async () => {
-        if (animationData || path) {
+        if (animationData || path || src) {
             await loadSource({
                 animationData,
-                path,
+                path: path || src,
+                name,
                 autoplay,
                 loop: currentLoop,
                 speed: currentSpeed,
                 direction: currentDirection,
+                background: currentBackground,
+                initialSegment,
             });
         }
     }).catch((error) => {

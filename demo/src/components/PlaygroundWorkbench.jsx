@@ -1,0 +1,623 @@
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import { animationUsesExpressions, getAnimationPlaybackMeta } from "../../public/render_mode.js"
+import { setExpressionHost } from "../../public/expression_host.js"
+import { resizeCanvasForDpr } from "../../public/canvas_dpr.js"
+import {
+  createCanvasRuntimeBridge,
+  createOfficialPlayerController,
+  createPlayer,
+  createViewportPresenter,
+  loadSampleIndex,
+} from "../../public/player/index.js"
+
+function normalizeSpeed(value, fallback = 1) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return fallback
+  return Math.min(4, Math.max(0.1, Math.round(parsed * 10) / 10))
+}
+
+function formatFileSize(size) {
+  if (!Number.isFinite(size) || size <= 0) return "-"
+  return `${(size / 1024).toFixed(2)} KB`
+}
+
+function ensureLottieScriptLoaded() {
+  if (window.lottie?.loadAnimation) {
+    return Promise.resolve(window.lottie)
+  }
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-moon-lottie-official="true"]')
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.lottie), { once: true })
+      existing.addEventListener("error", () => reject(new Error("Failed to load lottie.min.js")), { once: true })
+      return
+    }
+
+    const script = document.createElement("script")
+    script.src = `${import.meta.env.BASE_URL}lottie.min.js`
+    script.async = true
+    script.dataset.moonLottieOfficial = "true"
+    script.onload = () => resolve(window.lottie)
+    script.onerror = () => reject(new Error("Failed to load lottie.min.js"))
+    document.head.appendChild(script)
+  })
+}
+
+function isEditableTarget(target) {
+  return target instanceof HTMLInputElement
+    || target instanceof HTMLTextAreaElement
+    || target instanceof HTMLSelectElement
+    || target?.isContentEditable
+}
+
+export default function PlaygroundWorkbench() {
+  const canvasRef = useRef(null)
+  const viewportRef = useRef(null)
+  const wasmWrapperRef = useRef(null)
+  const officialWrapperRef = useRef(null)
+  const wasmStageRef = useRef(null)
+  const officialStageRef = useRef(null)
+  const officialContainerRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const seekBarRef = useRef(null)
+  const viewportResizeObserverRef = useRef(null)
+  const controllerRef = useRef(null)
+  const runtimeBridgeRef = useRef(null)
+  const officialControllerRef = useRef(null)
+  const viewportPresenterRef = useRef(null)
+  const viewportTransformRef = useRef({ scale: 1, offsetX: 0, offsetY: 0, dpr: 1 })
+  const runtimeJsonRef = useRef("")
+  const imageAssetsRef = useRef([])
+  const stateRef = useRef({
+    currentFileName: "",
+    currentFileSize: 0,
+    currentAnimationData: null,
+    currentAnimationMeta: null,
+    currentExpressionAnimationData: null,
+    currentExpressionMeta: null,
+    nativePlayer: null,
+    runtime: null,
+  })
+  const compareEnabledRef = useRef(true)
+  const currentSpeedRef = useRef(1)
+
+  const [sampleEntries, setSampleEntries] = useState([])
+  const [playlistQuery, setPlaylistQuery] = useState("")
+  const [playlistOpen, setPlaylistOpen] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [dropActive, setDropActive] = useState(false)
+  const [compareEnabled, setCompareEnabled] = useState(true)
+  const [currentSpeed, setCurrentSpeed] = useState(1)
+  const [currentBackground, setCurrentBackground] = useState("grid")
+  const [runtimePreference, setRuntimePreference] = useState("auto")
+  const [runtimeBackend, setRuntimeBackend] = useState("uninitialized")
+  const [statusMessage, setStatusMessage] = useState("初始化 MoonLottie 运行时...")
+  const [currentFileName, setCurrentFileName] = useState("")
+  const [currentFileSize, setCurrentFileSize] = useState(0)
+  const [currentAnimationData, setCurrentAnimationData] = useState(null)
+  const [currentAnimationMeta, setCurrentAnimationMeta] = useState(null)
+  const [currentExpressionAnimationData, setCurrentExpressionAnimationData] = useState(null)
+  const [currentExpressionMeta, setCurrentExpressionMeta] = useState(null)
+  const [currentFrame, setCurrentFrame] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [statusColor, setStatusColor] = useState("#c7cdd8")
+
+  compareEnabledRef.current = compareEnabled
+  currentSpeedRef.current = currentSpeed
+
+  function syncPlayerState(state) {
+    stateRef.current = {
+      currentFileName: state?.currentFileName || "",
+      currentFileSize: state?.currentFileSize || 0,
+      currentAnimationData: state?.currentAnimationData || null,
+      currentAnimationMeta: state?.currentAnimationMeta || null,
+      currentExpressionAnimationData: state?.currentExpressionAnimationData || null,
+      currentExpressionMeta: state?.currentExpressionMeta || null,
+      nativePlayer: state?.nativePlayer || null,
+      runtime: state?.runtime || null,
+    }
+    setCurrentFileName(stateRef.current.currentFileName)
+    setCurrentFileSize(stateRef.current.currentFileSize)
+    setCurrentAnimationData(stateRef.current.currentAnimationData)
+    setCurrentAnimationMeta(stateRef.current.currentAnimationMeta)
+    setCurrentExpressionAnimationData(stateRef.current.currentExpressionAnimationData)
+    setCurrentExpressionMeta(stateRef.current.currentExpressionMeta)
+  }
+
+  function renderCurrentFrame() {
+    const runtime = stateRef.current.runtime
+    const player = stateRef.current.nativePlayer
+    if (runtime && player) {
+      runtimeBridgeRef.current?.renderFrame(runtime, player, controllerRef.current?.getCurrentFrame() || 0)
+    }
+    officialControllerRef.current?.seek(controllerRef.current?.getCurrentFrame() || 0)
+  }
+
+  function updateStatus(message, color = null) {
+    setStatusMessage(message)
+    if (color) {
+      setStatusColor(color)
+    }
+  }
+
+  async function initAnimationList() {
+    const entries = await loadSampleIndex()
+    setSampleEntries(entries)
+    const lastSelected = localStorage.getItem("moon-lottie-last-anim")
+    const preferred = entries.find((entry) => entry.file === lastSelected) || entries[0]
+    if (preferred) {
+      await loadRemoteAnimation(preferred.file)
+    }
+  }
+
+  async function switchRuntime(preference) {
+    if (!controllerRef.current) return
+    try {
+      updateStatus(`切换运行时到 ${controllerRef.current.describePreference(preference)}...`)
+      const state = await controllerRef.current.switchRuntime(preference)
+      syncPlayerState(state)
+      setRuntimePreference(controllerRef.current.getPreference())
+      setRuntimeBackend(controllerRef.current.getBackend())
+      updateStatus(controllerRef.current.getBackend() === "wasm" ? "当前使用 Wasm 后端" : "当前使用 JS 后端", "#34c759")
+    } catch (error) {
+      updateStatus(`运行时切换失败: ${error.message}`, "#ff3b30")
+    }
+  }
+
+  async function loadRemoteAnimation(filename) {
+    if (!controllerRef.current) return
+    try {
+      localStorage.setItem("moon-lottie-last-anim", filename)
+      const state = await controllerRef.current.loadRemoteAnimation(filename)
+      syncPlayerState(state)
+      updateStatus(`已加载: ${filename}`, "#34c759")
+    } catch (error) {
+      updateStatus(`加载失败: ${error.message}`, "#ff3b30")
+    }
+  }
+
+  async function handleFile(file) {
+    if (!controllerRef.current) return
+    try {
+      const state = await controllerRef.current.loadFile(file)
+      syncPlayerState(state)
+      setPlaylistOpen(false)
+      updateStatus(`已加载本地文件: ${file.name}`, "#34c759")
+    } catch {
+      updateStatus("无效的 JSON 文件", "#ff3b30")
+    }
+  }
+
+  function scheduleViewportRefresh() {
+    controllerRef.current?.scheduleViewportRefresh()
+  }
+
+  function updateCompareMode(nextCompareEnabled) {
+    setCompareEnabled(nextCompareEnabled)
+    compareEnabledRef.current = nextCompareEnabled
+    if (stateRef.current.currentAnimationData) {
+      const state = controllerRef.current?.refreshCompare()
+      if (state) {
+        syncPlayerState(state)
+      }
+    }
+  }
+
+  function stepAnimation(delta) {
+    if (sampleEntries.length === 0) {
+      return
+    }
+
+    const currentIndex = sampleEntries.findIndex((entry) => entry.file === currentFileName)
+    const baseIndex = currentIndex >= 0 ? currentIndex : 0
+    const nextIndex = (baseIndex + delta + sampleEntries.length) % sampleEntries.length
+    const nextEntry = sampleEntries[nextIndex]
+    if (nextEntry) {
+      loadRemoteAnimation(nextEntry.file)
+    }
+  }
+
+  useEffect(() => {
+    let disposed = false
+
+    async function init() {
+      await ensureLottieScriptLoaded().catch(() => null)
+      if (disposed) return
+
+      const canvas = canvasRef.current
+      const viewport = viewportRef.current
+      const wasmWrapper = wasmWrapperRef.current
+      const officialWrapper = officialWrapperRef.current
+      const wasmStage = wasmStageRef.current
+      const officialStage = officialStageRef.current
+      const officialContainer = officialContainerRef.current
+      const seekBar = seekBarRef.current
+      if (!canvas || !viewport || !wasmWrapper || !officialWrapper || !wasmStage || !officialStage || !officialContainer || !seekBar) {
+        return
+      }
+
+      const ctx = canvas.getContext("2d")
+
+      officialControllerRef.current = createOfficialPlayerController({
+        container: officialContainer,
+        getLottie: () => window.lottie,
+      })
+
+      viewportPresenterRef.current = createViewportPresenter({
+        viewport,
+        canvas,
+        wasmWrapper,
+        officialWrapper,
+        wasmStage,
+        officialStage,
+        officialContainer,
+        seekBar,
+        resizeCanvasForDpr,
+        viewportTransform: viewportTransformRef.current,
+        getCompareEnabled: () => compareEnabledRef.current,
+        requestRender: () => renderCurrentFrame(),
+        updateCurrentFileLabel: () => {},
+        infoElements: {},
+      })
+
+      runtimeBridgeRef.current = createCanvasRuntimeBridge({
+        canvas,
+        viewportTransform: viewportTransformRef.current,
+        getRuntimeAnimationJson: () => runtimeJsonRef.current,
+        getImageAssets: () => imageAssetsRef.current,
+        getExpressionAnimationData: () => stateRef.current.currentExpressionAnimationData,
+        getExpressionMeta: () => stateRef.current.currentExpressionMeta,
+        getCanvasContext: () => ctx,
+        jsRuntimePath: `${import.meta.env.BASE_URL}runtime/js/moon-lottie-runtime.js`,
+      })
+
+      controllerRef.current = createPlayer({
+        loadWasmRuntime: runtimeBridgeRef.current.loadWasmRuntime,
+        loadJsRuntime: runtimeBridgeRef.current.loadJsRuntime,
+        officialPlayerController: officialControllerRef.current,
+        viewportPresenter: viewportPresenterRef.current,
+        getAnimationPlaybackMeta,
+        animationUsesExpressions,
+        setStatusMessage: (message) => updateStatus(message),
+        setExpressionHost,
+        setRuntimeAnimationJson: (value) => {
+          runtimeJsonRef.current = value
+        },
+        setImageAssets: (assets) => {
+          imageAssetsRef.current = assets
+        },
+        getSpeed: () => currentSpeedRef.current,
+        getCompareEnabled: () => compareEnabledRef.current,
+        renderFrame: () => {
+          renderCurrentFrame()
+        },
+        createNativePlayer: (runtime) => runtime.create_player_from_js(),
+        onRuntimeChanged: ({ runtime, backend }) => {
+          window.moonLottie = runtime
+          window.moonLottieBackend = backend
+          setRuntimeBackend(backend)
+          setRuntimePreference(controllerRef.current?.getPreference() || "auto")
+        },
+        onStateChange: (state) => {
+          syncPlayerState(state)
+        },
+        onFrameChange: ({ currentFrame: nextFrame }) => {
+          setCurrentFrame(nextFrame)
+        },
+        onPlayStateChange: ({ isPlaying: nextIsPlaying }) => {
+          setIsPlaying(nextIsPlaying)
+        },
+      })
+
+      try {
+        updateStatus("初始化 MoonLottie 运行时...")
+        const state = await controllerRef.current.initialize()
+        if (disposed) return
+        syncPlayerState(state)
+        setRuntimePreference(controllerRef.current.getPreference())
+        setRuntimeBackend(controllerRef.current.getBackend())
+        updateStatus(controllerRef.current.getBackend() === "wasm"
+          ? `已就绪，请打开 Lottie JSON (${controllerRef.current.describePreference(controllerRef.current.getPreference())})`
+          : `已就绪，当前使用 JS 兼容后端 (${controllerRef.current.describePreference(controllerRef.current.getPreference())})`, "#34c759")
+        await initAnimationList()
+      } catch (error) {
+        if (!disposed) {
+          updateStatus(`错误: ${error.message}`, "#ff3b30")
+        }
+      }
+
+      if (typeof ResizeObserver === "function") {
+        viewportResizeObserverRef.current = new ResizeObserver(() => {
+          scheduleViewportRefresh()
+        })
+        viewportResizeObserverRef.current.observe(viewport)
+      }
+    }
+
+    init()
+
+    function handleWindowResize() {
+      scheduleViewportRefresh()
+    }
+
+    function handleKeydown(event) {
+      if (isEditableTarget(event.target)) {
+        return
+      }
+
+      if (event.code === "Space") {
+        controllerRef.current?.toggle()
+        event.preventDefault()
+      } else if (event.code === "Escape") {
+        setPlaylistOpen(false)
+        setDetailsOpen(false)
+      } else if (event.code === "ArrowLeft") {
+        controllerRef.current?.stepFrame(-1)
+        event.preventDefault()
+      } else if (event.code === "ArrowRight") {
+        controllerRef.current?.stepFrame(1)
+        event.preventDefault()
+      } else if (event.code === "ArrowUp") {
+        stepAnimation(-1)
+        event.preventDefault()
+      } else if (event.code === "ArrowDown") {
+        stepAnimation(1)
+        event.preventDefault()
+      }
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault()
+      setDropActive(true)
+    }
+
+    function handleDragLeave(event) {
+      if (event.clientX === 0 && event.clientY === 0) {
+        setDropActive(false)
+      }
+    }
+
+    function handleDrop(event) {
+      event.preventDefault()
+      setDropActive(false)
+      const file = event.dataTransfer.files?.[0]
+      if (file) {
+        handleFile(file)
+      }
+    }
+
+    window.addEventListener("resize", handleWindowResize)
+    window.addEventListener("keydown", handleKeydown)
+    window.addEventListener("dragover", handleDragOver)
+    window.addEventListener("dragleave", handleDragLeave)
+    window.addEventListener("drop", handleDrop)
+
+    return () => {
+      disposed = true
+      viewportResizeObserverRef.current?.disconnect()
+      viewportResizeObserverRef.current = null
+      window.removeEventListener("resize", handleWindowResize)
+      window.removeEventListener("keydown", handleKeydown)
+      window.removeEventListener("dragover", handleDragOver)
+      window.removeEventListener("dragleave", handleDragLeave)
+      window.removeEventListener("drop", handleDrop)
+      controllerRef.current?.destroy()
+      officialControllerRef.current?.destroy()
+      controllerRef.current = null
+      officialControllerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!controllerRef.current || !currentAnimationData) return
+    scheduleViewportRefresh()
+    renderCurrentFrame()
+  }, [compareEnabled])
+
+  const filteredSamples = useMemo(() => {
+    const query = playlistQuery.trim().toLowerCase()
+    return sampleEntries.filter((entry) => {
+      const searchText = `${entry.label} ${entry.file}`.toLowerCase()
+      return !query || searchText.includes(query)
+    })
+  }, [playlistQuery, sampleEntries])
+
+  const infoRuntime = runtimeBackend === "uninitialized"
+    ? "未初始化"
+    : (runtimeBackend === "wasm" ? "Wasm" : "JS")
+  const frameDisplay = `${Math.floor(Math.max(0, currentFrame - (currentAnimationMeta?.inPoint || 0)))} / ${Math.floor(currentAnimationMeta?.totalFrames || 0)}`
+  const seekMin = currentAnimationMeta?.inPoint || 0
+  const seekMax = (currentAnimationMeta?.inPoint || 0) + (currentAnimationMeta?.totalFrames || 0)
+
+  return (
+    <div className={`playground-workbench${playlistOpen || detailsOpen ? " playground-workbench--overlay-open" : ""}`}>
+      <header className="playground-top-toolbar">
+        <div className="playground-toolbar-group playground-toolbar-group--grow">
+          <button className="playground-icon-btn" type="button" onClick={() => setPlaylistOpen(true)} aria-label="打开播放列表">☰</button>
+          <button className="playground-action-btn" type="button" onClick={() => fileInputRef.current?.click()}>打开</button>
+          <input ref={fileInputRef} type="file" accept=".json" hidden onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) {
+              handleFile(file)
+            }
+            event.target.value = ""
+          }} />
+          <div className="playground-current-file">
+            <p className="playground-current-file__label">当前文件 <span className="playground-status-dot" style={{ background: statusColor }} /></p>
+            <p className="playground-current-file__name">{currentFileName || "选择一个样例或打开本地 JSON"}</p>
+          </div>
+        </div>
+        <div className="playground-toolbar-group playground-toolbar-group--right">
+          <div className="playground-toolbar-segment" aria-label="背景切换">
+            {[
+              ["grid", "playground-bg-btn--grid", "网格背景"],
+              ["white", "playground-bg-btn--white", "白色背景"],
+              ["black", "playground-bg-btn--black", "黑色背景"],
+            ].map(([bg, className, title]) => (
+              <button
+                key={bg}
+                className={`playground-bg-btn ${className} ${currentBackground === bg ? "is-active" : ""}`}
+                type="button"
+                title={title}
+                onClick={() => setCurrentBackground(bg)}
+              />
+            ))}
+          </div>
+          <button className={`playground-toggle-btn ${compareEnabled ? "is-active" : ""}`} type="button" onClick={() => updateCompareMode(!compareEnabled)}>
+            对比
+          </button>
+          <div className="playground-toolbar-segment" aria-label="运行时选择">
+            {["auto", "wasm", "js"].map((runtime) => (
+              <button
+                key={runtime}
+                className={`playground-runtime-btn ${runtimePreference === runtime ? "is-active" : ""}`}
+                type="button"
+                onClick={() => switchRuntime(runtime)}
+              >
+                {runtime === "auto" ? "Auto" : runtime === "wasm" ? "Wasm" : "JS"}
+              </button>
+            ))}
+          </div>
+          <button className={`playground-toggle-btn ${detailsOpen ? "is-active" : ""}`} type="button" onClick={() => setDetailsOpen((value) => !value)}>
+            详情
+          </button>
+        </div>
+      </header>
+
+      <div className={`playground-backdrop ${playlistOpen ? "is-open" : ""}`} onClick={() => setPlaylistOpen(false)} />
+      <aside className={`playground-drawer ${playlistOpen ? "is-open" : ""}`} aria-hidden={playlistOpen ? "false" : "true"}>
+        <div className="playground-drawer-header">
+          <h2 className="playground-drawer-title">播放列表</h2>
+          <button className="playground-icon-btn" type="button" onClick={() => setPlaylistOpen(false)} aria-label="收起播放列表">⟨</button>
+        </div>
+        <div className="playground-search-wrap">
+          <input className="playground-search-input" type="search" placeholder="检索样例名称" value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} />
+        </div>
+        <div className="playground-playlist-list">
+          {filteredSamples.length === 0 ? (
+            <div className="playground-playlist-empty">没有匹配的样例。</div>
+          ) : filteredSamples.map((entry) => (
+            <button
+              key={entry.file}
+              type="button"
+              className={`playground-playlist-item ${entry.file === currentFileName ? "is-active" : ""}`}
+              onClick={() => {
+                setPlaylistOpen(false)
+                loadRemoteAnimation(entry.file)
+              }}
+            >
+              <span className="playground-playlist-item__title">{entry.label}</span>
+              <span className="playground-playlist-item__meta">{entry.file}</span>
+            </button>
+          ))}
+        </div>
+        <div className="playground-drawer-footer">也可以直接点击顶部“打开”，或将本地 JSON 文件拖到页面任意区域。</div>
+      </aside>
+
+      <div className={`playground-backdrop ${detailsOpen ? "is-open" : ""}`} onClick={() => setDetailsOpen(false)} />
+      <aside className={`playground-details ${detailsOpen ? "is-open" : ""}`} aria-hidden={detailsOpen ? "false" : "true"}>
+        <div className="playground-panel-header">
+          <h2 className="playground-drawer-title">动画详情</h2>
+          <button className="playground-icon-btn" type="button" onClick={() => setDetailsOpen(false)} aria-label="收起详情">⟩</button>
+        </div>
+        <div className="playground-panel-body">
+          <div className="playground-details-grid">
+            {[
+              ["名称", currentFileName || "-"],
+              ["大小", formatFileSize(currentFileSize)],
+              ["资源版本", currentAnimationMeta?.version || "-"],
+              ["持续时间", currentAnimationMeta?.fps > 0 ? `${(currentAnimationMeta.totalFrames / currentAnimationMeta.fps).toFixed(2)}s` : "-"],
+              ["帧率", currentAnimationMeta?.fps ? `${currentAnimationMeta.fps.toFixed(2)} fps` : "-"],
+              ["总帧数", Number.isFinite(currentAnimationMeta?.totalFrames) ? Math.floor(currentAnimationMeta.totalFrames) : "-"],
+              ["设计尺寸", currentAnimationMeta ? `${currentAnimationMeta.width} x ${currentAnimationMeta.height}` : "-"],
+              ["运行时", infoRuntime],
+              ["状态", statusMessage || "-"],
+            ].map(([label, value]) => (
+              <div className="playground-info-row" key={label}>
+                <span className="playground-info-label">{label}</span>
+                <span className="playground-info-value">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <main className="playground-player-shell">
+        <div ref={viewportRef} className={`playground-viewport ${currentBackground === "white" ? "bg-white" : currentBackground === "black" ? "bg-black" : ""}`}>
+          <section ref={wasmWrapperRef} className="playground-canvas-wrapper">
+            <div className="playground-canvas-head">
+              <div className="playground-canvas-tag">Moon Lottie</div>
+            </div>
+            <div ref={wasmStageRef} className="playground-canvas-stage">
+              <canvas ref={canvasRef} />
+            </div>
+          </section>
+          <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none" }}>
+            <div className="playground-canvas-head">
+              <div className="playground-canvas-tag">Lottie Web</div>
+            </div>
+            <div ref={officialStageRef} className="playground-canvas-stage">
+              <div ref={officialContainerRef} className="playground-official-container" />
+            </div>
+          </section>
+        </div>
+
+        <footer className="playground-control-bar">
+          <div className="playground-control-cluster">
+            <button className="playground-track-btn" type="button" onClick={() => stepAnimation(-1)} aria-label="上一个动画">⏮</button>
+            <button className="playground-frame-btn" type="button" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧">⟨</button>
+            <button className="playground-primary-play-btn" type="button" onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停">{isPlaying ? "‖" : "▶"}</button>
+            <button className="playground-frame-btn" type="button" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧">⟩</button>
+            <button className="playground-track-btn" type="button" onClick={() => stepAnimation(1)} aria-label="下一个动画">⏭</button>
+          </div>
+          <div className="playground-progress-wrap">
+            <input
+              ref={seekBarRef}
+              className="playground-seek-bar"
+              type="range"
+              min={seekMin}
+              max={seekMax || 1}
+              value={currentFrame}
+              onChange={(event) => controllerRef.current?.seek(parseFloat(event.target.value))}
+            />
+            <span className="playground-frame-info">{frameDisplay}</span>
+          </div>
+          <div className="playground-control-cluster">
+            <div className="playground-toolbar-segment" aria-label="播放速度">
+              {[0.5, 1, 2].map((speed) => (
+                <button
+                  key={speed}
+                  className={`playground-speed-btn ${Math.abs(currentSpeed - speed) < 0.01 ? "is-active" : ""}`}
+                  type="button"
+                  onClick={() => setCurrentSpeed(speed)}
+                >
+                  {speed.toFixed(1)}
+                </button>
+              ))}
+              <div className="playground-divider" />
+              <input
+                className="playground-speed-input"
+                type="number"
+                min="0.1"
+                max="4"
+                step="0.1"
+                value={currentSpeed.toFixed(1)}
+                onChange={(event) => setCurrentSpeed(normalizeSpeed(event.target.value, currentSpeed))}
+                onBlur={(event) => setCurrentSpeed(normalizeSpeed(event.target.value, currentSpeed))}
+                title="自定义速度"
+              />
+            </div>
+          </div>
+        </footer>
+      </main>
+
+      <div className={`playground-drop-overlay ${dropActive ? "is-open" : ""}`} aria-hidden={dropActive ? "false" : "true"}>
+        <div className="playground-drop-card">
+          <h2>打开本地 JSON</h2>
+          <p>把文件拖到这里即可直接预览，不会上传到服务器。</p>
+        </div>
+      </div>
+    </div>
+  )
+}
