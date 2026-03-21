@@ -18800,7 +18800,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, transform, frame) {
   return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with__context(transform, frame, self.current_layer_index, self.current_comp_id);
 }
-function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(c) {
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(c) {
   return c >= 48 && c <= 57 ? c - 48 | 0 : c >= 97 && c <= 102 ? (c - 97 | 0) + 10 | 0 : c >= 65 && c <= 70 ? (c - 65 | 0) + 10 | 0 : 0;
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__color(hex) {
@@ -18817,17 +18817,17 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__color(hex) {
     return _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32parse__hex__color_2etuple_2f5171;
   }
   $bound_check(hex, 1);
-  const _tmp$2 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(hex.charCodeAt(1)), 16) | 0;
+  const _tmp$2 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(hex.charCodeAt(1)), 16) | 0;
   $bound_check(hex, 2);
-  const r = _tmp$2 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(hex.charCodeAt(2)) | 0;
+  const r = _tmp$2 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(hex.charCodeAt(2)) | 0;
   $bound_check(hex, 3);
-  const _tmp$3 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(hex.charCodeAt(3)), 16) | 0;
+  const _tmp$3 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(hex.charCodeAt(3)), 16) | 0;
   $bound_check(hex, 4);
-  const g = _tmp$3 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(hex.charCodeAt(4)) | 0;
+  const g = _tmp$3 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(hex.charCodeAt(4)) | 0;
   $bound_check(hex, 5);
-  const _tmp$4 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(hex.charCodeAt(5)), 16) | 0;
+  const _tmp$4 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(hex.charCodeAt(5)), 16) | 0;
   $bound_check(hex, 6);
-  const b = _tmp$4 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1015(hex.charCodeAt(6)) | 0;
+  const b = _tmp$4 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1026(hex.charCodeAt(6)) | 0;
   return { _0: r, _1: g, _2: b };
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer26resolve__image__asset__src(asset) {

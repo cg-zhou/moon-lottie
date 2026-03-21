@@ -19,12 +19,67 @@ export function createPlaybackController(options = {}) {
     let isPlaying = true;
     let lastTimestamp = 0;
     let requestId = null;
+    let useSubframes = true;
+    let activeSegment = null;
+    let queuedSegments = [];
+
+    function normalizeSegment(segment) {
+        if (!Array.isArray(segment) || segment.length < 2) {
+            return null;
+        }
+
+        const start = Number(segment[0]);
+        const end = Number(segment[1]);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) {
+            return null;
+        }
+
+        return start <= end ? [start, end] : [end, start];
+    }
+
+    function normalizeSegments(segments) {
+        if (!Array.isArray(segments)) {
+            return [];
+        }
+
+        if (segments.length >= 2 && !Array.isArray(segments[0])) {
+            const single = normalizeSegment(segments);
+            return single ? [single] : [];
+        }
+
+        return segments.map(normalizeSegment).filter(Boolean);
+    }
+
+    function getPlaybackBounds() {
+        const meta = getMeta();
+        const inPoint = meta?.inPoint || 0;
+        const totalFrames = meta?.totalFrames || 0;
+        const endFrame = inPoint + totalFrames;
+
+        if (activeSegment) {
+            return {
+                startFrame: activeSegment[0],
+                endFrame: activeSegment[1],
+            };
+        }
+
+        return {
+            startFrame: inPoint,
+            endFrame,
+        };
+    }
+
+    function getRenderableFrame() {
+        return useSubframes ? currentFrame : Math.round(currentFrame);
+    }
 
     function getState() {
         return {
             currentFrame,
             isPlaying,
             meta: getMeta(),
+            useSubframes,
+            activeSegment,
         };
     }
 
@@ -45,7 +100,21 @@ export function createPlaybackController(options = {}) {
             return;
         }
 
-        onRenderFrame(currentFrame);
+        onRenderFrame(getRenderableFrame());
+    }
+
+    function advanceToNextSegment() {
+        if (queuedSegments.length === 0) {
+            activeSegment = null;
+            return false;
+        }
+
+        activeSegment = queuedSegments.shift() || null;
+        const direction = getDirection() >= 0 ? 1 : -1;
+        currentFrame = direction >= 0 ? activeSegment[0] : activeSegment[1];
+        renderCurrentFrame();
+        notifyFrameChange();
+        return true;
     }
 
     function cancelLoop() {
@@ -86,12 +155,14 @@ export function createPlaybackController(options = {}) {
             const frameDelta = deltaTime * fps * speed * direction;
             currentFrame += frameDelta;
 
-            const inPoint = meta?.inPoint || 0;
-            const totalFrames = meta?.totalFrames || 0;
-            const endFrame = inPoint + totalFrames;
+            const { startFrame, endFrame } = getPlaybackBounds();
             if (direction >= 0 && currentFrame >= endFrame) {
+                if (advanceToNextSegment()) {
+                    scheduleLoop();
+                    return;
+                }
                 if (loopEnabled) {
-                    currentFrame = inPoint;
+                    currentFrame = startFrame;
                     emitter.dispatchEvent('loopComplete', getState());
                 } else {
                     currentFrame = endFrame;
@@ -99,21 +170,27 @@ export function createPlaybackController(options = {}) {
                     lastTimestamp = 0;
                     renderCurrentFrame();
                     notifyFrameChange();
+                    emitter.dispatchEvent('complete', getState());
                     notifyPlayStateChange();
                     return;
                 }
             }
 
-            if (direction < 0 && currentFrame <= inPoint) {
+            if (direction < 0 && currentFrame <= startFrame) {
+                if (advanceToNextSegment()) {
+                    scheduleLoop();
+                    return;
+                }
                 if (loopEnabled) {
                     currentFrame = endFrame;
                     emitter.dispatchEvent('loopComplete', getState());
                 } else {
-                    currentFrame = inPoint;
+                    currentFrame = startFrame;
                     isPlaying = false;
                     lastTimestamp = 0;
                     renderCurrentFrame();
                     notifyFrameChange();
+                    emitter.dispatchEvent('complete', getState());
                     notifyPlayStateChange();
                     return;
                 }
@@ -130,6 +207,8 @@ export function createPlaybackController(options = {}) {
 
     function start({ initialFrame = 0, autoplay = true } = {}) {
         cancelLoop();
+        activeSegment = null;
+        queuedSegments = [];
         currentFrame = initialFrame;
         isPlaying = autoplay;
         lastTimestamp = autoplay ? performance.now() : 0;
@@ -178,14 +257,11 @@ export function createPlaybackController(options = {}) {
     }
 
     function stepFrame(delta) {
-        const meta = getMeta();
-        const inPoint = meta?.inPoint || 0;
-        const totalFrames = meta?.totalFrames || 0;
-        const endFrame = inPoint + totalFrames;
+        const { startFrame, endFrame } = getPlaybackBounds();
 
         pause();
         const nextFrame = delta < 0
-            ? Math.max(inPoint, currentFrame + delta)
+            ? Math.max(startFrame, currentFrame + delta)
             : Math.min(endFrame, currentFrame + delta);
         seek(nextFrame);
     }
@@ -193,7 +269,46 @@ export function createPlaybackController(options = {}) {
     function stop() {
         const meta = getMeta();
         pause();
+        activeSegment = null;
+        queuedSegments = [];
         seek(meta?.inPoint || 0, { render: false });
+    }
+
+    function playSegments(segments, forceFlag = false) {
+        const normalized = normalizeSegments(segments);
+        if (normalized.length === 0) {
+            return [];
+        }
+
+        if (forceFlag) {
+            queuedSegments = normalized.slice(1);
+            activeSegment = normalized[0];
+        } else if (activeSegment || queuedSegments.length > 0) {
+            queuedSegments = [...queuedSegments, ...normalized];
+            if (!activeSegment) {
+                activeSegment = queuedSegments.shift() || null;
+            }
+        } else {
+            queuedSegments = normalized.slice(1);
+            activeSegment = normalized[0];
+        }
+
+        const direction = getDirection() >= 0 ? 1 : -1;
+        currentFrame = direction >= 0 ? activeSegment[0] : activeSegment[1];
+        isPlaying = true;
+        lastTimestamp = performance.now();
+        renderCurrentFrame();
+        notifyFrameChange();
+        notifyPlayStateChange();
+        scheduleLoop();
+        return [activeSegment, ...queuedSegments];
+    }
+
+    function setSubframe(value) {
+        useSubframes = value !== false;
+        renderCurrentFrame();
+        notifyFrameChange();
+        return useSubframes;
     }
 
     function render() {
@@ -213,6 +328,8 @@ export function createPlaybackController(options = {}) {
         toggle,
         stop,
         seek,
+        playSegments,
+        setSubframe,
         stepFrame,
         render,
         destroy,
@@ -220,6 +337,7 @@ export function createPlaybackController(options = {}) {
         isPlaying: () => isPlaying,
         getDirection: () => getDirection(),
         getLoop: () => getLoop(),
+        getSubframe: () => useSubframes,
         addEventListener: emitter.addEventListener,
         removeEventListener: emitter.removeEventListener,
     };
