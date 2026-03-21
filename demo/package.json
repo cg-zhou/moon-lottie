@@ -10,13 +10,14 @@
     "sync": "node sync-assets.js"
   },
   "dependencies": {
+    "antd": "^6.3.3",
+    "iconify-icon": "^3.0.2",
     "mermaid": "^11.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",
-    "iconify-icon": "^3.0.2",
     "vite": "^8.0.0"
   }
 }

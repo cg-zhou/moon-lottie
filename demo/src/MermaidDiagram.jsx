@@ -73,16 +73,16 @@ export default function MermaidDiagram({ title, chart }) {
   }, [chart])
 
   return (
-    <article className="diagram-card">
-      <div>
-        {title ? <h3>{title}</h3> : null}
-        <p className="diagram-card__meta">基于当前代码路径绘制，和现有实现保持一致。</p>
-      </div>
+    <div className="mermaid-diagram">
+      {title ? <h3>{title}</h3> : null}
+      <p className="diagram-card__meta">基于当前代码路径绘制，和现有实现保持一致。</p>
       {error ? (
         <div className="diagram-surface diagram-surface--error">图表渲染失败：{error}</div>
-      ) : (
+      ) : svg ? (
         <div className="diagram-surface" dangerouslySetInnerHTML={{ __html: svg }} />
+      ) : (
+        <div className="diagram-surface diagram-surface--loading">图表加载中...</div>
       )}
-    </article>
+    </div>
   )
 }

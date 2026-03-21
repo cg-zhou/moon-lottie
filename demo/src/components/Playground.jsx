@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Button, Descriptions, Empty, Input, InputNumber, Tag } from "antd"
 import { animationUsesExpressions, getAnimationPlaybackMeta } from "../../public/render_mode.js"
 import { setExpressionHost } from "../../public/expression_host.js"
 import { resizeCanvasForDpr } from "../../public/canvas_dpr.js"
@@ -50,6 +51,55 @@ function isEditableTarget(target) {
     || target instanceof HTMLSelectElement
     || target?.isContentEditable
 }
+
+function IconifyIcon({ name, size = 18 }) {
+  return <iconify-icon icon={name} width={size} height={size} aria-hidden="true" />
+}
+
+const PlaybackTransport = React.memo(function PlaybackTransport({ controllerRef, isPlaying, onStepAnimation }) {
+  return (
+    <div className="playground-control-cluster">
+      <Button className="playground-track-btn" type="default" title="上一个动画" onClick={() => onStepAnimation(-1)} aria-label="上一个动画" icon={<IconifyIcon name="solar:rewind-back-bold" size={16} />} />
+      <Button className="playground-frame-btn" type="default" title="上一帧" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧" icon={<IconifyIcon name="solar:alt-arrow-left-bold" size={16} />} />
+      <Button className="playground-primary-play-btn" type="primary" shape="circle" title={isPlaying ? "暂停" : "播放"} onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停" icon={<IconifyIcon name={isPlaying ? "solar:pause-bold" : "solar:play-bold"} size={18} />} />
+      <Button className="playground-frame-btn" type="default" title="下一帧" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧" icon={<IconifyIcon name="solar:alt-arrow-right-bold" size={16} />} />
+      <Button className="playground-track-btn" type="default" title="下一个动画" onClick={() => onStepAnimation(1)} aria-label="下一个动画" icon={<IconifyIcon name="solar:rewind-forward-bold" size={16} />} />
+    </div>
+  )
+})
+
+const SpeedControls = React.memo(function SpeedControls({ currentSpeed, setCurrentSpeed }) {
+  return (
+    <div className="playground-control-cluster">
+      <div className="playground-toolbar-segment" aria-label="播放速度">
+        {[0.5, 1, 2].map((speed) => (
+          <Button
+            key={speed}
+            className={`playground-speed-btn ${Math.abs(currentSpeed - speed) < 0.01 ? "is-active" : ""}`}
+            type={Math.abs(currentSpeed - speed) < 0.01 ? "primary" : "default"}
+            onClick={() => setCurrentSpeed(speed)}
+          >
+            {speed.toFixed(1)}x
+          </Button>
+        ))}
+        <div className="playground-divider" />
+        <InputNumber
+          className="playground-speed-input"
+          min={0.1}
+          max={4}
+          step={0.1}
+          value={Number(currentSpeed.toFixed(1))}
+          onChange={(value) => {
+            if (typeof value === "number") {
+              setCurrentSpeed(normalizeSpeed(value, currentSpeed))
+            }
+          }}
+          title="自定义速度"
+        />
+      </div>
+    </div>
+  )
+})
 
 export default function Playground() {
   const canvasRef = useRef(null)
@@ -204,7 +254,7 @@ export default function Playground() {
     }
   }
 
-  function stepAnimation(delta) {
+  const stepAnimation = useCallback((delta) => {
     if (sampleEntries.length === 0) {
       return
     }
@@ -216,7 +266,7 @@ export default function Playground() {
     if (nextEntry) {
       loadRemoteAnimation(nextEntry.file)
     }
-  }
+  }, [currentFileName, sampleEntries])
 
   useEffect(() => {
     let disposed = false
@@ -303,7 +353,7 @@ export default function Playground() {
           syncPlayerState(state)
         },
         onFrameChange: ({ currentFrame: nextFrame }) => {
-          setCurrentFrame(nextFrame)
+          setCurrentFrame((previousFrame) => (previousFrame === nextFrame ? previousFrame : nextFrame))
         },
         onPlayStateChange: ({ isPlaying: nextIsPlaying }) => {
           setIsPlaying(nextIsPlaying)
@@ -429,13 +479,26 @@ export default function Playground() {
   const frameDisplay = `${Math.floor(Math.max(0, currentFrame - (currentAnimationMeta?.inPoint || 0)))} / ${Math.floor(currentAnimationMeta?.totalFrames || 0)}`
   const seekMin = currentAnimationMeta?.inPoint || 0
   const seekMax = (currentAnimationMeta?.inPoint || 0) + (currentAnimationMeta?.totalFrames || 0)
+  const detailItems = [
+    ["名称", currentFileName || "-"],
+    ["大小", formatFileSize(currentFileSize)],
+    ["资源版本", currentAnimationMeta?.version || "-"],
+    ["持续时间", currentAnimationMeta?.fps > 0 ? `${(currentAnimationMeta.totalFrames / currentAnimationMeta.fps).toFixed(2)} 秒` : "-"],
+    ["帧率", currentAnimationMeta?.fps ? `${currentAnimationMeta.fps.toFixed(2)} 帧/秒` : "-"],
+    ["总帧数", Number.isFinite(currentAnimationMeta?.totalFrames) ? Math.floor(currentAnimationMeta.totalFrames) : "-"],
+    ["设计尺寸", currentAnimationMeta ? `${currentAnimationMeta.width} x ${currentAnimationMeta.height}` : "-"],
+    ["运行时", infoRuntime],
+    ["状态", statusMessage || "-"],
+  ]
 
   return (
     <div className={`playground-workbench${playlistOpen || detailsOpen ? " playground-workbench--overlay-open" : ""}`}>
       <header className="playground-top-toolbar">
         <div className="playground-toolbar-group playground-toolbar-group--grow">
-          <button className="playground-icon-btn" type="button" onClick={() => setPlaylistOpen(true)} aria-label="打开播放列表">☰</button>
-          <button className="playground-action-btn" type="button" onClick={() => fileInputRef.current?.click()}>打开</button>
+          <Button className="playground-icon-btn" type="default" title="打开播放列表" onClick={() => setPlaylistOpen(true)} aria-label="打开播放列表" icon={<IconifyIcon name="solar:hamburger-menu-bold" size={16} />} />
+          <Button className="playground-action-btn" type="primary" onClick={() => fileInputRef.current?.click()} icon={<IconifyIcon name="solar:folder-with-files-bold" size={16} />}>
+            打开
+          </Button>
           <input ref={fileInputRef} type="file" accept=".json" hidden onChange={(event) => {
             const file = event.target.files?.[0]
             if (file) {
@@ -451,37 +514,38 @@ export default function Playground() {
         <div className="playground-toolbar-group playground-toolbar-group--right">
           <div className="playground-toolbar-segment" aria-label="背景切换">
             {[
-              ["grid", "playground-bg-btn--grid", "网格背景"],
-              ["white", "playground-bg-btn--white", "白色背景"],
-              ["black", "playground-bg-btn--black", "黑色背景"],
-            ].map(([bg, className, title]) => (
-              <button
+              ["grid", "playground-bg-btn--grid", "网格背景", "solar:widget-5-bold"],
+              ["white", "playground-bg-btn--white", "白色背景", "solar:square-bold"],
+              ["black", "playground-bg-btn--black", "黑色背景", "solar:square-bold-duotone"],
+            ].map(([bg, className, title, icon]) => (
+              <Button
                 key={bg}
                 className={`playground-bg-btn ${className} ${currentBackground === bg ? "is-active" : ""}`}
-                type="button"
+                type={currentBackground === bg ? "primary" : "default"}
                 title={title}
                 onClick={() => setCurrentBackground(bg)}
+                icon={<IconifyIcon name={icon} size={14} />}
               />
             ))}
           </div>
-          <button className={`playground-toggle-btn ${compareEnabled ? "is-active" : ""}`} type="button" onClick={() => updateCompareMode(!compareEnabled)}>
+          <Button className={`playground-toggle-btn ${compareEnabled ? "is-active" : ""}`} type={compareEnabled ? "primary" : "default"} onClick={() => updateCompareMode(!compareEnabled)} icon={<IconifyIcon name="solar:code-scan-bold" size={16} />}>
             对比
-          </button>
+          </Button>
           <div className="playground-toolbar-segment" aria-label="运行时选择">
             {["auto", "wasm", "js"].map((runtime) => (
-              <button
+              <Button
                 key={runtime}
                 className={`playground-runtime-btn ${runtimePreference === runtime ? "is-active" : ""}`}
-                type="button"
+                type={runtimePreference === runtime ? "primary" : "default"}
                 onClick={() => switchRuntime(runtime)}
               >
                 {runtime === "auto" ? "自动" : runtime === "wasm" ? "Wasm" : "JS"}
-              </button>
+              </Button>
             ))}
           </div>
-          <button className={`playground-toggle-btn ${detailsOpen ? "is-active" : ""}`} type="button" onClick={() => setDetailsOpen((value) => !value)}>
+          <Button className={`playground-toggle-btn ${detailsOpen ? "is-active" : ""}`} type={detailsOpen ? "primary" : "default"} onClick={() => setDetailsOpen((value) => !value)} icon={<IconifyIcon name="solar:info-circle-bold" size={16} />}>
             详情
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -489,19 +553,20 @@ export default function Playground() {
       <aside className={`playground-drawer ${playlistOpen ? "is-open" : ""}`} aria-hidden={playlistOpen ? "false" : "true"}>
         <div className="playground-drawer-header">
           <h2 className="playground-drawer-title">播放列表</h2>
-          <button className="playground-icon-btn" type="button" onClick={() => setPlaylistOpen(false)} aria-label="收起播放列表">⟨</button>
+          <Button className="playground-icon-btn" type="default" title="收起播放列表" onClick={() => setPlaylistOpen(false)} aria-label="收起播放列表" icon={<IconifyIcon name="solar:alt-arrow-left-bold" size={16} />} />
         </div>
         <div className="playground-search-wrap">
-          <input className="playground-search-input" type="search" placeholder="检索样例名称" value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} />
+          <Input className="playground-search-input" type="search" placeholder="检索样例名称" value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} allowClear prefix={<IconifyIcon name="solar:magnifer-bold" size={16} />} />
         </div>
         <div className="playground-playlist-list">
           {filteredSamples.length === 0 ? (
-            <div className="playground-playlist-empty">没有匹配的样例。</div>
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有匹配的样例。" className="playground-playlist-empty" />
           ) : filteredSamples.map((entry) => (
-            <button
+            <Button
               key={entry.file}
-              type="button"
+              type={entry.file === currentFileName ? "primary" : "text"}
               className={`playground-playlist-item ${entry.file === currentFileName ? "is-active" : ""}`}
+              block
               onClick={() => {
                 setPlaylistOpen(false)
                 loadRemoteAnimation(entry.file)
@@ -509,7 +574,7 @@ export default function Playground() {
             >
               <span className="playground-playlist-item__title">{entry.label}</span>
               <span className="playground-playlist-item__meta">{entry.file}</span>
-            </button>
+            </Button>
           ))}
         </div>
         <div className="playground-drawer-footer">也可以直接点击顶部“打开”，或将本地 JSON 文件拖到页面任意区域。</div>
@@ -519,27 +584,16 @@ export default function Playground() {
       <aside className={`playground-details ${detailsOpen ? "is-open" : ""}`} aria-hidden={detailsOpen ? "false" : "true"}>
         <div className="playground-panel-header">
           <h2 className="playground-drawer-title">动画详情</h2>
-          <button className="playground-icon-btn" type="button" onClick={() => setDetailsOpen(false)} aria-label="收起详情">⟩</button>
+          <Button className="playground-icon-btn" type="default" title="收起详情" onClick={() => setDetailsOpen(false)} aria-label="收起详情" icon={<IconifyIcon name="solar:alt-arrow-right-bold" size={16} />} />
         </div>
         <div className="playground-panel-body">
-          <div className="playground-details-grid">
-            {[
-              ["名称", currentFileName || "-"],
-              ["大小", formatFileSize(currentFileSize)],
-              ["资源版本", currentAnimationMeta?.version || "-"],
-              ["持续时间", currentAnimationMeta?.fps > 0 ? `${(currentAnimationMeta.totalFrames / currentAnimationMeta.fps).toFixed(2)} 秒` : "-"],
-              ["帧率", currentAnimationMeta?.fps ? `${currentAnimationMeta.fps.toFixed(2)} 帧/秒` : "-"],
-              ["总帧数", Number.isFinite(currentAnimationMeta?.totalFrames) ? Math.floor(currentAnimationMeta.totalFrames) : "-"],
-              ["设计尺寸", currentAnimationMeta ? `${currentAnimationMeta.width} x ${currentAnimationMeta.height}` : "-"],
-              ["运行时", infoRuntime],
-              ["状态", statusMessage || "-"],
-            ].map(([label, value]) => (
-              <div className="playground-info-row" key={label}>
-                <span className="playground-info-label">{label}</span>
+          <Descriptions column={1} size="small" className="playground-descriptions">
+            {detailItems.map(([label, value]) => (
+              <Descriptions.Item key={label} label={label}>
                 <span className="playground-info-value">{value}</span>
-              </div>
+              </Descriptions.Item>
             ))}
-          </div>
+          </Descriptions>
         </div>
       </aside>
 
@@ -547,7 +601,9 @@ export default function Playground() {
         <div ref={viewportRef} className={`playground-viewport ${currentBackground === "white" ? "bg-white" : currentBackground === "black" ? "bg-black" : ""}`}>
           <section ref={wasmWrapperRef} className="playground-canvas-wrapper">
             <div className="playground-canvas-head">
-              <div className="playground-canvas-tag">MoonLottie</div>
+              <Tag className="playground-canvas-tag" color="blue" icon={<IconifyIcon name="solar:stars-bold" size={14} />}>
+                MoonLottie
+              </Tag>
             </div>
             <div ref={wasmStageRef} className="playground-canvas-stage">
               <canvas ref={canvasRef} />
@@ -555,7 +611,9 @@ export default function Playground() {
           </section>
           <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none" }}>
             <div className="playground-canvas-head">
-              <div className="playground-canvas-tag">官方 lottie-web</div>
+              <Tag className="playground-canvas-tag" icon={<IconifyIcon name="mdi:animation-play-outline" size={14} />}>
+                官方 lottie-web
+              </Tag>
             </div>
             <div ref={officialStageRef} className="playground-canvas-stage">
               <div ref={officialContainerRef} className="playground-official-container" />
@@ -564,13 +622,7 @@ export default function Playground() {
         </div>
 
         <footer className="playground-control-bar">
-          <div className="playground-control-cluster">
-            <button className="playground-track-btn" type="button" onClick={() => stepAnimation(-1)} aria-label="上一个动画">⏮</button>
-            <button className="playground-frame-btn" type="button" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧">⟨</button>
-            <button className="playground-primary-play-btn" type="button" onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停">{isPlaying ? "‖" : "▶"}</button>
-            <button className="playground-frame-btn" type="button" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧">⟩</button>
-            <button className="playground-track-btn" type="button" onClick={() => stepAnimation(1)} aria-label="下一个动画">⏭</button>
-          </div>
+          <PlaybackTransport controllerRef={controllerRef} isPlaying={isPlaying} onStepAnimation={stepAnimation} />
           <div className="playground-progress-wrap">
             <input
               ref={seekBarRef}
@@ -583,32 +635,7 @@ export default function Playground() {
             />
             <span className="playground-frame-info">{frameDisplay}</span>
           </div>
-          <div className="playground-control-cluster">
-            <div className="playground-toolbar-segment" aria-label="播放速度">
-              {[0.5, 1, 2].map((speed) => (
-                <button
-                  key={speed}
-                  className={`playground-speed-btn ${Math.abs(currentSpeed - speed) < 0.01 ? "is-active" : ""}`}
-                  type="button"
-                  onClick={() => setCurrentSpeed(speed)}
-                >
-                  {speed.toFixed(1)}
-                </button>
-              ))}
-              <div className="playground-divider" />
-              <input
-                className="playground-speed-input"
-                type="number"
-                min="0.1"
-                max="4"
-                step="0.1"
-                value={currentSpeed.toFixed(1)}
-                onChange={(event) => setCurrentSpeed(normalizeSpeed(event.target.value, currentSpeed))}
-                onBlur={(event) => setCurrentSpeed(normalizeSpeed(event.target.value, currentSpeed))}
-                title="自定义速度"
-              />
-            </div>
-          </div>
+          <SpeedControls currentSpeed={currentSpeed} setCurrentSpeed={setCurrentSpeed} />
         </footer>
       </main>
 
