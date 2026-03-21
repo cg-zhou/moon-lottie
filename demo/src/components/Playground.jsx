@@ -30,7 +30,7 @@ function ensureLottieScriptLoaded() {
     const existing = document.querySelector('script[data-moon-lottie-official="true"]')
     if (existing) {
       existing.addEventListener("load", () => resolve(window.lottie), { once: true })
-      existing.addEventListener("error", () => reject(new Error("Failed to load lottie.min.js")), { once: true })
+      existing.addEventListener("error", () => reject(new Error("加载 lottie.min.js 失败")), { once: true })
       return
     }
 
@@ -39,7 +39,7 @@ function ensureLottieScriptLoaded() {
     script.async = true
     script.dataset.moonLottieOfficial = "true"
     script.onload = () => resolve(window.lottie)
-    script.onerror = () => reject(new Error("Failed to load lottie.min.js"))
+    script.onerror = () => reject(new Error("加载 lottie.min.js 失败"))
     document.head.appendChild(script)
   })
 }
@@ -475,7 +475,7 @@ export default function Playground() {
                 type="button"
                 onClick={() => switchRuntime(runtime)}
               >
-                {runtime === "auto" ? "Auto" : runtime === "wasm" ? "Wasm" : "JS"}
+                {runtime === "auto" ? "自动" : runtime === "wasm" ? "Wasm" : "JS"}
               </button>
             ))}
           </div>
@@ -527,8 +527,8 @@ export default function Playground() {
               ["名称", currentFileName || "-"],
               ["大小", formatFileSize(currentFileSize)],
               ["资源版本", currentAnimationMeta?.version || "-"],
-              ["持续时间", currentAnimationMeta?.fps > 0 ? `${(currentAnimationMeta.totalFrames / currentAnimationMeta.fps).toFixed(2)}s` : "-"],
-              ["帧率", currentAnimationMeta?.fps ? `${currentAnimationMeta.fps.toFixed(2)} fps` : "-"],
+              ["持续时间", currentAnimationMeta?.fps > 0 ? `${(currentAnimationMeta.totalFrames / currentAnimationMeta.fps).toFixed(2)} 秒` : "-"],
+              ["帧率", currentAnimationMeta?.fps ? `${currentAnimationMeta.fps.toFixed(2)} 帧/秒` : "-"],
               ["总帧数", Number.isFinite(currentAnimationMeta?.totalFrames) ? Math.floor(currentAnimationMeta.totalFrames) : "-"],
               ["设计尺寸", currentAnimationMeta ? `${currentAnimationMeta.width} x ${currentAnimationMeta.height}` : "-"],
               ["运行时", infoRuntime],
@@ -547,7 +547,7 @@ export default function Playground() {
         <div ref={viewportRef} className={`playground-viewport ${currentBackground === "white" ? "bg-white" : currentBackground === "black" ? "bg-black" : ""}`}>
           <section ref={wasmWrapperRef} className="playground-canvas-wrapper">
             <div className="playground-canvas-head">
-              <div className="playground-canvas-tag">Moon Lottie</div>
+              <div className="playground-canvas-tag">MoonLottie</div>
             </div>
             <div ref={wasmStageRef} className="playground-canvas-stage">
               <canvas ref={canvasRef} />
@@ -555,7 +555,7 @@ export default function Playground() {
           </section>
           <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none" }}>
             <div className="playground-canvas-head">
-              <div className="playground-canvas-tag">Lottie Web</div>
+              <div className="playground-canvas-tag">官方 lottie-web</div>
             </div>
             <div ref={officialStageRef} className="playground-canvas-stage">
               <div ref={officialContainerRef} className="playground-official-container" />

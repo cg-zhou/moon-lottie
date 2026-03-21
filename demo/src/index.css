@@ -107,31 +107,6 @@ main {
   min-width: 240px;
 }
 
-.topbar__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: auto;
-  flex: 0 0 auto;
-}
-
-.lang-switch-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: background-color 0.2s, transform 0.2s;
-  color: var(--muted);
-}
-
-.lang-switch-icon:hover {
-  background-color: var(--primary-soft);
-  transform: scale(1.1);
-  color: var(--text);
-}
-
 .github-corner:hover .octo-arm {
   animation: octocat-wave 560ms ease-in-out;
 }
@@ -217,15 +192,10 @@ main {
     flex-basis: 100%;
     min-width: 0;
   }
-
-  .topbar__actions {
-    margin-left: 0;
-  }
 }
 
 @media (max-width: 560px) {
-  .topbar__inner,
-  .topbar__actions {
+  .topbar__inner {
     gap: 10px;
   }
 
@@ -1410,10 +1380,6 @@ tbody tr:last-child td {
   .topnav {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .topbar__actions {
-    margin-left: 0;
   }
 }
 

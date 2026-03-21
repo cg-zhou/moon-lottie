@@ -60,7 +60,7 @@ export default function MermaidDiagram({ title, chart }) {
       } catch (renderError) {
         if (!cancelled) {
           setSvg('')
-          setError(renderError instanceof Error ? renderError.message : 'Mermaid render failed')
+          setError(renderError instanceof Error ? renderError.message : 'Mermaid 图渲染失败')
         }
       }
     }
@@ -75,11 +75,11 @@ export default function MermaidDiagram({ title, chart }) {
   return (
     <article className="diagram-card">
       <div>
-        <h3>{title}</h3>
+        {title ? <h3>{title}</h3> : null}
         <p className="diagram-card__meta">基于当前代码路径绘制，和现有实现保持一致。</p>
       </div>
       {error ? (
-        <div className="diagram-surface diagram-surface--error">Mermaid 渲染失败：{error}</div>
+        <div className="diagram-surface diagram-surface--error">图表渲染失败：{error}</div>
       ) : (
         <div className="diagram-surface" dangerouslySetInnerHTML={{ __html: svg }} />
       )}
