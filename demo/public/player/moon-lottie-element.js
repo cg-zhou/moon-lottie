@@ -1,4 +1,4 @@
-import { createBrowserPlayer } from './browser-player.js';
+import { createMoonLottieWeb } from './moon-lottie-web.js';
 
 function normalizeSpeed(value) {
     const parsed = Number(value);
@@ -48,7 +48,7 @@ export class MoonLottieElement extends HTMLElement {
     }
 
     _createPlayer() {
-        this._player = createBrowserPlayer({
+        this._player = createMoonLottieWeb({
             container: this._mount,
             path: this.getAttribute('src') || null,
             autoplay: this._autoplay,

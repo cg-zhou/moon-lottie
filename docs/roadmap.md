@@ -53,20 +53,17 @@
 	- `viewport-presenter.js`
 	- `create-player.js`
 	- `canvas-runtime-bridge.js`
-- 主站 Playground 已迁移到 `demo/src/components/PlaygroundWorkbench.jsx`，复用共享的 `createCanvasRuntimeBridge(...)` 与 `createPlayer(...)`。
+- 主站 Playground 已迁移到 `demo/src/components/Playground.jsx`，复用共享的 `createCanvasRuntimeBridge(...)` 与 `createPlayer(...)`。
 - 为多实例场景补上了 Wasm 模块缓存，避免反复从原始字节重复 instantiate 导致内存压力过大。这一点对后续 Web Component、React 多实例和预览卡片都很关键。
 
 #### 已落地的封装层雏形
 - `Web Component` 最小可用版已经落地：`demo/public/player/moon-lottie-element.js`。
-- 浏览器命令式播放器最小可用版已经落地：`demo/public/player/browser-player.js`，使用心智模型对齐 `lottie-web` 的 `loadAnimation(...)`。
-- 两个独立预览页已经补上：
-	- `demo/public/moon-lottie-element-preview.html`
-	- `demo/public/browser-player-preview.html`
+- 浏览器命令式播放器最小可用版已经落地：`demo/public/player/moon-lottie-web.js`，使用心智模型对齐 `lottie-web` 的 `loadAnimation(...)`。
 - React 薄封装第一版已经落地：`demo/src/components/MoonLottiePlayer.jsx`。
 - React 站点里已经接入一个真实预览卡片，用它直接消费 `public/player` 暴露出的 browser player API，而不是重新写一套 React 专用播放器逻辑。
 
 #### 本轮修复过的具体问题
-- `moon-lottie-element-preview.html` 和 `browser-player-preview.html` 都出现过同一个空指针问题：`viewport-presenter.js` 在单实例模式下仍访问了 compare-only DOM 节点的 `style`。
+- 单实例播放器在早期封装阶段出现过同一个空指针问题：`viewport-presenter.js` 在单实例模式下仍访问了 compare-only DOM 节点的 `style`。
 - 上述问题已经修复，当前 `viewport-presenter.js` 能处理 `officialContainer` 为 `null` 的场景。
 - React 薄封装初版接入时，Vite 会在构建期错误解析 `/player/index.js`。
 - 这一点也已经修复：改成运行时动态导入 public 目录入口，而不是让构建器把它当成源码依赖去解析。
@@ -97,7 +94,7 @@
 	- 然后再决定是否把现有实现拆成真正独立发布的包
 - 如果需要快速恢复上下文，可以优先看这几个位置：
 	- `demo/public/player/`
-	- `demo/src/components/PlaygroundWorkbench.jsx`
+	- `demo/src/components/Playground.jsx`
 	- `demo/src/components/MoonLottiePlayer.jsx`
 	- `demo/src/App.jsx`
 

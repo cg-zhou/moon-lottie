@@ -79,7 +79,7 @@ export const hostModules = [
     items: [
       'demo/src/App.jsx: SPA navigation and routing logic',
       'demo/src/supportMatrix.js: Feature compliance metadata',
-      'demo/src/components/PlaygroundWorkbench.jsx: React-native playground host'
+      'demo/src/components/Playground.jsx: React-native playground host'
     ],
   },
 ]

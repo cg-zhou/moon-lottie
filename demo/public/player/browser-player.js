@@ -297,19 +297,48 @@ export function createBrowserPlayer(options = {}) {
         return state;
     }
 
+    async function loadRemoteAnimation(filename) {
+        await ensureReady();
+        const state = await internalPlayer.loadRemoteAnimation(filename);
+        currentState = state;
+        emitter.dispatchEvent('load', { state });
+        return state;
+    }
+
+    async function loadFile(file) {
+        await ensureReady();
+        const state = await internalPlayer.loadFile(file);
+        currentState = state;
+        emitter.dispatchEvent('load', { state });
+        return state;
+    }
+
+    async function switchRuntime(preference) {
+        await ensureReady();
+        const state = await internalPlayer.switchRuntime(preference);
+        currentState = state;
+        return state;
+    }
+
     const player = {
         whenReady: () => ensureReady(),
         loadAnimation: (loadOptions = {}) => loadSource(loadOptions),
         load: (loadOptions = {}) => (typeof loadOptions === 'string'
             ? loadSource({ path: loadOptions, name: loadOptions })
             : loadSource(loadOptions)),
+        loadRemoteAnimation,
+        loadFile,
+        switchRuntime,
         render: () => internalPlayer.render(),
+        seek: (frame) => internalPlayer.seek(frame),
+        toggle: () => internalPlayer.toggle(),
         play: () => internalPlayer.play(),
         pause: () => internalPlayer.pause(),
         stop: () => {
             internalPlayer.stop();
             internalPlayer.render();
         },
+        stepFrame: (delta) => internalPlayer.stepFrame(delta),
         setSpeed: (value) => {
             currentSpeed = normalizeSpeed(value);
             return currentSpeed;
@@ -355,6 +384,10 @@ export function createBrowserPlayer(options = {}) {
         getSubframe: () => internalPlayer.getSubframe(),
         isLoaded: () => Boolean(currentState?.nativePlayer),
         isPaused: () => !internalPlayer.isPlaying(),
+        getRuntime: () => internalPlayer.getRuntime(),
+        getBackend: () => internalPlayer.getBackend(),
+        getPreference: () => internalPlayer.getPreference(),
+        describePreference: (preference) => internalPlayer.describePreference(preference),
         getState: () => currentState,
         getContainer: () => container,
         getCanvas: () => dom.canvas,

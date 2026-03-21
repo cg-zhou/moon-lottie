@@ -5,7 +5,7 @@ import { supportSections, platformColumns, statusSymbols } from "./supportMatrix
 import { architectureDiagram, renderPipelineDiagram } from "./techDesign"
 import { roadmapPhases, aboutCards } from "./constants"
 import MermaidDiagram from "./MermaidDiagram"
-import PlaygroundWorkbench from "./components/PlaygroundWorkbench.jsx"
+import Playground from "./components/Playground.jsx"
 
 function normalizeStatusCell(value) {
   if (typeof value === "string") return { status: value, detail: "" }
@@ -120,7 +120,7 @@ function PlaygroundPage({ t }) {
             不属于 Web Component、Browser Player 或 React Wrapper 的通用交付面。
           </p>
         </article>
-        <PlaygroundWorkbench />
+        <Playground />
       </section>
     </div>
   )

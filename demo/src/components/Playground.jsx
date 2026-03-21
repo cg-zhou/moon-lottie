@@ -51,7 +51,7 @@ function isEditableTarget(target) {
     || target?.isContentEditable
 }
 
-export default function PlaygroundWorkbench() {
+export default function Playground() {
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
   const wasmWrapperRef = useRef(null)
