@@ -597,7 +597,7 @@ export default function Playground() {
         </div>
       </aside>
 
-      <main className="playground-player-shell">
+      <div className="playground-player-shell">
         <div ref={viewportRef} className={`playground-viewport ${currentBackground === "white" ? "bg-white" : currentBackground === "black" ? "bg-black" : ""}`}>
           <section ref={wasmWrapperRef} className="playground-canvas-wrapper">
             <div className="playground-canvas-head">
@@ -637,7 +637,7 @@ export default function Playground() {
           </div>
           <SpeedControls currentSpeed={currentSpeed} setCurrentSpeed={setCurrentSpeed} />
         </footer>
-      </main>
+      </div>
 
       <div className={`playground-drop-overlay ${dropActive ? "is-open" : ""}`} aria-hidden={dropActive ? "false" : "true"}>
         <div className="playground-drop-card">
