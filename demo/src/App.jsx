@@ -287,17 +287,30 @@ function ArchitecturePage() {
 }
 
 export default function App() {
-  const currentPage = getPageFromPath(window.location.pathname, PAGE_IDS)
+  const [currentPage, setCurrentPage] = useState(() => getPageFromPath(window.location.pathname, PAGE_IDS))
   const menuItems = useMemo(() => NAV_ITEMS.map((item) => ({
     key: item.id,
     label: item.label,
   })), [])
 
+  useEffect(() => {
+    const syncCurrentPage = () => {
+      setCurrentPage(getPageFromPath(window.location.pathname, PAGE_IDS))
+    }
+
+    window.addEventListener("popstate", syncCurrentPage)
+
+    return () => {
+      window.removeEventListener("popstate", syncCurrentPage)
+    }
+  }, [])
+
   const navigateTo = (id) => {
     const nextPath = getPathForPage(id)
 
     if (window.location.pathname !== nextPath) {
-      window.location.assign(nextPath)
+      window.history.pushState(null, "", nextPath)
+      setCurrentPage(id)
     }
   }
 
