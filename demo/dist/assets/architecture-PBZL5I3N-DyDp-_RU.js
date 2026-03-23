@@ -1,1 +1,0 @@
-import"./chunk-XZSTWKYB-C2vPCup2.js";import{n as e}from"./chunk-R5LLSJPH-DBi9RP7U.js";export{e as createArchitectureServices};
