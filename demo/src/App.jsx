@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { Button, Card, ConfigProvider, Layout, Menu, Table, Tag, Typography } from "antd"
 import { supportSections, platformColumns } from "./supportMatrix"
 import { architectureDiagram, renderPipelineDiagram } from "./techDesign"

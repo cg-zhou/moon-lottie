@@ -54,7 +54,7 @@ jobs:
           
           # Move build output to temporary location outside git project
           mkdir -p /tmp/demo-dist
-          cp -r demo/dist/* /tmp/demo-dist/
+          cp -a demo/dist/. /tmp/demo-dist/
 
           # Fetch and checkout (or create) demo branch
           git fetch origin demo 2>/dev/null || true
@@ -69,7 +69,7 @@ jobs:
           git rm -rf . 2>/dev/null || true
           
           # Copy from temporary location back to root
-          cp -r /tmp/demo-dist/* .
+          cp -a /tmp/demo-dist/. .
 
           git add .
           git diff --staged --quiet || git commit -m "Deploy demo [skip ci]"
