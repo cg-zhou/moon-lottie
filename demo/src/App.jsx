@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { Button, Card, ConfigProvider, Layout, Menu, Table, Tag, Typography } from "antd"
 import { supportSections, platformColumns } from "./supportMatrix"
-import { architectureDiagram, renderPipelineDiagram } from "./techDesign"
-import MermaidDiagram from "./MermaidDiagram"
 import Playground from "./components/Playground.jsx"
 
 const NAV_ITEMS = [
   { id: "overview", label: "概览" },
   { id: "playground", label: "演示" },
   { id: "features", label: "特性支持" },
-  { id: "architecture", label: "底层架构" },
+  { id: "architecture", label: "架构设计" },
 ]
 
 const PAGE_IDS = new Set(NAV_ITEMS.map((item) => item.id))
@@ -101,6 +99,17 @@ function normalizeStatusCell(value) {
   return value
 }
 
+function getSectionCoverage(section) {
+  const total = section.rows.length
+  const supportedCount = section.rows.reduce((count, row) => {
+    const cell = normalizeStatusCell(row.moon)
+    return count + (cell.status === "supported" ? 1 : 0)
+  }, 0)
+  const coverage = total === 0 ? 0 : Math.round((supportedCount / total) * 100)
+
+  return { total, supportedCount, coverage }
+}
+
 function SectionHeading({ eyebrow, title, subtitle, action = null }) {
   return (
     <div className="section-heading">
@@ -117,19 +126,16 @@ function SectionHeading({ eyebrow, title, subtitle, action = null }) {
 function SupportCell({ value, highlight = false }) {
   const cell = normalizeStatusCell(value)
   const meta = STATUS_META[cell.status] || STATUS_META.unknown
-  const tagColor = highlight
-    ? (cell.status === "supported" ? "blue" : cell.status === "unsupported" ? "red" : "default")
-    : meta.color
 
   return (
-    <div className={`support-status${highlight ? " support-status--highlight" : ""}`}>
-      <Tag color={tagColor} className="support-status__tag">
-        <span className="support-status__tag-inner">
-          <IconifyIcon name={cell.symbol ? "solar:question-circle-bold" : meta.icon} size={14} />
-          <span>{cell.symbol || meta.label}</span>
-        </span>
-      </Tag>
-      {cell.detail ? <span className="support-status__detail">{cell.detail}</span> : null}
+    <div
+      className={`support-status support-status--${cell.status}${highlight ? " support-status--highlight" : ""}`}
+      title={cell.detail ? `${meta.label}：${cell.detail}` : meta.label}
+      aria-label={cell.detail ? `${meta.label}：${cell.detail}` : meta.label}
+    >
+      <span className="support-status__icon">
+        <IconifyIcon name={meta.icon} size={16} />
+      </span>
     </div>
   )
 }
@@ -220,8 +226,15 @@ function FeaturesPage() {
       dataIndex: column.key,
       key: column.key,
       align: "center",
-      width: 160,
+      width: column.highlight ? 108 : 92,
       className: column.highlight ? "support-col support-col--moon" : "support-col",
+      onCell: (record) => {
+        if (!column.highlight) return {}
+        const cell = normalizeStatusCell(record[column.key])
+        return {
+          className: `support-cell support-cell--moon support-cell--${cell.status}`,
+        }
+      },
       render: (value) => <SupportCell value={value} highlight={column.highlight} />,
     })),
   ], [])
@@ -229,32 +242,37 @@ function FeaturesPage() {
   return (
     <div className="page-stack">
       <section className="section-block">
-        <SectionHeading eyebrow="兼容性" title="特性支持矩阵" subtitle="本表遵循 Airbnb 官方 Supported Features 标准，对比 7 个主流平台与 MoonLottie 实现的特性支持情况。" />
+        <SectionHeading eyebrow="支持情况" title="特性支持" subtitle="基于 Airbnb 官方特性支持表，整理 MoonLottie 当前的支持情况。" />
         <Typography.Paragraph className="support-note">
-            数据同步自 Airbnb 官方 Lottie 规范 v24+。{" "}
+            参考{" "}
             <a className="inline-link" href="https://lottie.airbnb.tech/#/supported-features" target="_blank" rel="noreferrer">
-              查看官方原表
+              Airbnb 官方 Supported Features
             </a>
+            。
         </Typography.Paragraph>
 
         <div className="matrix-sections">
-          {supportSections.map((section) => (
-            <Card
-              key={section.id}
-              className="support-table-card"
-              title={section.title}
-              extra={<Tag color="blue">{section.rows.length} 项</Tag>}
-            >
-              <Table
-                rowKey="feature"
-                columns={columns}
-                dataSource={section.rows}
-                pagination={false}
-                size="small"
-                scroll={{ x: 1320 }}
-              />
-            </Card>
-          ))}
+          {supportSections.map((section) => {
+            const { total, supportedCount, coverage } = getSectionCoverage(section)
+
+            return (
+              <Card
+                key={section.id}
+                className="support-table-card"
+                title={section.title}
+                extra={<Tag color="green">支持 {supportedCount}/{total} 项 · {coverage}%</Tag>}
+              >
+                <Table
+                  rowKey="feature"
+                  columns={columns}
+                  dataSource={section.rows}
+                  pagination={false}
+                  size="small"
+                  scroll={{ x: 980 }}
+                />
+              </Card>
+            )
+          })}
         </div>
       </section>
     </div>
@@ -265,22 +283,12 @@ function ArchitecturePage() {
   return (
     <div className="page-stack">
       <section className="section-block">
-        <SectionHeading eyebrow="底层架构" title="底层技术设计" subtitle="解析、求值与渲染逻辑完全解耦，编译为紧凑的 Wasm 指令流。" />
+        <SectionHeading eyebrow="架构设计" title="架构设计" subtitle="TODO：补充核心模块拆分、运行时边界与渲染链路说明。" />
         <Card className="intro-card">
           <Typography.Paragraph>
-            MoonLottie 采用 <MoonBitLink /> 开发，利用其零开销抽象和卓越的运行时性能。架构上我们通过 Wasm 内存共享技术最小化了 JS 与核心引擎间的交互开销。
+            TODO：补充架构设计说明。
           </Typography.Paragraph>
         </Card>
-        <div className="diagram-stack">
-          <Card className="diagram-panel" title="核心系统架构">
-            <MermaidDiagram chart={architectureDiagram} />
-            <Typography.Paragraph className="diagram-caption"><MoonBitLink /> Wasm 内核与 JS 宿主环境的交互概览。</Typography.Paragraph>
-          </Card>
-          <Card className="diagram-panel" title="渲染流水线">
-            <MermaidDiagram chart={renderPipelineDiagram} />
-            <Typography.Paragraph className="diagram-caption">从 Lottie JSON 到引擎渲染，最终输出到 Canvas 帧的完整数据流。</Typography.Paragraph>
-          </Card>
-        </div>
       </section>
     </div>
   )
@@ -352,14 +360,14 @@ export default function App() {
         <Layout.Footer className="site-footer">
           <div className="site-footer__inner">
             <Typography.Text>
-              {new Date().getFullYear()} ©{" "}
+              {new Date().getFullYear()}{" © "}
               <a href="https://cg-zhou.top/" target="_blank" rel="noreferrer" className="inline-link inline-link--strong">
                 cg-zhou
               </a>
             </Typography.Text>
             <span className="footer-divider">·</span>
             <Typography.Text>
-              技术驱动：
+              {"Powered by "}
               <a href="https://www.moonbitlang.cn/" target="_blank" rel="noreferrer" className="inline-link inline-link--strong">
                 MoonBit
               </a>

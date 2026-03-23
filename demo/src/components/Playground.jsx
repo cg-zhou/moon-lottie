@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Button, Descriptions, Empty, Input, InputNumber, Tag } from "antd"
+import { Button, Descriptions, Empty, Input, Radio, Switch, Tag } from "antd"
 import { animationUsesExpressions, getAnimationPlaybackMeta } from "../../public/render_mode.js"
 import { setExpressionHost } from "../../public/expression_host.js"
 import { resizeCanvasForDpr } from "../../public/canvas_dpr.js"
@@ -10,12 +10,6 @@ import {
   createViewportPresenter,
   loadSampleIndex,
 } from "../../public/player/index.js"
-
-function normalizeSpeed(value, fallback = 1) {
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return fallback
-  return Math.min(4, Math.max(0.1, Math.round(parsed * 10) / 10))
-}
 
 function formatFileSize(size) {
   if (!Number.isFinite(size) || size <= 0) return "-"
@@ -59,11 +53,16 @@ function IconifyIcon({ name, size = 18 }) {
 const PlaybackTransport = React.memo(function PlaybackTransport({ controllerRef, isPlaying, onStepAnimation }) {
   return (
     <div className="playground-control-cluster">
-      <Button className="playground-track-btn" type="default" title="上一个动画" onClick={() => onStepAnimation(-1)} aria-label="上一个动画" icon={<IconifyIcon name="solar:rewind-back-bold" size={16} />} />
-      <Button className="playground-frame-btn" type="default" title="上一帧" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧" icon={<IconifyIcon name="solar:alt-arrow-left-bold" size={16} />} />
-      <Button className="playground-primary-play-btn" type="primary" shape="circle" title={isPlaying ? "暂停" : "播放"} onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停" icon={<IconifyIcon name={isPlaying ? "solar:pause-bold" : "solar:play-bold"} size={18} />} />
-      <Button className="playground-frame-btn" type="default" title="下一帧" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧" icon={<IconifyIcon name="solar:alt-arrow-right-bold" size={16} />} />
-      <Button className="playground-track-btn" type="default" title="下一个动画" onClick={() => onStepAnimation(1)} aria-label="下一个动画" icon={<IconifyIcon name="solar:rewind-forward-bold" size={16} />} />
+      <Button className="playground-transport-btn" type="default" title="上一个动画" onClick={() => onStepAnimation(-1)} aria-label="上一个动画" icon={<IconifyIcon name="solar:rewind-back-bold" size={16} />}>
+      </Button>
+      <Button className="playground-transport-btn" type="default" title="上一帧" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧" icon={<IconifyIcon name="solar:alt-arrow-left-bold" size={16} />}>
+      </Button>
+      <Button className="playground-primary-play-btn" type="default" title={isPlaying ? "暂停" : "播放"} onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停" icon={<IconifyIcon name={isPlaying ? "solar:pause-bold" : "solar:play-bold"} size={18} />}>
+      </Button>
+      <Button className="playground-transport-btn" type="default" title="下一帧" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧" icon={<IconifyIcon name="solar:alt-arrow-right-bold" size={16} />}>
+      </Button>
+      <Button className="playground-transport-btn" type="default" title="下一个动画" onClick={() => onStepAnimation(1)} aria-label="下一个动画" icon={<IconifyIcon name="solar:rewind-forward-bold" size={16} />}>
+      </Button>
     </div>
   )
 })
@@ -71,32 +70,34 @@ const PlaybackTransport = React.memo(function PlaybackTransport({ controllerRef,
 const SpeedControls = React.memo(function SpeedControls({ currentSpeed, setCurrentSpeed }) {
   return (
     <div className="playground-control-cluster">
-      <div className="playground-toolbar-segment" aria-label="播放速度">
-        {[0.5, 1, 2].map((speed) => (
-          <Button
-            key={speed}
-            className={`playground-speed-btn ${Math.abs(currentSpeed - speed) < 0.01 ? "is-active" : ""}`}
-            type={Math.abs(currentSpeed - speed) < 0.01 ? "primary" : "default"}
-            onClick={() => setCurrentSpeed(speed)}
-          >
-            {speed.toFixed(1)}x
-          </Button>
+      <Radio.Group className="playground-speed-group" value={currentSpeed} buttonStyle="solid" onChange={(event) => setCurrentSpeed(event.target.value)}>
+        {[0.5, 1, 1.5, 2].map((speed) => (
+          <Radio.Button key={speed} value={speed} className="playground-speed-radio">
+            {speed}x
+          </Radio.Button>
         ))}
-        <div className="playground-divider" />
-        <InputNumber
-          className="playground-speed-input"
-          min={0.1}
-          max={4}
-          step={0.1}
-          value={Number(currentSpeed.toFixed(1))}
-          onChange={(value) => {
-            if (typeof value === "number") {
-              setCurrentSpeed(normalizeSpeed(value, currentSpeed))
-            }
-          }}
-          title="自定义速度"
-        />
-      </div>
+      </Radio.Group>
+    </div>
+  )
+})
+
+const BackgroundSelector = React.memo(function BackgroundSelector({ currentBackground, setCurrentBackground }) {
+  return (
+    <div className="playground-toolbar-picker">
+      <Radio.Group className="playground-bg-group" value={currentBackground} buttonStyle="solid" onChange={(event) => setCurrentBackground(event.target.value)}>
+        {[
+          ["white", "白色", "playground-bg-swatch--white"],
+          ["grid", "网格", "playground-bg-swatch--grid"],
+          ["black", "黑色", "playground-bg-swatch--black"],
+        ].map(([value, label, swatchClass]) => (
+          <Radio.Button key={value} value={value} className="playground-bg-radio">
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              <span className={`playground-bg-swatch ${swatchClass}`} aria-hidden="true" />
+              <span>{label}</span>
+            </span>
+          </Radio.Button>
+        ))}
+      </Radio.Group>
     </div>
   )
 })
@@ -139,8 +140,7 @@ export default function Playground() {
   const [dropActive, setDropActive] = useState(false)
   const [compareEnabled, setCompareEnabled] = useState(true)
   const [currentSpeed, setCurrentSpeed] = useState(1)
-  const [currentBackground, setCurrentBackground] = useState("grid")
-  const [runtimePreference, setRuntimePreference] = useState("auto")
+  const [currentBackground, setCurrentBackground] = useState("white")
   const [runtimeBackend, setRuntimeBackend] = useState("uninitialized")
   const [statusMessage, setStatusMessage] = useState("初始化 MoonLottie 运行时...")
   const [currentFileName, setCurrentFileName] = useState("")
@@ -198,20 +198,6 @@ export default function Playground() {
     const preferred = entries.find((entry) => entry.file === lastSelected) || entries[0]
     if (preferred) {
       await loadRemoteAnimation(preferred.file)
-    }
-  }
-
-  async function switchRuntime(preference) {
-    if (!controllerRef.current) return
-    try {
-      updateStatus(`切换运行时到 ${controllerRef.current.describePreference(preference)}...`)
-      const state = await controllerRef.current.switchRuntime(preference)
-      syncPlayerState(state)
-      setRuntimePreference(controllerRef.current.getPreference())
-      setRuntimeBackend(controllerRef.current.getBackend())
-      updateStatus(controllerRef.current.getBackend() === "wasm" ? "当前使用 Wasm 后端" : "当前使用 JS 后端", "#34c759")
-    } catch (error) {
-      updateStatus(`运行时切换失败: ${error.message}`, "#ff3b30")
     }
   }
 
@@ -347,7 +333,6 @@ export default function Playground() {
           window.moonLottie = runtime
           window.moonLottieBackend = backend
           setRuntimeBackend(backend)
-          setRuntimePreference(controllerRef.current?.getPreference() || "auto")
         },
         onStateChange: (state) => {
           syncPlayerState(state)
@@ -365,11 +350,10 @@ export default function Playground() {
         const state = await controllerRef.current.initialize()
         if (disposed) return
         syncPlayerState(state)
-        setRuntimePreference(controllerRef.current.getPreference())
         setRuntimeBackend(controllerRef.current.getBackend())
         updateStatus(controllerRef.current.getBackend() === "wasm"
-          ? `已就绪，请打开 Lottie JSON (${controllerRef.current.describePreference(controllerRef.current.getPreference())})`
-          : `已就绪，当前使用 JS 兼容后端 (${controllerRef.current.describePreference(controllerRef.current.getPreference())})`, "#34c759")
+          ? "已就绪，当前使用 Wasm 后端"
+          : "已就绪，当前使用 JS 兼容后端", "#34c759")
         await initAnimationList()
       } catch (error) {
         if (!disposed) {
@@ -512,37 +496,11 @@ export default function Playground() {
           </div>
         </div>
         <div className="playground-toolbar-group playground-toolbar-group--right">
-          <div className="playground-toolbar-segment" aria-label="背景切换">
-            {[
-              ["grid", "playground-bg-btn--grid", "网格背景", "solar:widget-5-bold"],
-              ["white", "playground-bg-btn--white", "白色背景", "solar:square-bold"],
-              ["black", "playground-bg-btn--black", "黑色背景", "solar:square-bold-duotone"],
-            ].map(([bg, className, title, icon]) => (
-              <Button
-                key={bg}
-                className={`playground-bg-btn ${className} ${currentBackground === bg ? "is-active" : ""}`}
-                type={currentBackground === bg ? "primary" : "default"}
-                title={title}
-                onClick={() => setCurrentBackground(bg)}
-                icon={<IconifyIcon name={icon} size={14} />}
-              />
-            ))}
-          </div>
-          <Button className={`playground-toggle-btn ${compareEnabled ? "is-active" : ""}`} type={compareEnabled ? "primary" : "default"} onClick={() => updateCompareMode(!compareEnabled)} icon={<IconifyIcon name="solar:code-scan-bold" size={16} />}>
-            对比
-          </Button>
-          <div className="playground-toolbar-segment" aria-label="运行时选择">
-            {["auto", "wasm", "js"].map((runtime) => (
-              <Button
-                key={runtime}
-                className={`playground-runtime-btn ${runtimePreference === runtime ? "is-active" : ""}`}
-                type={runtimePreference === runtime ? "primary" : "default"}
-                onClick={() => switchRuntime(runtime)}
-              >
-                {runtime === "auto" ? "自动" : runtime === "wasm" ? "Wasm" : "JS"}
-              </Button>
-            ))}
-          </div>
+          <BackgroundSelector currentBackground={currentBackground} setCurrentBackground={setCurrentBackground} />
+          <label className="playground-toolbar-switch" aria-label="对比模式">
+            <span className="playground-toolbar-switch__label">对比</span>
+            <Switch checked={compareEnabled} onChange={updateCompareMode} />
+          </label>
           <Button className={`playground-toggle-btn ${detailsOpen ? "is-active" : ""}`} type={detailsOpen ? "primary" : "default"} onClick={() => setDetailsOpen((value) => !value)} icon={<IconifyIcon name="solar:info-circle-bold" size={16} />}>
             详情
           </Button>
@@ -577,7 +535,6 @@ export default function Playground() {
             </Button>
           ))}
         </div>
-        <div className="playground-drawer-footer">也可以直接点击顶部“打开”，或将本地 JSON 文件拖到页面任意区域。</div>
       </aside>
 
       <div className={`playground-backdrop ${detailsOpen ? "is-open" : ""}`} onClick={() => setDetailsOpen(false)} />
