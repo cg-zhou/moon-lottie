@@ -110,19 +110,6 @@ function getSectionCoverage(section) {
   return { total, supportedCount, coverage }
 }
 
-function SectionHeading({ eyebrow, title, subtitle, action = null }) {
-  return (
-    <div className="section-heading">
-      <div>
-        <p className="section-kicker">{eyebrow}</p>
-        <Typography.Title level={2}>{title}</Typography.Title>
-        {subtitle ? <Typography.Paragraph>{subtitle}</Typography.Paragraph> : null}
-      </div>
-      {action}
-    </div>
-  )
-}
-
 function SupportCell({ value, highlight = false }) {
   const cell = normalizeStatusCell(value)
   const meta = STATUS_META[cell.status] || STATUS_META.unknown
@@ -189,7 +176,11 @@ function OverviewPage({ onNavigate }) {
       </div>
 
       <section className="section-block">
-        <SectionHeading eyebrow="快速开始" title="接入方式" subtitle="保持最短路径接入，先跑起来，再逐步扩展能力。" />
+        <div className="section-heading">
+          <div>
+            <Typography.Title level={2}>快速开始</Typography.Title>
+          </div>
+        </div>
         <div className="quickstart-grid">
           {QUICK_START_STEPS.map((step) => <QuickStartCard key={step.title} step={step} />)}
         </div>
@@ -198,12 +189,16 @@ function OverviewPage({ onNavigate }) {
   )
 }
 
-function PlaygroundPage() {
+function PlaygroundPage({ active = true }) {
   return (
     <div className="page-stack">
       <section className="section-block">
-        <SectionHeading eyebrow="在线演示" title="在线演示" subtitle="直观感受 MoonLottie 引擎的渲染，并支持与官方 lottie-web 进行对比。" />
-        <Playground />
+        <div className="section-heading">
+          <div>
+            <Typography.Paragraph>直接对比 MoonLottie 与官方 lottie-web 的渲染表现。</Typography.Paragraph>
+          </div>
+        </div>
+        <Playground active={active} />
       </section>
     </div>
   )
@@ -242,7 +237,11 @@ function FeaturesPage() {
   return (
     <div className="page-stack">
       <section className="section-block">
-        <SectionHeading eyebrow="支持情况" title="特性支持" subtitle="基于 Airbnb 官方特性支持表，整理 MoonLottie 当前的支持情况。" />
+        <div className="section-heading">
+          <div>
+            <Typography.Paragraph>基于 Airbnb 官方特性支持表，整理 MoonLottie 当前的支持情况。</Typography.Paragraph>
+          </div>
+        </div>
         <Typography.Paragraph className="support-note">
             参考{" "}
             <a className="inline-link" href="https://lottie.airbnb.tech/#/supported-features" target="_blank" rel="noreferrer">
@@ -283,7 +282,11 @@ function ArchitecturePage() {
   return (
     <div className="page-stack">
       <section className="section-block">
-        <SectionHeading eyebrow="架构设计" title="架构设计" subtitle="TODO：补充核心模块拆分、运行时边界与渲染链路说明。" />
+        <div className="section-heading">
+          <div>
+            <Typography.Paragraph>核心模块拆分、运行时边界与渲染链路说明正在整理中。</Typography.Paragraph>
+          </div>
+        </div>
         <Card className="intro-card">
           <Typography.Paragraph>
             TODO：补充架构设计说明。
@@ -296,10 +299,17 @@ function ArchitecturePage() {
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState(() => getPageFromPath(window.location.pathname, PAGE_IDS))
+  const [hasVisitedPlayground, setHasVisitedPlayground] = useState(() => getPageFromPath(window.location.pathname, PAGE_IDS) === "playground")
   const menuItems = useMemo(() => NAV_ITEMS.map((item) => ({
     key: item.id,
     label: item.label,
   })), [])
+
+  useEffect(() => {
+    if (currentPage === "playground") {
+      setHasVisitedPlayground(true)
+    }
+  }, [currentPage])
 
   useEffect(() => {
     const syncCurrentPage = () => {
@@ -321,11 +331,6 @@ export default function App() {
       setCurrentPage(id)
     }
   }
-
-  let content = <OverviewPage onNavigate={navigateTo} />
-  if (currentPage === "playground") content = <PlaygroundPage />
-  else if (currentPage === "features") content = <FeaturesPage />
-  else if (currentPage === "architecture") content = <ArchitecturePage />
 
   return (
     <ConfigProvider theme={THEME_CONFIG}>
@@ -354,7 +359,16 @@ export default function App() {
         </Layout.Header>
 
         <Layout.Content className="site-content" tabIndex="-1">
-          <div className="view-shell">{content}</div>
+          <div className="view-shell">
+            {currentPage === "overview" ? <OverviewPage onNavigate={navigateTo} /> : null}
+            {hasVisitedPlayground ? (
+              <div hidden={currentPage !== "playground"} aria-hidden={currentPage !== "playground"}>
+                <PlaygroundPage active={currentPage === "playground"} />
+              </div>
+            ) : null}
+            {currentPage === "features" ? <FeaturesPage /> : null}
+            {currentPage === "architecture" ? <ArchitecturePage /> : null}
+          </div>
         </Layout.Content>
 
         <Layout.Footer className="site-footer">

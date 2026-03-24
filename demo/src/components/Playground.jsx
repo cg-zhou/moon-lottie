@@ -109,7 +109,7 @@ const BackgroundSelector = React.memo(function BackgroundSelector({ currentBackg
   )
 })
 
-export default function Playground() {
+export default function Playground({ active = true }) {
   const workbenchRef = useRef(null)
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
@@ -140,6 +140,7 @@ export default function Playground() {
   })
   const compareEnabledRef = useRef(true)
   const currentSpeedRef = useRef(1)
+  const resumePlaybackOnActivateRef = useRef(false)
 
   const [sampleEntries, setSampleEntries] = useState([])
   const [playlistQuery, setPlaylistQuery] = useState("")
@@ -479,6 +480,23 @@ export default function Playground() {
     scheduleViewportRefresh()
     renderCurrentFrame()
   }, [compareEnabled])
+
+  useEffect(() => {
+    if (!controllerRef.current || !currentAnimationData) return
+
+    if (active) {
+      scheduleViewportRefresh()
+      renderCurrentFrame()
+      if (resumePlaybackOnActivateRef.current) {
+        controllerRef.current.play()
+        resumePlaybackOnActivateRef.current = false
+      }
+      return
+    }
+
+    resumePlaybackOnActivateRef.current = controllerRef.current.isPlaying()
+    controllerRef.current.pause()
+  }, [active, currentAnimationData])
 
   const filteredSamples = useMemo(() => {
     const query = playlistQuery.trim().toLowerCase()

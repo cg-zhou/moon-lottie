@@ -1,3 +1,9 @@
+const BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
+
+function resolveDemoAssetPath(path) {
+    return new URL(path.replace(/^\//, ''), window.location.origin + BASE_PATH).toString();
+}
+
 export function cloneAnimationData(animationData) {
     if (typeof structuredClone !== 'undefined') {
         return structuredClone(animationData);
@@ -12,7 +18,7 @@ export function cloneAnimationData(animationData) {
 }
 
 export async function loadSampleIndex() {
-    const response = await fetch('sample_index.json');
+    const response = await fetch(resolveDemoAssetPath('sample_index.json'), { cache: 'no-store' });
     if (!response.ok) {
         throw new Error(`Failed to load sample index: ${response.status}`);
     }
@@ -27,7 +33,7 @@ export async function loadSampleIndex() {
 
 export async function loadRemoteAnimationSource(filename) {
     const encodedName = encodeURIComponent(filename);
-    const path = `samples/${encodedName}`;
+    const path = resolveDemoAssetPath(`samples/${encodedName}`);
     console.log(`[MoonLottie] Fetching animation from: ${path}`);
 
     return loadAnimationSourceFromUrl(path, {
