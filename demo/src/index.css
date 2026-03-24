@@ -211,6 +211,10 @@ main {
 
 .playground-workbench {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  aspect-ratio: var(--playground-page-aspect, 16 / 9);
   border: 1px solid rgba(229, 231, 235, 0.88);
   border-radius: 20px;
   overflow: hidden;
@@ -223,6 +227,7 @@ main {
 }
 
 .playground-top-toolbar {
+  flex: 0 0 auto;
   min-height: 60px;
   display: flex;
   align-items: center;
@@ -250,6 +255,11 @@ main {
 .playground-toolbar-group--right {
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.playground-bg-radio__content {
+  display: inline-flex;
+  align-items: center;
 }
 
 .playground-icon-btn,
@@ -544,9 +554,9 @@ main {
 
 .playground-player-shell {
   display: flex;
+  flex: 1 1 auto;
   min-height: 0;
   flex-direction: column;
-  height: calc(100% - 60px);
 }
 
 .playground-viewport {
@@ -636,9 +646,11 @@ main {
 }
 
 .playground-control-bar {
+  flex: 0 0 auto;
   min-height: 60px;
   display: grid;
   grid-template-columns: auto 1fr auto;
+  grid-template-areas: "transport progress speed";
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
@@ -652,6 +664,19 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.playground-control-bar > .playground-control-cluster:first-child {
+  grid-area: transport;
+}
+
+.playground-progress-wrap {
+  grid-area: progress;
+}
+
+.playground-control-bar > .playground-control-cluster:last-child {
+  grid-area: speed;
+  justify-content: flex-end;
 }
 
 .playground-primary-play-btn {
@@ -762,10 +787,6 @@ main {
 
   .playground-progress-wrap {
     order: -1;
-  }
-
-  .playground-viewport {
-    flex-direction: column;
   }
 }
 
@@ -1372,12 +1393,14 @@ tbody tr:last-child td {
   min-height: 76px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "brand nav actions";
   align-items: center;
   gap: 16px;
   padding: 14px 0;
 }
 
 .brand-button.ant-btn {
+  grid-area: brand;
   height: auto;
   padding: 8px 12px;
   border-radius: 999px;
@@ -1420,6 +1443,7 @@ tbody tr:last-child td {
 }
 
 .site-nav.ant-menu {
+  grid-area: nav;
   min-width: 0;
   border-bottom: 0;
   background: transparent;
@@ -1456,6 +1480,7 @@ tbody tr:last-child td {
 }
 
 .site-header__actions {
+  grid-area: actions;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1938,10 +1963,15 @@ tbody tr:last-child td {
   color: currentColor;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 920px) {
   .site-header__inner {
-    grid-template-columns: 1fr;
-    align-items: flex-start;
+    min-height: auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand . actions"
+      "nav nav nav";
+    align-items: center;
+    row-gap: 10px;
   }
 
   .site-nav.ant-menu-horizontal {
@@ -1949,7 +1979,43 @@ tbody tr:last-child td {
   }
 
   .site-header__actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 720px) {
+  .site-header__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "nav actions";
+    align-items: center;
+  }
+
+  .brand-button.ant-btn {
+    display: none;
+  }
+
+  .site-nav.ant-menu-horizontal {
     justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .site-nav.ant-menu-horizontal::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-header__actions {
+    justify-content: flex-end;
+  }
+
+  .site-header__github.ant-btn {
+    min-width: 42px;
+    padding-inline: 0;
+  }
+
+  .site-header__github.ant-btn > span:not(.ant-btn-icon) {
+    display: none;
   }
 }
 
@@ -1971,6 +2037,113 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 640px) {
+  .site-header__inner {
+    gap: 10px 12px;
+    padding: 12px 0;
+  }
+
+  .brand-button.ant-btn {
+    padding: 6px 10px;
+  }
+
+  .site-nav.ant-menu .ant-menu-item {
+    margin-inline: 8px;
+    padding-inline: 0;
+  }
+
+  .site-header__actions .ant-btn {
+    padding-inline: 14px;
+  }
+
+  .playground-workbench {
+    border-radius: 16px;
+  }
+
+  .playground-top-toolbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .playground-top-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .playground-toolbar-group {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .playground-toolbar-group--right,
+  .playground-toolbar-group--grow {
+    width: auto;
+  }
+
+  .playground-action-btn,
+  .playground-toggle-btn {
+    min-width: 36px;
+    padding-inline: 0;
+  }
+
+  .playground-action-btn > span:not(.ant-btn-icon),
+  .playground-toggle-btn > span:not(.ant-btn-icon) {
+    display: none;
+  }
+
+  .playground-current-file {
+    display: none;
+  }
+
+  .playground-toolbar-switch {
+    gap: 6px;
+  }
+
+  .playground-toolbar-switch__label,
+  .playground-bg-radio__label {
+    display: none;
+  }
+
+  .playground-bg-radio.ant-radio-button-wrapper,
+  .playground-speed-radio.ant-radio-button-wrapper {
+    min-width: 34px;
+    justify-content: center;
+    padding-inline: 8px;
+  }
+
+  .playground-bg-swatch {
+    margin-right: 0;
+  }
+
+  .playground-control-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "transport speed"
+      "progress progress";
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .playground-control-bar > .playground-control-cluster:first-child {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+  }
+
+  .playground-control-bar > .playground-control-cluster:last-child {
+    justify-content: flex-end;
+  }
+
+  .playground-progress-wrap {
+    order: 0;
+    min-width: 0;
+  }
+
+  .playground-frame-info {
+    min-width: 92px;
+    font-size: 12px;
+  }
+
   .hero-card .ant-card-body {
     padding: 24px !important;
   }
@@ -2080,5 +2253,84 @@ tbody tr:last-child td {
 
   .moon-lottie-react-player {
     min-height: 270px;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header__inner,
+  .site-footer__inner,
+  .view-shell {
+    width: min(100% - 20px, 1200px);
+  }
+
+  .brand-button__label {
+    font-size: 0.95rem;
+  }
+
+  .site-nav.ant-menu-horizontal {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .site-nav.ant-menu-horizontal::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-nav.ant-menu .ant-menu-item {
+    margin-inline: 6px;
+    font-size: 0.95rem;
+  }
+
+  .playground-top-toolbar {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .playground-icon-btn,
+  .playground-action-btn,
+  .playground-toggle-btn,
+  .playground-transport-btn,
+  .playground-primary-play-btn {
+    min-height: 34px;
+  }
+
+  .playground-icon-btn,
+  .playground-action-btn,
+  .playground-toggle-btn,
+  .playground-transport-btn {
+    width: 34px;
+    min-width: 34px;
+  }
+
+  .playground-primary-play-btn {
+    min-width: 34px;
+    padding-inline: 0;
+  }
+
+  .playground-control-cluster,
+  .playground-progress-wrap {
+    gap: 8px;
+  }
+
+  .playground-speed-group.ant-radio-group,
+  .playground-bg-group.ant-radio-group {
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .playground-speed-radio.ant-radio-button-wrapper {
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 11px;
+  }
+
+  .site-header__github.ant-btn {
+    min-width: 42px;
+    padding-inline: 0;
+  }
+
+  .site-header__github.ant-btn > span:not(.ant-btn-icon) {
+    display: none;
   }
 }

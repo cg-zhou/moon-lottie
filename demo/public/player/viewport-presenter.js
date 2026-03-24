@@ -11,7 +11,7 @@ function getWrapperChromeHeight(wrapper) {
     if (!wrapper) {
         return 0;
     }
-    const head = wrapper.querySelector('.canvas-head');
+    const head = wrapper.querySelector('.playground-canvas-head');
     const wrapperStyle = window.getComputedStyle(wrapper);
     const gap = parsePixelValue(wrapperStyle.rowGap || wrapperStyle.gap);
     return Math.ceil((head?.offsetHeight || 0) + gap);
@@ -43,6 +43,31 @@ function applyWrapperLayout(wrapper, stage, width, height) {
     wrapper.style.height = `${Math.max(0, chromeHeight + height)}px`;
     stage.style.width = `${Math.max(0, width)}px`;
     stage.style.height = `${Math.max(0, height)}px`;
+}
+
+function fitStageWithinSlot(slotWidth, slotHeight, chromeHeight, aspectRatio) {
+    return fitStage(slotWidth, Math.max(0, slotHeight - chromeHeight), aspectRatio);
+}
+
+function evaluateViewportLayout({
+    direction,
+    availableWidth,
+    availableHeight,
+    gap,
+    chromeHeight,
+    aspectRatio,
+}) {
+    const slotWidth = direction === 'row'
+        ? Math.max(0, (availableWidth - gap) / 2)
+        : availableWidth;
+    const slotHeight = direction === 'column'
+        ? Math.max(0, (availableHeight - gap) / 2)
+        : availableHeight;
+
+    return {
+        direction,
+        stageSize: fitStageWithinSlot(slotWidth, slotHeight, chromeHeight, aspectRatio),
+    };
 }
 
 function resetWrapperLayout(wrapper, stage) {
@@ -93,41 +118,45 @@ export function createViewportPresenter(options = {}) {
         const officialChrome = compareActive ? getWrapperChromeHeight(officialWrapper) : 0;
         const chromeHeight = Math.max(wasmChrome, officialChrome);
 
-        let direction = 'row';
-        let stageSize = fitStage(availableWidth, availableHeight - chromeHeight, aspectRatio);
+        let layout = {
+            direction: 'row',
+            stageSize: fitStageWithinSlot(availableWidth, availableHeight, wasmChrome, aspectRatio),
+        };
 
         if (compareActive) {
-            const rowStage = fitStage(
-                (availableWidth - gap) / 2,
-                availableHeight - chromeHeight,
-                aspectRatio,
-            );
-            const columnStage = fitStage(
+            const rowLayout = evaluateViewportLayout({
+                direction: 'row',
                 availableWidth,
-                (availableHeight - gap) / 2 - chromeHeight,
+                availableHeight,
+                gap,
+                chromeHeight,
                 aspectRatio,
-            );
+            });
+            const columnLayout = evaluateViewportLayout({
+                direction: 'column',
+                availableWidth,
+                availableHeight,
+                gap,
+                chromeHeight,
+                aspectRatio,
+            });
 
-            if (columnStage.area > rowStage.area) {
-                direction = 'column';
-                stageSize = columnStage;
-            } else {
-                direction = 'row';
-                stageSize = rowStage;
-            }
+            layout = columnLayout.stageSize.area > rowLayout.stageSize.area ? columnLayout : rowLayout;
         }
 
-        viewport.style.flexDirection = direction;
+        viewport.style.flexDirection = layout.direction;
+        viewport.dataset.layout = layout.direction;
+        viewport.dataset.compare = compareActive ? 'true' : 'false';
 
-        applyWrapperLayout(wasmWrapper, wasmStage, stageSize.width, stageSize.height);
-        canvas.style.width = `${Math.max(0, stageSize.width)}px`;
-        canvas.style.height = `${Math.max(0, stageSize.height)}px`;
+        applyWrapperLayout(wasmWrapper, wasmStage, layout.stageSize.width, layout.stageSize.height);
+        canvas.style.width = `${Math.max(0, layout.stageSize.width)}px`;
+        canvas.style.height = `${Math.max(0, layout.stageSize.height)}px`;
 
         if (compareActive) {
-            applyWrapperLayout(officialWrapper, officialStage, stageSize.width, stageSize.height);
+            applyWrapperLayout(officialWrapper, officialStage, layout.stageSize.width, layout.stageSize.height);
             if (officialContainer) {
-                officialContainer.style.width = `${Math.max(0, stageSize.width)}px`;
-                officialContainer.style.height = `${Math.max(0, stageSize.height)}px`;
+                officialContainer.style.width = `${Math.max(0, layout.stageSize.width)}px`;
+                officialContainer.style.height = `${Math.max(0, layout.stageSize.height)}px`;
             }
         } else {
             resetWrapperLayout(officialWrapper, officialStage);
@@ -137,7 +166,7 @@ export function createViewportPresenter(options = {}) {
             }
         }
 
-        return stageSize;
+        return layout.stageSize;
     }
 
     function updateViewportTransform(meta) {

@@ -346,7 +346,7 @@ export default function App() {
             />
 
             <div className="site-header__actions">
-              <Button href="https://github.com/cg-zhou/moon-lottie" target="_blank" rel="noreferrer" icon={<IconifyIcon name="mdi:github" size={18} />}>
+              <Button className="site-header__github" href="https://github.com/cg-zhou/moon-lottie" target="_blank" rel="noreferrer" icon={<IconifyIcon name="mdi:github" size={18} />}>
                 GitHub
               </Button>
             </div>

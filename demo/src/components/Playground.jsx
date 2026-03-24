@@ -11,6 +11,13 @@ import {
   loadSampleIndex,
 } from "../../public/player/index.js"
 
+function readPageAspectRatio() {
+  const viewport = window.visualViewport
+  const width = viewport?.width || window.innerWidth || 1
+  const height = viewport?.height || window.innerHeight || 1
+  return width > 0 && height > 0 ? width / height : 16 / 9
+}
+
 function formatFileSize(size) {
   if (!Number.isFinite(size) || size <= 0) return "-"
   return `${(size / 1024).toFixed(2)} KB`
@@ -91,9 +98,9 @@ const BackgroundSelector = React.memo(function BackgroundSelector({ currentBackg
           ["black", "黑色", "playground-bg-swatch--black"],
         ].map(([value, label, swatchClass]) => (
           <Radio.Button key={value} value={value} className="playground-bg-radio">
-            <span style={{ display: "inline-flex", alignItems: "center" }}>
+            <span className="playground-bg-radio__content">
               <span className={`playground-bg-swatch ${swatchClass}`} aria-hidden="true" />
-              <span>{label}</span>
+              <span className="playground-bg-radio__label">{label}</span>
             </span>
           </Radio.Button>
         ))}
@@ -103,6 +110,7 @@ const BackgroundSelector = React.memo(function BackgroundSelector({ currentBackg
 })
 
 export default function Playground() {
+  const workbenchRef = useRef(null)
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
   const wasmWrapperRef = useRef(null)
@@ -152,6 +160,7 @@ export default function Playground() {
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [statusColor, setStatusColor] = useState("#c7cdd8")
+  const [pageAspectRatio, setPageAspectRatio] = useState(() => readPageAspectRatio())
 
   compareEnabledRef.current = compareEnabled
   currentSpeedRef.current = currentSpeed
@@ -253,6 +262,28 @@ export default function Playground() {
       loadRemoteAnimation(nextEntry.file)
     }
   }, [currentFileName, sampleEntries])
+
+  useEffect(() => {
+    function updatePageAspectRatio() {
+      setPageAspectRatio((previousRatio) => {
+        const nextRatio = readPageAspectRatio()
+        return Math.abs(previousRatio - nextRatio) < 0.001 ? previousRatio : nextRatio
+      })
+    }
+
+    const visualViewport = window.visualViewport
+    window.addEventListener("resize", updatePageAspectRatio)
+    visualViewport?.addEventListener("resize", updatePageAspectRatio)
+
+    return () => {
+      window.removeEventListener("resize", updatePageAspectRatio)
+      visualViewport?.removeEventListener("resize", updatePageAspectRatio)
+    }
+  }, [])
+
+  useEffect(() => {
+    scheduleViewportRefresh()
+  }, [pageAspectRatio])
 
   useEffect(() => {
     let disposed = false
@@ -476,7 +507,11 @@ export default function Playground() {
   ]
 
   return (
-    <div className={`playground-workbench${playlistOpen || detailsOpen ? " playground-workbench--overlay-open" : ""}`}>
+    <div
+      ref={workbenchRef}
+      className={`playground-workbench${playlistOpen || detailsOpen ? " playground-workbench--overlay-open" : ""}`}
+      style={{ "--playground-page-aspect": `${pageAspectRatio}` }}
+    >
       <header className="playground-top-toolbar">
         <div className="playground-toolbar-group playground-toolbar-group--grow">
           <Button className="playground-icon-btn" type="default" title="打开播放列表" onClick={() => setPlaylistOpen(true)} aria-label="打开播放列表" icon={<IconifyIcon name="solar:hamburger-menu-bold" size={16} />} />
