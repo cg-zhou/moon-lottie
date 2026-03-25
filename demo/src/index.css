@@ -1417,6 +1417,12 @@ tbody tr:last-child td {
   color: var(--text) !important;
 }
 
+.brand-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
 .brand-mark {
   width: 34px;
   height: 34px;

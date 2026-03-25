@@ -338,7 +338,7 @@ export default function App() {
         <Layout.Header className="site-header">
           <div className="site-header__inner">
             <Button type="text" className="brand-button" onClick={() => navigateTo("overview")}>
-              <span className="brand-mark brand-mark--minimal" />
+              <img src="/logo.svg" alt="Moon Lottie Logo" className="brand-logo" />
               <span className="brand-button__label">MoonLottie</span>
             </Button>
 
