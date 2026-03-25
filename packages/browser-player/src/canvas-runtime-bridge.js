@@ -383,7 +383,7 @@ export function createCanvasRuntimeBridge(options = {}) {
     async function loadJsRuntime() {
         installJsRuntimeGlobals();
         const moduleUrl = new URL(jsRuntimePath, import.meta.url);
-        return import(moduleUrl.href);
+        return import(/* @vite-ignore */ moduleUrl.href);
     }
 
     function renderFrame(runtime, nativePlayer, frame) {

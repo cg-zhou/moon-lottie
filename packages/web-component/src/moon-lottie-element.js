@@ -1,4 +1,4 @@
-import { createMoonLottieWeb } from './moon-lottie-web.js';
+import { createMoonLottieWeb } from '@moon-lottie/browser-player';
 
 function normalizeSpeed(value) {
     const parsed = Number(value);

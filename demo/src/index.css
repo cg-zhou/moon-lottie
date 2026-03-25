@@ -2266,19 +2266,19 @@ tbody tr:last-child td {
   .playground-toggle-btn,
   .playground-transport-btn,
   .playground-primary-play-btn {
-    min-height: 34px;
+    min-height: 30px;
   }
 
   .playground-icon-btn,
   .playground-action-btn,
   .playground-toggle-btn,
   .playground-transport-btn {
-    width: 34px;
-    min-width: 34px;
+    width: 30px;
+    min-width: 30px;
   }
 
   .playground-primary-play-btn {
-    min-width: 34px;
+    min-width: 32px;
     padding-inline: 0;
   }
 

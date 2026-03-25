@@ -22,4 +22,3 @@ export {
 	createBrowserPlayer,
 	loadAnimation,
 } from './moon-lottie-web.js';
-export { MoonLottieElement, defineMoonLottieElement } from './moon-lottie-element.js';

@@ -1,1 +1,1 @@
-export { MoonLottieElement, defineMoonLottieElement } from '@moon-lottie/browser-player';
+export { MoonLottieElement, defineMoonLottieElement } from './moon-lottie-element.js';
