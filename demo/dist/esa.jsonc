@@ -1,7 +1,0 @@
-{
-  "name": "moon-lottie",
-  "assets": {
-    "directory": "./",
-    "notFoundStrategy": "singlePageApplication"
-  }
-}
