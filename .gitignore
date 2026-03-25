@@ -9,7 +9,6 @@ target/
 _build/
 node_modules
 demo/node_modules
-/package-lock.json
 
 # Toolchain
 .moonc/
