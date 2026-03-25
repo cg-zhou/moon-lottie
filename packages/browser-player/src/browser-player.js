@@ -1,6 +1,6 @@
 import { createEventEmitter } from './event-emitter.js';
-import { animationUsesExpressions, getAnimationPlaybackMeta } from '../render_mode.js';
-import { resizeCanvasForDpr } from '../canvas_dpr.js';
+import { animationUsesExpressions, getAnimationPlaybackMeta } from './render_mode.js';
+import { resizeCanvasForDpr } from './canvas_dpr.js';
 import { createCanvasRuntimeBridge } from './canvas-runtime-bridge.js';
 import { createOfficialPlayerController } from './official-player.js';
 import { createPlayer } from './create-player.js';
@@ -143,6 +143,8 @@ export function createBrowserPlayer(options = {}) {
         renderer = 'canvas',
         rendererSettings = {},
         initialSegment = null,
+        wasmPath,
+        jsRuntimePath,
         onError = () => {},
     } = options;
 
@@ -198,6 +200,8 @@ export function createBrowserPlayer(options = {}) {
         getExpressionAnimationData: () => currentState?.currentExpressionAnimationData || null,
         getExpressionMeta: () => currentState?.currentExpressionMeta || null,
         getCanvasContext: () => ctx,
+        wasmPath,
+        jsRuntimePath,
     });
 
     const internalPlayer = createPlayer({

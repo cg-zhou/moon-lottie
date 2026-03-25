@@ -103,6 +103,9 @@ jobs:
             git rm -rf . 2>/dev/null || true
           fi
 
+          git rm -rf . 2>/dev/null || true
+          git clean -fdx
+
           mkdir -p badges
           cp /tmp/badges_output/*.json badges/
 

@@ -1,0 +1,13 @@
+{
+  "name": "moon-lottie-workspace",
+  "private": true,
+  "workspaces": [
+    "demo",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:moon:js": "moon build --target js",
+    "build:demo": "npm --workspace demo run build",
+    "dev:demo": "npm --workspace demo run dev"
+  }
+}

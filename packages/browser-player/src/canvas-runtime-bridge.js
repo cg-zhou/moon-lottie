@@ -1,6 +1,6 @@
-import { createExpressionModule, setExpressionHost } from '../expression_host.js';
-import { clearActiveCanvas, cloneActiveCanvas } from '../canvas_matte.js';
-import { rasterizeMaskPath } from '../canvas_mask_expansion.js';
+import { createExpressionModule, setExpressionHost } from './expression_host.js';
+import { clearActiveCanvas, cloneActiveCanvas } from './canvas_matte.js';
+import { rasterizeMaskPath } from './canvas_mask_expansion.js';
 
 const wasmRuntimeModuleCache = new Map();
 

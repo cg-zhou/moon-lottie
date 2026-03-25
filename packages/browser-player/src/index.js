@@ -1,5 +1,8 @@
 export { createPlaybackController } from './playback-controller.js';
 export { createRuntimeManager } from './runtime-manager.js';
+export { animationUsesExpressions, getAnimationPlaybackMeta, getPreferredRendererMode } from './render_mode.js';
+export { setExpressionHost, createExpressionModule } from './expression_host.js';
+export { resizeCanvasForDpr, getCanvasPixelSize, normalizeDevicePixelRatio, applyDprTransform } from './canvas_dpr.js';
 export {
 	cloneAnimationData,
 	loadAnimationSourceFromUrl,

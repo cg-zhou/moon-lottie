@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button, Descriptions, Empty, Input, Radio, Switch, Tag } from "antd"
-import { animationUsesExpressions, getAnimationPlaybackMeta } from "../../public/render_mode.js"
-import { setExpressionHost } from "../../public/expression_host.js"
-import { resizeCanvasForDpr } from "../../public/canvas_dpr.js"
 import {
+  animationUsesExpressions,
   createCanvasRuntimeBridge,
   createOfficialPlayerController,
   createPlayer,
   createViewportPresenter,
+  getAnimationPlaybackMeta,
   loadSampleIndex,
-} from "../../public/player/index.js"
+  resizeCanvasForDpr,
+  setExpressionHost,
+} from "@moon-lottie/browser-player"
 
 function readPageAspectRatio() {
   const viewport = window.visualViewport

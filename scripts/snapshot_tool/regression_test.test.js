@@ -2,7 +2,12 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { parseCaseConfig } = require('./regression_test');
+
+function importRepoModule(repoRoot, ...segments) {
+  return import(pathToFileURL(path.join(repoRoot, ...segments)).href);
+}
 
 test('parseCaseConfig parses file and frames', () => {
   const input = [
@@ -34,15 +39,15 @@ test('parseCaseConfig parses explicit similarity thresholds', () => {
 
 test('demo uses vendored lottie-web asset', () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const html = fs.readFileSync(path.join(repoRoot, 'demo', 'index.html'), 'utf8');
+  const playgroundSource = fs.readFileSync(path.join(repoRoot, 'demo', 'src', 'components', 'Playground.jsx'), 'utf8');
 
-  assert.match(html, /<script src="\.\/lottie\.min\.js"><\/script>/);
-  assert.ok(fs.existsSync(path.join(repoRoot, 'demo', 'lottie.min.js')));
+  assert.match(playgroundSource, /lottie\.min\.js/);
+  assert.ok(fs.existsSync(path.join(repoRoot, 'demo', 'public', 'lottie.min.js')));
 });
 
 test('expression detection finds string-valued expression fields', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'render_mode.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'render_mode.js');
 
   assert.equal(helper.animationUsesExpressions({
     ks: {
@@ -57,7 +62,7 @@ test('expression detection finds string-valued expression fields', async () => {
 
 test('expression helper computes playback metadata from animation root', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'render_mode.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'render_mode.js');
 
   const meta = helper.getAnimationPlaybackMeta({
     v: '5.12.2',
@@ -82,7 +87,7 @@ test('expression helper computes playback metadata from animation root', async (
 
 test('canvas DPR helper scales backing store dimensions', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_dpr.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_dpr.js');
   const canvas = { width: 0, height: 0 };
 
   assert.deepEqual(helper.getCanvasPixelSize(80, 100, 2), {
@@ -114,7 +119,7 @@ test('canvas DPR helper scales backing store dimensions', async () => {
 
 test('canvas DPR helper applies scaled transform matrices', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_dpr.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_dpr.js');
 
   let lastTransform = null;
   helper.applyDprTransform({
@@ -128,7 +133,7 @@ test('canvas DPR helper applies scaled transform matrices', async () => {
 
 test('canvas matte helper clones and clears the active offscreen canvas', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_matte.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_matte.js');
 
   const rootCanvas = { id: 'root', width: 640, height: 480 };
   const offscreenCanvas = { id: 'offscreen', width: 320, height: 240 };
@@ -184,7 +189,7 @@ test('canvas matte helper clones and clears the active offscreen canvas', async 
 
 test('canvas matte helper falls back to the root canvas when ctx has no canvas', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_matte.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_matte.js');
 
   const rootCanvas = { id: 'root', width: 640, height: 480 };
   let clonedSource = null;
@@ -208,7 +213,7 @@ test('canvas matte helper falls back to the root canvas when ctx has no canvas',
 
 test('canvas mask expansion helper dilates alpha neighborhoods', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_mask_expansion.js');
 
   const source = new Uint8ClampedArray(3 * 3 * 4);
   source[(1 * 3 + 1) * 4 + 3] = 255;
@@ -226,7 +231,7 @@ test('canvas mask expansion helper dilates alpha neighborhoods', async () => {
 
 test('canvas mask expansion helper erodes alpha neighborhoods', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_mask_expansion.js');
 
   const source = new Uint8ClampedArray(3 * 3 * 4);
   for (let i = 0; i < source.length; i += 4) {
@@ -247,7 +252,7 @@ test('canvas mask expansion helper erodes alpha neighborhoods', async () => {
 
 test('canvas mask expansion helper keeps a 1px source stroke before negative erosion', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_mask_expansion.js');
 
   const imageData = { data: new Uint8ClampedArray(4 * 4 * 4) };
   const strokeWidths = [];
@@ -278,7 +283,7 @@ test('canvas mask expansion helper keeps a 1px source stroke before negative ero
 
 test('canvas mask expansion helper uses 2x width for positive expansion strokes', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const helper = await import(path.join(repoRoot, 'demo', 'canvas_mask_expansion.js'));
+  const helper = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'canvas_mask_expansion.js');
 
   const strokeWidths = [];
   const pathCtx = {
@@ -308,7 +313,7 @@ test('canvas mask expansion helper uses 2x width for positive expansion strokes'
 
 test('default expression host evaluates scalar expressions with layer effects context', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 60,
@@ -353,7 +358,7 @@ test('default expression host evaluates scalar expressions with layer effects co
 
 test('default expression host evaluates vector expressions', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const host = hostModule.createDefaultExpressionHost({
     getAnimationData: () => ({ fr: 30, layers: [{ ind: 2 }] }),
@@ -367,7 +372,7 @@ test('default expression host evaluates vector expressions', async () => {
 
 test('default expression host supports createPath-style path mutations', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const host = hostModule.createDefaultExpressionHost({
     getAnimationData: () => ({ fr: 30, layers: [{ ind: 15 }] }),
@@ -392,7 +397,7 @@ test('default expression host supports createPath-style path mutations', async (
 
 test('default expression host resolves thisComp.layer and thisLayer.effect lookups', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 60,
@@ -441,7 +446,7 @@ test('default expression host resolves thisComp.layer and thisLayer.effect looku
 
 test('default expression host resolves maskPath access through thisComp.layer', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 30,
@@ -480,7 +485,7 @@ test('default expression host resolves maskPath access through thisComp.layer', 
 
 test('default expression host matches lottie-web velocityAtTime sampling at key boundaries', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 30,
@@ -512,7 +517,7 @@ test('default expression host matches lottie-web velocityAtTime sampling at key 
 
 test('default expression host matches lottie-web pointOnPath and tangentOnPath geometry', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 30,
@@ -603,7 +608,7 @@ test('default expression host matches lottie-web pointOnPath and tangentOnPath g
 
 test('default expression host matches lottie-web path sampling for expression-mutated wire paths', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
   const animationData = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'samples', '3_1_lights(expr).json'), 'utf8'),
   );
@@ -638,7 +643,7 @@ test('default expression host matches lottie-web path sampling for expression-mu
 
 test('default expression host resolves content path lookup and toComp projection', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 60,
@@ -695,7 +700,7 @@ test('default expression host resolves content path lookup and toComp projection
 
 test('default expression host resolves layer control effects and fromCompToSurface in path expressions', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const animationData = {
     fr: 60,
@@ -750,7 +755,7 @@ test('default expression host resolves layer control effects and fromCompToSurfa
 
 test('default expression host exposes bare loopOut helper with cycle semantics', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const expression = "var $bm_rt; $bm_rt = loopOut('cycle');";
   const animationData = {
@@ -781,7 +786,7 @@ test('default expression host exposes bare loopOut helper with cycle semantics',
 
 test('default expression host supports loopOut offset and pingpong modes', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const offsetExpression = "var $bm_rt; $bm_rt = loopOut('offset');";
   const pingPongExpression = "var $bm_rt; $bm_rt = loopOut('pingpong');";
@@ -823,7 +828,7 @@ test('default expression host supports loopOut offset and pingpong modes', async
 
 test('default expression host supports loopIn hold mode', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const expression = "var $bm_rt; $bm_rt = loopIn('hold');";
   const animationData = {
@@ -854,7 +859,7 @@ test('default expression host supports loopIn hold mode', async () => {
 
 test('default expression host resolves thisComp.layer within the current precomp scope', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const barLookupExpression = "var $bm_rt; var barLayer, barPath; barLayer = thisComp.layer('bar'); barPath = barLayer.content('Path 1').path.points(); $bm_rt = barLayer.toComp(barPath[1]);";
   const traceNullExpression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').effect('Trace Path')('Progress');";
@@ -942,7 +947,7 @@ test('default expression host resolves thisComp.layer within the current precomp
 
 test('default expression host does not fall back to a wrong comp when expression context is missing', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
   const matchedExpression = "var $bm_rt; $bm_rt = thisLayer.name === 'inner-layer' ? 1 : -1;";
 
   const animationData = {
@@ -978,7 +983,7 @@ test('default expression host does not fall back to a wrong comp when expression
 
 test('default expression host uses explicit comp scope for nested thisComp.layer effect lookups', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const expression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').effect('Trace Path')('Progress');";
   const animationData = {
@@ -1023,7 +1028,7 @@ test('default expression host uses explicit comp scope for nested thisComp.layer
 
 test('default expression host exposes evaluated transform.position for referenced layers', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const expression = "var $bm_rt; $bm_rt = thisComp.layer('traceNull').transform.position;";
   const traceExpression = "var $bm_rt; $bm_rt = [11, 22, 0];";
@@ -1060,7 +1065,7 @@ test('default expression host exposes evaluated transform.position for reference
 
 test('default expression host resolves toComp parent matrices inside current precomp scope', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const expression = "var $bm_rt; $bm_rt = thisComp.layer('child').toComp([0, 0, 0]);";
   const animationData = {
@@ -1112,7 +1117,7 @@ test('default expression host resolves toComp parent matrices inside current pre
 
 test('velocityAtTime returns pixels per second matching lottie-web units', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   // Layer position goes from y=0 to y=60 over 60 frames (at 60fps = 1 second).
   // Velocity just before frame 60 should be ~60 px/s, NOT ~1 px/frame.
@@ -1167,7 +1172,7 @@ test('velocityAtTime returns pixels per second matching lottie-web units', async
 
 test('shape path expression is evaluated when accessed from another layer', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   // Wire layer has a path expression that shifts all vertices by +100 in y.
   const wirePathExpression = `var $bm_rt;
@@ -1233,7 +1238,7 @@ test('shape path expression is evaluated when accessed from another layer', asyn
 
 test('toComp uses expression-evaluated position when accessing another layer', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   // The null layer has a position expression that overrides to [500, 400].
   const nullPosExpression = "var $bm_rt; $bm_rt = [500, 400, 0];";
@@ -1306,7 +1311,7 @@ test('default expression host evaluates loopOut expression on effect parameter (
   // The Progress slider has a loopOut('cycle') expression that must cycle the value
   // beyond the last keyframe instead of clamping.
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   // Minimal reproduction of the ripple's traceNull layer:
   //   - layer ind=1 is a null layer with a "Trace Path" effect
@@ -1384,7 +1389,7 @@ test('default expression host evaluates loopOut expression on effect parameter (
 
 test('default expression host preserves keyframe easing for effect parameters with array tangents', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const hostModule = await import(path.join(repoRoot, 'demo', 'expression_host.js'));
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
 
   const solveCubicBezierEasing = (x1, y1, x2, y2, targetX) => {
     if (targetX <= 0) return 0;
@@ -1447,3 +1452,4 @@ test('default expression host preserves keyframe easing for effect parameters wi
   assert.ok(Math.abs(at84 - 60) > 3, `Expected frame 84 to be eased, not linear 60, got ${at84}`);
   assert.ok(Math.abs(at114 - 10) > 3, `Expected frame 114 to be eased, not linear 10, got ${at114}`);
 });
+

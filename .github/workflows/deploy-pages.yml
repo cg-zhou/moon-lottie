@@ -65,8 +65,9 @@ jobs:
             git rm -rf .
           fi
 
-          # Clean everything in the branch
+          # Clean tracked and untracked files from the source branch build.
           git rm -rf . 2>/dev/null || true
+          git clean -fdx
           
           # Copy from temporary location back to root
           cp -a /tmp/demo-dist/. .
