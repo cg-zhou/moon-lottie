@@ -80,11 +80,13 @@ fn main {
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 fn get_json_from_js() -> String {
   js_get_json_string()
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
   try {
     @runtime.install_expression_handlers(
@@ -105,6 +107,7 @@ pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn update_player_with_speed(
   player : @renderer.Player[@renderer.CanvasRenderer],
   frame : Double,
@@ -118,6 +121,7 @@ pub fn update_player_with_speed(
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn get_frame_count(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> Double {
@@ -125,21 +129,25 @@ pub fn get_frame_count(
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn get_width(player : @renderer.Player[@renderer.CanvasRenderer]) -> Int {
   player.animation.width
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn get_height(player : @renderer.Player[@renderer.CanvasRenderer]) -> Int {
   player.animation.height
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn get_fps(player : @renderer.Player[@renderer.CanvasRenderer]) -> Double {
   player.animation.frame_rate
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn get_version(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> String {
@@ -147,6 +155,7 @@ pub fn get_version(
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn update_player(
   player : @renderer.Player[@renderer.CanvasRenderer],
   frame : Double,
@@ -157,6 +166,7 @@ pub fn update_player(
 }
 
 ///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn get_in_point(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> Double {
