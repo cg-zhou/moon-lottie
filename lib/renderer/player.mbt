@@ -2621,8 +2621,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           let sw = self.evaluate_double(
             sw_prop, self.current_comp_frame,
           )
-          char_stroke_width =
-            char_stroke_width + mult * (sw - char_stroke_width)
+          char_stroke_width = char_stroke_width + mult * sw
         }
         None => ()
       }
@@ -2667,6 +2666,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     } else {
       char_stroke_width
     }
+    let stroke_opacity = 1.0
 
     // Find and render glyph
     for g in glyphs {
@@ -2711,7 +2711,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           stroke_r,
           stroke_g,
           stroke_b,
-          fill_opacity,
+          stroke_opacity,
           stroke_width,
           doc.stroke_over_fill,
         )
