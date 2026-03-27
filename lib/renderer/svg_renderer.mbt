@@ -21,7 +21,7 @@ pub struct SvgRenderer {
   ]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
-  mut gradient_count : Int
+  mut def_count : Int
   mut group_depth : Int
   mut current_fill_rule : String
   mut current_line_cap : String
@@ -41,7 +41,7 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
     state_stack: [],
     current_matrix: @math.Matrix::identity(),
     path_buffer: StringBuilder::new(),
-    gradient_count: 0,
+    def_count: 0,
     group_depth: 0,
     current_fill_rule: "nonzero",
     current_line_cap: "butt",
@@ -98,6 +98,9 @@ fn escape_xml(value : String) -> String {
 
 ///|
 fn matrix_to_attr(matrix : @math.Matrix) -> String {
+  // SVG uses matrix(a b c d e f) for 2D affine transforms. We recover those six
+  // coefficients by sampling the transformed origin and unit basis vectors from
+  // the current MoonBit matrix and converting them back into SVG's matrix form.
   let origin = matrix.transform_point(0.0, 0.0)
   let x_axis = matrix.transform_point(1.0, 0.0)
   let y_axis = matrix.transform_point(0.0, 1.0)
@@ -140,8 +143,8 @@ fn stroke_attrs(renderer : SvgRenderer) -> String {
 
 ///|
 fn next_def_id(renderer : SvgRenderer, prefix : String) -> String {
-  let id = "\{prefix}_\{renderer.gradient_count}"
-  renderer.gradient_count = renderer.gradient_count + 1
+  let id = "\{prefix}_\{renderer.def_count}"
+  renderer.def_count = renderer.def_count + 1
   id
 }
 
