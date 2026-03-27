@@ -1118,7 +1118,9 @@ test "text animator stroke width adds onto document stroke width" {
   }
   let epsilon = 0.000001
   if stroke_width < 2.0 - epsilon || stroke_width > 2.0 + epsilon {
-    fail("Expected glyph stroke width to be 2.0 (base 1 + animator contribution 1), got \{stroke_width}")
+    fail(
+      "Expected glyph stroke width to be 2.0 (base 1 + half of the animator's width 2.0), got \{stroke_width}",
+    )
   }
 }
 
