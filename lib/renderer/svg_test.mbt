@@ -24,10 +24,9 @@ test "SvgRenderer basic" {
   assert_true(output.contains("M10"), "Output should contain move to 10")
   assert_true(output.contains("L90"), "Output should contain line to 90")
   assert_true(output.contains("Z"), "Output should contain close path")
-  assert_false(
-    output.contains("<rect"),
-    "Transparent SVG export should not inject a background rect",
-  )
+  if output.contains("<rect") {
+    fail("Transparent SVG export should not inject a background rect")
+  }
 }
 
 ///|
