@@ -1,14 +1,14 @@
 {
   "name": "cg-zhou/moon-lottie",
   "version": "0.1.0",
-  "preferred-target": "wasm-gc",
-  "readme": "README.mbt.md",
-  "repository": "https://github.com/cg-zhou/moon-lottie",
-  "license": "MIT",
   "deps": {
     "cg-zhou/bezier-easing": "0.2.0",
     "moonbitlang/x": "0.4.41"
   },
+  "readme": "README.mbt.md",
+  "repository": "https://github.com/cg-zhou/moon-lottie",
+  "license": "MIT",
   "keywords": [],
-  "description": "MoonBit 原生高性能 Lottie 动画引擎 | High-performance Lottie animation engine in native MoonBit"
+  "description": "MoonBit 原生高性能 Lottie 动画引擎 | High-performance Lottie animation engine in native MoonBit",
+  "preferred-target": "wasm-gc"
 }
