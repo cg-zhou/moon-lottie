@@ -18976,7 +18976,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, transform, frame) {
   return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with__context(transform, frame, self.current_layer_index, self.current_comp_id);
 }
-function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(c) {
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(c) {
   return c >= 48 && c <= 57 ? c - 48 | 0 : c >= 97 && c <= 102 ? (c - 97 | 0) + 10 | 0 : c >= 65 && c <= 70 ? (c - 65 | 0) + 10 | 0 : 0;
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__color(hex) {
@@ -18993,17 +18993,17 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__color(hex) {
     return _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32parse__hex__color_2etuple_2f5212;
   }
   $bound_check(hex, 1);
-  const _tmp$2 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(hex.charCodeAt(1)), 16) | 0;
+  const _tmp$2 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(1)), 16) | 0;
   $bound_check(hex, 2);
-  const r = _tmp$2 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(hex.charCodeAt(2)) | 0;
+  const r = _tmp$2 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(2)) | 0;
   $bound_check(hex, 3);
-  const _tmp$3 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(hex.charCodeAt(3)), 16) | 0;
+  const _tmp$3 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(3)), 16) | 0;
   $bound_check(hex, 4);
-  const g = _tmp$3 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(hex.charCodeAt(4)) | 0;
+  const g = _tmp$3 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(4)) | 0;
   $bound_check(hex, 5);
-  const _tmp$4 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(hex.charCodeAt(5)), 16) | 0;
+  const _tmp$4 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(5)), 16) | 0;
   $bound_check(hex, 6);
-  const b = _tmp$4 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1055(hex.charCodeAt(6)) | 0;
+  const b = _tmp$4 + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(6)) | 0;
   return { _0: r, _1: g, _2: b };
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer26resolve__image__asset__src(asset) {
@@ -20914,7 +20914,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26render__text__with
             const _Some = _bind$9;
             const _sw_prop = _Some;
             const sw = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, _sw_prop, self.current_comp_frame);
-            char_stroke_width = char_stroke_width + mult * (sw - char_stroke_width);
+            char_stroke_width = char_stroke_width + mult * sw;
           }
           const _bind$10 = anim.properties.opacity;
           if (_bind$10 === undefined) {
@@ -20982,7 +20982,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26render__text__with
             _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
             _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape__pathsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, g.shapes);
             _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
-            _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27render__text__glyph__paintsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, fill_r, fill_g, fill_b, fill_opacity, stroke_r, stroke_g, stroke_b, fill_opacity, stroke_width, doc.stroke_over_fill);
+            _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27render__text__glyph__paintsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, fill_r, fill_g, fill_b, fill_opacity, stroke_r, stroke_g, stroke_b, 1, stroke_width, doc.stroke_over_fill);
             self.current_paths = saved_paths;
             _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
             break;
