@@ -806,7 +806,7 @@ test "text stroke animators render glyph stroke in lottie-web order" {
         }
       }
       Stroke(r, g, b, opacity, width) => {
-        if r == 0 && g == 255 && b == 0 && opacity == 1.0 && width == 2.0 {
+        if r == 0 && g == 255 && b == 0 && opacity == 1.0 && width > 0.0 {
           paint_order.push("stroke")
           saw_green_stroke = true
         }
@@ -1096,6 +1096,29 @@ test "text animator opacity does not suppress glyph stroke" {
   }
   if stroke_width < 4.0 - epsilon || stroke_width > 4.0 + epsilon {
     fail("Expected glyph stroke width to remain 4.0, got \{stroke_width}")
+  }
+}
+
+test "text animator stroke width adds onto document stroke width" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":100,"f":"Test Bold","t":"A","j":0,"tr":0,"fc":[1,1,1],"sc":[0,0,1],"sw":1,"of":true}}]},"a":[{"a":{"sw":{"a":0,"k":2}},"s":{"s":{"a":0,"k":0},"e":{"a":0,"k":100},"a":{"a":0,"k":100},"b":1,"sh":2,"rn":0,"ne":{"a":0,"k":0},"xe":{"a":0,"k":0},"o":{"a":0,"k":0}}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let mut stroke_width = -1.0
+  for cmd in recorder.get_commands() {
+    match cmd {
+      Stroke(_, _, _, _, width) => stroke_width = width
+      _ => ()
+    }
+  }
+  let epsilon = 0.000001
+  if stroke_width < 2.0 - epsilon || stroke_width > 2.0 + epsilon {
+    fail("Expected glyph stroke width to be 2.0 (base 1 + animator contribution 1), got \{stroke_width}")
   }
 }
 

@@ -2621,8 +2621,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           let sw = self.evaluate_double(
             sw_prop, self.current_comp_frame,
           )
-          char_stroke_width =
-            char_stroke_width + mult * (sw - char_stroke_width)
+          char_stroke_width = char_stroke_width + mult * sw
         }
         None => ()
       }
