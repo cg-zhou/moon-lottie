@@ -48,6 +48,9 @@ struct TextDocumentJson {
   line_height : Double?
   baseline_shift : Double?
   fill_color : Array[Double]?
+  stroke_color : Array[Double]?
+  stroke_width : Double?
+  stroke_over_fill : Bool?
 } derive(
   FromJson(
     fields(
@@ -59,6 +62,9 @@ struct TextDocumentJson {
       line_height(rename="lh"),
       baseline_shift(rename="ls"),
       fill_color(rename="fc"),
+      stroke_color(rename="sc"),
+      stroke_width(rename="sw"),
+      stroke_over_fill(rename="of"),
     ),
   ),
 )
@@ -573,6 +579,8 @@ struct TextAnimatorPropertiesJson {
   opacity : Json?
   tracking : Json?
   fill_color : Json?
+  stroke_color : Json?
+  stroke_width : Json?
 } derive(
   FromJson(
     fields(
@@ -582,6 +590,8 @@ struct TextAnimatorPropertiesJson {
       opacity(rename="o"),
       tracking(rename="t"),
       fill_color(rename="fc"),
+      stroke_color(rename="sc"),
+      stroke_width(rename="sw"),
     ),
   ),
 )
@@ -661,7 +671,7 @@ let known_keys : Array[String] = [
   "v", "fr", "ip", "op", "w", "h", "nm", "ddd", "assets", "layers", "fonts", "chars",
   "ty", "ks", "p", "a", "k", "s", "e", "o", "r", "sk", "sa", "x", "y", "z",
   "d", "st", "bm", "ind", "cl", "ln", "tg", "sr", "parent", "sh", "sw", "sc", "lc", "lj", "ml",
-  "shapes", "it", "c", "g", "t", "hd", "v", "fc", "fill-rule", "gr", "tr", "p", "s", "r", "o",
+  "shapes", "it", "c", "g", "t", "hd", "v", "fc", "of", "fill-rule", "gr", "tr", "p", "s", "r", "o",
   "expressions", "markers", "metadata", "masks", "inv", "pt", "mode", "px", "py", "pz", "i", "h", "to",
   "ti", "n",
 ]
@@ -1098,6 +1108,9 @@ fn parse_text_document(json : Json) -> @model.TextDocument raise LottieError {
     line_height: decoded.line_height.unwrap_or(0.0),
     baseline_shift: decoded.baseline_shift.unwrap_or(0.0),
     fill_color: decoded.fill_color.unwrap_or([0.0, 0.0, 0.0]),
+    stroke_color: decoded.stroke_color.unwrap_or([0.0, 0.0, 0.0]),
+    stroke_width: decoded.stroke_width.unwrap_or(0.0),
+    stroke_over_fill: decoded.stroke_over_fill.unwrap_or(false),
   }
 }
 
@@ -1234,7 +1247,26 @@ fn parse_text_animator_properties(
   } catch {
     _ => None
   }
-  { scale, position, rotation, opacity, tracking, fill_color }
+  let stroke_color = try {
+    Some(parse_property_vec(decoded.stroke_color))
+  } catch {
+    _ => None
+  }
+  let stroke_width = try {
+    Some(parse_property_double(decoded.stroke_width))
+  } catch {
+    _ => None
+  }
+  {
+    scale,
+    position,
+    rotation,
+    opacity,
+    tracking,
+    fill_color,
+    stroke_color,
+    stroke_width,
+  }
 }
 
 ///|
@@ -1266,6 +1298,8 @@ fn parse_text_data_from_decoded(
                     opacity: None,
                     tracking: None,
                     fill_color: None,
+                    stroke_color: None,
+                    stroke_width: None,
                   }
                 }
               None => {
@@ -1275,6 +1309,8 @@ fn parse_text_data_from_decoded(
                 opacity: None,
                 tracking: None,
                 fill_color: None,
+                stroke_color: None,
+                stroke_width: None,
               }
             }
             animators.push({ selector, properties })

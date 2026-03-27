@@ -346,6 +346,51 @@ test "parse_animated_text_document_property" {
 }
 
 ///|
+test "parse_text_stroke_document_and_animator_properties" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"A\",\"fc\":[0,0,0],\"sc\":[1,0,0],\"sw\":3,\"of\":true}}]},\"a\":[{\"a\":{\"sc\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0,1,0],\"e\":[0,0,1]},{\"t\":10}]},\"sw\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[1],\"e\":[4]},{\"t\":10}]}},\"s\":{}}]}}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse text stroke properties: \{e}")
+  }
+  match ani.layers[0].data {
+    @model.LayerData::Text(text_data) => {
+      match text_data.text.value {
+        @model.PropertyValue::Static(doc) => {
+          inspect(doc.stroke_color, content="[1, 0, 0]")
+          inspect(doc.stroke_width, content="3")
+          inspect(doc.stroke_over_fill, content="true")
+        }
+        _ => fail("text document should be static")
+      }
+      match text_data.animators[0].properties.stroke_color {
+        Some(stroke_color) =>
+          match stroke_color.value {
+            @model.PropertyValue::Animated(keyframes) => {
+              inspect(keyframes.length(), content="2")
+              inspect(keyframes[0].start_value, content="[0, 1, 0]")
+            }
+            _ => fail("text animator stroke color should be animated")
+          }
+        None => fail("text animator stroke color should be parsed")
+      }
+      match text_data.animators[0].properties.stroke_width {
+        Some(stroke_width) =>
+          match stroke_width.value {
+            @model.PropertyValue::Animated(keyframes) => {
+              inspect(keyframes.length(), content="2")
+              inspect(keyframes[0].start_value, content="1")
+            }
+            _ => fail("text animator stroke width should be animated")
+          }
+        None => fail("text animator stroke width should be parsed")
+      }
+    }
+    _ => fail("layer should be text layer")
+  }
+}
+
+///|
 test "parse_text_animator_selector_range_start_end" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":5,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"t\":{\"d\":{\"k\":[{\"t\":0,\"s\":{\"s\":20,\"f\":\"Arial\",\"t\":\"AB\"}}]},\"a\":[{\"a\":{\"fc\":{\"k\":[1,0,0]}},\"s\":{\"s\":{\"k\":25},\"e\":{\"k\":75},\"a\":{\"k\":100},\"b\":1,\"sh\":1,\"rn\":0,\"ne\":{\"k\":0},\"xe\":{\"k\":0},\"o\":{\"k\":0}}}]}}]}"
