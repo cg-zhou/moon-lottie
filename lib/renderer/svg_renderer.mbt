@@ -149,6 +149,13 @@ fn next_def_id(renderer : SvgRenderer, prefix : String) -> String {
 }
 
 ///|
+fn point_distance(p1 : (Double, Double), p2 : (Double, Double)) -> Double {
+  @math.sqrt(
+    (p2.0 - p1.0) * (p2.0 - p1.0) + (p2.1 - p1.1) * (p2.1 - p1.1),
+  )
+}
+
+///|
 pub impl Renderer for SvgRenderer with save(self : SvgRenderer) -> Unit {
   self.state_stack.push((
     self.current_matrix,
@@ -599,14 +606,8 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   let p_f = self.current_matrix.transform_point(fx, fy)
   let fr_point = self.current_matrix.transform_point(fx + fr, fy)
   let radius_point = self.current_matrix.transform_point(cx + r, cy)
-  let gradient_radius = @math.sqrt(
-    (radius_point.0 - p_c.0) * (radius_point.0 - p_c.0) +
-    (radius_point.1 - p_c.1) * (radius_point.1 - p_c.1),
-  )
-  let focus_radius = @math.sqrt(
-    (fr_point.0 - p_f.0) * (fr_point.0 - p_f.0) +
-    (fr_point.1 - p_f.1) * (fr_point.1 - p_f.1),
-  )
+  let gradient_radius = point_distance(p_c, radius_point)
+  let focus_radius = point_distance(p_f, fr_point)
 
   self.defs_buffer.write_string(
     "<radialGradient id=\"\{id}\" cx=\"\{fmt(p_c.0)}\" cy=\"\{fmt(p_c.1)}\" r=\"\{fmt(gradient_radius)}\" fx=\"\{fmt(p_f.0)}\" fy=\"\{fmt(p_f.1)}\" fr=\"\{fmt(focus_radius)}\" gradientUnits=\"userSpaceOnUse\">",
@@ -655,14 +656,8 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   let p_f = self.current_matrix.transform_point(fx, fy)
   let fr_point = self.current_matrix.transform_point(fx + fr, fy)
   let radius_point = self.current_matrix.transform_point(cx + r, cy)
-  let gradient_radius = @math.sqrt(
-    (radius_point.0 - p_c.0) * (radius_point.0 - p_c.0) +
-    (radius_point.1 - p_c.1) * (radius_point.1 - p_c.1),
-  )
-  let focus_radius = @math.sqrt(
-    (fr_point.0 - p_f.0) * (fr_point.0 - p_f.0) +
-    (fr_point.1 - p_f.1) * (fr_point.1 - p_f.1),
-  )
+  let gradient_radius = point_distance(p_c, radius_point)
+  let focus_radius = point_distance(p_f, fr_point)
 
   self.defs_buffer.write_string(
     "<radialGradient id=\"\{id}\" cx=\"\{fmt(p_c.0)}\" cy=\"\{fmt(p_c.1)}\" r=\"\{fmt(gradient_radius)}\" fx=\"\{fmt(p_f.0)}\" fy=\"\{fmt(p_f.1)}\" fr=\"\{fmt(focus_radius)}\" gradientUnits=\"userSpaceOnUse\">",
