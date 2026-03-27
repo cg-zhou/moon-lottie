@@ -806,7 +806,7 @@ test "text stroke animators render glyph stroke in lottie-web order" {
         }
       }
       Stroke(r, g, b, opacity, width) => {
-        if r == 0 && g == 255 && b == 0 && opacity == 1.0 && width > 0.0 {
+        if r == 0 && g == 255 && b == 0 && opacity == 1.0 && width == 6.0 {
           paint_order.push("stroke")
           saw_green_stroke = true
         }
