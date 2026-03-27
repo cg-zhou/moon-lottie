@@ -77,6 +77,8 @@ pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
 
 ///|
 fn is_near_zero(v : Double) -> Bool {
+  // Treat values smaller than 1e-6 as numerically zero when deciding whether an
+  // affine transform differs from the identity matrix.
   v.abs() < 0.000001
 }
 
@@ -101,6 +103,8 @@ fn matrix_to_attr(matrix : @math.Matrix) -> String {
   // SVG uses matrix(a b c d e f) for 2D affine transforms. We recover those six
   // coefficients by sampling the transformed origin and unit basis vectors from
   // the current MoonBit matrix and converting them back into SVG's matrix form.
+  // The result is either an empty string for identity transforms or a complete
+  // ` transform="matrix(...)"` attribute for non-identity transforms.
   let origin = matrix.transform_point(0.0, 0.0)
   let x_axis = matrix.transform_point(1.0, 0.0)
   let y_axis = matrix.transform_point(0.0, 1.0)
@@ -150,6 +154,7 @@ fn next_def_id(renderer : SvgRenderer, prefix : String) -> String {
 
 ///|
 fn point_distance(p1 : (Double, Double), p2 : (Double, Double)) -> Double {
+  // Compute the Euclidean distance between two 2D points.
   @math.sqrt(
     (p2.0 - p1.0) * (p2.0 - p1.0) + (p2.1 - p1.1) * (p2.1 - p1.1),
   )
