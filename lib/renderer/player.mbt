@@ -599,6 +599,44 @@ fn color_channel_to_u8(v : Double) -> Int {
   }
 }
 
+fn[R : Renderer] render_text_glyph_paints(
+  player : Player[R],
+  fill_r : Int,
+  fill_g : Int,
+  fill_b : Int,
+  fill_opacity : Double,
+  stroke_r : Int,
+  stroke_g : Int,
+  stroke_b : Int,
+  stroke_opacity : Double,
+  stroke_width : Double,
+  stroke_over_fill : Bool,
+) -> Unit {
+  if stroke_over_fill {
+    player.renderer.fill(fill_r, fill_g, fill_b, fill_opacity)
+    if stroke_width > 0.0 {
+      player.renderer.stroke(
+        stroke_r,
+        stroke_g,
+        stroke_b,
+        stroke_opacity,
+        stroke_width,
+      )
+    }
+  } else {
+    if stroke_width > 0.0 {
+      player.renderer.stroke(
+        stroke_r,
+        stroke_g,
+        stroke_b,
+        stroke_opacity,
+        stroke_width,
+      )
+    }
+    player.renderer.fill(fill_r, fill_g, fill_b, fill_opacity)
+  }
+}
+
 ///|
 fn color_rgb_from_vec(v : Array[Double]) -> (Int, Int, Int) {
   (
@@ -2389,6 +2427,9 @@ fn[R : Renderer] Player::render_text_with_glyphs(
   let base_fill_r = get_vec_at(doc.fill_color, 0, 0.0)
   let base_fill_g = get_vec_at(doc.fill_color, 1, 0.0)
   let base_fill_b = get_vec_at(doc.fill_color, 2, 0.0)
+  let base_stroke_r = get_vec_at(doc.stroke_color, 0, 0.0)
+  let base_stroke_g = get_vec_at(doc.stroke_color, 1, 0.0)
+  let base_stroke_b = get_vec_at(doc.stroke_color, 2, 0.0)
   let text = doc.text
   let chars = text.to_array()
   let n = chars.length()
@@ -2487,6 +2528,10 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     let mut char_fill_r = base_fill_r
     let mut char_fill_g = base_fill_g
     let mut char_fill_b = base_fill_b
+    let mut char_stroke_r = base_stroke_r
+    let mut char_stroke_g = base_stroke_g
+    let mut char_stroke_b = base_stroke_b
+    let mut char_stroke_width = doc.stroke_width
     for ai = 0; ai < animators.length(); ai = ai + 1 {
       let anim = animators[ai]
       let sel = anim.selector
@@ -2557,6 +2602,30 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         }
         None => ()
       }
+      match anim.properties.stroke_color {
+        Some(sc_prop) => {
+          let sv = self.evaluate_vec(
+            sc_prop, self.current_comp_frame,
+          )
+          let ar = get_vec_at(sv, 0, 0.0)
+          let ag = get_vec_at(sv, 1, 0.0)
+          let ab = get_vec_at(sv, 2, 0.0)
+          char_stroke_r = char_stroke_r + mult * (ar - char_stroke_r)
+          char_stroke_g = char_stroke_g + mult * (ag - char_stroke_g)
+          char_stroke_b = char_stroke_b + mult * (ab - char_stroke_b)
+        }
+        None => ()
+      }
+      match anim.properties.stroke_width {
+        Some(sw_prop) => {
+          let sw = self.evaluate_double(
+            sw_prop, self.current_comp_frame,
+          )
+          char_stroke_width =
+            char_stroke_width + mult * (sw - char_stroke_width)
+        }
+        None => ()
+      }
       match anim.properties.opacity {
         Some(opacity_prop) => {
           let ov = self.evaluate_double(
@@ -2590,6 +2659,14 @@ fn[R : Renderer] Player::render_text_with_glyphs(
     let fill_r = color_channel_to_u8(char_fill_r)
     let fill_g = color_channel_to_u8(char_fill_g)
     let fill_b = color_channel_to_u8(char_fill_b)
+    let stroke_r = color_channel_to_u8(char_stroke_r)
+    let stroke_g = color_channel_to_u8(char_stroke_g)
+    let stroke_b = color_channel_to_u8(char_stroke_b)
+    let stroke_width = if char_stroke_width < 0.0 {
+      0.0
+    } else {
+      char_stroke_width
+    }
 
     // Find and render glyph
     for g in glyphs {
@@ -2625,7 +2702,19 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
         self.renderer.set_fill_rule("nonzero")
-        self.renderer.fill(fill_r, fill_g, fill_b, fill_opacity)
+        render_text_glyph_paints(
+          self,
+          fill_r,
+          fill_g,
+          fill_b,
+          fill_opacity,
+          stroke_r,
+          stroke_g,
+          stroke_b,
+          fill_opacity,
+          stroke_width,
+          doc.stroke_over_fill,
+        )
         self.current_paths = saved_paths
         self.renderer.restore()
         break

@@ -785,6 +785,40 @@ test "text animator tracking shifts glyph positions" {
   }
 }
 
+test "text stroke animators render glyph stroke in lottie-web order" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":100,"f":"Test Bold","t":"A","j":0,"tr":0,"fc":[1,0,0],"sc":[0,0,1],"sw":4,"of":true}}]},"a":[{"a":{"sc":{"a":1,"k":[{"t":0,"s":[0,1,0],"e":[0,0,1]},{"t":10}]},"sw":{"a":1,"k":[{"t":0,"s":[2],"e":[4]},{"t":10}]}},"s":{}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let paint_order : Array[String] = []
+  let mut saw_green_stroke = false
+  for cmd in commands {
+    match cmd {
+      Fill(r, g, b, opacity) => {
+        if r == 255 && g == 0 && b == 0 && opacity == 1.0 {
+          paint_order.push("fill")
+        }
+      }
+      Stroke(r, g, b, opacity, width) => {
+        if r == 0 && g == 255 && b == 0 && opacity == 1.0 && width == 2.0 {
+          paint_order.push("stroke")
+          saw_green_stroke = true
+        }
+      }
+      _ => ()
+    }
+  }
+
+  inspect(paint_order, content="[\"fill\", \"stroke\"]")
+  assert_eq(saw_green_stroke, true)
+}
+
 fn first_move_positions_for_fills(
   commands : Array[DrawCommand],
 ) -> Array[(Double, Double)] {

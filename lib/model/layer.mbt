@@ -30,6 +30,8 @@ pub(all) struct TextAnimatorProperties {
   opacity : LottieProperty[Double]?
   tracking : LottieProperty[Double]?
   fill_color : LottieProperty[Array[Double]]?
+  stroke_color : LottieProperty[Array[Double]]?
+  stroke_width : LottieProperty[Double]?
 }
 
 ///|
@@ -56,6 +58,9 @@ pub(all) struct TextDocument {
   line_height : Double
   baseline_shift : Double
   fill_color : Array[Double]
+  stroke_color : Array[Double]
+  stroke_width : Double
+  stroke_over_fill : Bool
 }
 
 ///|

@@ -348,6 +348,9 @@ pub fn evaluate_text_document_property(
           line_height: 0.0,
           baseline_shift: 0.0,
           fill_color: [0.0, 0.0, 0.0],
+          stroke_color: [0.0, 0.0, 0.0],
+          stroke_width: 0.0,
+          stroke_over_fill: false,
         }
       }
       keyframes[idx].start_value
