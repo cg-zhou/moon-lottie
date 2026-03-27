@@ -2711,7 +2711,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           stroke_r,
           stroke_g,
           stroke_b,
-          fill_opacity,
+          1.0,
           stroke_width,
           doc.stroke_over_fill,
         )

@@ -1064,6 +1064,41 @@ test "text animator opacity uses lottie-web multiplier blending" {
   }
 }
 
+test "text animator opacity does not suppress glyph stroke" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":100,"f":"Test Bold","t":"A","j":0,"tr":0,"fc":[1,1,1],"sc":[0,0,1],"sw":4,"of":true}}]},"a":[{"a":{"o":{"a":0,"k":0}},"s":{"s":{"a":0,"k":0},"e":{"a":0,"k":100},"a":{"a":0,"k":100},"b":1,"sh":2,"rn":0,"ne":{"a":0,"k":0},"xe":{"a":0,"k":0},"o":{"a":0,"k":0}}}]}}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { e => fail("Failed to parse: \{e}") }
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(0.0)
+  player.render()
+
+  let mut fill_opacity = -1.0
+  let mut stroke_opacity = -1.0
+  let mut stroke_width = -1.0
+  for cmd in recorder.get_commands() {
+    match cmd {
+      Fill(_, _, _, opacity) => fill_opacity = opacity
+      Stroke(_, _, _, opacity, width) => {
+        stroke_opacity = opacity
+        stroke_width = width
+      }
+      _ => ()
+    }
+  }
+  let epsilon = 0.000001
+  if fill_opacity < 0.5 - epsilon || fill_opacity > 0.5 + epsilon {
+    fail("Expected glyph fill opacity to be 0.5, got \{fill_opacity}")
+  }
+  if stroke_opacity < 1.0 - epsilon || stroke_opacity > 1.0 + epsilon {
+    fail("Expected glyph stroke opacity to remain 1.0, got \{stroke_opacity}")
+  }
+  if stroke_width < 4.0 - epsilon || stroke_width > 4.0 + epsilon {
+    fail("Expected glyph stroke width to remain 4.0, got \{stroke_width}")
+  }
+}
+
 test "text animator randomize changes selector order" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":240,"h":100,"chars":[{"ch":"A","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"B","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"C","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}},{"ch":"D","size":100,"style":"Bold","w":100,"data":{"shapes":[{"ty":"sh","ks":{"a":0,"k":{"i":[[0,0],[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0],[0,0]],"v":[[0,0],[10,0],[10,10],[0,10]],"c":true}}}]}}],"layers":[{"ty":5,"ind":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"t":{"d":{"k":[{"t":0,"s":{"s":50,"f":"Test Bold","t":"ABCD","j":0,"tr":0,"fc":[1,1,1]}}]},"a":[{"a":{"o":{"a":0,"k":0}},"s":{"s":{"a":0,"k":0},"e":{"a":0,"k":100},"a":{"a":0,"k":100},"b":1,"sh":2,"rn":1,"ne":{"a":0,"k":0},"xe":{"a":0,"k":0},"o":{"a":0,"k":0}}}]}}]}
