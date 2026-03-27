@@ -24,6 +24,10 @@ test "SvgRenderer basic" {
   assert_true(output.contains("M10"), "Output should contain move to 10")
   assert_true(output.contains("L90"), "Output should contain line to 90")
   assert_true(output.contains("Z"), "Output should contain close path")
+  assert_false(
+    output.contains("<rect"),
+    "Transparent SVG export should not inject a background rect",
+  )
 }
 
 ///|
@@ -53,6 +57,10 @@ test "SvgRenderer with gradient" {
   assert_true(
     output.contains("stop-color=\"#0000FF\""),
     "Output should contain blue stop color",
+  )
+  assert_true(
+    output.contains("id=\"grad_0\""),
+    "Output should use unique gradient ids",
   )
 }
 
@@ -113,5 +121,60 @@ test "precomp rendering applies composition clipping" {
   assert_true(
     svgs[0].contains("<clipPath"),
     "Precomp layer should be clipped to its composition bounds",
+  )
+}
+
+///|
+test "SvgRenderer stroke style and transform attrs" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.set_transform(@math.Matrix::identity().translate(5.0, 6.0).scale(2.0, 3.0))
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(10.0, 0.0)
+  renderer.set_stroke_style(2, 3, 7.0)
+  renderer.set_line_dash([4.0, 2.0], 1.5)
+  renderer.stroke(255, 0, 0, 0.5, 3.0)
+
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("stroke-linecap=\"round\""),
+    "Stroke cap should be emitted",
+  )
+  assert_true(
+    output.contains("stroke-linejoin=\"bevel\""),
+    "Stroke join should be emitted",
+  )
+  assert_true(
+    output.contains("stroke-dasharray=\"4 2\""),
+    "Dash array should be emitted",
+  )
+  assert_true(
+    output.contains("stroke-dashoffset=\"1.5\""),
+    "Dash offset should be emitted",
+  )
+  assert_true(
+    output.contains("transform=\"matrix(2 0 0 3 5 6)\""),
+    "Transform should be emitted on stroked paths",
+  )
+}
+
+///|
+test "SvgRenderer escapes text and image attributes" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.draw_text("<moon&lottie>", "\"Font\"", 12.0, 255, 255, 255, 1.0, 0)
+  renderer.draw_image("https://example.com/a?x=1&y=2", 10.0, 20.0, 0)
+
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("&lt;moon&amp;lottie&gt;"),
+    "Text content should be XML-escaped",
+  )
+  assert_true(
+    output.contains("font-family=\"&quot;Font&quot;\""),
+    "Font attribute should be XML-escaped",
+  )
+  assert_true(
+    output.contains("href=\"https://example.com/a?x=1&amp;y=2\""),
+    "Image href should be XML-escaped",
   )
 }

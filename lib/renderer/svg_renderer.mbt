@@ -7,12 +7,28 @@ pub struct SvgRenderer {
   height : Double
   buffer : StringBuilder
   defs_buffer : StringBuilder
-  state_stack : Array[(@math.Matrix, String, Int)]
+  state_stack : Array[
+    (
+      @math.Matrix,
+      String,
+      Int,
+      String,
+      String,
+      Double,
+      Array[Double],
+      Double
+    )
+  ]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
   mut gradient_count : Int
   mut group_depth : Int
   mut current_fill_rule : String
+  mut current_line_cap : String
+  mut current_line_join : String
+  mut current_miter_limit : Double
+  mut current_dash_array : Array[Double]
+  mut current_dash_offset : Double
 }
 
 ///|
@@ -28,6 +44,11 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
     gradient_count: 0,
     group_depth: 0,
     current_fill_rule: "nonzero",
+    current_line_cap: "butt",
+    current_line_join: "miter",
+    current_miter_limit: 4.0,
+    current_dash_array: [],
+    current_dash_offset: 0.0,
   }
 }
 
@@ -55,8 +76,87 @@ pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
 }
 
 ///|
+fn is_near_zero(v : Double) -> Bool {
+  v.abs() < 0.000001
+}
+
+///|
+fn escape_xml(value : String) -> String {
+  let out = StringBuilder::new()
+  for ch in value {
+    match ch {
+      '&' => out.write_string("&amp;")
+      '<' => out.write_string("&lt;")
+      '>' => out.write_string("&gt;")
+      '"' => out.write_string("&quot;")
+      '\'' => out.write_string("&apos;")
+      _ => out.write_char(ch)
+    }
+  }
+  out.to_string()
+}
+
+///|
+fn matrix_to_attr(matrix : @math.Matrix) -> String {
+  let origin = matrix.transform_point(0.0, 0.0)
+  let x_axis = matrix.transform_point(1.0, 0.0)
+  let y_axis = matrix.transform_point(0.0, 1.0)
+  let a = x_axis.0 - origin.0
+  let b = x_axis.1 - origin.1
+  let c = y_axis.0 - origin.0
+  let d = y_axis.1 - origin.1
+  let e = origin.0
+  let f = origin.1
+  if is_near_zero(a - 1.0) && is_near_zero(b) && is_near_zero(c) &&
+    is_near_zero(d - 1.0) && is_near_zero(e) && is_near_zero(f) {
+    ""
+  } else {
+    " transform=\"matrix(\{fmt(a)} \{fmt(b)} \{fmt(c)} \{fmt(d)} \{fmt(e)} \{fmt(f)})\""
+  }
+}
+
+///|
+fn stroke_attrs(renderer : SvgRenderer) -> String {
+  let attrs = StringBuilder::new()
+  attrs.write_string(" stroke-linecap=\"\{renderer.current_line_cap}\"")
+  attrs.write_string(" stroke-linejoin=\"\{renderer.current_line_join}\"")
+  attrs.write_string(
+    " stroke-miterlimit=\"\{fmt(renderer.current_miter_limit)}\"",
+  )
+  if renderer.current_dash_array.length() > 0 {
+    let dash_values = StringBuilder::new()
+    for i = 0; i < renderer.current_dash_array.length(); i = i + 1 {
+      if i > 0 {
+        dash_values.write_string(" ")
+      }
+      dash_values.write_string(fmt(renderer.current_dash_array[i]))
+    }
+    attrs.write_string(
+      " stroke-dasharray=\"\{dash_values.to_string()}\" stroke-dashoffset=\"\{fmt(renderer.current_dash_offset)}\"",
+    )
+  }
+  attrs.to_string()
+}
+
+///|
+fn next_def_id(renderer : SvgRenderer, prefix : String) -> String {
+  let id = "\{prefix}_\{renderer.gradient_count}"
+  renderer.gradient_count = renderer.gradient_count + 1
+  id
+}
+
+///|
 pub impl Renderer for SvgRenderer with save(self : SvgRenderer) -> Unit {
-  self.state_stack.push((self.current_matrix, self.current_fill_rule, 1))
+  self.state_stack.push((
+    self.current_matrix,
+    self.current_fill_rule,
+    1,
+    self.current_line_cap,
+    self.current_line_join,
+    self.current_miter_limit,
+    self.current_dash_array,
+    self.current_dash_offset,
+  ))
   self.buffer.write_string("<g>")
   self.group_depth = self.group_depth + 1
 }
@@ -64,9 +164,14 @@ pub impl Renderer for SvgRenderer with save(self : SvgRenderer) -> Unit {
 ///|
 pub impl Renderer for SvgRenderer with restore(self : SvgRenderer) -> Unit {
   match self.state_stack.pop() {
-    Some((m, fr, gc)) => {
+    Some((m, fr, gc, lc, lj, ml, da, doff)) => {
       self.current_matrix = m
       self.current_fill_rule = fr
+      self.current_line_cap = lc
+      self.current_line_join = lj
+      self.current_miter_limit = ml
+      self.current_dash_array = da
+      self.current_dash_offset = doff
       for i = 0; i < gc; i = i + 1 {
         self.buffer.write_string("</g>")
         self.group_depth = self.group_depth - 1
@@ -108,8 +213,7 @@ pub impl Renderer for SvgRenderer with move_to(
   x : Double,
   y : Double,
 ) -> Unit {
-  let p = self.current_matrix.transform_point(x, y)
-  self.path_buffer.write_string("M\{fmt(p.0)},\{fmt(p.1)} ")
+  self.path_buffer.write_string("M\{fmt(x)},\{fmt(y)} ")
 }
 
 ///|
@@ -118,8 +222,7 @@ pub impl Renderer for SvgRenderer with line_to(
   x : Double,
   y : Double,
 ) -> Unit {
-  let p = self.current_matrix.transform_point(x, y)
-  self.path_buffer.write_string("L\{fmt(p.0)},\{fmt(p.1)} ")
+  self.path_buffer.write_string("L\{fmt(x)},\{fmt(y)} ")
 }
 
 ///|
@@ -132,11 +235,8 @@ pub impl Renderer for SvgRenderer with cubic_to(
   x : Double,
   y : Double,
 ) -> Unit {
-  let p1 = self.current_matrix.transform_point(cp1x, cp1y)
-  let p2 = self.current_matrix.transform_point(cp2x, cp2y)
-  let p = self.current_matrix.transform_point(x, y)
   self.path_buffer.write_string(
-    "C\{fmt(p1.0)},\{fmt(p1.1)} \{fmt(p2.0)},\{fmt(p2.1)} \{fmt(p.0)},\{fmt(p.1)} ",
+    "C\{fmt(cp1x)},\{fmt(cp1y)} \{fmt(cp2x)},\{fmt(cp2y)} \{fmt(x)},\{fmt(y)} ",
   )
 }
 
@@ -168,7 +268,7 @@ pub impl Renderer for SvgRenderer with fill(
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
+      "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\"\{matrix_to_attr(self.current_matrix)} />",
     )
   }
 }
@@ -186,7 +286,7 @@ pub impl Renderer for SvgRenderer with stroke(
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\" />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{stroke_attrs(self)}\{matrix_to_attr(self.current_matrix)} />",
     )
   }
 }
@@ -198,10 +298,17 @@ pub impl Renderer for SvgRenderer with set_stroke_style(
   line_join : Int,
   miter_limit : Double,
 ) -> Unit {
-  let _ = self
-  let _ = line_cap
-  let _ = line_join
-  let _ = miter_limit
+  self.current_line_cap = match line_cap {
+    2 => "round"
+    3 => "square"
+    _ => "butt"
+  }
+  self.current_line_join = match line_join {
+    2 => "round"
+    3 => "bevel"
+    _ => "miter"
+  }
+  self.current_miter_limit = miter_limit
 }
 
 ///|
@@ -210,11 +317,8 @@ pub impl Renderer for SvgRenderer with set_line_dash(
   dash_array : Array[Double],
   dash_offset : Double,
 ) -> Unit {
-  // SVG dash stroke is handled via stroke-dasharray/stroke-dashoffset attributes
-  // in the SVG output. Not yet implemented for SVG renderer.
-  let _ = self
-  let _ = dash_array
-  let _ = dash_offset
+  self.current_dash_array = dash_array
+  self.current_dash_offset = dash_offset
 }
 
 ///|
@@ -232,8 +336,8 @@ pub impl Renderer for SvgRenderer with set_opacity(
 ) -> Unit {
   if self.state_stack.length() > 0 {
     let last_idx = self.state_stack.length() - 1
-    let (m, fr, gc) = self.state_stack[last_idx]
-    self.state_stack[last_idx] = (m, fr, gc + 1)
+    let (m, fr, gc, lc, lj, ml, da, doff) = self.state_stack[last_idx]
+    self.state_stack[last_idx] = (m, fr, gc + 1, lc, lj, ml, da, doff)
   }
   self.buffer.write_string("<g opacity=\"\{fmt(opacity)}\">")
   self.group_depth = self.group_depth + 1
@@ -358,7 +462,7 @@ pub impl Renderer for SvgRenderer with draw_image(
   // wasm-only numeric asset index used by the canvas bridge.
   let _ = asset_index
   self.buffer.write_string(
-    "<image href=\"\{id}\" width=\"\{width}\" height=\"\{height}\" />",
+    "<image href=\"\{escape_xml(id)}\" width=\"\{fmt(width)}\" height=\"\{fmt(height)}\"\{matrix_to_attr(self.current_matrix)} />",
   )
 }
 
@@ -381,7 +485,7 @@ pub impl Renderer for SvgRenderer with draw_text(
     _ => "start"
   }
   self.buffer.write_string(
-    "<text font-family=\"\{font}\" font-size=\"\{size}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" text-anchor=\"\{anchor}\">\{text}</text>",
+    "<text font-family=\"\{escape_xml(font)}\" font-size=\"\{fmt(size)}\" fill=\"\{color}\" fill-opacity=\"\{fmt(opacity)}\" text-anchor=\"\{anchor}\"\{matrix_to_attr(self.current_matrix)}>\{escape_xml(text)}</text>",
   )
 }
 
@@ -396,8 +500,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
-  let id = "lottie-id" // Normalized ID
-  self.gradient_count = self.gradient_count + 1
+  let id = next_def_id(self, "grad")
 
   let p1 = self.current_matrix.transform_point(x1, y1)
   let p2 = self.current_matrix.transform_point(x2, y2)
@@ -425,7 +528,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
+      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\"\{matrix_to_attr(self.current_matrix)} />",
     )
   }
 }
@@ -442,8 +545,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   opacity : Double,
   width : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = next_def_id(self, "grad")
 
   let p1 = self.current_matrix.transform_point(x1, y1)
   let p2 = self.current_matrix.transform_point(x2, y2)
@@ -471,7 +573,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{stroke_attrs(self)}\{matrix_to_attr(self.current_matrix)} />",
     )
   }
 }
@@ -489,14 +591,22 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = next_def_id(self, "grad")
   let p_c = self.current_matrix.transform_point(cx, cy)
   let p_f = self.current_matrix.transform_point(fx, fy)
-  let _ = fr
+  let fr_point = self.current_matrix.transform_point(fx + fr, fy)
+  let radius_point = self.current_matrix.transform_point(cx + r, cy)
+  let gradient_radius = @math.sqrt(
+    (radius_point.0 - p_c.0) * (radius_point.0 - p_c.0) +
+    (radius_point.1 - p_c.1) * (radius_point.1 - p_c.1),
+  )
+  let focus_radius = @math.sqrt(
+    (fr_point.0 - p_f.0) * (fr_point.0 - p_f.0) +
+    (fr_point.1 - p_f.1) * (fr_point.1 - p_f.1),
+  )
 
   self.defs_buffer.write_string(
-    "<radialGradient id=\"\{id}\" cx=\"\{p_c.0}\" cy=\"\{p_c.1}\" r=\"\{r}\" fx=\"\{p_f.0}\" fy=\"\{p_f.1}\" gradientUnits=\"userSpaceOnUse\">",
+    "<radialGradient id=\"\{id}\" cx=\"\{fmt(p_c.0)}\" cy=\"\{fmt(p_c.1)}\" r=\"\{fmt(gradient_radius)}\" fx=\"\{fmt(p_f.0)}\" fy=\"\{fmt(p_f.1)}\" fr=\"\{fmt(focus_radius)}\" gradientUnits=\"userSpaceOnUse\">",
   )
   for i = 0; i < p; i = i + 1 {
     let offset = stops[i * 4]
@@ -518,7 +628,7 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
+      "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\"\{matrix_to_attr(self.current_matrix)} />",
     )
   }
 }
@@ -537,14 +647,22 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   opacity : Double,
   width : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = next_def_id(self, "grad")
   let p_c = self.current_matrix.transform_point(cx, cy)
   let p_f = self.current_matrix.transform_point(fx, fy)
-  let _ = fr
+  let fr_point = self.current_matrix.transform_point(fx + fr, fy)
+  let radius_point = self.current_matrix.transform_point(cx + r, cy)
+  let gradient_radius = @math.sqrt(
+    (radius_point.0 - p_c.0) * (radius_point.0 - p_c.0) +
+    (radius_point.1 - p_c.1) * (radius_point.1 - p_c.1),
+  )
+  let focus_radius = @math.sqrt(
+    (fr_point.0 - p_f.0) * (fr_point.0 - p_f.0) +
+    (fr_point.1 - p_f.1) * (fr_point.1 - p_f.1),
+  )
 
   self.defs_buffer.write_string(
-    "<radialGradient id=\"\{id}\" cx=\"\{p_c.0}\" cy=\"\{p_c.1}\" r=\"\{r}\" fx=\"\{p_f.0}\" fy=\"\{p_f.1}\" gradientUnits=\"userSpaceOnUse\">",
+    "<radialGradient id=\"\{id}\" cx=\"\{fmt(p_c.0)}\" cy=\"\{fmt(p_c.1)}\" r=\"\{fmt(gradient_radius)}\" fx=\"\{fmt(p_f.0)}\" fy=\"\{fmt(p_f.1)}\" fr=\"\{fmt(focus_radius)}\" gradientUnits=\"userSpaceOnUse\">",
   )
   for i = 0; i < p; i = i + 1 {
     let offset = stops[i * 4]
@@ -566,23 +684,22 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{stroke_attrs(self)}\{matrix_to_attr(self.current_matrix)} />",
     )
   }
 }
 
 ///|
 pub impl Renderer for SvgRenderer with clip(self : SvgRenderer) -> Unit {
-  let id = "clip_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = next_def_id(self, "clip")
   let path_data = self.path_buffer.to_string()
   self.defs_buffer.write_string(
-    "<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"\{self.current_fill_rule}\" /></clipPath>",
+    "<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"\{self.current_fill_rule}\"\{matrix_to_attr(self.current_matrix)} /></clipPath>",
   )
   if self.state_stack.length() > 0 {
     let last_idx = self.state_stack.length() - 1
-    let (m, fr, gc) = self.state_stack[last_idx]
-    self.state_stack[last_idx] = (m, fr, gc + 1)
+    let (m, fr, gc, lc, lj, ml, da, doff) = self.state_stack[last_idx]
+    self.state_stack[last_idx] = (m, fr, gc + 1, lc, lj, ml, da, doff)
   }
   self.buffer.write_string("<g clip-path=\"url(#\{id})\">")
   self.group_depth = self.group_depth + 1
