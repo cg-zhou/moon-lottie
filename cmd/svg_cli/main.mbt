@@ -2,22 +2,23 @@
 struct Config {
   input_path : String
   output_dir : String?
-  prefix : String?
   start_frame : Int?
   end_frame : Int?
   step : Int
-  overwrite : Bool
+}
+
+///|
+struct ArgReader {
+  values : Map[String, Array[String]]
 }
 
 ///|
 struct ExportPlan {
   input_path : String
   output_dir : String
-  prefix : String
   start_frame : Int
   end_frame : Int
   step : Int
-  overwrite : Bool
 }
 
 ///|
@@ -31,12 +32,7 @@ fn command() -> @argparse.Command {
         "output_dir",
         short='o',
         long="output-dir",
-        about="Output directory for exported SVG files",
-      ),
-      @argparse.OptionArg::new(
-        "prefix",
-        short='p',
-        about="Output filename prefix",
+        about="Base directory where the export folder will be created",
       ),
       @argparse.OptionArg::new(
         "start",
@@ -56,13 +52,6 @@ fn command() -> @argparse.Command {
         about="Frame increment between exports",
       ),
     ],
-    flags=[
-      @argparse.FlagArg::new(
-        "overwrite",
-        short='f',
-        about="Overwrite existing SVG files",
-      ),
-    ],
     positionals=[
       @argparse.PositionArg::new(
         "input",
@@ -74,12 +63,33 @@ fn command() -> @argparse.Command {
 }
 
 ///|
-fn parse_int_option(
-  values : Map[String, Array[String]],
+fn ArgReader::new(matches : @argparse.Matches) -> ArgReader {
+  { values: matches.values }
+}
+
+///|
+fn ArgReader::string(self : ArgReader, key : String) -> String? {
+  match self.values.get(key) {
+    Some([value, ..]) => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn ArgReader::required_string(
+  self : ArgReader,
   key : String,
-) -> Int? raise {
-  match values.get(key) {
-    Some([value, ..]) =>
+) -> String raise {
+  match self.values.get(key) {
+    Some([value, ..]) => value
+    _ => fail("Missing required argument: \{key}")
+  }
+}
+
+///|
+fn ArgReader::int(self : ArgReader, key : String) -> Int? raise {
+  match self.string(key) {
+    Some(value) =>
       Some(
         try {
           @strconv.parse_int(value)
@@ -87,31 +97,16 @@ fn parse_int_option(
           _ => fail("Invalid --\{key} value: \{value}")
         },
       )
-    _ => None
-  }
-}
-
-///|
-fn parse_string_option(
-  values : Map[String, Array[String]],
-  key : String,
-) -> String? {
-  match values.get(key) {
-    Some([value, ..]) => Some(value)
-    _ => None
+    None => None
   }
 }
 
 ///|
 fn parse_config(argv : Array[String]) -> Config raise {
   let matches = @argparse.parse(command(), argv=argv[1:])
-  let values = matches.values
+  let args = ArgReader::new(matches)
 
-  guard values is { "input": [input_path, ..], .. } else {
-    fail("Missing input file path")
-  }
-
-  let step = match parse_int_option(values, "step") {
+  let step = match args.int("step") {
     Some(value) => {
       guard value > 0 else {
         fail("--step must be greater than 0")
@@ -122,13 +117,11 @@ fn parse_config(argv : Array[String]) -> Config raise {
   }
 
   {
-    input_path,
-    output_dir: parse_string_option(values, "output_dir"),
-    prefix: parse_string_option(values, "prefix"),
-    start_frame: parse_int_option(values, "start"),
-    end_frame: parse_int_option(values, "end"),
+    input_path: args.required_string("input"),
+    output_dir: args.string("output_dir"),
+    start_frame: args.int("start"),
+    end_frame: args.int("end"),
     step,
-    overwrite: matches.flags.get_or_default("overwrite", false),
   }
 }
 
@@ -226,6 +219,21 @@ fn ensure_dir_all(path : String) -> Unit raise {
 }
 
 ///|
+fn ensure_unique_dir(base_path : String) -> String {
+  if !@fs.path_exists(base_path) {
+    return base_path
+  }
+
+  let mut suffix = 1
+  let mut candidate = "\{base_path}_\{suffix}"
+  while @fs.path_exists(candidate) {
+    suffix = suffix + 1
+    candidate = "\{base_path}_\{suffix}"
+  }
+  candidate
+}
+
+///|
 fn count_digits(value : Int) -> Int {
   let mut n = if value < 0 { -value } else { value }
   let mut digits = 1
@@ -288,28 +296,18 @@ fn resolve_export_plan(
   }
 
   let stem = file_stem(config.input_path)
-  let base_name = if stem == "" { "frames" } else { stem }
+  let base_name = if stem == "" { "animation" } else { stem }
   let output_dir = match config.output_dir {
     Some(dir) => dir
-    None => base_name + "_svg"
-  }
-  let prefix = match config.prefix {
-    Some(value) => value
-    None => base_name
-  }
-
-  guard prefix != "" else {
-    fail("output prefix cannot be empty")
+    None => ensure_unique_dir(join_path(".", base_name))
   }
 
   {
     input_path: config.input_path,
     output_dir,
-    prefix,
     start_frame,
     end_frame,
     step: config.step,
-    overwrite: config.overwrite,
   }
 }
 
@@ -339,15 +337,8 @@ fn export_frames(animation : @model.Animation, plan : ExportPlan) -> Int raise {
   let mut exported = 0
   let mut frame = plan.start_frame
   while frame <= plan.end_frame {
-    let file_name =
-      "\{plan.prefix}_\{format_frame_index(frame, max_digits)}.svg"
+    let file_name = "frame_\{format_frame_index(frame, max_digits)}.svg"
     let file_path = join_path(plan.output_dir, file_name)
-
-    if @fs.path_exists(file_path) && !plan.overwrite {
-      fail(
-        "Refusing to overwrite existing file: \{file_path}; pass --overwrite to replace it",
-      )
-    }
 
     let svg = render_svg_frame(animation, frame)
     @fs.write_string_to_file(file_path, svg)
@@ -368,7 +359,6 @@ fn load_animation(input_path : String) -> @model.Animation raise {
 fn print_summary(animation : @model.Animation, plan : ExportPlan, count : Int) -> Unit {
   println("Input: \{plan.input_path}")
   println("Output directory: \{plan.output_dir}")
-  println("Prefix: \{plan.prefix}")
   println(
     "Frames: \{plan.start_frame}..\{plan.end_frame} step \{plan.step} (exported \{count} file(s))",
   )
