@@ -132,6 +132,21 @@ test "SvgRenderer escapes text content" {
 }
 
 ///|
+test "SvgRenderer scales stroke width with current transform" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.concat_transform(@math.Matrix::identity().scale(0.5, 0.5))
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(20.0, 0.0)
+  renderer.set_line_dash([4.0, 2.0], 1.0)
+  renderer.stroke(255, 0, 0, 1.0, 10.0)
+  let output = renderer.get_output()
+  assert_true(output.contains("stroke-width=\"5\""), "Stroke width should scale with the current matrix")
+  assert_true(output.contains("stroke-dasharray=\"2,1\""), "Dash pattern should scale with the current matrix")
+  assert_true(output.contains("stroke-dashoffset=\"0.5\""), "Dash offset should scale with the current matrix")
+}
+
+///|
 test "SvgRenderer applies image transforms" {
   let renderer = SvgRenderer::new(100.0, 100.0)
   renderer.concat_transform(@math.Matrix::identity().translate(12.0, 34.0))

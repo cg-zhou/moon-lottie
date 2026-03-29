@@ -235,6 +235,11 @@ fn matrix_to_svg_transform(matrix : @math.Matrix) -> String {
 }
 
 ///|
+fn matrix_stroke_scale(matrix : @math.Matrix) -> Double {
+  @math.sqrt((matrix.a * matrix.d - matrix.b * matrix.c).abs())
+}
+
+///|
 fn line_cap_to_svg(line_cap : Int) -> String {
   match line_cap {
     2 => "round"
@@ -272,14 +277,18 @@ fn SvgRenderer::next_id(self : SvgRenderer, prefix : String) -> String {
 }
 
 ///|
-fn SvgRenderer::stroke_attrs(self : SvgRenderer) -> String {
+fn SvgRenderer::stroke_attrs(self : SvgRenderer, scale : Double) -> String {
   let attrs = StringBuilder::new()
   attrs.write_string(
     " stroke-linecap=\"\{line_cap_to_svg(self.current_line_cap)}\" stroke-linejoin=\"\{line_join_to_svg(self.current_line_join)}\" stroke-miterlimit=\"\{fmt(self.current_miter_limit)}\"",
   )
   if self.current_dash_array.length() > 0 {
+    let scaled_dash_array = []
+    for dash in self.current_dash_array {
+      scaled_dash_array.push(dash * scale)
+    }
     attrs.write_string(
-      " stroke-dasharray=\"\{dash_array_to_svg(self.current_dash_array)}\" stroke-dashoffset=\"\{fmt(self.current_dash_offset)}\"",
+      " stroke-dasharray=\"\{dash_array_to_svg(scaled_dash_array)}\" stroke-dashoffset=\"\{fmt(self.current_dash_offset * scale)}\"",
     )
   }
   attrs.to_string()
@@ -345,8 +354,9 @@ pub impl Renderer for SvgRenderer with stroke(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
+    let scale = matrix_stroke_scale(self.current_matrix)
     self.append_markup(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{self.stroke_attrs()} />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width * scale)}\"\{self.stroke_attrs(scale)} />",
     )
   }
 }
@@ -661,6 +671,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
 
   let p1 = self.current_matrix.transform_point(x1, y1)
   let p2 = self.current_matrix.transform_point(x2, y2)
+  let scale = matrix_stroke_scale(self.current_matrix)
 
   self.defs_buffer.write_string(
     "<linearGradient id=\"\{id}\" x1=\"\{p1.0}\" y1=\"\{p1.1}\" x2=\"\{p2.0}\" y2=\"\{p2.1}\" gradientUnits=\"userSpaceOnUse\">",
@@ -685,7 +696,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.append_markup(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{self.stroke_attrs()} />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width * scale)}\"\{self.stroke_attrs(scale)} />",
     )
   }
 }
@@ -753,6 +764,7 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   let id = self.next_id("grad")
   let p_c = self.current_matrix.transform_point(cx, cy)
   let p_f = self.current_matrix.transform_point(fx, fy)
+  let scale = matrix_stroke_scale(self.current_matrix)
   let _ = fr
 
   self.defs_buffer.write_string(
@@ -778,7 +790,7 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     self.append_markup(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{self.stroke_attrs()} />",
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width * scale)}\"\{self.stroke_attrs(scale)} />",
     )
   }
 }

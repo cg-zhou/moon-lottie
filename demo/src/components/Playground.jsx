@@ -147,6 +147,7 @@ export default function Playground({ active = true }) {
   const viewportTransformRef = useRef({ scale: 1, offsetX: 0, offsetY: 0, dpr: 1 })
   const runtimeJsonRef = useRef("")
   const imageAssetsRef = useRef([])
+  const lastRequestedSampleRef = useRef("")
   const stateRef = useRef({
     currentFileName: "",
     currentFileSize: 0,
@@ -199,6 +200,9 @@ export default function Playground({ active = true }) {
       nativePlayer: state?.nativePlayer || null,
       runtime: state?.runtime || null,
     }
+    if (stateRef.current.currentFileName) {
+      lastRequestedSampleRef.current = stateRef.current.currentFileName
+    }
     setCurrentFileName(stateRef.current.currentFileName)
     setCurrentFileSize(stateRef.current.currentFileSize)
     setCurrentAnimationData(stateRef.current.currentAnimationData)
@@ -249,13 +253,16 @@ export default function Playground({ active = true }) {
 
   async function loadRemoteAnimation(filename) {
     if (!controllerRef.current) return
+    lastRequestedSampleRef.current = filename
     try {
       localStorage.setItem("moon-lottie-last-anim", filename)
       const state = await controllerRef.current.loadRemoteAnimation(filename)
       syncPlayerState(state)
       updateStatus(`已加载: ${filename}`, "#34c759")
+      return true
     } catch (error) {
       updateStatus(`加载失败: ${error.message}`, "#ff3b30")
+      return false
     }
   }
 
@@ -286,19 +293,31 @@ export default function Playground({ active = true }) {
     }
   }
 
-  const stepAnimation = useCallback((delta) => {
+  const stepAnimation = useCallback(async (delta) => {
     if (sampleEntries.length === 0) {
       return
     }
 
-    const currentIndex = sampleEntries.findIndex((entry) => entry.file === currentFileName)
-    const baseIndex = currentIndex >= 0 ? currentIndex : 0
-    const nextIndex = (baseIndex + delta + sampleEntries.length) % sampleEntries.length
-    const nextEntry = sampleEntries[nextIndex]
-    if (nextEntry) {
-      loadRemoteAnimation(nextEntry.file)
+    const anchorFile = lastRequestedSampleRef.current || currentFileName
+    let currentIndex = sampleEntries.findIndex((entry) => entry.file === anchorFile)
+    if (currentIndex < 0) {
+      currentIndex = sampleEntries.findIndex((entry) => entry.file === currentFileName)
     }
-  }, [currentFileName, sampleEntries])
+    if (currentIndex < 0) {
+      currentIndex = 0
+    }
+
+    for (let attempts = 0; attempts < sampleEntries.length; attempts += 1) {
+      const nextIndex = (currentIndex + delta + sampleEntries.length) % sampleEntries.length
+      currentIndex = nextIndex
+      const nextEntry = sampleEntries[nextIndex]
+      if (nextEntry && await loadRemoteAnimation(nextEntry.file)) {
+        return
+      }
+    }
+
+    updateStatus("没有可加载的动画样例", "#ff3b30")
+  }, [currentFileName, sampleEntries, lastRequestedSampleRef])
 
   useEffect(() => {
     function updatePageAspectRatio() {

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const samplesDir = path.join(__dirname, '../samples');
-const outputDir = path.join(__dirname, '../demo');
+const outputDir = path.join(__dirname, '../demo/public');
 const outputFile = path.join(outputDir, 'sample_index.json');
 
 /**
