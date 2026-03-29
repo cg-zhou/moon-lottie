@@ -105,9 +105,10 @@ test "render_animation_to_svgs utility" {
 ///|
 test "SvgRenderer escapes text content" {
   let renderer = SvgRenderer::new(100.0, 100.0)
-  renderer.draw_text("A&B<test>", "Arial", 16.0, 255, 255, 255, 1.0, 0)
+  renderer.draw_text("A&B<test>\"'", "Arial\"'", 16.0, 255, 255, 255, 1.0, 0)
   let output = renderer.get_output()
   assert_true(output.contains("A&amp;B&lt;test&gt;"), "Text content should be XML escaped")
+  assert_true(output.contains("&quot;&#39;"), "Quotes should be XML escaped")
 }
 
 ///|

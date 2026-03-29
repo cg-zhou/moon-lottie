@@ -205,7 +205,14 @@ export default function Playground({ active = true }) {
     setCurrentAnimationMeta(stateRef.current.currentAnimationMeta)
     setCurrentExpressionAnimationData(stateRef.current.currentExpressionAnimationData)
     setCurrentExpressionMeta(stateRef.current.currentExpressionMeta)
-    if (stateRef.current.currentAnimationData) {
+    if (
+      stateRef.current.currentAnimationData
+      && (
+        animationSnapshotRef.current?.animationData !== stateRef.current.currentAnimationData
+        || animationSnapshotRef.current?.filename !== stateRef.current.currentFileName
+        || animationSnapshotRef.current?.size !== stateRef.current.currentFileSize
+      )
+    ) {
       animationSnapshotRef.current = {
         filename: stateRef.current.currentFileName,
         size: stateRef.current.currentFileSize,
@@ -317,12 +324,9 @@ export default function Playground({ active = true }) {
 
   useEffect(() => {
     let disposed = false
-    let currentMoonSvgUrl = null
+    let currentMoonSvgMarkup = ""
     const clearMoonSvgFrame = () => {
-      if (currentMoonSvgUrl) {
-        URL.revokeObjectURL(currentMoonSvgUrl)
-        currentMoonSvgUrl = null
-      }
+      currentMoonSvgMarkup = ""
       moonSvgContainerRef.current?.replaceChildren()
     }
 
@@ -352,6 +356,26 @@ export default function Playground({ active = true }) {
           moonSvgContainer.replaceChildren(image)
         }
         return image
+      }
+      const renderMoonSvgFrame = (runtime, nativePlayer, frame) => {
+        if (!runtime || !nativePlayer) {
+          clearMoonSvgFrame()
+          return
+        }
+        const svgMarkup = runtime.render_svg_frame(nativePlayer, frame)
+        if (svgMarkup === currentMoonSvgMarkup) {
+          return
+        }
+        currentMoonSvgMarkup = svgMarkup
+        const image = ensureMoonSvgImage()
+        const nextSvgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`
+        if (image.src !== nextSvgUrl) {
+          image.src = nextSvgUrl
+        }
+      }
+      const renderMoonCanvasFrame = (runtime, nativePlayer, frame) => {
+        clearMoonSvgFrame()
+        baseRuntimeBridge.renderFrame(runtime, nativePlayer, frame)
       }
 
       officialControllerRef.current = createOfficialPlayerController({
@@ -388,31 +412,9 @@ export default function Playground({ active = true }) {
         jsRuntimePath: `${import.meta.env.BASE_URL}runtime/js/moon-lottie-runtime.js`,
       })
 
-      const moonRenderFrame = moonRenderer === "svg"
-        ? (runtime, nativePlayer, frame) => {
-          if (!runtime || !nativePlayer) {
-            clearMoonSvgFrame()
-            return
-          }
-          const svgMarkup = runtime.render_svg_frame(nativePlayer, frame)
-          const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml" })
-          const nextSvgUrl = URL.createObjectURL(svgBlob)
-          const image = ensureMoonSvgImage()
-          const previousSvgUrl = currentMoonSvgUrl
-          currentMoonSvgUrl = nextSvgUrl
-          image.src = nextSvgUrl
-          if (previousSvgUrl) {
-            URL.revokeObjectURL(previousSvgUrl)
-          }
-        }
-        : (runtime, nativePlayer, frame) => {
-          clearMoonSvgFrame()
-          baseRuntimeBridge.renderFrame(runtime, nativePlayer, frame)
-        }
-
       runtimeBridgeRef.current = {
         ...baseRuntimeBridge,
-        renderFrame: moonRenderFrame,
+        renderFrame: moonRenderer === "svg" ? renderMoonSvgFrame : renderMoonCanvasFrame,
       }
 
       controllerRef.current = createPlayer({

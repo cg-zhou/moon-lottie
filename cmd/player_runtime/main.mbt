@@ -202,7 +202,6 @@ pub fn render_svg_frame(
   handle : SvgAnimationHandle,
   frame : Double,
 ) -> String {
-  js_log_frame(frame)
   let renderer = @renderer.SvgRenderer::new(
     handle.animation.width.to_double(),
     handle.animation.height.to_double(),

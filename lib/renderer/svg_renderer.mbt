@@ -160,14 +160,14 @@ fn color_to_hex(r : Int, g : Int, b : Int) -> String {
 fn escape_xml_text(value : String) -> String {
   let buffer = StringBuilder::new()
   for i = 0; i < value.length(); i = i + 1 {
-    let ch = value[i].to_int().unsafe_to_char()
-    match ch {
+    let current_char = value[i].to_int().unsafe_to_char()
+    match current_char {
       '&' => buffer.write_string("&amp;")
       '<' => buffer.write_string("&lt;")
       '>' => buffer.write_string("&gt;")
       '"' => buffer.write_string("&quot;")
       '\'' => buffer.write_string("&#39;")
-      _ => buffer.write_char(ch)
+      _ => buffer.write_char(current_char)
     }
   }
   buffer.to_string()
