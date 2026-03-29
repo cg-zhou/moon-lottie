@@ -272,6 +272,14 @@ test "SvgRenderer mask composite uses luminance root mask for subtract stacks" {
     output.contains("fill=\"#000000\""),
     "subtract masks should emit black mask paths",
   )
+  assert_true(
+    output.contains("fill-rule=\"nonzero\""),
+    "mask paths should emit fill-rule so SVG mask winding matches lottie-web",
+  )
+  assert_true(
+    not(output.contains("clip-rule=\"nonzero\"")),
+    "mask paths should not emit clip-rule on <path> elements",
+  )
 }
 
 ///|

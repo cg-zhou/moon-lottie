@@ -371,7 +371,7 @@ fn SvgRenderer::mask_path_markup(
     path_data
   }
   attrs.write_string(
-    " fill=\"\{fill}\" clip-rule=\"nonzero\" fill-opacity=\"\{fmt(opacity)}\"",
+    " fill=\"\{fill}\" fill-rule=\"nonzero\" fill-opacity=\"\{fmt(opacity)}\"",
   )
   if expansion != 0.0 {
     attrs.write_string(" stroke=\"\{fill}\"")
