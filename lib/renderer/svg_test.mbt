@@ -18,6 +18,10 @@ test "SvgRenderer basic" {
   // Basic check
   assert_true(output.contains("<svg"), "Output should contain svg tag")
   assert_true(
+    output.contains("overflow=\"hidden\""),
+    "Root svg should hide content outside the canvas",
+  )
+  assert_true(
     output.contains("fill=\"#FF0000\""),
     "Output should contain red fill",
   )
@@ -134,6 +138,14 @@ test "SvgRenderer applies image transforms" {
   renderer.draw_image("data:image/png;base64,abc", 20.0, 10.0, 0)
   let output = renderer.get_output()
   assert_true(
+    output.contains("xmlns:xlink=\"http://www.w3.org/1999/xlink\""),
+    "SVG output should declare the xlink namespace for image compatibility",
+  )
+  assert_true(
+    output.contains("xlink:href=\"data:image/png;base64,abc\""),
+    "Images should include a legacy xlink:href for embedded asset compatibility",
+  )
+  assert_true(
     output.contains("transform=\"matrix(1 0 0 1 12 34)\""),
     "Images should carry the current transform matrix",
   )
@@ -191,7 +203,10 @@ test "SvgRenderer track matte outputs masked content" {
   renderer.fill(255, 255, 255, 1.0)
   renderer.end_matte_exit(1)
   let output = renderer.get_output()
-  assert_true(output.contains("<mask id=\"matte_0\""), "track matte should create a mask")
+  assert_true(
+    output.contains("<mask id=\"matte_0\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">"),
+    "track matte should create an alpha mask so matte color does not affect opacity",
+  )
   assert_true(output.contains("mask=\"url(#matte_0)\""), "content should reference the matte mask")
 }
 
