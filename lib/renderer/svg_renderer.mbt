@@ -82,7 +82,7 @@ fn fmt(v : Double) -> String {
 pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
   let output = StringBuilder::new()
   output.write_string(
-    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" viewBox=\"0 0 \{fmt(self.width)} \{fmt(self.height)}\">",
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" viewBox=\"0 0 \{fmt(self.width)} \{fmt(self.height)}\" overflow=\"hidden\">",
   )
   if self.defs_buffer.to_string().length() > 0 {
     output.write_string("<defs>")
@@ -295,7 +295,7 @@ fn SvgRenderer::append_markup(self : SvgRenderer, markup : String) -> Unit {
     }
     let mask_id = self.next_id("blend_mask")
     self.defs_buffer.write_string(
-      "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\">",
+      "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">",
     )
     self.defs_buffer.write_string(existing)
     self.defs_buffer.write_string("</mask>")
@@ -486,7 +486,7 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
       }
       let mask_id = self.next_id("matte")
       self.defs_buffer.write_string(
-        "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\">",
+        "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">",
       )
       if matte_type == 2 {
         self.defs_buffer.write_string(
@@ -574,7 +574,7 @@ pub impl Renderer for SvgRenderer with draw_image(
   // wasm-only numeric asset index used by the canvas bridge.
   let _ = asset_index
   self.append_markup(
-    "<image href=\"\{escape_xml_text(id)}\" width=\"\{fmt(width)}\" height=\"\{fmt(height)}\" preserveAspectRatio=\"none\" transform=\"\{matrix_to_svg_transform(self.current_matrix)}\" />",
+    "<image href=\"\{escape_xml_text(id)}\" xlink:href=\"\{escape_xml_text(id)}\" width=\"\{fmt(width)}\" height=\"\{fmt(height)}\" preserveAspectRatio=\"none\" transform=\"\{matrix_to_svg_transform(self.current_matrix)}\" />",
   )
 }
 
