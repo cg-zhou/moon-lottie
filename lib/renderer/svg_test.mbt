@@ -57,6 +57,22 @@ test "SvgRenderer with gradient" {
 }
 
 ///|
+test "SvgRenderer uses unique gradient ids" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  draw_gradient(renderer)
+  draw_gradient(renderer)
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("id=\"grad_0\""),
+    "First gradient should use its own id",
+  )
+  assert_true(
+    output.contains("id=\"grad_1\""),
+    "Second gradient should use its own id",
+  )
+}
+
+///|
 test "SvgRenderer subtract mask logic" {
   let renderer = SvgRenderer::new(500.0, 500.0)
 
@@ -109,6 +125,74 @@ test "SvgRenderer escapes text content" {
   let output = renderer.get_output()
   assert_true(output.contains("A&amp;B&lt;test&gt;"), "Text content should be XML escaped")
   assert_true(output.contains("&quot;&#39;"), "Quotes should be XML escaped")
+}
+
+///|
+test "SvgRenderer applies image transforms" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.concat_transform(@math.Matrix::identity().translate(12.0, 34.0))
+  renderer.draw_image("data:image/png;base64,abc", 20.0, 10.0, 0)
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("transform=\"matrix(1 0 0 1 12 34)\""),
+    "Images should carry the current transform matrix",
+  )
+  assert_true(
+    output.contains("width=\"20\" height=\"10\""),
+    "Images should preserve their requested dimensions",
+  )
+}
+
+///|
+test "SvgRenderer layer source-atop masks replacement paint" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.begin_layer()
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(10.0, 0.0)
+  renderer.line_to(10.0, 10.0)
+  renderer.line_to(0.0, 10.0)
+  renderer.close_path()
+  renderer.fill(255, 0, 0, 1.0)
+  renderer.set_blend_mode("source-atop")
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(20.0, 0.0)
+  renderer.line_to(20.0, 20.0)
+  renderer.line_to(0.0, 20.0)
+  renderer.close_path()
+  renderer.fill(0, 0, 255, 1.0)
+  renderer.set_blend_mode("source-over")
+  renderer.end_layer("source-over")
+  let output = renderer.get_output()
+  assert_true(output.contains("<mask id=\"blend_mask_0\""), "source-atop should create a mask")
+  assert_true(output.contains("mask=\"url(#blend_mask_0)\""), "replacement paint should be masked by prior content")
+  assert_true(output.contains("fill=\"#0000FF\""), "replacement paint should remain visible")
+}
+
+///|
+test "SvgRenderer track matte outputs masked content" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.prepare_matte_layer()
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(20.0, 0.0)
+  renderer.line_to(20.0, 20.0)
+  renderer.line_to(0.0, 20.0)
+  renderer.close_path()
+  renderer.fill(255, 0, 0, 1.0)
+  renderer.begin_matte_exit()
+  renderer.begin_path()
+  renderer.move_to(5.0, 5.0)
+  renderer.line_to(15.0, 5.0)
+  renderer.line_to(15.0, 15.0)
+  renderer.line_to(5.0, 15.0)
+  renderer.close_path()
+  renderer.fill(255, 255, 255, 1.0)
+  renderer.end_matte_exit(1)
+  let output = renderer.get_output()
+  assert_true(output.contains("<mask id=\"matte_0\""), "track matte should create a mask")
+  assert_true(output.contains("mask=\"url(#matte_0)\""), "content should reference the matte mask")
 }
 
 ///|
