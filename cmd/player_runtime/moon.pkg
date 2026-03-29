@@ -1,4 +1,5 @@
 import {
+  "cg-zhou/moon-lottie/lib/model",
   "cg-zhou/moon-lottie/lib/parser",
   "cg-zhou/moon-lottie/lib/renderer",
   "cg-zhou/moon-lottie/lib/runtime",
@@ -20,6 +21,8 @@ options(
         "get_height",
         "get_fps",
         "get_version",
+        "create_svg_animation_from_js",
+        "render_svg_frame",
       ],
     },
     "wasm-gc": {
@@ -34,6 +37,8 @@ options(
         "get_height",
         "get_fps",
         "get_version",
+        "create_svg_animation_from_js",
+        "render_svg_frame",
       ],
     },
   },

@@ -81,6 +81,28 @@ fn main {
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc", target="js"))
+struct SvgAnimationHandle {
+  animation : @model.Animation
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
+fn parse_animation_from_js() -> @model.Animation raise {
+  @runtime.install_expression_handlers(
+    (expression, frame, layer_index, comp_id, value) =>
+      js_evaluate_expression_double(expression, frame, layer_index, comp_id, value),
+    (expression, frame, layer_index, comp_id, value) =>
+      js_evaluate_expression_vec(expression, frame, layer_index, comp_id, value),
+    (expression, frame, layer_index, comp_id, value) =>
+      js_evaluate_expression_path(expression, frame, layer_index, comp_id, value),
+  )
+  let json_str = get_json_from_js()
+  let json = @json.parse(json_str)
+  @parser.parse_animation(json)
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
 fn get_json_from_js() -> String {
   js_get_json_string()
 }
@@ -89,18 +111,19 @@ fn get_json_from_js() -> String {
 #cfg(any(target="wasm", target="wasm-gc", target="js"))
 pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
   try {
-    @runtime.install_expression_handlers(
-      (expression, frame, layer_index, comp_id, value) =>
-        js_evaluate_expression_double(expression, frame, layer_index, comp_id, value),
-      (expression, frame, layer_index, comp_id, value) =>
-        js_evaluate_expression_vec(expression, frame, layer_index, comp_id, value),
-      (expression, frame, layer_index, comp_id, value) =>
-        js_evaluate_expression_path(expression, frame, layer_index, comp_id, value),
-    )
-    let json_str = get_json_from_js()
-    let json = @json.parse(json_str)
-    let anim = @parser.parse_animation(json)
+    let anim = parse_animation_from_js()
     Some(@renderer.create_canvas_player(anim))
+  } catch {
+    _ => None
+  }
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
+pub fn create_svg_animation_from_js() -> SvgAnimationHandle? {
+  try {
+    let animation = parse_animation_from_js()
+    Some({ animation, })
   } catch {
     _ => None
   }
@@ -171,4 +194,20 @@ pub fn get_in_point(
   player : @renderer.Player[@renderer.CanvasRenderer],
 ) -> Double {
   player.animation.in_point
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc", target="js"))
+pub fn render_svg_frame(
+  handle : SvgAnimationHandle,
+  frame : Double,
+) -> String {
+  let renderer = @renderer.SvgRenderer::new(
+    handle.animation.width.to_double(),
+    handle.animation.height.to_double(),
+  )
+  let player = @renderer.Player::new(handle.animation, renderer)
+  player.set_frame(frame)
+  player.render()
+  renderer.get_output()
 }

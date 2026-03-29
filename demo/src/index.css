@@ -624,6 +624,18 @@ main {
   letter-spacing: 0.05em;
 }
 
+.playground-renderer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playground-renderer-toggle__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
 .playground-canvas-stage {
   flex: 1;
   min-height: 0;
@@ -649,6 +661,16 @@ main {
   margin: auto;
   max-width: 100% !important;
   max-height: 100% !important;
+}
+
+.playground-svg-container,
+.playground-svg-container img {
+  width: 100%;
+  height: 100%;
+}
+
+.playground-svg-container img {
+  object-fit: contain;
 }
 
 .playground-control-bar {

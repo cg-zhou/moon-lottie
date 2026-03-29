@@ -103,6 +103,15 @@ test "render_animation_to_svgs utility" {
 }
 
 ///|
+test "SvgRenderer escapes text content" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.draw_text("A&B<test>\"'", "Arial\"'", 16.0, 255, 255, 255, 1.0, 0)
+  let output = renderer.get_output()
+  assert_true(output.contains("A&amp;B&lt;test&gt;"), "Text content should be XML escaped")
+  assert_true(output.contains("&quot;&#39;"), "Quotes should be XML escaped")
+}
+
+///|
 test "precomp rendering applies composition clipping" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"assets\":[{\"id\":\"comp_1\",\"w\":50,\"h\":50,\"layers\":[{\"ddd\":0,\"ind\":1,\"ty\":1,\"nm\":\"solid\",\"ks\":{\"a\":{\"a\":0,\"k\":[0,0,0]},\"p\":{\"a\":0,\"k\":[25,25,0]},\"s\":{\"a\":0,\"k\":[100,100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}},\"ip\":0,\"op\":10,\"st\":0,\"sc\":\"#ff0000\",\"sw\":100,\"sh\":100}]}],\"layers\":[{\"ddd\":0,\"ind\":1,\"ty\":0,\"nm\":\"precomp\",\"refId\":\"comp_1\",\"w\":50,\"h\":50,\"ks\":{\"a\":{\"a\":0,\"k\":[0,0,0]},\"p\":{\"a\":0,\"k\":[50,50,0]},\"s\":{\"a\":0,\"k\":[100,100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}},\"ip\":0,\"op\":10,\"st\":0}]}"

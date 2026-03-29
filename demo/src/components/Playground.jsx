@@ -110,9 +110,27 @@ const BackgroundSelector = React.memo(function BackgroundSelector({ currentBackg
   )
 })
 
+const RendererToggle = React.memo(function RendererToggle({ label, value, onChange }) {
+  return (
+    <label className="playground-renderer-toggle" aria-label={`${label} 渲染器`}>
+      <span className="playground-renderer-toggle__label">{label}</span>
+      <Radio.Group
+        size="small"
+        value={value}
+        buttonStyle="solid"
+        onChange={(event) => onChange(event.target.value)}
+      >
+        <Radio.Button value="canvas">canvas</Radio.Button>
+        <Radio.Button value="svg">svg</Radio.Button>
+      </Radio.Group>
+    </label>
+  )
+})
+
 export default function Playground({ active = true }) {
   const workbenchRef = useRef(null)
   const canvasRef = useRef(null)
+  const moonSvgContainerRef = useRef(null)
   const viewportRef = useRef(null)
   const wasmWrapperRef = useRef(null)
   const officialWrapperRef = useRef(null)
@@ -139,6 +157,7 @@ export default function Playground({ active = true }) {
     nativePlayer: null,
     runtime: null,
   })
+  const animationSnapshotRef = useRef(null)
   const compareEnabledRef = useRef(true)
   const currentSpeedRef = useRef(1)
   const resumePlaybackOnActivateRef = useRef(false)
@@ -151,6 +170,8 @@ export default function Playground({ active = true }) {
   const [compareEnabled, setCompareEnabled] = useState(true)
   const [currentSpeed, setCurrentSpeed] = useState(1)
   const [currentBackground, setCurrentBackground] = useState("white")
+  const [moonRenderer, setMoonRenderer] = useState("canvas")
+  const [officialRenderer, setOfficialRenderer] = useState("svg")
   const [runtimeBackend, setRuntimeBackend] = useState("uninitialized")
   const [statusMessage, setStatusMessage] = useState("初始化 MoonLottie 运行时...")
   const [currentFileName, setCurrentFileName] = useState("")
@@ -184,6 +205,20 @@ export default function Playground({ active = true }) {
     setCurrentAnimationMeta(stateRef.current.currentAnimationMeta)
     setCurrentExpressionAnimationData(stateRef.current.currentExpressionAnimationData)
     setCurrentExpressionMeta(stateRef.current.currentExpressionMeta)
+    if (
+      stateRef.current.currentAnimationData
+      && (
+        animationSnapshotRef.current?.animationData !== stateRef.current.currentAnimationData
+        || animationSnapshotRef.current?.filename !== stateRef.current.currentFileName
+        || animationSnapshotRef.current?.size !== stateRef.current.currentFileSize
+      )
+    ) {
+      animationSnapshotRef.current = {
+        filename: stateRef.current.currentFileName,
+        size: stateRef.current.currentFileSize,
+        animationData: stateRef.current.currentAnimationData,
+      }
+    }
   }
 
   function renderCurrentFrame() {
@@ -289,12 +324,18 @@ export default function Playground({ active = true }) {
 
   useEffect(() => {
     let disposed = false
+    let currentMoonSvgMarkup = ""
+    const clearMoonSvgFrame = () => {
+      currentMoonSvgMarkup = ""
+      moonSvgContainerRef.current?.replaceChildren()
+    }
 
     async function init() {
       await ensureLottieScriptLoaded().catch(() => null)
       if (disposed) return
 
       const canvas = canvasRef.current
+      const moonSvgContainer = moonSvgContainerRef.current
       const viewport = viewportRef.current
       const wasmWrapper = wasmWrapperRef.current
       const officialWrapper = officialWrapperRef.current
@@ -302,15 +343,45 @@ export default function Playground({ active = true }) {
       const officialStage = officialStageRef.current
       const officialContainer = officialContainerRef.current
       const seekBar = seekBarRef.current
-      if (!canvas || !viewport || !wasmWrapper || !officialWrapper || !wasmStage || !officialStage || !officialContainer || !seekBar) {
+      if (!canvas || !moonSvgContainer || !viewport || !wasmWrapper || !officialWrapper || !wasmStage || !officialStage || !officialContainer || !seekBar) {
         return
       }
 
       const ctx = canvas.getContext("2d")
+      const ensureMoonSvgImage = () => {
+        let image = moonSvgContainer.querySelector("img")
+        if (!image) {
+          image = document.createElement("img")
+          image.alt = "MoonLottie SVG frame"
+          moonSvgContainer.replaceChildren(image)
+        }
+        return image
+      }
+      const renderMoonSvgFrame = (runtime, nativePlayer, frame) => {
+        if (!runtime || !nativePlayer) {
+          clearMoonSvgFrame()
+          return
+        }
+        const svgMarkup = runtime.render_svg_frame(nativePlayer, frame)
+        if (svgMarkup === currentMoonSvgMarkup) {
+          return
+        }
+        currentMoonSvgMarkup = svgMarkup
+        const image = ensureMoonSvgImage()
+        const nextSvgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`
+        if (image.src !== nextSvgUrl) {
+          image.src = nextSvgUrl
+        }
+      }
+      const renderMoonCanvasFrame = (runtime, nativePlayer, frame) => {
+        clearMoonSvgFrame()
+        baseRuntimeBridge.renderFrame(runtime, nativePlayer, frame)
+      }
 
       officialControllerRef.current = createOfficialPlayerController({
         container: officialContainer,
         getLottie: () => window.lottie,
+        defaultRenderer: officialRenderer,
       })
 
       viewportPresenterRef.current = createViewportPresenter({
@@ -330,7 +401,7 @@ export default function Playground({ active = true }) {
         infoElements: {},
       })
 
-      runtimeBridgeRef.current = createCanvasRuntimeBridge({
+      const baseRuntimeBridge = createCanvasRuntimeBridge({
         canvas,
         viewportTransform: viewportTransformRef.current,
         getRuntimeAnimationJson: () => runtimeJsonRef.current,
@@ -340,6 +411,11 @@ export default function Playground({ active = true }) {
         getCanvasContext: () => ctx,
         jsRuntimePath: `${import.meta.env.BASE_URL}runtime/js/moon-lottie-runtime.js`,
       })
+
+      runtimeBridgeRef.current = {
+        ...baseRuntimeBridge,
+        renderFrame: moonRenderer === "svg" ? renderMoonSvgFrame : renderMoonCanvasFrame,
+      }
 
       controllerRef.current = createPlayer({
         loadWasmRuntime: runtimeBridgeRef.current.loadWasmRuntime,
@@ -361,7 +437,9 @@ export default function Playground({ active = true }) {
         renderFrame: () => {
           renderCurrentFrame()
         },
-        createNativePlayer: (runtime) => runtime.create_player_from_js(),
+        createNativePlayer: (runtime) => moonRenderer === "svg"
+          ? runtime.create_svg_animation_from_js()
+          : runtime.create_player_from_js(),
         onRuntimeChanged: ({ runtime, backend }) => {
           window.moonLottie = runtime
           window.moonLottieBackend = backend
@@ -387,7 +465,22 @@ export default function Playground({ active = true }) {
         updateStatus(controllerRef.current.getBackend() === "wasm"
           ? "已就绪，当前使用 Wasm 后端"
           : "已就绪，当前使用 JS 兼容后端", "#34c759")
-        await initAnimationList()
+        const snapshot = animationSnapshotRef.current
+        if (snapshot?.animationData) {
+          const restoredState = await controllerRef.current.loadFromText(
+            JSON.stringify(snapshot.animationData),
+            {
+              filename: snapshot.filename,
+              size: snapshot.size,
+            },
+          )
+          if (disposed) return
+          syncPlayerState(restoredState)
+          updateStatus(`已切换 MoonLottie 渲染器: ${moonRenderer}`, "#34c759")
+          renderCurrentFrame()
+        } else {
+          await initAnimationList()
+        }
       } catch (error) {
         if (!disposed) {
           updateStatus(`错误: ${error.message}`, "#ff3b30")
@@ -471,16 +564,28 @@ export default function Playground({ active = true }) {
       window.removeEventListener("drop", handleDrop)
       controllerRef.current?.destroy()
       officialControllerRef.current?.destroy()
+      clearMoonSvgFrame()
       controllerRef.current = null
       officialControllerRef.current = null
     }
-  }, [])
+  }, [moonRenderer])
 
   useEffect(() => {
     if (!controllerRef.current || !currentAnimationData) return
     scheduleViewportRefresh()
     renderCurrentFrame()
   }, [compareEnabled])
+
+  useEffect(() => {
+    if (!officialControllerRef.current) return
+    officialControllerRef.current.setRenderer(officialRenderer)
+    if (currentAnimationData && compareEnabled) {
+      const state = controllerRef.current?.refreshCompare()
+      if (state) {
+        syncPlayerState(state)
+      }
+    }
+  }, [compareEnabled, currentAnimationData, officialRenderer])
 
   useEffect(() => {
     if (!controllerRef.current || !currentAnimationData) return
@@ -615,9 +720,11 @@ export default function Playground({ active = true }) {
               <Tag className="playground-canvas-tag" color="blue" icon={<IconifyIcon name="solar:stars-bold" size={14} />}>
                 MoonLottie
               </Tag>
+              <RendererToggle label="渲染器" value={moonRenderer} onChange={setMoonRenderer} />
             </div>
             <div ref={wasmStageRef} className="playground-canvas-stage">
-              <canvas ref={canvasRef} />
+              <canvas ref={canvasRef} style={{ display: moonRenderer === "canvas" ? "block" : "none" }} />
+              <div ref={moonSvgContainerRef} className="playground-official-container playground-svg-container" style={{ display: moonRenderer === "svg" ? "block" : "none" }} />
             </div>
           </section>
           <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none" }}>
@@ -625,6 +732,7 @@ export default function Playground({ active = true }) {
               <Tag className="playground-canvas-tag" icon={<IconifyIcon name="mdi:animation-play-outline" size={14} />}>
                 官方 lottie-web
               </Tag>
+              <RendererToggle label="渲染器" value={officialRenderer} onChange={setOfficialRenderer} />
             </div>
             <div ref={officialStageRef} className="playground-canvas-stage">
               <div ref={officialContainerRef} className="playground-official-container" />
