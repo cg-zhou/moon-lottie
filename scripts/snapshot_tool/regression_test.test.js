@@ -1452,4 +1452,3 @@ test('default expression host preserves keyframe easing for effect parameters wi
   assert.ok(Math.abs(at84 - 60) > 3, `Expected frame 84 to be eased, not linear 60, got ${at84}`);
   assert.ok(Math.abs(at114 - 10) > 3, `Expected frame 114 to be eased, not linear 10, got ${at114}`);
 });
-
