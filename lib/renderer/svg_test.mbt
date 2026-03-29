@@ -137,6 +137,10 @@ test "SvgRenderer applies image transforms" {
     output.contains("transform=\"matrix(1 0 0 1 12 34)\""),
     "Images should carry the current transform matrix",
   )
+  assert_true(
+    output.contains("width=\"20\" height=\"10\""),
+    "Images should preserve their requested dimensions",
+  )
 }
 
 ///|

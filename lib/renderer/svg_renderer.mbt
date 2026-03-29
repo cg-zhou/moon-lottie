@@ -290,6 +290,7 @@ fn SvgRenderer::append_markup(self : SvgRenderer, markup : String) -> Unit {
   if self.current_blend_mode == "source-atop" {
     let existing = self.buffer.to_string()
     if existing.length() == 0 {
+      // source-atop draws only where prior layer content already exists.
       return
     }
     let mask_id = self.next_id("blend_mask")
@@ -480,6 +481,7 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
     Some(matte) => {
       self.buffer = matte.parent_buffer
       if matte.content_markup.length() == 0 || matte_markup.length() == 0 {
+        // Empty content or matte means the composite has no visible output.
         return
       }
       let mask_id = self.next_id("matte")
