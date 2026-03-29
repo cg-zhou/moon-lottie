@@ -5,14 +5,46 @@
 pub struct SvgRenderer {
   width : Double
   height : Double
-  buffer : StringBuilder
+  mut buffer : StringBuilder
   defs_buffer : StringBuilder
-  state_stack : Array[(@math.Matrix, String, Int)]
+  state_stack : Array[SvgRendererState]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
   mut gradient_count : Int
   mut group_depth : Int
   mut current_fill_rule : String
+  mut current_blend_mode : String
+  mut current_line_cap : Int
+  mut current_line_join : Int
+  mut current_miter_limit : Double
+  mut current_dash_array : Array[Double]
+  mut current_dash_offset : Double
+  layer_stack : Array[SvgLayerCapture]
+  matte_stack : Array[SvgMatteCapture]
+}
+
+///|
+struct SvgRendererState {
+  current_matrix : @math.Matrix
+  current_fill_rule : String
+  group_count : Int
+  current_blend_mode : String
+  current_line_cap : Int
+  current_line_join : Int
+  current_miter_limit : Double
+  current_dash_array : Array[Double]
+  current_dash_offset : Double
+}
+
+///|
+struct SvgLayerCapture {
+  buffer : StringBuilder
+}
+
+///|
+struct SvgMatteCapture {
+  parent_buffer : StringBuilder
+  content_markup : String
 }
 
 ///|
@@ -28,6 +60,14 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
     gradient_count: 0,
     group_depth: 0,
     current_fill_rule: "nonzero",
+    current_blend_mode: "source-over",
+    current_line_cap: 1,
+    current_line_join: 1,
+    current_miter_limit: 4.0,
+    current_dash_array: [],
+    current_dash_offset: 0.0,
+    layer_stack: [],
+    matte_stack: [],
   }
 }
 
@@ -56,7 +96,17 @@ pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
 
 ///|
 pub impl Renderer for SvgRenderer with save(self : SvgRenderer) -> Unit {
-  self.state_stack.push((self.current_matrix, self.current_fill_rule, 1))
+  self.state_stack.push({
+    current_matrix: self.current_matrix,
+    current_fill_rule: self.current_fill_rule,
+    group_count: 1,
+    current_blend_mode: self.current_blend_mode,
+    current_line_cap: self.current_line_cap,
+    current_line_join: self.current_line_join,
+    current_miter_limit: self.current_miter_limit,
+    current_dash_array: self.current_dash_array,
+    current_dash_offset: self.current_dash_offset,
+  })
   self.buffer.write_string("<g>")
   self.group_depth = self.group_depth + 1
 }
@@ -64,10 +114,16 @@ pub impl Renderer for SvgRenderer with save(self : SvgRenderer) -> Unit {
 ///|
 pub impl Renderer for SvgRenderer with restore(self : SvgRenderer) -> Unit {
   match self.state_stack.pop() {
-    Some((m, fr, gc)) => {
-      self.current_matrix = m
-      self.current_fill_rule = fr
-      for i = 0; i < gc; i = i + 1 {
+    Some(state) => {
+      self.current_matrix = state.current_matrix
+      self.current_fill_rule = state.current_fill_rule
+      self.current_blend_mode = state.current_blend_mode
+      self.current_line_cap = state.current_line_cap
+      self.current_line_join = state.current_line_join
+      self.current_miter_limit = state.current_miter_limit
+      self.current_dash_array = state.current_dash_array
+      self.current_dash_offset = state.current_dash_offset
+      for i = 0; i < state.group_count; i = i + 1 {
         self.buffer.write_string("</g>")
         self.group_depth = self.group_depth - 1
       }
@@ -174,6 +230,92 @@ fn escape_xml_text(value : String) -> String {
 }
 
 ///|
+fn matrix_to_svg_transform(matrix : @math.Matrix) -> String {
+  "matrix(\{fmt(matrix.a)} \{fmt(matrix.b)} \{fmt(matrix.c)} \{fmt(matrix.d)} \{fmt(matrix.e)} \{fmt(matrix.f)})"
+}
+
+///|
+fn line_cap_to_svg(line_cap : Int) -> String {
+  match line_cap {
+    2 => "round"
+    3 => "square"
+    _ => "butt"
+  }
+}
+
+///|
+fn line_join_to_svg(line_join : Int) -> String {
+  match line_join {
+    2 => "round"
+    3 => "bevel"
+    _ => "miter"
+  }
+}
+
+///|
+fn dash_array_to_svg(dash_array : Array[Double]) -> String {
+  let buffer = StringBuilder::new()
+  for i = 0; i < dash_array.length(); i = i + 1 {
+    if i > 0 {
+      buffer.write_string(",")
+    }
+    buffer.write_string(fmt(dash_array[i]))
+  }
+  buffer.to_string()
+}
+
+///|
+fn SvgRenderer::next_id(self : SvgRenderer, prefix : String) -> String {
+  let id = "\{prefix}_\{self.gradient_count}"
+  self.gradient_count = self.gradient_count + 1
+  id
+}
+
+///|
+fn SvgRenderer::stroke_attrs(self : SvgRenderer) -> String {
+  let attrs = StringBuilder::new()
+  attrs.write_string(
+    " stroke-linecap=\"\{line_cap_to_svg(self.current_line_cap)}\" stroke-linejoin=\"\{line_join_to_svg(self.current_line_join)}\" stroke-miterlimit=\"\{fmt(self.current_miter_limit)}\"",
+  )
+  if self.current_dash_array.length() > 0 {
+    attrs.write_string(
+      " stroke-dasharray=\"\{dash_array_to_svg(self.current_dash_array)}\" stroke-dashoffset=\"\{fmt(self.current_dash_offset)}\"",
+    )
+  }
+  attrs.to_string()
+}
+
+///|
+fn SvgRenderer::append_markup(self : SvgRenderer, markup : String) -> Unit {
+  if self.current_blend_mode == "source-atop" {
+    let existing = self.buffer.to_string()
+    if existing.length() == 0 {
+      return
+    }
+    let mask_id = self.next_id("blend_mask")
+    self.defs_buffer.write_string(
+      "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\">",
+    )
+    self.defs_buffer.write_string(existing)
+    self.defs_buffer.write_string("</mask>")
+    self.buffer = StringBuilder::new()
+    self.buffer.write_string("<g mask=\"url(#\{mask_id})\">")
+    self.buffer.write_string(markup)
+    self.buffer.write_string("</g>")
+    return
+  }
+  if self.current_blend_mode != "source-over" {
+    self.buffer.write_string(
+      "<g style=\"mix-blend-mode:\{escape_xml_text(self.current_blend_mode)}\">",
+    )
+    self.buffer.write_string(markup)
+    self.buffer.write_string("</g>")
+    return
+  }
+  self.buffer.write_string(markup)
+}
+
+///|
 pub impl Renderer for SvgRenderer with fill(
   self : SvgRenderer,
   r : Int,
@@ -184,7 +326,7 @@ pub impl Renderer for SvgRenderer with fill(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
-    self.buffer.write_string(
+    self.append_markup(
       "<path d=\"\{path_data}\" fill=\"\{color}\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
     )
   }
@@ -202,8 +344,8 @@ pub impl Renderer for SvgRenderer with stroke(
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
-    self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\" />",
+    self.append_markup(
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"\{color}\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{self.stroke_attrs()} />",
     )
   }
 }
@@ -215,10 +357,9 @@ pub impl Renderer for SvgRenderer with set_stroke_style(
   line_join : Int,
   miter_limit : Double,
 ) -> Unit {
-  let _ = self
-  let _ = line_cap
-  let _ = line_join
-  let _ = miter_limit
+  self.current_line_cap = line_cap
+  self.current_line_join = line_join
+  self.current_miter_limit = miter_limit
 }
 
 ///|
@@ -227,11 +368,8 @@ pub impl Renderer for SvgRenderer with set_line_dash(
   dash_array : Array[Double],
   dash_offset : Double,
 ) -> Unit {
-  // SVG dash stroke is handled via stroke-dasharray/stroke-dashoffset attributes
-  // in the SVG output. Not yet implemented for SVG renderer.
-  let _ = self
-  let _ = dash_array
-  let _ = dash_offset
+  self.current_dash_array = dash_array
+  self.current_dash_offset = dash_offset
 }
 
 ///|
@@ -249,8 +387,18 @@ pub impl Renderer for SvgRenderer with set_opacity(
 ) -> Unit {
   if self.state_stack.length() > 0 {
     let last_idx = self.state_stack.length() - 1
-    let (m, fr, gc) = self.state_stack[last_idx]
-    self.state_stack[last_idx] = (m, fr, gc + 1)
+    let state = self.state_stack[last_idx]
+    self.state_stack[last_idx] = {
+      current_matrix: state.current_matrix,
+      current_fill_rule: state.current_fill_rule,
+      group_count: state.group_count + 1,
+      current_blend_mode: state.current_blend_mode,
+      current_line_cap: state.current_line_cap,
+      current_line_join: state.current_line_join,
+      current_miter_limit: state.current_miter_limit,
+      current_dash_array: state.current_dash_array,
+      current_dash_offset: state.current_dash_offset,
+    }
   }
   self.buffer.write_string("<g opacity=\"\{fmt(opacity)}\">")
   self.group_depth = self.group_depth + 1
@@ -261,15 +409,15 @@ pub impl Renderer for SvgRenderer with set_blend_mode(
   self : SvgRenderer,
   mode : String,
 ) -> Unit {
-  let _ = self
-  let _ = mode
+  self.current_blend_mode = mode
 }
 
 ///|
 pub impl Renderer for SvgRenderer with begin_layer(
   self : SvgRenderer,
 ) -> Unit {
-  let _ = self
+  self.layer_stack.push({ buffer: self.buffer })
+  self.buffer = StringBuilder::new()
 }
 
 ///|
@@ -277,22 +425,49 @@ pub impl Renderer for SvgRenderer with end_layer(
   self : SvgRenderer,
   mode : String,
 ) -> Unit {
-  let _ = self
-  let _ = mode
+  let layer_markup = self.buffer.to_string()
+  match self.layer_stack.pop() {
+    Some(layer) => {
+      self.buffer = layer.buffer
+      if mode != "source-over" && mode != "" {
+        self.buffer.write_string(
+          "<g style=\"mix-blend-mode:\{escape_xml_text(mode)}\">",
+        )
+        self.buffer.write_string(layer_markup)
+        self.buffer.write_string("</g>")
+      } else {
+        self.buffer.write_string(layer_markup)
+      }
+    }
+    None => ()
+  }
 }
 
 ///|
 pub impl Renderer for SvgRenderer with prepare_matte_layer(
   self : SvgRenderer,
 ) -> Unit {
-  let _ = self
+  self.matte_stack.push({
+    parent_buffer: self.buffer,
+    content_markup: "",
+  })
+  self.buffer = StringBuilder::new()
 }
 
 ///|
 pub impl Renderer for SvgRenderer with begin_matte_exit(
   self : SvgRenderer,
 ) -> Unit {
-  let _ = self
+  match self.matte_stack.pop() {
+    Some(matte) => {
+      self.matte_stack.push({
+        parent_buffer: matte.parent_buffer,
+        content_markup: self.buffer.to_string(),
+      })
+      self.buffer = StringBuilder::new()
+    }
+    None => ()
+  }
 }
 
 ///|
@@ -300,8 +475,30 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
   self : SvgRenderer,
   matte_type : Int,
 ) -> Unit {
-  let _ = self
-  let _ = matte_type
+  let matte_markup = self.buffer.to_string()
+  match self.matte_stack.pop() {
+    Some(matte) => {
+      self.buffer = matte.parent_buffer
+      if matte.content_markup.length() == 0 || matte_markup.length() == 0 {
+        return
+      }
+      let mask_id = self.next_id("matte")
+      self.defs_buffer.write_string(
+        "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\">",
+      )
+      if matte_type == 2 {
+        self.defs_buffer.write_string(
+          "<rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" fill=\"#FFFFFF\" />",
+        )
+      }
+      self.defs_buffer.write_string(matte_markup)
+      self.defs_buffer.write_string("</mask>")
+      self.buffer.write_string("<g mask=\"url(#\{mask_id})\">")
+      self.buffer.write_string(matte.content_markup)
+      self.buffer.write_string("</g>")
+    }
+    None => ()
+  }
 }
 
 ///|
@@ -374,8 +571,8 @@ pub impl Renderer for SvgRenderer with draw_image(
   // SVG renderer writes the resolved href directly, so it does not need the
   // wasm-only numeric asset index used by the canvas bridge.
   let _ = asset_index
-  self.buffer.write_string(
-    "<image href=\"\{escape_xml_text(id)}\" width=\"\{width}\" height=\"\{height}\" />",
+  self.append_markup(
+    "<image href=\"\{escape_xml_text(id)}\" width=\"\{fmt(width)}\" height=\"\{fmt(height)}\" preserveAspectRatio=\"none\" transform=\"\{matrix_to_svg_transform(self.current_matrix)}\" />",
   )
 }
 
@@ -397,8 +594,8 @@ pub impl Renderer for SvgRenderer with draw_text(
     2 => "middle"
     _ => "start"
   }
-  self.buffer.write_string(
-    "<text font-family=\"\{escape_xml_text(font)}\" font-size=\"\{size}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" text-anchor=\"\{anchor}\">\{escape_xml_text(text)}</text>",
+  self.append_markup(
+    "<text font-family=\"\{escape_xml_text(font)}\" font-size=\"\{fmt(size)}\" fill=\"\{color}\" fill-opacity=\"\{fmt(opacity)}\" text-anchor=\"\{anchor}\" transform=\"\{matrix_to_svg_transform(self.current_matrix)}\">\{escape_xml_text(text)}</text>",
   )
 }
 
@@ -413,8 +610,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
-  let id = "lottie-id" // Normalized ID
-  self.gradient_count = self.gradient_count + 1
+  let id = self.next_id("grad")
 
   let p1 = self.current_matrix.transform_point(x1, y1)
   let p2 = self.current_matrix.transform_point(x2, y2)
@@ -441,7 +637,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
 
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
-    self.buffer.write_string(
+    self.append_markup(
       "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
     )
   }
@@ -459,8 +655,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   opacity : Double,
   width : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = self.next_id("grad")
 
   let p1 = self.current_matrix.transform_point(x1, y1)
   let p2 = self.current_matrix.transform_point(x2, y2)
@@ -487,8 +682,8 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
 
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
-    self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+    self.append_markup(
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{self.stroke_attrs()} />",
     )
   }
 }
@@ -506,8 +701,7 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   stops : Array[Double],
   opacity : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = self.next_id("grad")
   let p_c = self.current_matrix.transform_point(cx, cy)
   let p_f = self.current_matrix.transform_point(fx, fy)
   let _ = fr
@@ -534,7 +728,7 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
 
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
-    self.buffer.write_string(
+    self.append_markup(
       "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
     )
   }
@@ -554,8 +748,7 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   opacity : Double,
   width : Double,
 ) -> Unit {
-  let id = "grad_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = self.next_id("grad")
   let p_c = self.current_matrix.transform_point(cx, cy)
   let p_f = self.current_matrix.transform_point(fx, fy)
   let _ = fr
@@ -582,24 +775,33 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
 
   let path_data = self.path_buffer.to_string()
   if path_data.length() > 0 {
-    self.buffer.write_string(
-      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{opacity}\" stroke-width=\"\{width}\" />",
+    self.append_markup(
+      "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width)}\"\{self.stroke_attrs()} />",
     )
   }
 }
 
 ///|
 pub impl Renderer for SvgRenderer with clip(self : SvgRenderer) -> Unit {
-  let id = "clip_\{self.gradient_count}"
-  self.gradient_count = self.gradient_count + 1
+  let id = self.next_id("clip")
   let path_data = self.path_buffer.to_string()
   self.defs_buffer.write_string(
     "<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"\{self.current_fill_rule}\" /></clipPath>",
   )
   if self.state_stack.length() > 0 {
     let last_idx = self.state_stack.length() - 1
-    let (m, fr, gc) = self.state_stack[last_idx]
-    self.state_stack[last_idx] = (m, fr, gc + 1)
+    let state = self.state_stack[last_idx]
+    self.state_stack[last_idx] = {
+      current_matrix: state.current_matrix,
+      current_fill_rule: state.current_fill_rule,
+      group_count: state.group_count + 1,
+      current_blend_mode: state.current_blend_mode,
+      current_line_cap: state.current_line_cap,
+      current_line_join: state.current_line_join,
+      current_miter_limit: state.current_miter_limit,
+      current_dash_array: state.current_dash_array,
+      current_dash_offset: state.current_dash_offset,
+    }
   }
   self.buffer.write_string("<g clip-path=\"url(#\{id})\">")
   self.group_depth = self.group_depth + 1

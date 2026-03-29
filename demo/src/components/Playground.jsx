@@ -348,15 +348,7 @@ export default function Playground({ active = true }) {
       }
 
       const ctx = canvas.getContext("2d")
-      const ensureMoonSvgImage = () => {
-        let image = moonSvgContainer.querySelector("img")
-        if (!image) {
-          image = document.createElement("img")
-          image.alt = "MoonLottie SVG frame"
-          moonSvgContainer.replaceChildren(image)
-        }
-        return image
-      }
+      const parser = new DOMParser()
       const renderMoonSvgFrame = (runtime, nativePlayer, frame) => {
         if (!runtime || !nativePlayer) {
           clearMoonSvgFrame()
@@ -367,11 +359,13 @@ export default function Playground({ active = true }) {
           return
         }
         currentMoonSvgMarkup = svgMarkup
-        const image = ensureMoonSvgImage()
-        const nextSvgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`
-        if (image.src !== nextSvgUrl) {
-          image.src = nextSvgUrl
+        const parsed = parser.parseFromString(svgMarkup, "image/svg+xml")
+        const svgElement = parsed.documentElement
+        if (svgElement?.tagName.toLowerCase() !== "svg") {
+          clearMoonSvgFrame()
+          return
         }
+        moonSvgContainer.replaceChildren(document.importNode(svgElement, true))
       }
       const renderMoonCanvasFrame = (runtime, nativePlayer, frame) => {
         clearMoonSvgFrame()
