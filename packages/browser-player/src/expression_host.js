@@ -1027,7 +1027,7 @@ function createMaskAccessor(layer, frame) {
         }
         const rawPath = sampleKeyframedProperty(mask.pt, frame);
         const isPathObject = rawPath && typeof rawPath === 'object';
-        const lacksClosedProperty = isPathObject && rawPath.c == null && rawPath.closed == null;
+        const lacksClosedProperty = isPathObject && !('c' in rawPath) && !('closed' in rawPath);
         const hasMaskClosedProperty = mask.cl != null;
         const normalizedPath = lacksClosedProperty && hasMaskClosedProperty
             ? { ...rawPath, closed: !!mask.cl }
