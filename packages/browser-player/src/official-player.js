@@ -2,9 +2,11 @@ export function createOfficialPlayerController(options = {}) {
     const {
         container,
         getLottie = () => window.lottie,
+        defaultRenderer = 'svg',
     } = options;
 
     let officialPlayer = null;
+    let renderer = defaultRenderer === 'canvas' ? 'canvas' : 'svg';
 
     function destroy() {
         if (officialPlayer) {
@@ -28,7 +30,7 @@ export function createOfficialPlayerController(options = {}) {
         try {
             officialPlayer = lottie.loadAnimation({
                 container,
-                renderer: 'svg',
+                renderer,
                 loop: false,
                 autoplay: false,
                 animationData,
@@ -55,6 +57,10 @@ export function createOfficialPlayerController(options = {}) {
         load,
         seek,
         destroy,
+        setRenderer: (value) => {
+            renderer = value === 'canvas' ? 'canvas' : 'svg';
+        },
+        getRenderer: () => renderer,
         getPlayer: () => officialPlayer,
     };
 }

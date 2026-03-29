@@ -157,6 +157,23 @@ fn color_to_hex(r : Int, g : Int, b : Int) -> String {
 }
 
 ///|
+fn escape_xml_text(value : String) -> String {
+  let buffer = StringBuilder::new()
+  for i = 0; i < value.length(); i = i + 1 {
+    let ch = value[i].to_int().unsafe_to_char()
+    match ch {
+      '&' => buffer.write_string("&amp;")
+      '<' => buffer.write_string("&lt;")
+      '>' => buffer.write_string("&gt;")
+      '"' => buffer.write_string("&quot;")
+      '\'' => buffer.write_string("&#39;")
+      _ => buffer.write_char(ch)
+    }
+  }
+  buffer.to_string()
+}
+
+///|
 pub impl Renderer for SvgRenderer with fill(
   self : SvgRenderer,
   r : Int,
@@ -358,7 +375,7 @@ pub impl Renderer for SvgRenderer with draw_image(
   // wasm-only numeric asset index used by the canvas bridge.
   let _ = asset_index
   self.buffer.write_string(
-    "<image href=\"\{id}\" width=\"\{width}\" height=\"\{height}\" />",
+    "<image href=\"\{escape_xml_text(id)}\" width=\"\{width}\" height=\"\{height}\" />",
   )
 }
 
@@ -381,7 +398,7 @@ pub impl Renderer for SvgRenderer with draw_text(
     _ => "start"
   }
   self.buffer.write_string(
-    "<text font-family=\"\{font}\" font-size=\"\{size}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" text-anchor=\"\{anchor}\">\{text}</text>",
+    "<text font-family=\"\{escape_xml_text(font)}\" font-size=\"\{size}\" fill=\"\{color}\" fill-opacity=\"\{opacity}\" text-anchor=\"\{anchor}\">\{escape_xml_text(text)}</text>",
   )
 }
 
