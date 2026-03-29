@@ -19047,7 +19047,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer18mask__path__
   const fill = mode === 2 ? "#000000" : "#ffffff";
   const attrs = _M0MPB13StringBuilder11new_2einner(0);
   const final_path = inverted ? `${_M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer17mask__solid__path(self)}${path_data}` : path_data;
-  _M0IPB13StringBuilderPB6Logger13write__string(attrs, ` fill=\"${fill}\" clip-rule=\"nonzero\" fill-opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity)}\"`);
+  _M0IPB13StringBuilderPB6Logger13write__string(attrs, ` fill=\"${fill}\" fill-rule=\"nonzero\" fill-opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity)}\"`);
   if (expansion !== 0) {
     _M0IPB13StringBuilderPB6Logger13write__string(attrs, ` stroke=\"${fill}\"`);
     if (expansion < 0) {
