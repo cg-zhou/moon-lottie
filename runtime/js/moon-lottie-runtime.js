@@ -18793,15 +18793,15 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(v) {
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer11get__output(self) {
   const output = _M0MPB13StringBuilder11new_2einner(0);
   _M0IPB13StringBuilderPB6Logger13write__string(output, `<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" viewBox=\"0 0 ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)} ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" overflow=\"hidden\">`);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, "<defs>");
   const _p = self.defs_buffer;
-  if (_p.val.length > 0) {
-    _M0IPB13StringBuilderPB6Logger13write__string(output, "<defs>");
-    const _p$2 = self.defs_buffer;
-    _M0IPB13StringBuilderPB6Logger13write__string(output, _p$2.val);
-    _M0IPB13StringBuilderPB6Logger13write__string(output, "</defs>");
-  }
+  _M0IPB13StringBuilderPB6Logger13write__string(output, _p.val);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, `<clipPath id=\"frame_clip\"><rect x=\"0\" y=\"0\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" /></clipPath>`);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, "</defs>");
+  _M0IPB13StringBuilderPB6Logger13write__string(output, "<g clip-path=\"url(#frame_clip)\">");
   const _p$2 = self.buffer;
   _M0IPB13StringBuilderPB6Logger13write__string(output, _p$2.val);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, "</g>");
   _M0IPB13StringBuilderPB6Logger13write__string(output, "</svg>");
   return output.val;
 }
@@ -19010,7 +19010,6 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer14append__mark
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<mask id=\"${mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">`);
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, existing);
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</mask>");
-    self.buffer = _M0MPB13StringBuilder11new_2einner(0);
     _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<g mask=\"url(#${mask_id})\">`);
     _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, markup);
     _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, "</g>");
@@ -19142,8 +19141,12 @@ function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<mask id=\"${mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">`);
     if (matte_type === 2) {
       _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<rect x=\"0\" y=\"0\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" fill=\"#FFFFFF\" />`);
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "<g style=\"mix-blend-mode:destination-out\">");
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, matte_markup);
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</g>");
+    } else {
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, matte_markup);
     }
-    _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, matte_markup);
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</mask>");
     _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<g mask=\"url(#${mask_id})\">`);
     _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, _matte.content_markup);
