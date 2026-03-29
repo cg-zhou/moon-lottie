@@ -428,7 +428,10 @@ fn[R : Renderer] Player::render_layer(
     self.renderer.restore()
   }
 
-  // 6. Apply Layer Effects
+  self.renderer.restore()
+
+  // 6. Apply Layer Effects after restore() so isolated renderers (like SVG)
+  // can composite against a balanced layer subtree.
   match layer.fill_effect {
     Some(fill_effect) => self.apply_layer_fill_effect(fill_effect, comp_frame)
     None => ()
@@ -439,8 +442,6 @@ fn[R : Renderer] Player::render_layer(
     (Some(masks), true) => self.apply_layer_mask_composite(masks)
     _ => ()
   }
-
-  self.renderer.restore()
 
   // 8. Apply Track Matte using lottie-web's exitLayer two-buffer pattern.
   // This runs AFTER restore() so the canvas is back at the base transform,
