@@ -1836,7 +1836,7 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     _ => raise UnexpectedType("mask", "Object")
   }
   let inverted = decoded.inverted.unwrap_or(false)
-  let closed = decoded.closed.unwrap_or(false)
+  let closed = decoded.closed.unwrap_or(true)
   let path = parse_property_bezier(decoded.path, closed)
   let opacity = parse_property_double(decoded.opacity) catch {
     _ => @model.LottieProperty::new_static(100.0)
