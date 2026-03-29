@@ -317,7 +317,7 @@ export default function Playground({ active = true }) {
     }
 
     updateStatus("没有可加载的动画样例", "#ff3b30")
-  }, [currentFileName, sampleEntries])
+  }, [currentFileName, sampleEntries, lastRequestedSampleRef])
 
   useEffect(() => {
     function updatePageAspectRatio() {
