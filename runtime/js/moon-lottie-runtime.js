@@ -224,6 +224,7 @@ const _M0MPB7MyInt6410compare__u = (a, b) => {
 };
 const _M0MPB7MyInt6419convert__to__double = (a) => a.hi * 4294967296.0 + (a.lo >>> 0);
 const _M0FPB15ryu__to__string = (number) => number.toString();
+const _M0MPB7JSArray3pop = (arr) => arr.pop();
 function _M0DTPC16result6ResultGUiRPC16string10StringViewbERPC17strconv12StrConvErrorE3Err(param0) {
   this._0 = param0;
 }
@@ -1781,6 +1782,32 @@ function _M0TP49cg_2dzhou13moon_2dlottie3lib4math7Vector2(param0, param1) {
   this.x = param0;
   this.y = param1;
 }
+function _M0TP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer(param0, param1, param2, param3, param4, param5, param6, param7, param8, param9) {
+  this.width = param0;
+  this.height = param1;
+  this.buffer = param2;
+  this.defs_buffer = param3;
+  this.state_stack = param4;
+  this.current_matrix = param5;
+  this.path_buffer = param6;
+  this.gradient_count = param7;
+  this.group_depth = param8;
+  this.current_fill_rule = param9;
+}
+function _M0TP49cg_2dzhou13moon_2dlottie3lib8renderer6PlayerGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11) {
+  this.animation = param0;
+  this.renderer = param1;
+  this.current_frame = param2;
+  this.current_comp_frame = param3;
+  this.current_layer_index = param4;
+  this.current_comp_id = param5;
+  this.current_paths = param6;
+  this.debug_enabled = param7;
+  this.debug_logs = param8;
+  this.debug_layer = param9;
+  this.debug_shape = param10;
+  this.debug_property = param11;
+}
 function _M0TP49cg_2dzhou13moon_2dlottie3lib8renderer6PlayerGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(param0, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11) {
   this.animation = param0;
   this.renderer = param1;
@@ -1837,6 +1864,9 @@ const _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14js__log__frame = dem
 const _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime32js__evaluate__expression__double = expressions.evaluate_double;
 const _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime29js__evaluate__expression__vec = expressions.evaluate_vec;
 const _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime30js__evaluate__expression__path = expressions.evaluate_path;
+function _M0TP49cg_2dzhou13moon_2dlottie3cmd15player__runtime18SvgAnimationHandle(param0) {
+  this.animation = param0;
+}
 const _M0FP092moonbitlang_2fcore_2fbuiltin_2fStringBuilder_24as_24_40moonbitlang_2fcore_2fbuiltin_2eLogger = { method_0: _M0IPB13StringBuilderPB6Logger13write__string, method_1: _M0IP016_24default__implPB6Logger16write__substringGRPB13StringBuilderE, method_2: _M0IPB13StringBuilderPB6Logger11write__view, method_3: _M0IPB13StringBuilderPB6Logger11write__char };
 const _M0FPB4null = _M0DTPB4Json4Null__;
 const _M0FPB19wasm__helper__cache = new _M0TPB15WasmHelperCache(false, undefined);
@@ -1850,68 +1880,68 @@ const _M0FPC17strconv17parse__scientificN8exp__numS241 = $0L;
 const _M0FPC17strconv13parse__numberN11exp__numberS222 = $0L;
 const _M0FPC17strconv12double__info = new _M0TPC17strconv9FloatInfo(52, 11, -1023);
 const _M0FPC17strconv6powtab = [1, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36, 39, 43, 46, 49, 53, 56, 59];
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f892 = { _0: 0, _1: "" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f893 = { _0: 1, _1: "5" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f894 = { _0: 1, _1: "25" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f895 = { _0: 1, _1: "125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f896 = { _0: 2, _1: "625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f897 = { _0: 2, _1: "3125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f898 = { _0: 2, _1: "15625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f899 = { _0: 3, _1: "78125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f900 = { _0: 3, _1: "390625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f901 = { _0: 3, _1: "1953125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f902 = { _0: 4, _1: "9765625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f903 = { _0: 4, _1: "48828125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f904 = { _0: 4, _1: "244140625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f905 = { _0: 4, _1: "1220703125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f906 = { _0: 5, _1: "6103515625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f907 = { _0: 5, _1: "30517578125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f908 = { _0: 5, _1: "152587890625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f909 = { _0: 6, _1: "762939453125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f910 = { _0: 6, _1: "3814697265625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f911 = { _0: 6, _1: "19073486328125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f912 = { _0: 7, _1: "95367431640625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f913 = { _0: 7, _1: "476837158203125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f914 = { _0: 7, _1: "2384185791015625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f915 = { _0: 7, _1: "11920928955078125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f916 = { _0: 8, _1: "59604644775390625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f917 = { _0: 8, _1: "298023223876953125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f918 = { _0: 8, _1: "1490116119384765625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f919 = { _0: 9, _1: "7450580596923828125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f920 = { _0: 9, _1: "37252902984619140625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f921 = { _0: 9, _1: "186264514923095703125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f922 = { _0: 10, _1: "931322574615478515625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f923 = { _0: 10, _1: "4656612873077392578125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f924 = { _0: 10, _1: "23283064365386962890625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f925 = { _0: 10, _1: "116415321826934814453125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f926 = { _0: 11, _1: "582076609134674072265625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f927 = { _0: 11, _1: "2910383045673370361328125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f928 = { _0: 11, _1: "14551915228366851806640625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f929 = { _0: 12, _1: "72759576141834259033203125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f930 = { _0: 12, _1: "363797880709171295166015625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f931 = { _0: 12, _1: "1818989403545856475830078125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f932 = { _0: 13, _1: "9094947017729282379150390625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f933 = { _0: 13, _1: "45474735088646411895751953125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f934 = { _0: 13, _1: "227373675443232059478759765625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f935 = { _0: 13, _1: "1136868377216160297393798828125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f936 = { _0: 14, _1: "5684341886080801486968994140625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f937 = { _0: 14, _1: "28421709430404007434844970703125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f938 = { _0: 14, _1: "142108547152020037174224853515625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f939 = { _0: 15, _1: "710542735760100185871124267578125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f940 = { _0: 15, _1: "3552713678800500929355621337890625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f941 = { _0: 15, _1: "17763568394002504646778106689453125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f942 = { _0: 16, _1: "88817841970012523233890533447265625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f943 = { _0: 16, _1: "444089209850062616169452667236328125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f944 = { _0: 16, _1: "2220446049250313080847263336181640625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f945 = { _0: 16, _1: "11102230246251565404236316680908203125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f946 = { _0: 17, _1: "55511151231257827021181583404541015625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f947 = { _0: 17, _1: "277555756156289135105907917022705078125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f948 = { _0: 17, _1: "1387778780781445675529539585113525390625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f949 = { _0: 18, _1: "6938893903907228377647697925567626953125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f950 = { _0: 18, _1: "34694469519536141888238489627838134765625" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f951 = { _0: 18, _1: "173472347597680709441192448139190673828125" };
-const _M0FPC17strconv33left__shift__cheats_2etuple_2f952 = { _0: 19, _1: "867361737988403547205962240695953369140625" };
-const _M0FPC17strconv19left__shift__cheats = [_M0FPC17strconv33left__shift__cheats_2etuple_2f892, _M0FPC17strconv33left__shift__cheats_2etuple_2f893, _M0FPC17strconv33left__shift__cheats_2etuple_2f894, _M0FPC17strconv33left__shift__cheats_2etuple_2f895, _M0FPC17strconv33left__shift__cheats_2etuple_2f896, _M0FPC17strconv33left__shift__cheats_2etuple_2f897, _M0FPC17strconv33left__shift__cheats_2etuple_2f898, _M0FPC17strconv33left__shift__cheats_2etuple_2f899, _M0FPC17strconv33left__shift__cheats_2etuple_2f900, _M0FPC17strconv33left__shift__cheats_2etuple_2f901, _M0FPC17strconv33left__shift__cheats_2etuple_2f902, _M0FPC17strconv33left__shift__cheats_2etuple_2f903, _M0FPC17strconv33left__shift__cheats_2etuple_2f904, _M0FPC17strconv33left__shift__cheats_2etuple_2f905, _M0FPC17strconv33left__shift__cheats_2etuple_2f906, _M0FPC17strconv33left__shift__cheats_2etuple_2f907, _M0FPC17strconv33left__shift__cheats_2etuple_2f908, _M0FPC17strconv33left__shift__cheats_2etuple_2f909, _M0FPC17strconv33left__shift__cheats_2etuple_2f910, _M0FPC17strconv33left__shift__cheats_2etuple_2f911, _M0FPC17strconv33left__shift__cheats_2etuple_2f912, _M0FPC17strconv33left__shift__cheats_2etuple_2f913, _M0FPC17strconv33left__shift__cheats_2etuple_2f914, _M0FPC17strconv33left__shift__cheats_2etuple_2f915, _M0FPC17strconv33left__shift__cheats_2etuple_2f916, _M0FPC17strconv33left__shift__cheats_2etuple_2f917, _M0FPC17strconv33left__shift__cheats_2etuple_2f918, _M0FPC17strconv33left__shift__cheats_2etuple_2f919, _M0FPC17strconv33left__shift__cheats_2etuple_2f920, _M0FPC17strconv33left__shift__cheats_2etuple_2f921, _M0FPC17strconv33left__shift__cheats_2etuple_2f922, _M0FPC17strconv33left__shift__cheats_2etuple_2f923, _M0FPC17strconv33left__shift__cheats_2etuple_2f924, _M0FPC17strconv33left__shift__cheats_2etuple_2f925, _M0FPC17strconv33left__shift__cheats_2etuple_2f926, _M0FPC17strconv33left__shift__cheats_2etuple_2f927, _M0FPC17strconv33left__shift__cheats_2etuple_2f928, _M0FPC17strconv33left__shift__cheats_2etuple_2f929, _M0FPC17strconv33left__shift__cheats_2etuple_2f930, _M0FPC17strconv33left__shift__cheats_2etuple_2f931, _M0FPC17strconv33left__shift__cheats_2etuple_2f932, _M0FPC17strconv33left__shift__cheats_2etuple_2f933, _M0FPC17strconv33left__shift__cheats_2etuple_2f934, _M0FPC17strconv33left__shift__cheats_2etuple_2f935, _M0FPC17strconv33left__shift__cheats_2etuple_2f936, _M0FPC17strconv33left__shift__cheats_2etuple_2f937, _M0FPC17strconv33left__shift__cheats_2etuple_2f938, _M0FPC17strconv33left__shift__cheats_2etuple_2f939, _M0FPC17strconv33left__shift__cheats_2etuple_2f940, _M0FPC17strconv33left__shift__cheats_2etuple_2f941, _M0FPC17strconv33left__shift__cheats_2etuple_2f942, _M0FPC17strconv33left__shift__cheats_2etuple_2f943, _M0FPC17strconv33left__shift__cheats_2etuple_2f944, _M0FPC17strconv33left__shift__cheats_2etuple_2f945, _M0FPC17strconv33left__shift__cheats_2etuple_2f946, _M0FPC17strconv33left__shift__cheats_2etuple_2f947, _M0FPC17strconv33left__shift__cheats_2etuple_2f948, _M0FPC17strconv33left__shift__cheats_2etuple_2f949, _M0FPC17strconv33left__shift__cheats_2etuple_2f950, _M0FPC17strconv33left__shift__cheats_2etuple_2f951, _M0FPC17strconv33left__shift__cheats_2etuple_2f952];
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f904 = { _0: 0, _1: "" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f905 = { _0: 1, _1: "5" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f906 = { _0: 1, _1: "25" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f907 = { _0: 1, _1: "125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f908 = { _0: 2, _1: "625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f909 = { _0: 2, _1: "3125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f910 = { _0: 2, _1: "15625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f911 = { _0: 3, _1: "78125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f912 = { _0: 3, _1: "390625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f913 = { _0: 3, _1: "1953125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f914 = { _0: 4, _1: "9765625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f915 = { _0: 4, _1: "48828125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f916 = { _0: 4, _1: "244140625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f917 = { _0: 4, _1: "1220703125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f918 = { _0: 5, _1: "6103515625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f919 = { _0: 5, _1: "30517578125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f920 = { _0: 5, _1: "152587890625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f921 = { _0: 6, _1: "762939453125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f922 = { _0: 6, _1: "3814697265625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f923 = { _0: 6, _1: "19073486328125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f924 = { _0: 7, _1: "95367431640625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f925 = { _0: 7, _1: "476837158203125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f926 = { _0: 7, _1: "2384185791015625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f927 = { _0: 7, _1: "11920928955078125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f928 = { _0: 8, _1: "59604644775390625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f929 = { _0: 8, _1: "298023223876953125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f930 = { _0: 8, _1: "1490116119384765625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f931 = { _0: 9, _1: "7450580596923828125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f932 = { _0: 9, _1: "37252902984619140625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f933 = { _0: 9, _1: "186264514923095703125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f934 = { _0: 10, _1: "931322574615478515625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f935 = { _0: 10, _1: "4656612873077392578125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f936 = { _0: 10, _1: "23283064365386962890625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f937 = { _0: 10, _1: "116415321826934814453125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f938 = { _0: 11, _1: "582076609134674072265625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f939 = { _0: 11, _1: "2910383045673370361328125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f940 = { _0: 11, _1: "14551915228366851806640625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f941 = { _0: 12, _1: "72759576141834259033203125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f942 = { _0: 12, _1: "363797880709171295166015625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f943 = { _0: 12, _1: "1818989403545856475830078125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f944 = { _0: 13, _1: "9094947017729282379150390625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f945 = { _0: 13, _1: "45474735088646411895751953125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f946 = { _0: 13, _1: "227373675443232059478759765625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f947 = { _0: 13, _1: "1136868377216160297393798828125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f948 = { _0: 14, _1: "5684341886080801486968994140625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f949 = { _0: 14, _1: "28421709430404007434844970703125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f950 = { _0: 14, _1: "142108547152020037174224853515625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f951 = { _0: 15, _1: "710542735760100185871124267578125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f952 = { _0: 15, _1: "3552713678800500929355621337890625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f953 = { _0: 15, _1: "17763568394002504646778106689453125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f954 = { _0: 16, _1: "88817841970012523233890533447265625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f955 = { _0: 16, _1: "444089209850062616169452667236328125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f956 = { _0: 16, _1: "2220446049250313080847263336181640625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f957 = { _0: 16, _1: "11102230246251565404236316680908203125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f958 = { _0: 17, _1: "55511151231257827021181583404541015625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f959 = { _0: 17, _1: "277555756156289135105907917022705078125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f960 = { _0: 17, _1: "1387778780781445675529539585113525390625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f961 = { _0: 18, _1: "6938893903907228377647697925567626953125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f962 = { _0: 18, _1: "34694469519536141888238489627838134765625" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f963 = { _0: 18, _1: "173472347597680709441192448139190673828125" };
+const _M0FPC17strconv33left__shift__cheats_2etuple_2f964 = { _0: 19, _1: "867361737988403547205962240695953369140625" };
+const _M0FPC17strconv19left__shift__cheats = [_M0FPC17strconv33left__shift__cheats_2etuple_2f904, _M0FPC17strconv33left__shift__cheats_2etuple_2f905, _M0FPC17strconv33left__shift__cheats_2etuple_2f906, _M0FPC17strconv33left__shift__cheats_2etuple_2f907, _M0FPC17strconv33left__shift__cheats_2etuple_2f908, _M0FPC17strconv33left__shift__cheats_2etuple_2f909, _M0FPC17strconv33left__shift__cheats_2etuple_2f910, _M0FPC17strconv33left__shift__cheats_2etuple_2f911, _M0FPC17strconv33left__shift__cheats_2etuple_2f912, _M0FPC17strconv33left__shift__cheats_2etuple_2f913, _M0FPC17strconv33left__shift__cheats_2etuple_2f914, _M0FPC17strconv33left__shift__cheats_2etuple_2f915, _M0FPC17strconv33left__shift__cheats_2etuple_2f916, _M0FPC17strconv33left__shift__cheats_2etuple_2f917, _M0FPC17strconv33left__shift__cheats_2etuple_2f918, _M0FPC17strconv33left__shift__cheats_2etuple_2f919, _M0FPC17strconv33left__shift__cheats_2etuple_2f920, _M0FPC17strconv33left__shift__cheats_2etuple_2f921, _M0FPC17strconv33left__shift__cheats_2etuple_2f922, _M0FPC17strconv33left__shift__cheats_2etuple_2f923, _M0FPC17strconv33left__shift__cheats_2etuple_2f924, _M0FPC17strconv33left__shift__cheats_2etuple_2f925, _M0FPC17strconv33left__shift__cheats_2etuple_2f926, _M0FPC17strconv33left__shift__cheats_2etuple_2f927, _M0FPC17strconv33left__shift__cheats_2etuple_2f928, _M0FPC17strconv33left__shift__cheats_2etuple_2f929, _M0FPC17strconv33left__shift__cheats_2etuple_2f930, _M0FPC17strconv33left__shift__cheats_2etuple_2f931, _M0FPC17strconv33left__shift__cheats_2etuple_2f932, _M0FPC17strconv33left__shift__cheats_2etuple_2f933, _M0FPC17strconv33left__shift__cheats_2etuple_2f934, _M0FPC17strconv33left__shift__cheats_2etuple_2f935, _M0FPC17strconv33left__shift__cheats_2etuple_2f936, _M0FPC17strconv33left__shift__cheats_2etuple_2f937, _M0FPC17strconv33left__shift__cheats_2etuple_2f938, _M0FPC17strconv33left__shift__cheats_2etuple_2f939, _M0FPC17strconv33left__shift__cheats_2etuple_2f940, _M0FPC17strconv33left__shift__cheats_2etuple_2f941, _M0FPC17strconv33left__shift__cheats_2etuple_2f942, _M0FPC17strconv33left__shift__cheats_2etuple_2f943, _M0FPC17strconv33left__shift__cheats_2etuple_2f944, _M0FPC17strconv33left__shift__cheats_2etuple_2f945, _M0FPC17strconv33left__shift__cheats_2etuple_2f946, _M0FPC17strconv33left__shift__cheats_2etuple_2f947, _M0FPC17strconv33left__shift__cheats_2etuple_2f948, _M0FPC17strconv33left__shift__cheats_2etuple_2f949, _M0FPC17strconv33left__shift__cheats_2etuple_2f950, _M0FPC17strconv33left__shift__cheats_2etuple_2f951, _M0FPC17strconv33left__shift__cheats_2etuple_2f952, _M0FPC17strconv33left__shift__cheats_2etuple_2f953, _M0FPC17strconv33left__shift__cheats_2etuple_2f954, _M0FPC17strconv33left__shift__cheats_2etuple_2f955, _M0FPC17strconv33left__shift__cheats_2etuple_2f956, _M0FPC17strconv33left__shift__cheats_2etuple_2f957, _M0FPC17strconv33left__shift__cheats_2etuple_2f958, _M0FPC17strconv33left__shift__cheats_2etuple_2f959, _M0FPC17strconv33left__shift__cheats_2etuple_2f960, _M0FPC17strconv33left__shift__cheats_2etuple_2f961, _M0FPC17strconv33left__shift__cheats_2etuple_2f962, _M0FPC17strconv33left__shift__cheats_2etuple_2f963, _M0FPC17strconv33left__shift__cheats_2etuple_2f964];
 const _M0FPC17strconv10int__pow10 = [$1L, $10L, $100L, $1000L, $10000L, $100000L, $1000000L, $10000000L, $100000000L, $1000000000L, $10000000000L, $100000000000L, $1000000000000L, $10000000000000L, $100000000000000L, $1000000000000000L];
 const _M0FPC17strconv25max__exponent__fast__path = $22L;
 const _M0FPC17strconv5table = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1e+12, 1e+13, 1e+14, 1e+15, 1e+16, 1e+17, 1e+18, 1e+19, 1e+20, 1e+21, 1e+22, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -1922,37 +1952,43 @@ const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1059 = "e";
 const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1060 = "E";
 const _M0IPC14json8JsonPathPB4Show6outputN7_2abindS1376 = "~/";
 const _M0FP29cg_2dzhou15bezier_2deasing18sample__step__size = 1 / (11 + 0 - 1);
-const _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709 = new _M0TP49cg_2dzhou13moon_2dlottie3lib4math6Matrix(1, 0, 0, 1, 0, 0);
+const _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721 = new _M0TP49cg_2dzhou13moon_2dlottie3lib4math6Matrix(1, 0, 0, 1, 0, 0);
 const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime27expression__double__handler = new _M0TPC13ref3RefGOWsdisdEdE(undefined);
 const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime24expression__vec__handler = new _M0TPC13ref3RefGOWsdissEsE(undefined);
 const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime25expression__path__handler = new _M0TPC13ref3RefGOWsdissEsE(undefined);
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN5charsS1431 = "0123456789ABCDEF";
+const _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__linear__gradientN2idS1345 = "lottie-id";
 const _M0FPB4seed = _M0FPB12random__seed();
 const _M0FPC16double13neg__infinity = _M0MPC15int645Int6423reinterpret__as__double($_4503599627370496L);
 const _M0FPC16double14not__a__number = _M0MPC15int645Int6423reinterpret__as__double($9221120237041090561L);
 const _M0FPC16double8infinity = _M0MPC15int645Int6423reinterpret__as__double($9218868437227405312L);
-const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser47parse__transform__from__decoded_2econstr_2f4151 = true;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4473 = 0;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4474 = "ADBE Fill";
-const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4475 = 21;
-const _M0FPB33brute__force__find_2econstr_2f391 = 0;
-const _M0FPB43boyer__moore__horspool__find_2econstr_2f377 = 0;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser47parse__transform__from__decoded_2econstr_2f4163 = true;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4485 = 0;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4486 = "ADBE Fill";
+const _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4487 = 21;
+const _M0FPB33brute__force__find_2econstr_2f394 = 0;
+const _M0FPB43boyer__moore__horspool__find_2econstr_2f380 = 0;
 const _M0FPC17strconv25max__mantissa__fast__path = _M0IPC16uint646UInt64PB3Shl3shl($2L, 52);
-const _M0FPC17strconv28checked__mul_2econstr_2f1369 = $0L;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4822 = { _0: -1, _1: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4823 = { _0: 0, _1: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__vec__property_2econstr_2f5019 = 1;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4792 = { _0: -1, _1: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4793 = { _0: 0, _1: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime42evaluate__double__property_2econstr_2f4957 = 1;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime50evaluate__transform__with__context_2econstr_2f5085 = true;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime40evaluate__path__property_2econstr_2f5053 = 1;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32parse__hex__color_2etuple_2f5212 = { _0: 0, _1: 0, _2: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4802 = { _0: -1, _1: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4803 = { _0: 0, _1: 0 };
-const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6124 = true;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6125 = 1;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f6185 = true;
-const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f6186 = 1;
+const _M0FPC17strconv28checked__mul_2econstr_2f1381 = $0L;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4834 = { _0: -1, _1: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4835 = { _0: 0, _1: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__vec__property_2econstr_2f5031 = 1;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4804 = { _0: -1, _1: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4805 = { _0: 0, _1: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime42evaluate__double__property_2econstr_2f4969 = 1;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime50evaluate__transform__with__context_2econstr_2f5097 = true;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime40evaluate__path__property_2econstr_2f5065 = 1;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32parse__hex__color_2etuple_2f5492 = { _0: 0, _1: 0, _2: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4814 = { _0: -1, _1: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4815 = { _0: 0, _1: 0 };
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6934 = true;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6935 = 1;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7056 = true;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7057 = 1;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6995 = true;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6996 = 1;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7064 = true;
+const _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7065 = 1;
 function _M0FPC15abort5abortGRPB4JsonE(msg) {
   return $panic();
 }
@@ -3007,7 +3043,7 @@ function _M0FPB28boyer__moore__horspool__find(haystack, needle) {
       return undefined;
     }
   } else {
-    return _M0FPB43boyer__moore__horspool__find_2econstr_2f377;
+    return _M0FPB43boyer__moore__horspool__find_2econstr_2f380;
   }
 }
 function _M0FPB18brute__force__find(haystack, needle) {
@@ -3066,7 +3102,7 @@ function _M0FPB18brute__force__find(haystack, needle) {
       return undefined;
     }
   } else {
-    return _M0FPB33brute__force__find_2econstr_2f391;
+    return _M0FPB33brute__force__find_2econstr_2f394;
   }
 }
 function _M0MPC16string10StringView4find(self, str) {
@@ -3078,10 +3114,10 @@ function _M0MPC15array5Array11new_2einnerGcE(capacity) {
 function _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self, value) {
   _M0MPB7JSArray4push(self, value);
 }
-function _M0MPC15array5Array4pushGdE(self, value) {
+function _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(self, value) {
   _M0MPB7JSArray4push(self, value);
 }
-function _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(self, value) {
+function _M0MPC15array5Array4pushGdE(self, value) {
   _M0MPB7JSArray4push(self, value);
 }
 function _M0MPC15array5Array4pushGcE(self, value) {
@@ -3310,6 +3346,17 @@ function _M0MPC16option6Option3mapGRPC16string10StringViewsE(self, f) {
     const _Some = self;
     const _t = _Some;
     return f(_t);
+  }
+}
+function _M0MPC15array5Array3setGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self, index, value) {
+  const len = self.length;
+  if (index >= 0 && index < len) {
+    $bound_check(self, index);
+    self[index] = value;
+    return;
+  } else {
+    $panic();
+    return;
   }
 }
 function _M0MPC15array5Array3setGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(self, index, value) {
@@ -3896,6 +3943,17 @@ function _M0IPB13SourceLocReprPB4Show6output(self, logger) {
 }
 function _M0IPB9SourceLocPB4Show6output(self, logger) {
   _M0IPB13SourceLocReprPB4Show6output(_M0MPB13SourceLocRepr5parse(self), logger);
+}
+function _M0MPC15array5Array11unsafe__popGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self) {
+  return _M0MPB7JSArray3pop(self);
+}
+function _M0MPC15array5Array3popGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self) {
+  if (self.length === 0) {
+    return undefined;
+  } else {
+    const v = _M0MPC15array5Array11unsafe__popGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self);
+    return v;
+  }
 }
 function _M0FPC17strconv9base__errGUiRPC16string10StringViewbEE() {
   return new _M0DTPC16result6ResultGUiRPC16string10StringViewbERPC17strconv12StrConvErrorE3Err(new _M0DTPC15error5Error58moonbitlang_2fcore_2fstrconv_2eStrConvError_2eStrConvError(_M0FPC17strconv14base__err__str));
@@ -6156,7 +6214,7 @@ function _M0MPC17strconv7Decimal16to__double__priv(self) {
 }
 function _M0FPC17strconv12checked__mul(a, b) {
   if (_M0IPC16uint646UInt64PB2Eq5equal(a, $0L) || _M0IPC16uint646UInt64PB2Eq5equal(b, $0L)) {
-    return _M0FPC17strconv28checked__mul_2econstr_2f1369;
+    return _M0FPC17strconv28checked__mul_2econstr_2f1381;
   }
   if (_M0IPC16uint646UInt64PB2Eq5equal(a, $1L)) {
     return b;
@@ -15486,7 +15544,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib6parser31parse__transform__from__dec
       }
       skew_axis = undefined;
     }
-    return new _M0DTPC16result6ResultGRP49cg_2dzhou13moon_2dlottie3lib5model9TransformRP49cg_2dzhou13moon_2dlottie3lib6parser11LottieErrorE2Ok(_M0MP49cg_2dzhou13moon_2dlottie3lib5model9Transform11new_2einner(anchor, position, scale, rotation, opacity, px, py, split ? _M0FP49cg_2dzhou13moon_2dlottie3lib6parser47parse__transform__from__decoded_2econstr_2f4151 : -1, skew, skew_axis));
+    return new _M0DTPC16result6ResultGRP49cg_2dzhou13moon_2dlottie3lib5model9TransformRP49cg_2dzhou13moon_2dlottie3lib6parser11LottieErrorE2Ok(_M0MP49cg_2dzhou13moon_2dlottie3lib5model9Transform11new_2einner(anchor, position, scale, rotation, opacity, px, py, split ? _M0FP49cg_2dzhou13moon_2dlottie3lib6parser47parse__transform__from__decoded_2econstr_2f4163 : -1, skew, skew_axis));
   }
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib6parser19parse__closed__flag(json, default_closed) {
@@ -17037,10 +17095,10 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib6parser26parse__layer__fill__effect(
             }
             break _L;
           }
-          if (_M0IPC16option6OptionPB2Eq5equalGiE(effect.enabled, _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4473)) {
+          if (_M0IPC16option6OptionPB2Eq5equalGiE(effect.enabled, _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4485)) {
             break _L;
           }
-          const is_fill = _M0IPC16option6OptionPB2Eq5equalGsE(effect.match_name, _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4474) || _M0IPC16option6OptionPB2Eq5equalGiE(effect.effect_type, _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4475);
+          const is_fill = _M0IPC16option6OptionPB2Eq5equalGsE(effect.match_name, _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4486) || _M0IPC16option6OptionPB2Eq5equalGiE(effect.effect_type, _M0FP49cg_2dzhou13moon_2dlottie3lib6parser42parse__layer__fill__effect_2econstr_2f4487);
           if (!is_fill) {
             break _L;
           }
@@ -18007,10 +18065,10 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29install__expression__handl
 function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime14find__keyframeGdE(keyframes, frame) {
   const len = keyframes.length;
   if (len === 0) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4792;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4804;
   }
   if (frame <= _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(keyframes, 0).frame) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4793;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4805;
   }
   if (frame >= _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(keyframes, len - 1 | 0).frame) {
     return { _0: len - 1 | 0, _1: 0 };
@@ -18036,10 +18094,10 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime14find__keyframeGdE(keyframe
 function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime14find__keyframeGRP49cg_2dzhou13moon_2dlottie3lib5model12TextDocumentE(keyframes, frame) {
   const len = keyframes.length;
   if (len === 0) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4802;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4814;
   }
   if (frame <= _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(keyframes, 0).frame) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4803;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4815;
   }
   if (frame >= _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(keyframes, len - 1 | 0).frame) {
     return { _0: len - 1 | 0, _1: 0 };
@@ -18065,10 +18123,10 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime14find__keyframeGRP49cg_2dzh
 function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime14find__keyframeGRPB5ArrayGdEE(keyframes, frame) {
   const len = keyframes.length;
   if (len === 0) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4822;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4834;
   }
   if (frame <= _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(keyframes, 0).frame) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4823;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29find__keyframe_2etuple_2f4835;
   }
   if (frame >= _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(keyframes, len - 1 | 0).frame) {
     return { _0: len - 1 | 0, _1: 0 };
@@ -18382,7 +18440,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime26evaluate__double__property
       return 0;
     }
     const k1 = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_keyframes, _idx);
-    if (_M0IPC16option6OptionPB2Eq5equalGiE(k1.hold, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime42evaluate__double__property_2econstr_2f4957)) {
+    if (_M0IPC16option6OptionPB2Eq5equalGiE(k1.hold, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime42evaluate__double__property_2econstr_2f4969)) {
       return k1.start_value;
     }
     if (_t <= 0 || _idx >= (_keyframes.length - 1 | 0)) {
@@ -18527,7 +18585,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime23evaluate__vec__property(pr
       return [];
     }
     const k1 = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_keyframes, _idx);
-    if (_M0IPC16option6OptionPB2Eq5equalGiE(k1.hold, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__vec__property_2econstr_2f5019)) {
+    if (_M0IPC16option6OptionPB2Eq5equalGiE(k1.hold, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__vec__property_2econstr_2f5031)) {
       return k1.start_value;
     }
     if (_t <= 0 || _idx >= (_keyframes.length - 1 | 0)) {
@@ -18606,7 +18664,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime24evaluate__path__property(p
       return _M0MP49cg_2dzhou13moon_2dlottie3lib5model10BezierPath3new([], [], [], false);
     }
     const kf = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_keyframes, _idx);
-    if (_M0IPC16option6OptionPB2Eq5equalGiE(kf.hold, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime40evaluate__path__property_2econstr_2f5053)) {
+    if (_M0IPC16option6OptionPB2Eq5equalGiE(kf.hold, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime40evaluate__path__property_2econstr_2f5065)) {
       return kf.start_value;
     }
     if (_t <= 0 || _idx >= (_keyframes.length - 1 | 0)) {
@@ -18663,7 +18721,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__path__property__
 function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with__context(transform, frame, layer_index, comp_id) {
   const a = _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime38evaluate__vec__property__with__context(transform.anchor, frame, layer_index, comp_id);
   let p;
-  if (_M0IPC16option6OptionPB2Eq5equalGbE(transform.split, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime50evaluate__transform__with__context_2econstr_2f5085)) {
+  if (_M0IPC16option6OptionPB2Eq5equalGbE(transform.split, _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime50evaluate__transform__with__context_2econstr_2f5097)) {
     const _bind = transform.px;
     let x;
     if (_bind === undefined) {
@@ -18688,7 +18746,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with_
   }
   const s = _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime38evaluate__vec__property__with__context(transform.scale, frame, layer_index, comp_id);
   const r = _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime41evaluate__double__property__with__context(transform.rotation, frame, layer_index, comp_id);
-  const m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709;
+  const m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
   const ax = a.length > 0 ? _M0MPC15array5Array2atGdE(a, 0) : 0;
   const ay = a.length > 1 ? _M0MPC15array5Array2atGdE(a, 1) : 0;
   const px = p.length > 0 ? _M0MPC15array5Array2atGdE(p, 0) : 0;
@@ -18699,6 +18757,365 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with_
   const m2 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix6rotate(m1, r * 3.14159265358979312 / 180);
   const m3 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix5scale(m2, sx / 100, sy / 100);
   return _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(m3, -ax, -ay);
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer3new(width, height) {
+  return new _M0TP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer(width, height, _M0MPB13StringBuilder11new_2einner(0), _M0MPB13StringBuilder11new_2einner(0), [], _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721, _M0MPB13StringBuilder11new_2einner(0), 0, 0, "nonzero");
+}
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(v) {
+  const rounded = (_M0MPC16double6Double7to__int(v * 100) + 0) / 100;
+  return _M0MPC16double6Double10to__string(rounded);
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer11get__output(self) {
+  const output = _M0MPB13StringBuilder11new_2einner(0);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" viewBox=\"0 0 ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)} ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\">`);
+  const _p = self.defs_buffer;
+  if (_p.val.length > 0) {
+    _M0IPB13StringBuilderPB6Logger13write__string(output, "<defs>");
+    const _p$2 = self.defs_buffer;
+    _M0IPB13StringBuilderPB6Logger13write__string(output, _p$2.val);
+    _M0IPB13StringBuilderPB6Logger13write__string(output, "</defs>");
+  }
+  const _p$2 = self.buffer;
+  _M0IPB13StringBuilderPB6Logger13write__string(output, _p$2.val);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, "</svg>");
+  return output.val;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self) {
+  _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.state_stack, { _0: self.current_matrix, _1: self.current_fill_rule, _2: 1 });
+  _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, "<g>");
+  self.group_depth = self.group_depth + 1 | 0;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self) {
+  const _bind = _M0MPC15array5Array3popGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self.state_stack);
+  if (_bind === undefined) {
+    return;
+  } else {
+    const _Some = _bind;
+    const _x = _Some;
+    const _m = _x._0;
+    const _fr = _x._1;
+    const _gc = _x._2;
+    self.current_matrix = _m;
+    self.current_fill_rule = _fr;
+    let _tmp = 0;
+    while (true) {
+      const i = _tmp;
+      if (i < _gc) {
+        _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, "</g>");
+        self.group_depth = self.group_depth - 1 | 0;
+        _tmp = i + 1 | 0;
+        continue;
+      } else {
+        return;
+      }
+    }
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self, matrix) {
+  self.current_matrix = matrix;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self, matrix) {
+  self.current_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix8multiply(self.current_matrix, matrix);
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self) {
+  self.path_buffer = _M0MPB13StringBuilder11new_2einner(0);
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self) {
+  _M0IPB13StringBuilderPB6Logger13write__string(self.path_buffer, "Z");
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self, x, y) {
+  const p = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x, y);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.path_buffer, `M${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p._0)},${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p._1)} `);
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self, x, y) {
+  const p = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x, y);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.path_buffer, `L${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p._0)},${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p._1)} `);
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer9cubic__to(self, cp1x, cp1y, cp2x, cp2y, x, y) {
+  const p1 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, cp1x, cp1y);
+  const p2 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, cp2x, cp2y);
+  const p = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x, y);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.path_buffer, `C${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p1._0)},${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p1._1)} ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p2._0)},${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p2._1)} ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p._0)},${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p._1)} `);
+}
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN3hexS1429(v) {
+  const v$2 = v < 0 ? 0 : v > 255 ? 255 : v;
+  const high = v$2 / 16 | 0;
+  const low = v$2 % 16 | 0;
+  const s = _M0MPB13StringBuilder11new_2einner(0);
+  $bound_check(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN5charsS1431, high);
+  _M0IPB13StringBuilderPB6Logger11write__char(s, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN5charsS1431.charCodeAt(high));
+  $bound_check(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN5charsS1431, low);
+  _M0IPB13StringBuilderPB6Logger11write__char(s, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN5charsS1431.charCodeAt(low));
+  return s.val;
+}
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(r, g, b) {
+  return `#${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN3hexS1429(r)}${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN3hexS1429(g)}${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hexN3hexS1429(b)}`;
+}
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(value) {
+  const buffer = _M0MPB13StringBuilder11new_2einner(0);
+  let _tmp = 0;
+  while (true) {
+    const i = _tmp;
+    if (i < value.length) {
+      $bound_check(value, i);
+      const current_char = value.charCodeAt(i);
+      switch (current_char) {
+        case 38: {
+          _M0IPB13StringBuilderPB6Logger13write__string(buffer, "&amp;");
+          break;
+        }
+        case 60: {
+          _M0IPB13StringBuilderPB6Logger13write__string(buffer, "&lt;");
+          break;
+        }
+        case 62: {
+          _M0IPB13StringBuilderPB6Logger13write__string(buffer, "&gt;");
+          break;
+        }
+        case 34: {
+          _M0IPB13StringBuilderPB6Logger13write__string(buffer, "&quot;");
+          break;
+        }
+        case 39: {
+          _M0IPB13StringBuilderPB6Logger13write__string(buffer, "&#39;");
+          break;
+        }
+        default: {
+          _M0IPB13StringBuilderPB6Logger11write__char(buffer, current_char);
+        }
+      }
+      _tmp = i + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  return buffer.val;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(self, r, g, b, opacity) {
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  if (path_data.length > 0) {
+    const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(r, g, b);
+    _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<path d=\"${path_data}\" fill=\"${color}\" fill-opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity)}\" fill-rule=\"${self.current_fill_rule}\" />`);
+    return;
+  } else {
+    return;
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer6stroke(self, r, g, b, opacity, width) {
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  if (path_data.length > 0) {
+    const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(r, g, b);
+    _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<path d=\"${path_data}\" fill=\"none\" stroke=\"${color}\" stroke-opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity)}\" stroke-width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(width)}\" />`);
+    return;
+  } else {
+    return;
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer18set__stroke__style(self, line_cap, line_join, miter_limit) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__line__dash(self, dash_array, dash_offset) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self, rule) {
+  self.current_fill_rule = rule;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12set__opacity(self, opacity) {
+  if (self.state_stack.length > 0) {
+    const last_idx = self.state_stack.length - 1 | 0;
+    const _bind = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(self.state_stack, last_idx);
+    const _m = _bind._0;
+    const _fr = _bind._1;
+    const _gc = _bind._2;
+    _M0MPC15array5Array3setGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self.state_stack, last_idx, { _0: _m, _1: _fr, _2: _gc + 1 | 0 });
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<g opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity)}\">`);
+  self.group_depth = self.group_depth + 1 | 0;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer16set__blend__mode(self, mode) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12begin__layer(self) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer10end__layer(self, mode) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer21prepare__matte__layer(self) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer18begin__matte__exit(self) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer16end__matte__exit(self, matte_type) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer25supports__mask__composite(self) {
+  return false;
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22begin__mask__composite(self) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17begin__mask__path(self) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17apply__mask__path(self, mode, opacity, inverted, expansion) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer20end__mask__composite(self) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11clear__rect(self, x, y, w, h) {}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11draw__image(self, id, width, height, asset_index) {
+  _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<image href=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(id)}\" width=\"${_M0IP016_24default__implPB4Show10to__stringGdE(width)}\" height=\"${_M0IP016_24default__implPB4Show10to__stringGdE(height)}\" />`);
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer10draw__text(self, text, font, size, r, g, b, opacity, justify) {
+  const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(r, g, b);
+  let anchor;
+  switch (justify) {
+    case 1: {
+      anchor = "end";
+      break;
+    }
+    case 2: {
+      anchor = "middle";
+      break;
+    }
+    default: {
+      anchor = "start";
+    }
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<text font-family=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(font)}\" font-size=\"${_M0IP016_24default__implPB4Show10to__stringGdE(size)}\" fill=\"${color}\" fill-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity)}\" text-anchor=\"${anchor}\">${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(text)}</text>`);
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__linear__gradient(self, x1, y1, x2, y2, p, stops, opacity) {
+  self.gradient_count = self.gradient_count + 1 | 0;
+  const p1 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x1, y1);
+  const p2 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x2, y2);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<linearGradient id=\"${_M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__linear__gradientN2idS1345}\" x1=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p1._0)}\" y1=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p1._1)}\" x2=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p2._0)}\" y2=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(p2._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  let _tmp = 0;
+  while (true) {
+    const i = _tmp;
+    if (i < p) {
+      const offset = _M0MPC15array5Array2atGdE(stops, Math.imul(i, 4) | 0);
+      const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(_M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 1 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 2 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 3 | 0) * 255));
+      let opacity_stop = 1;
+      if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
+        opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
+      }
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity_stop)}\" />`);
+      _tmp = i + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</linearGradient>");
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  if (path_data.length > 0) {
+    _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<path d=\"${path_data}\" fill=\"url(#${_M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__linear__gradientN2idS1345})\" fill-opacity=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(opacity)}\" fill-rule=\"${self.current_fill_rule}\" />`);
+    return;
+  } else {
+    return;
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer24stroke__linear__gradient(self, x1, y1, x2, y2, p, stops, opacity, width) {
+  const id = `grad_${_M0IP016_24default__implPB4Show10to__stringGiE(self.gradient_count)}`;
+  self.gradient_count = self.gradient_count + 1 | 0;
+  const p1 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x1, y1);
+  const p2 = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, x2, y2);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<linearGradient id=\"${id}\" x1=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p1._0)}\" y1=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p1._1)}\" x2=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p2._0)}\" y2=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p2._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  let _tmp = 0;
+  while (true) {
+    const i = _tmp;
+    if (i < p) {
+      const offset = _M0MPC15array5Array2atGdE(stops, Math.imul(i, 4) | 0);
+      const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(_M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 1 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 2 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 3 | 0) * 255));
+      let opacity_stop = 1;
+      if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
+        opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
+      }
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IP016_24default__implPB4Show10to__stringGdE(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity_stop)}\" />`);
+      _tmp = i + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</linearGradient>");
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  if (path_data.length > 0) {
+    _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<path d=\"${path_data}\" fill=\"none\" stroke=\"url(#${id})\" stroke-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity)}\" stroke-width=\"${_M0IP016_24default__implPB4Show10to__stringGdE(width)}\" />`);
+    return;
+  } else {
+    return;
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__radial__gradient(self, cx, cy, r, fx, fy, fr, p, stops, opacity) {
+  const id = `grad_${_M0IP016_24default__implPB4Show10to__stringGiE(self.gradient_count)}`;
+  self.gradient_count = self.gradient_count + 1 | 0;
+  const p_c = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, cx, cy);
+  const p_f = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, fx, fy);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<radialGradient id=\"${id}\" cx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._0)}\" cy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._1)}\" r=\"${_M0IP016_24default__implPB4Show10to__stringGdE(r)}\" fx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._0)}\" fy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  let _tmp = 0;
+  while (true) {
+    const i = _tmp;
+    if (i < p) {
+      const offset = _M0MPC15array5Array2atGdE(stops, Math.imul(i, 4) | 0);
+      const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(_M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 1 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 2 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 3 | 0) * 255));
+      let opacity_stop = 1;
+      if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
+        opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
+      }
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IP016_24default__implPB4Show10to__stringGdE(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity_stop)}\" />`);
+      _tmp = i + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</radialGradient>");
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  if (path_data.length > 0) {
+    _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<path d=\"${path_data}\" fill=\"url(#${id})\" fill-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity)}\" fill-rule=\"${self.current_fill_rule}\" />`);
+    return;
+  } else {
+    return;
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer24stroke__radial__gradient(self, cx, cy, r, fx, fy, fr, p, stops, opacity, width) {
+  const id = `grad_${_M0IP016_24default__implPB4Show10to__stringGiE(self.gradient_count)}`;
+  self.gradient_count = self.gradient_count + 1 | 0;
+  const p_c = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, cx, cy);
+  const p_f = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix16transform__point(self.current_matrix, fx, fy);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<radialGradient id=\"${id}\" cx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._0)}\" cy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._1)}\" r=\"${_M0IP016_24default__implPB4Show10to__stringGdE(r)}\" fx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._0)}\" fy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  let _tmp = 0;
+  while (true) {
+    const i = _tmp;
+    if (i < p) {
+      const offset = _M0MPC15array5Array2atGdE(stops, Math.imul(i, 4) | 0);
+      const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(_M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 1 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 2 | 0) * 255), _M0MPC16double6Double7to__int(_M0MPC15array5Array2atGdE(stops, (Math.imul(i, 4) | 0) + 3 | 0) * 255));
+      let opacity_stop = 1;
+      if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
+        opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
+      }
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IP016_24default__implPB4Show10to__stringGdE(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity_stop)}\" />`);
+      _tmp = i + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</radialGradient>");
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  if (path_data.length > 0) {
+    _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<path d=\"${path_data}\" fill=\"none\" stroke=\"url(#${id})\" stroke-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity)}\" stroke-width=\"${_M0IP016_24default__implPB4Show10to__stringGdE(width)}\" />`);
+    return;
+  } else {
+    return;
+  }
+}
+function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4clip(self) {
+  const id = `clip_${_M0IP016_24default__implPB4Show10to__stringGiE(self.gradient_count)}`;
+  self.gradient_count = self.gradient_count + 1 | 0;
+  const _p = self.path_buffer;
+  const path_data = _p.val;
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<clipPath id=\"${id}\"><path d=\"${path_data}\" fill-rule=\"${self.current_fill_rule}\" /></clipPath>`);
+  if (self.state_stack.length > 0) {
+    const last_idx = self.state_stack.length - 1 | 0;
+    const _bind = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(self.state_stack, last_idx);
+    const _m = _bind._0;
+    const _fr = _bind._1;
+    const _gc = _bind._2;
+    _M0MPC15array5Array3setGURP49cg_2dzhou13moon_2dlottie3lib4math6MatrixsiEE(self.state_stack, last_idx, { _0: _m, _1: _fr, _2: _gc + 1 | 0 });
+  }
+  _M0IPB13StringBuilderPB6Logger13write__string(self.buffer, `<g clip-path=\"url(#${id})\">`);
+  self.group_depth = self.group_depth + 1 | 0;
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player3newGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(animation, renderer) {
+  return new _M0TP49cg_2dzhou13moon_2dlottie3lib8renderer6PlayerGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(animation, renderer, 0, 0, -1, "", [], false, [], "", "", "");
 }
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player3newGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(animation, renderer) {
   return new _M0TP49cg_2dzhou13moon_2dlottie3lib8renderer6PlayerGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(animation, renderer, 0, 0, -1, "", [], false, [], "", "", "");
@@ -18816,7 +19233,13 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer21color__rgb__from__vec(v) 
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, prop, frame) {
   return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime41evaluate__double__property__with__context(prop, frame, self.current_layer_index, self.current_comp_id);
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, prop, frame) {
+  return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime41evaluate__double__property__with__context(prop, frame, self.current_layer_index, self.current_comp_id);
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, prop, frame) {
+  return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime38evaluate__vec__property__with__context(prop, frame, self.current_layer_index, self.current_comp_id);
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, prop, frame) {
   return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime38evaluate__vec__property__with__context(prop, frame, self.current_layer_index, self.current_comp_id);
 }
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26apply__layer__fill__effectGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, effect, frame) {
@@ -18835,6 +19258,23 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26apply__layer__fill
   _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
   _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(self.renderer, _r, _g, _b, opacity / 100);
   _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer16set__blend__mode(self.renderer, "source-over");
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26apply__layer__fill__effectGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, effect, frame) {
+  const color = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, effect.color, frame);
+  const opacity = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, effect.opacity, frame);
+  const _bind = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer21color__rgb__from__vec(color);
+  const _r = _bind._0;
+  const _g = _bind._1;
+  const _b = _bind._2;
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer16set__blend__mode(self.renderer, "source-atop");
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self.renderer, -10000, -10000);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 10000, -10000);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 10000, 10000);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, -10000, 10000);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(self.renderer, _r, _g, _b, opacity / 100);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer16set__blend__mode(self.renderer, "source-over");
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer31mask__mode__to__composite__code(mode) {
   switch (mode) {
@@ -18897,7 +19337,47 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__path
     return;
   }
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path) {
+  const v = path.vertices;
+  if (v.length > 0) {
+    const i = path.in_tangents;
+    const o = path.out_tangents;
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, 0, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, 0, 1));
+    let _tmp = 1;
+    while (true) {
+      const n = _tmp;
+      if (n < v.length) {
+        const cp1x = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n - 1 | 0, 0) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(o, n - 1 | 0, 0);
+        const cp1y = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n - 1 | 0, 1) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(o, n - 1 | 0, 1);
+        const cp2x = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n, 0) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(i, n, 0);
+        const cp2y = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n, 1) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(i, n, 1);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer9cubic__to(self.renderer, cp1x, cp1y, cp2x, cp2y, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n, 1));
+        _tmp = n + 1 | 0;
+        continue;
+      } else {
+        break;
+      }
+    }
+    if (path.closed) {
+      const n = v.length;
+      const cp1x = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n - 1 | 0, 0) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(o, n - 1 | 0, 0);
+      const cp1y = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, n - 1 | 0, 1) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(o, n - 1 | 0, 1);
+      const cp2x = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, 0, 0) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(i, 0, 0);
+      const cp2y = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, 0, 1) + _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(i, 0, 1);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer9cubic__to(self.renderer, cp1x, cp1y, cp2x, cp2y, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, 0, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer11get__pt__at(v, 0, 1));
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
+      return;
+    } else {
+      return;
+    }
+  } else {
+    return;
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, prop, frame) {
+  return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__path__property__with__context(prop, frame, self.current_layer_index, self.current_comp_id);
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, prop, frame) {
   return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime39evaluate__path__property__with__context(prop, frame, self.current_layer_index, self.current_comp_id);
 }
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player29apply__layer__mask__compositeGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, masks) {
@@ -18939,6 +19419,45 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player29apply__layer__mask
     return;
   }
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player29apply__layer__mask__compositeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, masks) {
+  let has_effective_mask = false;
+  const _bind = masks.length;
+  let _tmp = 0;
+  while (true) {
+    const _ = _tmp;
+    if (_ < _bind) {
+      const mask = masks[_];
+      _L: {
+        if (_M0IP49cg_2dzhou13moon_2dlottie3lib5model8MaskModePB2Eq5equal(mask.mode, 6)) {
+          break _L;
+        }
+        if (!has_effective_mask) {
+          _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22begin__mask__composite(self.renderer);
+          has_effective_mask = true;
+        }
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17begin__mask__path(self.renderer);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+        const path_val = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, mask.path, self.current_comp_frame);
+        _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path_val);
+        const opacity = _M0MPC16double6Double3min(_M0MPC16double6Double3max(_M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, mask.opacity, self.current_comp_frame) / 100, 0), 1);
+        const expansion = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, mask.expansion, self.current_comp_frame);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17apply__mask__path(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer31mask__mode__to__composite__code(mask.mode), opacity, mask.inverted, expansion);
+        break _L;
+      }
+      _tmp = _ + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  if (has_effective_mask) {
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer20end__mask__composite(self.renderer);
+    return;
+  } else {
+    return;
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player24apply__parent__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, parent_ind, scope, comp_frame) {
   const _bind = scope.length;
   let _tmp = 0;
@@ -18965,6 +19484,32 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player24apply__parent__tra
     }
   }
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player24apply__parent__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, parent_ind, scope, comp_frame) {
+  const _bind = scope.length;
+  let _tmp = 0;
+  while (true) {
+    const _ = _tmp;
+    if (_ < _bind) {
+      const layer = scope[_];
+      if (layer.index === parent_ind) {
+        const _bind$2 = layer.parent;
+        if (_bind$2 === undefined) {
+        } else {
+          const _Some = _bind$2;
+          const _p_ind = _Some;
+          _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player24apply__parent__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _p_ind, scope, comp_frame);
+        }
+        const matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with__context(layer.transform, comp_frame, layer.index, self.current_comp_id);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self.renderer, matrix);
+        return undefined;
+      }
+      _tmp = _ + 1 | 0;
+      continue;
+    } else {
+      return;
+    }
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, stage) {
   if (self.debug_enabled) {
     _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.debug_logs, `frame=${_M0IP016_24default__implPB4Show10to__stringGdE(self.current_frame)},layer=${self.debug_layer},shape=${self.debug_shape},property=${self.debug_property},stage=${stage}`);
@@ -18973,7 +19518,18 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_
     return;
   }
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, stage) {
+  if (self.debug_enabled) {
+    _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.debug_logs, `frame=${_M0IP016_24default__implPB4Show10to__stringGdE(self.current_frame)},layer=${self.debug_layer},shape=${self.debug_shape},property=${self.debug_property},stage=${stage}`);
+    return;
+  } else {
+    return;
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, transform, frame) {
+  return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with__context(transform, frame, self.current_layer_index, self.current_comp_id);
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, transform, frame) {
   return _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__transform__with__context(transform, frame, self.current_layer_index, self.current_comp_id);
 }
 function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(c) {
@@ -18990,7 +19546,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__color(hex) {
     _tmp = _p !== _p$2;
   }
   if (_tmp) {
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32parse__hex__color_2etuple_2f5212;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32parse__hex__color_2etuple_2f5492;
   }
   $bound_check(hex, 1);
   const _tmp$2 = Math.imul(_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(1)), 16) | 0;
@@ -19636,6 +20192,84 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22create__polystar__
   }
   return _M0MP49cg_2dzhou13moon_2dlottie3lib5model10BezierPath3new(vertices, ins, outs, true);
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22create__polystar__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr) {
+  const pt = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.points, self.current_comp_frame);
+  const p = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.position, self.current_comp_frame);
+  const r = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.rotation, self.current_comp_frame);
+  const or = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.outer_radius, self.current_comp_frame);
+  const or_round = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.outer_roundness, self.current_comp_frame);
+  const cx = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(p, 0, 0);
+  const cy = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(p, 1, 0);
+  const num_points = _M0MPC16double6Double7to__int(pt);
+  const vertices = [];
+  const ins = [];
+  const outs = [];
+  if (sr.star_type === 2) {
+    const angle_step = 6.28318530717958623 / pt;
+    const start_angle = (r - 90) * 3.14159265358979312 / 180;
+    let _tmp = 0;
+    while (true) {
+      const i = _tmp;
+      if (i < num_points) {
+        const angle = start_angle + angle_step * (i + 0);
+        const x = cx + or * _M0FPC14math3cos(angle);
+        const y = cy + or * _M0FPC14math3sin(angle);
+        _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(vertices, [x, y]);
+        if (or_round > 0) {
+          const dist = or_round * 0.471960249438992 / 100 * or;
+          const tx = -dist * _M0FPC14math3sin(angle);
+          const ty = dist * _M0FPC14math3cos(angle);
+          _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(ins, [-tx, -ty]);
+          _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(outs, [tx, ty]);
+        } else {
+          _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(ins, [0, 0]);
+          _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(outs, [0, 0]);
+        }
+        _tmp = i + 1 | 0;
+        continue;
+      } else {
+        break;
+      }
+    }
+  } else {
+    const ir = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.inner_radius, self.current_comp_frame);
+    const ir_round = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, sr.inner_roundness, self.current_comp_frame);
+    const angle_step = 3.14159265358979312 / pt;
+    const start_angle = (r - 90) * 3.14159265358979312 / 180;
+    let _tmp = 0;
+    while (true) {
+      const i = _tmp;
+      if (i < (Math.imul(num_points, 2) | 0)) {
+        const angle = start_angle + angle_step * (i + 0);
+        const radius = (i % 2 | 0) === 0 ? or : ir;
+        const roundness = (i % 2 | 0) === 0 ? or_round : ir_round;
+        const x = cx + radius * _M0FPC14math3cos(angle);
+        const y = cy + radius * _M0FPC14math3sin(angle);
+        _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(vertices, [x, y]);
+        if (roundness > 0) {
+          const cp_dist = radius * roundness * 0.471960249438992 / 100;
+          const tx = cp_dist * _M0FPC14math3sin(angle);
+          const ty = -cp_dist * _M0FPC14math3cos(angle);
+          if ((i % 2 | 0) === 0) {
+            _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(ins, [tx, ty]);
+            _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(outs, [-tx, -ty]);
+          } else {
+            _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(ins, [-tx, -ty]);
+            _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(outs, [tx, ty]);
+          }
+        } else {
+          _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(ins, [0, 0]);
+          _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(outs, [0, 0]);
+        }
+        _tmp = i + 1 | 0;
+        continue;
+      } else {
+        break;
+      }
+    }
+  }
+  return _M0MP49cg_2dzhou13moon_2dlottie3lib5model10BezierPath3new(vertices, ins, outs, true);
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__itemsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, items) {
   let draw_items = [];
   let draw_path_snapshots = [];
@@ -19663,7 +20297,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__ite
                 _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_items, item);
                 _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_path_snapshots, []);
                 _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_item_path_modifiers, []);
-                _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709);
+                _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
                 _M0MPC15array5Array4pushGdE(draw_item_opacities, 1);
               }
               break;
@@ -19759,7 +20393,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__ite
                 let copy_idx = start_idx;
                 while (true) {
                   if (step === 1 ? copy_idx < end_idx : copy_idx > end_idx) {
-                    let m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709;
+                    let m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
                     const total_steps = copy_idx + 0 + offset$2;
                     let _tmp$4 = 0;
                     while (true) {
@@ -19819,7 +20453,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__ite
         }
         _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_path_snapshots, snapshot);
         _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_item_path_modifiers, []);
-        _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709);
+        _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
         _M0MPC15array5Array4pushGdE(draw_item_opacities, 1);
       }
       _tmp = item_idx + 1 | 0;
@@ -19849,7 +20483,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__ite
     if (i >= 0) {
       const draw_matrix = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_item_matrices, i);
       const draw_opacity = _M0MPC15array5Array2atGdE(draw_item_opacities, i);
-      const needs_wrapper = draw_opacity < 0.999999 || _M0IP016_24default__implPB2Eq10not__equalGRP49cg_2dzhou13moon_2dlottie3lib4math6MatrixE(draw_matrix, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709);
+      const needs_wrapper = draw_opacity < 0.999999 || _M0IP016_24default__implPB2Eq10not__equalGRP49cg_2dzhou13moon_2dlottie3lib4math6MatrixE(draw_matrix, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
       if (needs_wrapper) {
         _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
         _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self.renderer, draw_matrix);
@@ -19929,6 +20563,299 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__ite
   }
   self.current_paths = all_inner_paths;
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__itemsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, items) {
+  let draw_items = [];
+  let draw_path_snapshots = [];
+  let draw_item_path_modifiers = [];
+  let draw_item_matrices = [];
+  let draw_item_opacities = [];
+  let _tmp = 0;
+  while (true) {
+    const item_idx = _tmp;
+    if (item_idx < items.length) {
+      const item = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(items, item_idx);
+      _L: {
+        _L$2: {
+          const _bind = item.data;
+          switch (_bind.$tag) {
+            case 8: {
+              break;
+            }
+            case 0: {
+              const _Group = _bind;
+              const _nested = _Group._0;
+              if (!_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24shape__group__has__paint(_nested)) {
+                _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, item);
+              } else {
+                _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_items, item);
+                _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_path_snapshots, []);
+                _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_item_path_modifiers, []);
+                _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
+                _M0MPC15array5Array4pushGdE(draw_item_opacities, 1);
+              }
+              break;
+            }
+            case 4: {
+              break _L$2;
+            }
+            case 5: {
+              break _L$2;
+            }
+            case 6: {
+              break _L$2;
+            }
+            case 7: {
+              break _L$2;
+            }
+            case 9: {
+              const _TrimPath = _bind;
+              const _t = _TrimPath._0;
+              _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, item);
+              const start = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _t.start, self.current_comp_frame);
+              const end = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _t.end, self.current_comp_frame);
+              const offset = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _t.offset, self.current_comp_frame);
+              let _tmp$2 = 0;
+              while (true) {
+                const i = _tmp$2;
+                if (i < draw_items.length) {
+                  _L$3: {
+                    _L$4: {
+                      const _bind$2 = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_items, i).data;
+                      switch (_bind$2.$tag) {
+                        case 4: {
+                          break _L$4;
+                        }
+                        case 5: {
+                          break _L$4;
+                        }
+                        case 6: {
+                          break _L$4;
+                        }
+                        case 7: {
+                          break _L$4;
+                        }
+                        case 0: {
+                          _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(_M0MPC15array5Array2atGRPB5ArrayGdEE(draw_item_path_modifiers, i), item);
+                          break;
+                        }
+                      }
+                      break _L$3;
+                    }
+                    _M0MPC15array5Array3setGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_path_snapshots, i, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer29apply__trim__path__with__mode(_M0MPC15array5Array2atGRPB5ArrayGdEE(draw_path_snapshots, i), start, end, offset, _t.multiple));
+                  }
+                  _tmp$2 = i + 1 | 0;
+                  continue;
+                } else {
+                  break;
+                }
+              }
+              break;
+            }
+            case 11: {
+              const _Repeater = _bind;
+              const _rep = _Repeater._0;
+              const repeater_source_items = [];
+              let _tmp$3 = 0;
+              while (true) {
+                const source_idx = _tmp$3;
+                if (source_idx < item_idx) {
+                  _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(repeater_source_items, _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(items, source_idx));
+                  _tmp$3 = source_idx + 1 | 0;
+                  continue;
+                } else {
+                  break;
+                }
+              }
+              if (_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24shape__group__has__paint(repeater_source_items)) {
+                self.current_paths = [];
+                draw_items = [];
+                draw_path_snapshots = [];
+                draw_item_path_modifiers = [];
+                draw_item_matrices = [];
+                draw_item_opacities = [];
+                const copies = _M0MPC16double6Double7to__int(_M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.copies, self.current_comp_frame));
+                const offset$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.offset, self.current_comp_frame);
+                const tr_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.transform, self.current_comp_frame);
+                const so = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.start_opacity, self.current_comp_frame);
+                const eo = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.end_opacity, self.current_comp_frame);
+                const needs_opacity = Math.abs(so - eo) > 0.001 || Math.abs(so - 100) > 0.001;
+                const repeated_group = _M0MP49cg_2dzhou13moon_2dlottie3lib5model5Shape3new("gr", new _M0DTP49cg_2dzhou13moon_2dlottie3lib5model9ShapeData5Group(repeater_source_items), _M0DTPC16option6OptionGOsE4None__, _M0DTPC16option6OptionGOiE4None__, _M0DTPC16option6OptionGObE4None__);
+                const start_idx = _rep.composite === 1 ? 0 : copies - 1 | 0;
+                const end_idx = _rep.composite === 1 ? copies : -1;
+                const step = _rep.composite === 1 ? 1 : -1;
+                let copy_idx = start_idx;
+                while (true) {
+                  if (step === 1 ? copy_idx < end_idx : copy_idx > end_idx) {
+                    let m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
+                    const total_steps = copy_idx + 0 + offset$2;
+                    let _tmp$4 = 0;
+                    while (true) {
+                      const _step = _tmp$4;
+                      if (_step < _M0MPC16double6Double7to__int(total_steps)) {
+                        m = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix8multiply(m, tr_matrix);
+                        _tmp$4 = _step + 1 | 0;
+                        continue;
+                      } else {
+                        break;
+                      }
+                    }
+                    let opacity;
+                    if (needs_opacity) {
+                      const t = copies > 1 ? (copy_idx + 0) / ((copies - 1 | 0) + 0) : 0;
+                      opacity = (so + (eo - so) * t) / 100;
+                    } else {
+                      opacity = 1;
+                    }
+                    _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_items, repeated_group);
+                    _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_path_snapshots, []);
+                    _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_item_path_modifiers, []);
+                    _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, m);
+                    _M0MPC15array5Array4pushGdE(draw_item_opacities, opacity);
+                    copy_idx = copy_idx + step | 0;
+                    continue;
+                  } else {
+                    break;
+                  }
+                }
+              } else {
+                _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, item);
+              }
+              break;
+            }
+            default: {
+              _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, item);
+            }
+          }
+          break _L;
+        }
+        _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_items, item);
+        const snapshot = [];
+        const _bind = self.current_paths;
+        const _bind$2 = _bind.length;
+        let _tmp$2 = 0;
+        while (true) {
+          const _ = _tmp$2;
+          if (_ < _bind$2) {
+            const p = _bind[_];
+            _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(snapshot, p);
+            _tmp$2 = _ + 1 | 0;
+            continue;
+          } else {
+            break;
+          }
+        }
+        _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_path_snapshots, snapshot);
+        _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(draw_item_path_modifiers, []);
+        _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(draw_item_matrices, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
+        _M0MPC15array5Array4pushGdE(draw_item_opacities, 1);
+      }
+      _tmp = item_idx + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  const all_inner_paths = [];
+  const _bind = self.current_paths;
+  const _bind$2 = _bind.length;
+  let _tmp$2 = 0;
+  while (true) {
+    const _ = _tmp$2;
+    if (_ < _bind$2) {
+      const p = _bind[_];
+      _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(all_inner_paths, p);
+      _tmp$2 = _ + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  let _tmp$3 = draw_items.length - 1 | 0;
+  while (true) {
+    const i = _tmp$3;
+    if (i >= 0) {
+      const draw_matrix = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_item_matrices, i);
+      const draw_opacity = _M0MPC15array5Array2atGdE(draw_item_opacities, i);
+      const needs_wrapper = draw_opacity < 0.999999 || _M0IP016_24default__implPB2Eq10not__equalGRP49cg_2dzhou13moon_2dlottie3lib4math6MatrixE(draw_matrix, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
+      if (needs_wrapper) {
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self.renderer, draw_matrix);
+        if (draw_opacity < 0.999999) {
+          _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12set__opacity(self.renderer, draw_opacity);
+        }
+      }
+      _L: {
+        _L$2: {
+          const _bind$3 = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_items, i).data;
+          switch (_bind$3.$tag) {
+            case 4: {
+              break _L$2;
+            }
+            case 5: {
+              break _L$2;
+            }
+            case 6: {
+              break _L$2;
+            }
+            case 7: {
+              break _L$2;
+            }
+            case 0: {
+              const _Group = _bind$3;
+              const _nested = _Group._0;
+              const modifiers = _M0MPC15array5Array2atGRPB5ArrayGdEE(draw_item_path_modifiers, i);
+              if (modifiers.length === 0) {
+                _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_items, i));
+              } else {
+                const group_items_with_modifiers = [];
+                const _bind$4 = _nested.length;
+                let _tmp$4 = 0;
+                while (true) {
+                  const _ = _tmp$4;
+                  if (_ < _bind$4) {
+                    const nested_item = _nested[_];
+                    _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(group_items_with_modifiers, nested_item);
+                    _tmp$4 = _ + 1 | 0;
+                    continue;
+                  } else {
+                    break;
+                  }
+                }
+                const _bind$5 = modifiers.length;
+                let _tmp$5 = 0;
+                while (true) {
+                  const _ = _tmp$5;
+                  if (_ < _bind$5) {
+                    const modifier = modifiers[_];
+                    _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(group_items_with_modifiers, modifier);
+                    _tmp$5 = _ + 1 | 0;
+                    continue;
+                  } else {
+                    break;
+                  }
+                }
+                const decorated_group = _M0MP49cg_2dzhou13moon_2dlottie3lib5model5Shape3new(_M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_items, i).shape_type, new _M0DTP49cg_2dzhou13moon_2dlottie3lib5model9ShapeData5Group(group_items_with_modifiers), _M0DTPC16option6OptionGOsE4None__, _M0DTPC16option6OptionGOiE4None__, _M0DTPC16option6OptionGObE4None__);
+                _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, decorated_group);
+              }
+              break;
+            }
+          }
+          break _L;
+        }
+        self.current_paths = _M0MPC15array5Array2atGRPB5ArrayGdEE(draw_path_snapshots, i);
+        _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(draw_items, i));
+      }
+      if (needs_wrapper) {
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+      }
+      _tmp$3 = i - 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  self.current_paths = all_inner_paths;
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, shape) {
   const _bind = shape.name;
   let _tmp;
@@ -19960,7 +20887,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49
       const old_paths = self.current_paths;
       self.current_paths = [];
       const group_has_paint_ops = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24shape__group__has__paint(_items);
-      let group_matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709;
+      let group_matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
       const _bind$4 = _items.length;
       let _tmp$2 = 0;
       while (true) {
@@ -20264,7 +21191,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49
       let i = start_idx;
       while (true) {
         if (step === 1 ? i < end_idx : i > end_idx) {
-          let m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709;
+          let m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
           const total_steps = i + 0 + offset$2;
           let _tmp$7 = 0;
           while (true) {
@@ -20315,6 +21242,416 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49
       const _Rounding = _bind$3;
       const _rounding = _Rounding._0;
       const radius = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, _rounding.radius, self.current_comp_frame);
+      if (radius > 0) {
+        const new_paths$2 = [];
+        const _bind$17 = self.current_paths;
+        const _bind$18 = _bind$17.length;
+        let _tmp$7 = 0;
+        while (true) {
+          const _ = _tmp$7;
+          if (_ < _bind$18) {
+            const path$2 = _bind$17[_];
+            _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(new_paths$2, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer25apply__rounding__to__path(path$2, radius));
+            _tmp$7 = _ + 1 | 0;
+            continue;
+          } else {
+            break;
+          }
+        }
+        self.current_paths = new_paths$2;
+        return;
+      } else {
+        return;
+      }
+    }
+  }
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, shape) {
+  const _bind = shape.name;
+  let _tmp;
+  if (_bind === undefined) {
+    _tmp = shape.shape_type;
+  } else {
+    const _Some = _bind;
+    const _name = _Some;
+    _tmp = `${_name}:${shape.shape_type}`;
+  }
+  self.debug_shape = _tmp;
+  self.debug_property = shape.shape_type;
+  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, "render_shape");
+  const _bind$2 = shape.hidden;
+  if (_bind$2 === -1) {
+  } else {
+    const _Some = _bind$2;
+    const _x = _Some;
+    if (_x === true) {
+      return undefined;
+    }
+  }
+  const _bind$3 = shape.data;
+  switch (_bind$3.$tag) {
+    case 0: {
+      const _Group = _bind$3;
+      const _items = _Group._0;
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+      const old_paths = self.current_paths;
+      self.current_paths = [];
+      const group_has_paint_ops = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24shape__group__has__paint(_items);
+      let group_matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
+      const _bind$4 = _items.length;
+      let _tmp$2 = 0;
+      while (true) {
+        const _ = _tmp$2;
+        if (_ < _bind$4) {
+          const item = _items[_];
+          const _bind$5 = item.data;
+          if (_bind$5.$tag === 8) {
+            const _Transform = _bind$5;
+            const _tr = _Transform._0;
+            group_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _tr, self.current_comp_frame);
+            _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__shapeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, item);
+          }
+          _tmp$2 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__itemsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _items);
+      const inner_paths = self.current_paths;
+      self.current_paths = old_paths;
+      if (!group_has_paint_ops) {
+        const _bind$5 = inner_paths.length;
+        let _tmp$3 = 0;
+        while (true) {
+          const _ = _tmp$3;
+          if (_ < _bind$5) {
+            const p = inner_paths[_];
+            _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.current_paths, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer15transform__path(p, group_matrix));
+            _tmp$3 = _ + 1 | 0;
+            continue;
+          } else {
+            break;
+          }
+        }
+      }
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+      return;
+    }
+    case 1: {
+      const _Rect = _bind$3;
+      const _r = _Rect._0;
+      const p = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _r.position, self.current_comp_frame);
+      const s = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _r.size, self.current_comp_frame);
+      const corner_r = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _r.roundness, self.current_comp_frame);
+      const x = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(p, 0, 0);
+      const y = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(p, 1, 0);
+      const w = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(s, 0, 0);
+      const h = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(s, 1, 0);
+      _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.current_paths, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer18create__rect__path(x, y, w, h, corner_r, _r.direction));
+      return;
+    }
+    case 2: {
+      const _Ellipse = _bind$3;
+      const _e = _Ellipse._0;
+      const p$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _e.position, self.current_comp_frame);
+      const s$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _e.size, self.current_comp_frame);
+      const cx = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(p$2, 0, 0);
+      const cy = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(p$2, 1, 0);
+      const rx = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(s$2, 0, 0) / 2;
+      const ry = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(s$2, 1, 0) / 2;
+      _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.current_paths, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer21create__ellipse__path(cx, cy, rx, ry, _e.direction));
+      return;
+    }
+    case 3: {
+      const _Path = _bind$3;
+      const _p = _Path._0;
+      const path = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _p.path, self.current_comp_frame);
+      _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.current_paths, path);
+      return;
+    }
+    case 4: {
+      const _Fill = _bind$3;
+      const _f = _Fill._0;
+      const color_vec = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _f.color, self.current_comp_frame);
+      const opacity = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _f.opacity, self.current_comp_frame);
+      const _bind$5 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer21color__rgb__from__vec(color_vec);
+      const _r$2 = _bind$5._0;
+      const _g = _bind$5._1;
+      const _b = _bind$5._2;
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, _f.fill_rule === 2 ? "evenodd" : "nonzero");
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+      const _bind$6 = self.current_paths;
+      const _bind$7 = _bind$6.length;
+      let _tmp$3 = 0;
+      while (true) {
+        const _ = _tmp$3;
+        if (_ < _bind$7) {
+          const p$3 = _bind$6[_];
+          _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, p$3);
+          _tmp$3 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(self.renderer, _r$2, _g, _b, opacity / 100);
+      return;
+    }
+    case 5: {
+      const _Stroke = _bind$3;
+      const _s = _Stroke._0;
+      const color_vec$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s.color, self.current_comp_frame);
+      const opacity$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s.opacity, self.current_comp_frame);
+      const width = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s.width, self.current_comp_frame);
+      const _bind$8 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer21color__rgb__from__vec(color_vec$2);
+      const _r$3 = _bind$8._0;
+      const _g$2 = _bind$8._1;
+      const _b$2 = _bind$8._2;
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+      const _bind$9 = self.current_paths;
+      const _bind$10 = _bind$9.length;
+      let _tmp$4 = 0;
+      while (true) {
+        const _ = _tmp$4;
+        if (_ < _bind$10) {
+          const p$3 = _bind$9[_];
+          _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, p$3);
+          _tmp$4 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer18set__stroke__style(self.renderer, _s.line_cap, _s.line_join, _s.miter_limit);
+      if (_s.dashes.length > 0) {
+        const dash_array = [];
+        let dash_offset = 0;
+        const _bind$11 = _s.dashes;
+        const _bind$12 = _bind$11.length;
+        let _tmp$5 = 0;
+        while (true) {
+          const _ = _tmp$5;
+          if (_ < _bind$12) {
+            const d = _bind$11[_];
+            const v = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, d.value, self.current_comp_frame);
+            if (d.name === "o") {
+              dash_offset = v;
+            } else {
+              _M0MPC15array5Array4pushGdE(dash_array, v);
+            }
+            _tmp$5 = _ + 1 | 0;
+            continue;
+          } else {
+            break;
+          }
+        }
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__line__dash(self.renderer, dash_array, dash_offset);
+      } else {
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__line__dash(self.renderer, [], 0);
+      }
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer6stroke(self.renderer, _r$3, _g$2, _b$2, opacity$2 / 100, width);
+      return;
+    }
+    case 6: {
+      const _GradientFill = _bind$3;
+      const _f$2 = _GradientFill._0;
+      const start_p = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _f$2.start_point, self.current_comp_frame);
+      const end_p = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _f$2.end_point, self.current_comp_frame);
+      const stops = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _f$2.gradient_colors.color_stops, self.current_comp_frame);
+      const opacity$3 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _f$2.opacity, self.current_comp_frame);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, _f$2.fill_rule === 2 ? "evenodd" : "nonzero");
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+      const _bind$11 = self.current_paths;
+      const _bind$12 = _bind$11.length;
+      let _tmp$5 = 0;
+      while (true) {
+        const _ = _tmp$5;
+        if (_ < _bind$12) {
+          const p$3 = _bind$11[_];
+          _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, p$3);
+          _tmp$5 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      const _bind$13 = _f$2.gradient_type;
+      if (_bind$13 === 0) {
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__linear__gradient(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p, 0, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p, 1, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p, 0, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p, 1, 0), _f$2.gradient_colors.color_count, stops, opacity$3 / 100);
+        return;
+      } else {
+        const x0 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p, 0, 0);
+        const y0 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p, 1, 0);
+        const x1 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p, 0, 0);
+        const y1 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p, 1, 0);
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+        const _p$2 = dx * dx + dy * dy;
+        const radius = Math.sqrt(_p$2);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer22fill__radial__gradient(self.renderer, x0, y0, radius, x0, y0, 0, _f$2.gradient_colors.color_count, stops, opacity$3 / 100);
+        return;
+      }
+    }
+    case 7: {
+      const _GradientStroke = _bind$3;
+      const _s$2 = _GradientStroke._0;
+      const start_p$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s$2.start_point, self.current_comp_frame);
+      const end_p$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s$2.end_point, self.current_comp_frame);
+      const stops$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s$2.gradient_colors.color_stops, self.current_comp_frame);
+      const opacity$4 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s$2.opacity, self.current_comp_frame);
+      const width$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _s$2.width, self.current_comp_frame);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+      const _bind$14 = self.current_paths;
+      const _bind$15 = _bind$14.length;
+      let _tmp$6 = 0;
+      while (true) {
+        const _ = _tmp$6;
+        if (_ < _bind$15) {
+          const p$3 = _bind$14[_];
+          _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, p$3);
+          _tmp$6 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer18set__stroke__style(self.renderer, _s$2.line_cap, _s$2.line_join, _s$2.miter_limit);
+      if (_s$2.dashes.length > 0) {
+        const dash_array = [];
+        let dash_offset = 0;
+        const _bind$16 = _s$2.dashes;
+        const _bind$17 = _bind$16.length;
+        let _tmp$7 = 0;
+        while (true) {
+          const _ = _tmp$7;
+          if (_ < _bind$17) {
+            const d = _bind$16[_];
+            const v = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, d.value, self.current_comp_frame);
+            if (d.name === "o") {
+              dash_offset = v;
+            } else {
+              _M0MPC15array5Array4pushGdE(dash_array, v);
+            }
+            _tmp$7 = _ + 1 | 0;
+            continue;
+          } else {
+            break;
+          }
+        }
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__line__dash(self.renderer, dash_array, dash_offset);
+      } else {
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__line__dash(self.renderer, [], 0);
+      }
+      const _bind$16 = _s$2.gradient_type;
+      if (_bind$16 === 0) {
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer24stroke__linear__gradient(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p$2, 0, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p$2, 1, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p$2, 0, 0), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p$2, 1, 0), _s$2.gradient_colors.color_count, stops$2, opacity$4 / 100, width$2);
+        return;
+      } else {
+        const x0 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p$2, 0, 0);
+        const y0 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(start_p$2, 1, 0);
+        const x1 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p$2, 0, 0);
+        const y1 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(end_p$2, 1, 0);
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+        const _p$2 = dx * dx + dy * dy;
+        const radius = Math.sqrt(_p$2);
+        _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer24stroke__radial__gradient(self.renderer, x0, y0, radius, x0, y0, 0, _s$2.gradient_colors.color_count, stops$2, opacity$4 / 100, width$2);
+        return;
+      }
+    }
+    case 8: {
+      const _Transform = _bind$3;
+      const _tr = _Transform._0;
+      const matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _tr, self.current_comp_frame);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self.renderer, matrix);
+      const opacity$5 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _tr.opacity, self.current_comp_frame);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12set__opacity(self.renderer, opacity$5 / 100);
+      return;
+    }
+    case 9: {
+      const _TrimPath = _bind$3;
+      const _t = _TrimPath._0;
+      const start = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _t.start, self.current_comp_frame);
+      const end = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _t.end, self.current_comp_frame);
+      const offset = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _t.offset, self.current_comp_frame);
+      self.current_paths = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer29apply__trim__path__with__mode(self.current_paths, start, end, offset, _t.multiple);
+      return;
+    }
+    case 10: {
+      const _Polystar = _bind$3;
+      const _sr = _Polystar._0;
+      _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(self.current_paths, _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22create__polystar__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _sr));
+      return;
+    }
+    case 11: {
+      const _Repeater = _bind$3;
+      const _rep = _Repeater._0;
+      const copies = _M0MPC16double6Double7to__int(_M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.copies, self.current_comp_frame));
+      const offset$2 = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.offset, self.current_comp_frame);
+      const tr_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.transform, self.current_comp_frame);
+      const so = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.start_opacity, self.current_comp_frame);
+      const eo = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rep.end_opacity, self.current_comp_frame);
+      const original_paths = self.current_paths;
+      const new_paths = [];
+      const start_idx = _rep.composite === 1 ? 0 : copies - 1 | 0;
+      const end_idx = _rep.composite === 1 ? copies : -1;
+      const step = _rep.composite === 1 ? 1 : -1;
+      const needs_opacity = Math.abs(so - eo) > 0.001 || Math.abs(so - 100) > 0.001;
+      let i = start_idx;
+      while (true) {
+        if (step === 1 ? i < end_idx : i > end_idx) {
+          let m = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
+          const total_steps = i + 0 + offset$2;
+          let _tmp$7 = 0;
+          while (true) {
+            const _j = _tmp$7;
+            if (_j < _M0MPC16double6Double7to__int(total_steps)) {
+              m = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix8multiply(m, tr_matrix);
+              _tmp$7 = _j + 1 | 0;
+              continue;
+            } else {
+              break;
+            }
+          }
+          if (needs_opacity) {
+            const t = copies > 1 ? (i + 0) / ((copies - 1 | 0) + 0) : 0;
+            const copy_opacity = so + (eo - so) * t;
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12set__opacity(self.renderer, copy_opacity / 100);
+          }
+          const _bind$17 = original_paths.length;
+          let _tmp$8 = 0;
+          while (true) {
+            const _ = _tmp$8;
+            if (_ < _bind$17) {
+              const path$2 = original_paths[_];
+              _M0MPC15array5Array4pushGRP49cg_2dzhou13moon_2dlottie3lib5model5AssetE(new_paths, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer15transform__path(path$2, m));
+              _tmp$8 = _ + 1 | 0;
+              continue;
+            } else {
+              break;
+            }
+          }
+          if (needs_opacity) {
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+          }
+          i = i + step | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      self.current_paths = new_paths;
+      return;
+    }
+    case 12: {
+      return;
+    }
+    default: {
+      const _Rounding = _bind$3;
+      const _rounding = _Rounding._0;
+      const radius = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rounding.radius, self.current_comp_frame);
       if (radius > 0) {
         const new_paths$2 = [];
         const _bind$17 = self.current_paths;
@@ -20676,6 +22013,23 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27render__text__glyph__pain
     return;
   }
 }
+function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27render__text__glyph__paintsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(player, fill_r, fill_g, fill_b, fill_opacity, stroke_r, stroke_g, stroke_b, stroke_opacity, stroke_width, stroke_over_fill) {
+  if (stroke_over_fill) {
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(player.renderer, fill_r, fill_g, fill_b, fill_opacity);
+    if (stroke_width > 0) {
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer6stroke(player.renderer, stroke_r, stroke_g, stroke_b, stroke_opacity, stroke_width);
+      return;
+    } else {
+      return;
+    }
+  } else {
+    if (stroke_width > 0) {
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer6stroke(player.renderer, stroke_r, stroke_g, stroke_b, stroke_opacity, stroke_width);
+    }
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(player.renderer, fill_r, fill_g, fill_b, fill_opacity);
+    return;
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape__pathsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, shapes) {
   const _bind = shapes.length;
   let _tmp = 0;
@@ -20706,6 +22060,48 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape
             const _Group = _bind$3;
             const _items = _Group._0;
             _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape__pathsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, _items);
+            break;
+          }
+        }
+        break _L;
+      }
+      _tmp = _ + 1 | 0;
+      continue;
+    } else {
+      return;
+    }
+  }
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape__pathsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, shapes) {
+  const _bind = shapes.length;
+  let _tmp = 0;
+  while (true) {
+    const _ = _tmp;
+    if (_ < _bind) {
+      const shape = shapes[_];
+      _L: {
+        const _bind$2 = shape.hidden;
+        if (_bind$2 === -1) {
+        } else {
+          const _Some = _bind$2;
+          const _x = _Some;
+          if (_x === true) {
+            break _L;
+          }
+        }
+        const _bind$3 = shape.data;
+        switch (_bind$3.$tag) {
+          case 3: {
+            const _Path = _bind$3;
+            const _p = _Path._0;
+            const path = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _p.path, self.current_comp_frame);
+            _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path);
+            break;
+          }
+          case 0: {
+            const _Group = _bind$3;
+            const _items = _Group._0;
+            _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape__pathsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _items);
             break;
           }
         }
@@ -20966,7 +22362,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26render__text__with
             const saved_paths = self.current_paths;
             self.current_paths = [];
             _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
-            let glyph_matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709;
+            let glyph_matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
             glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, cursor_x, 0);
             glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, 0, -doc.baseline_shift);
             glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, _offf, 0);
@@ -20985,6 +22381,289 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26render__text__with
             _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27render__text__glyph__paintsGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, fill_r, fill_g, fill_b, fill_opacity, stroke_r, stroke_g, stroke_b, 1, stroke_width, doc.stroke_over_fill);
             self.current_paths = saved_paths;
             _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+            break;
+          }
+          _tmp$5 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      cursor_x = cursor_x + (advance + base_tracking);
+      _tmp$3 = ci + 1 | 0;
+      continue;
+    } else {
+      return;
+    }
+  }
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26render__text__with__glyphsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, doc, animators, anchor_grouping, grouping_alignment, glyphs) {
+  const base_fill_r = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(doc.fill_color, 0, 0);
+  const base_fill_g = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(doc.fill_color, 1, 0);
+  const base_fill_b = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(doc.fill_color, 2, 0);
+  const base_stroke_r = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(doc.stroke_color, 0, 0);
+  const base_stroke_g = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(doc.stroke_color, 1, 0);
+  const base_stroke_b = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(doc.stroke_color, 2, 0);
+  const text = doc.text;
+  const chars = _M0MPC16string6String9to__array(text);
+  const n = chars.length;
+  const base_tracking = doc.tracking * 0.001 * doc.size;
+  const font_info = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer16find__font__info(self.animation, doc.font);
+  let total_width = 0;
+  const char_advances = [];
+  let _tmp = 0;
+  while (true) {
+    const ci = _tmp;
+    if (ci < n) {
+      const ch = _M0MPC15array5Array2atGcE(chars, ci);
+      const ch_str = _M0IPC14char4CharPB4Show10to__string(ch);
+      let found = false;
+      const _bind = glyphs.length;
+      let _tmp$2 = 0;
+      while (true) {
+        const _ = _tmp$2;
+        if (_ < _bind) {
+          const g = glyphs[_];
+          if (g.ch === ch_str && _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer20glyph__matches__font(g, doc.font, font_info)) {
+            const advance = g.advance_width * doc.size / 100;
+            _M0MPC15array5Array4pushGdE(char_advances, advance);
+            total_width = total_width + advance;
+            if (ci < (n - 1 | 0)) {
+              total_width = total_width + base_tracking;
+            }
+            found = true;
+            break;
+          }
+          _tmp$2 = _ + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      if (!found) {
+        const fallback = doc.size * 0.6;
+        _M0MPC15array5Array4pushGdE(char_advances, fallback);
+        total_width = total_width + fallback;
+        if (ci < (n - 1 | 0)) {
+          total_width = total_width + base_tracking;
+        }
+      }
+      _tmp = ci + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  const char_indices_by_mode = [_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24build__selector__indices(chars, 1), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24build__selector__indices(chars, 2), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24build__selector__indices(chars, 3), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer24build__selector__indices(chars, 4)];
+  const selector_totals_by_mode = [_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer29count__selector__total__chars(chars, 1), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer29count__selector__total__chars(chars, 2), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer29count__selector__total__chars(chars, 3), _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer29count__selector__total__chars(chars, 4)];
+  const _bind = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer35build__text__letter__group__metrics(chars, char_advances, anchor_grouping);
+  const _group_widths = _bind._0;
+  const _group_offsets = _bind._1;
+  const _bind$2 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27get__text__group__alignment(grouping_alignment, self.current_comp_frame);
+  const _align_x = _bind$2._0;
+  const _align_y = _bind$2._1;
+  const y_off = doc.size * 1.2 * 0.714;
+  const _bind$3 = doc.justify;
+  let cursor_x;
+  switch (_bind$3) {
+    case 1: {
+      cursor_x = -total_width;
+      break;
+    }
+    case 2: {
+      cursor_x = -total_width / 2;
+      break;
+    }
+    default: {
+      cursor_x = 0;
+    }
+  }
+  const random_orders = [];
+  let _tmp$2 = 0;
+  while (true) {
+    const ai = _tmp$2;
+    if (ai < animators.length) {
+      const selector = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(animators, ai).selector;
+      const mode_idx = selector.based_on >= 1 && selector.based_on <= 4 ? selector.based_on - 1 | 0 : 0;
+      if (selector.randomize === 1) {
+        const total_chars = _M0MPC15array5Array2atGiE(selector_totals_by_mode, mode_idx);
+        _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(random_orders, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer36build__text__animator__random__order(total_chars, ai + text.length | 0));
+      } else {
+        _M0MPC15array5Array4pushGRPB5ArrayGRP49cg_2dzhou13moon_2dlottie3lib5model10BezierPathEE(random_orders, []);
+      }
+      _tmp$2 = ai + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  let _tmp$3 = 0;
+  while (true) {
+    const ci = _tmp$3;
+    if (ci < n) {
+      const ch = _M0MPC15array5Array2atGcE(chars, ci);
+      const ch_str = _M0IPC14char4CharPB4Show10to__string(ch);
+      const advance = _M0MPC15array5Array2atGdE(char_advances, ci);
+      let anim_scale_x = 1;
+      let anim_scale_y = 1;
+      let anim_pos_x = 0;
+      let anim_pos_y = 0;
+      let anim_rotation = 0;
+      let anim_tracking = 0;
+      let char_opacity = 1;
+      let char_fill_r = base_fill_r;
+      let char_fill_g = base_fill_g;
+      let char_fill_b = base_fill_b;
+      let char_stroke_r = base_stroke_r;
+      let char_stroke_g = base_stroke_g;
+      let char_stroke_b = base_stroke_b;
+      let char_stroke_width = doc.stroke_width;
+      let _tmp$4 = 0;
+      while (true) {
+        const ai = _tmp$4;
+        if (ai < animators.length) {
+          const anim = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(animators, ai);
+          const sel = anim.selector;
+          const mode_idx = sel.based_on >= 1 && sel.based_on <= 4 ? sel.based_on - 1 | 0 : 0;
+          const total_chars = _M0MPC15array5Array2atGiE(selector_totals_by_mode, mode_idx);
+          const base_char_anim_idx = _M0MPC15array5Array2atGiE(_M0MPC15array5Array2atGRPB5ArrayGdEE(char_indices_by_mode, mode_idx), ci);
+          const char_anim_idx = sel.randomize === 1 && (base_char_anim_idx >= 0 && base_char_anim_idx < _M0MPC15array5Array2atGRPB5ArrayGdEE(random_orders, ai).length) ? _M0MPC15array5Array2atGiE(_M0MPC15array5Array2atGRPB5ArrayGdEE(random_orders, ai), base_char_anim_idx) : base_char_anim_idx;
+          const mult = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer23compute__animator__mult(sel, char_anim_idx, total_chars, self.current_comp_frame);
+          const _bind$4 = anim.properties.scale;
+          if (_bind$4 === undefined) {
+          } else {
+            const _Some = _bind$4;
+            const _scale_prop = _Some;
+            const sv = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _scale_prop, self.current_comp_frame);
+            const sx = sv.length > 0 ? _M0MPC15array5Array2atGdE(sv, 0) : 100;
+            const sy = sv.length > 1 ? _M0MPC15array5Array2atGdE(sv, 1) : 100;
+            const sx_delta = sx / 100 - 1;
+            const sy_delta = sy / 100 - 1;
+            anim_scale_x = anim_scale_x * (1 + mult * sx_delta);
+            anim_scale_y = anim_scale_y * (1 + mult * sy_delta);
+          }
+          const _bind$5 = anim.properties.position;
+          if (_bind$5 === undefined) {
+          } else {
+            const _Some = _bind$5;
+            const _pos_prop = _Some;
+            const pv = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _pos_prop, self.current_comp_frame);
+            const px = pv.length > 0 ? _M0MPC15array5Array2atGdE(pv, 0) : 0;
+            const py = pv.length > 1 ? _M0MPC15array5Array2atGdE(pv, 1) : 0;
+            anim_pos_x = anim_pos_x + mult * px;
+            anim_pos_y = anim_pos_y + mult * py;
+          }
+          const _bind$6 = anim.properties.rotation;
+          if (_bind$6 === undefined) {
+          } else {
+            const _Some = _bind$6;
+            const _rotation_prop = _Some;
+            const rv = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _rotation_prop, self.current_comp_frame);
+            anim_rotation = anim_rotation + mult * rv;
+          }
+          const _bind$7 = anim.properties.fill_color;
+          if (_bind$7 === undefined) {
+          } else {
+            const _Some = _bind$7;
+            const _fc_prop = _Some;
+            const fv = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _fc_prop, self.current_comp_frame);
+            const ar = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(fv, 0, 0);
+            const ag = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(fv, 1, 0);
+            const ab = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(fv, 2, 0);
+            char_fill_r = char_fill_r + mult * (ar - char_fill_r);
+            char_fill_g = char_fill_g + mult * (ag - char_fill_g);
+            char_fill_b = char_fill_b + mult * (ab - char_fill_b);
+          }
+          const _bind$8 = anim.properties.stroke_color;
+          if (_bind$8 === undefined) {
+          } else {
+            const _Some = _bind$8;
+            const _sc_prop = _Some;
+            const sv = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13evaluate__vecGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _sc_prop, self.current_comp_frame);
+            const ar = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(sv, 0, 0);
+            const ag = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(sv, 1, 0);
+            const ab = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer12get__vec__at(sv, 2, 0);
+            char_stroke_r = char_stroke_r + mult * (ar - char_stroke_r);
+            char_stroke_g = char_stroke_g + mult * (ag - char_stroke_g);
+            char_stroke_b = char_stroke_b + mult * (ab - char_stroke_b);
+          }
+          const _bind$9 = anim.properties.stroke_width;
+          if (_bind$9 === undefined) {
+          } else {
+            const _Some = _bind$9;
+            const _sw_prop = _Some;
+            const sw = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _sw_prop, self.current_comp_frame);
+            char_stroke_width = char_stroke_width + mult * sw;
+          }
+          const _bind$10 = anim.properties.opacity;
+          if (_bind$10 === undefined) {
+          } else {
+            const _Some = _bind$10;
+            const _opacity_prop = _Some;
+            const ov = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _opacity_prop, self.current_comp_frame) / 100;
+            char_opacity = char_opacity + (ov * mult - char_opacity) * mult;
+          }
+          const _bind$11 = anim.properties.tracking;
+          if (_bind$11 === undefined) {
+          } else {
+            const _Some = _bind$11;
+            const _tracking_prop = _Some;
+            const tv = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _tracking_prop, self.current_comp_frame);
+            anim_tracking = anim_tracking + mult * tv;
+          }
+          _tmp$4 = ai + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+      if (ci > 0 || doc.justify !== 0) {
+        cursor_x = cursor_x + anim_tracking;
+      }
+      const fill_opacity = char_opacity < 0 ? 0 : char_opacity > 1 ? 1 : char_opacity;
+      const fill_r = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22color__channel__to__u8(char_fill_r);
+      const fill_g = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22color__channel__to__u8(char_fill_g);
+      const fill_b = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22color__channel__to__u8(char_fill_b);
+      const stroke_r = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22color__channel__to__u8(char_stroke_r);
+      const stroke_g = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22color__channel__to__u8(char_stroke_g);
+      const stroke_b = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22color__channel__to__u8(char_stroke_b);
+      const stroke_width = char_stroke_width < 0 ? 0 : char_stroke_width;
+      const _bind$4 = glyphs.length;
+      let _tmp$5 = 0;
+      while (true) {
+        const _ = _tmp$5;
+        if (_ < _bind$4) {
+          const g = glyphs[_];
+          if (g.ch === ch_str && _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer20glyph__matches__font(g, doc.font, font_info)) {
+            const glyph_scale = doc.size / 100;
+            const char_scale_x = glyph_scale * anim_scale_x;
+            const char_scale_y = glyph_scale * anim_scale_y;
+            const _bind$5 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer23get__text__group__pivot(_M0MPC15array5Array2atGdE(_group_widths, ci), _M0MPC15array5Array2atGdE(_group_offsets, ci), _align_x, _align_y, y_off);
+            const _offf = _bind$5._0;
+            const _pivot_x = _bind$5._1;
+            const _pivot_y = _bind$5._2;
+            const saved_paths = self.current_paths;
+            self.current_paths = [];
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+            let glyph_matrix = _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721;
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, cursor_x, 0);
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, 0, -doc.baseline_shift);
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, _offf, 0);
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, _pivot_x, _pivot_y);
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, anim_pos_x, anim_pos_y);
+            if (anim_rotation !== 0) {
+              glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix6rotate(glyph_matrix, anim_rotation * 3.14159265358979312 / 180);
+            }
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, -_pivot_x, -_pivot_y);
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix9translate(glyph_matrix, -_offf, 0);
+            glyph_matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib4math6Matrix5scale(glyph_matrix, char_scale_x, char_scale_y);
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self.renderer, glyph_matrix);
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+            _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player25emit__glyph__shape__pathsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, g.shapes);
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
+            _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer27render__text__glyph__paintsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, fill_r, fill_g, fill_b, fill_opacity, stroke_r, stroke_g, stroke_b, 1, stroke_width, doc.stroke_over_fill);
+            self.current_paths = saved_paths;
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
             break;
           }
           _tmp$5 = _ + 1 | 0;
@@ -21244,7 +22923,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49
     const matte_saved_frame = self.current_frame;
     self.current_frame = comp_frame;
     _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
-    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709);
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
     _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, _m_layer, scope);
     _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
     self.current_frame = matte_saved_frame;
@@ -21281,6 +22960,292 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49
   }
   if (needs_layer_isolation) {
     _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer10end__layer(self.renderer, "source-over");
+  }
+  self.current_frame = saved_frame;
+  self.current_comp_frame = saved_comp_frame;
+  self.current_layer_index = saved_layer_index;
+  self.current_comp_id = saved_comp_id;
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, layer, scope) {
+  const comp_frame = self.current_frame;
+  if (comp_frame < layer.in_point || comp_frame >= layer.out_point) {
+    return undefined;
+  }
+  const layer_frame = comp_frame - layer.start_time;
+  const _bind = layer.time_remap;
+  let precomp_frame;
+  if (_bind === undefined) {
+    precomp_frame = layer_frame;
+  } else {
+    const _Some = _bind;
+    const _time_remap = _Some;
+    const remapped_seconds = _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime41evaluate__double__property__with__context(_time_remap, layer_frame, layer.index, self.current_comp_id);
+    const remapped = remapped_seconds * self.animation.frame_rate;
+    precomp_frame = remapped === layer.out_point ? remapped - 1 : remapped;
+  }
+  const saved_frame = self.current_frame;
+  const saved_comp_frame = self.current_comp_frame;
+  const saved_layer_index = self.current_layer_index;
+  const saved_comp_id = self.current_comp_id;
+  self.current_comp_frame = comp_frame;
+  self.current_frame = layer_frame;
+  self.current_layer_index = layer.index;
+  const _bind$2 = layer.name;
+  let _tmp;
+  if (_bind$2 === undefined) {
+    _tmp = `#${_M0IP016_24default__implPB4Show10to__stringGiE(layer.index)}`;
+  } else {
+    const _Some = _bind$2;
+    const _name = _Some;
+    _tmp = `${_name}#${_M0IP016_24default__implPB4Show10to__stringGiE(layer.index)}`;
+  }
+  self.debug_layer = _tmp;
+  self.debug_shape = "";
+  self.debug_property = "layer";
+  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10debug__logGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, "render_layer");
+  let matte_source = undefined;
+  _L: {
+    _L$2: {
+      const _bind$3 = layer.matte_type;
+      if (_bind$3 === undefined) {
+      } else {
+        const _Some = _bind$3;
+        const _x = _Some;
+        switch (_x) {
+          case 1: {
+            break _L$2;
+          }
+          case 2: {
+            break _L$2;
+          }
+          case 3: {
+            break _L$2;
+          }
+          case 4: {
+            break _L$2;
+          }
+        }
+      }
+      break _L;
+    }
+    let _tmp$2 = 0;
+    while (true) {
+      const i = _tmp$2;
+      if (i < scope.length) {
+        if (_M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(scope, i).index === layer.index && i > 0) {
+          matte_source = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(scope, i - 1 | 0);
+          break;
+        }
+        _tmp$2 = i + 1 | 0;
+        continue;
+      } else {
+        break;
+      }
+    }
+  }
+  let use_mask_composite = false;
+  const _bind$3 = layer.masks;
+  if (_bind$3.$tag === 1) {
+    const _Some = _bind$3;
+    const _masks = _Some._0;
+    if (_M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer25supports__mask__composite(self.renderer) && (_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32layer__masks__support__composite(_masks) && _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer32layer__masks__require__composite(_masks))) {
+      use_mask_composite = true;
+    }
+  }
+  const _bind$4 = layer.fill_effect;
+  const has_fill_effect = !(_bind$4 === undefined);
+  const _bind$5 = matte_source;
+  const has_matte_source = !(_bind$5 === undefined);
+  const needs_layer_isolation = use_mask_composite || has_fill_effect || has_matte_source;
+  if (needs_layer_isolation) {
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12begin__layer(self.renderer);
+  }
+  const _bind$6 = matte_source;
+  if (_bind$6 === undefined) {
+  } else {
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer21prepare__matte__layer(self.renderer);
+  }
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+  const _bind$7 = layer.parent;
+  if (_bind$7 === undefined) {
+  } else {
+    const _Some = _bind$7;
+    const _p_ind = _Some;
+    _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player24apply__parent__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _p_ind, scope, comp_frame);
+  }
+  const matrix = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, layer.transform, comp_frame);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer17concat__transform(self.renderer, matrix);
+  const opacity = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player16evaluate__doubleGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, layer.transform.opacity, comp_frame);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer12set__opacity(self.renderer, opacity / 100);
+  let mask_restore_count = 0;
+  const _bind$8 = layer.masks;
+  const _bind$9 = use_mask_composite;
+  if (_bind$8.$tag === 1) {
+    const _Some = _bind$8;
+    if (_bind$9 === true) {
+    } else {
+      const _masks = _Some._0;
+      let i = 0;
+      while (true) {
+        if (i < _masks.length) {
+          const mask = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_masks, i);
+          if (_M0IP49cg_2dzhou13moon_2dlottie3lib5model8MaskModePB2Eq5equal(mask.mode, 0) && !mask.inverted) {
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
+            while (true) {
+              if (i < _masks.length) {
+                const m = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_masks, i);
+                if (_M0IP49cg_2dzhou13moon_2dlottie3lib5model8MaskModePB2Eq5equal(m.mode, 0) && !m.inverted) {
+                  const path_val = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, m.path, self.current_comp_frame);
+                  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path_val);
+                  i = i + 1 | 0;
+                } else {
+                  break;
+                }
+                continue;
+              } else {
+                break;
+              }
+            }
+            _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4clip(self.renderer);
+            continue;
+          }
+          _L$2: {
+            _L$3: {
+              const _bind$10 = mask.mode;
+              switch (_bind$10) {
+                case 1: {
+                  break _L$3;
+                }
+                case 0: {
+                  break _L$3;
+                }
+                case 2: {
+                  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+                  const path_val = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, mask.path, self.current_comp_frame);
+                  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path_val);
+                  if (mask.inverted) {
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self.renderer, -10000, -10000);
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 10000, -10000);
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 10000, 10000);
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, -10000, 10000);
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "evenodd");
+                  } else {
+                    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
+                  }
+                  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4clip(self.renderer);
+                  break;
+                }
+              }
+              break _L$2;
+            }
+            const is_inv = _M0IP49cg_2dzhou13moon_2dlottie3lib5model8MaskModePB2Eq5equal(mask.mode, 0) && mask.inverted || _M0IP49cg_2dzhou13moon_2dlottie3lib5model8MaskModePB2Eq5equal(mask.mode, 1) && !mask.inverted;
+            if (is_inv) {
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+              mask_restore_count = mask_restore_count + 1 | 0;
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self.renderer, -10000, -10000);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 10000, -10000);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 10000, 10000);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, -10000, 10000);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
+              const path_val = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, mask.path, self.current_comp_frame);
+              _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path_val);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "evenodd");
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4clip(self.renderer);
+            } else {
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+              const path_val = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player14evaluate__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, mask.path, self.current_comp_frame);
+              _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player18draw__lottie__pathGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, path_val);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4clip(self.renderer);
+            }
+          }
+          i = i + 1 | 0;
+          continue;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22render__layer__contentGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, layer, precomp_frame);
+  const _bind$10 = mask_restore_count;
+  let _tmp$2 = 0;
+  while (true) {
+    const _ = _tmp$2;
+    if (_ < _bind$10) {
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+      _tmp$2 = _ + 1 | 0;
+      continue;
+    } else {
+      break;
+    }
+  }
+  const _bind$11 = layer.fill_effect;
+  if (_bind$11 === undefined) {
+  } else {
+    const _Some = _bind$11;
+    const _fill_effect = _Some;
+    _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26apply__layer__fill__effectGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _fill_effect, comp_frame);
+  }
+  const _bind$12 = layer.masks;
+  const _bind$13 = use_mask_composite;
+  if (_bind$12.$tag === 1) {
+    const _Some = _bind$12;
+    const _masks = _Some._0;
+    if (_bind$13 === true) {
+      _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player29apply__layer__mask__compositeGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _masks);
+    }
+  }
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+  const _bind$14 = matte_source;
+  if (_bind$14 === undefined) {
+  } else {
+    const _Some = _bind$14;
+    const _m_layer = _Some;
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer18begin__matte__exit(self.renderer);
+    const matte_saved_frame = self.current_frame;
+    self.current_frame = comp_frame;
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
+    _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _m_layer, scope);
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+    self.current_frame = matte_saved_frame;
+    const _bind$15 = layer.matte_type;
+    let matte_type;
+    if (_bind$15 === undefined) {
+      matte_type = 1;
+    } else {
+      const _Some$2 = _bind$15;
+      const _x = _Some$2;
+      switch (_x) {
+        case 1: {
+          matte_type = 1;
+          break;
+        }
+        case 3: {
+          matte_type = 1;
+          break;
+        }
+        case 2: {
+          matte_type = 2;
+          break;
+        }
+        case 4: {
+          matte_type = 2;
+          break;
+        }
+        default: {
+          matte_type = 1;
+        }
+      }
+    }
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer16end__matte__exit(self.renderer, matte_type);
+  }
+  if (needs_layer_isolation) {
+    _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer10end__layer(self.renderer, "source-over");
   }
   self.current_frame = saved_frame;
   self.current_comp_frame = saved_comp_frame;
@@ -21354,10 +23319,10 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22render__layer__con
                   if (i >= 0) {
                     _L: {
                       const child_layer = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_layers, i);
-                      if (_M0IPC16option6OptionPB2Eq5equalGbE(child_layer.hidden, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6124)) {
+                      if (_M0IPC16option6OptionPB2Eq5equalGbE(child_layer.hidden, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6934)) {
                         break _L;
                       }
-                      if (_M0IPC16option6OptionPB2Eq5equalGiE(child_layer.matte_inherit, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6125)) {
+                      if (_M0IPC16option6OptionPB2Eq5equalGiE(child_layer.matte_inherit, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6935)) {
                         break _L;
                       }
                       _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, child_layer, _layers);
@@ -21458,6 +23423,177 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22render__layer__con
     }
   }
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player22render__layer__contentGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, layer, precomp_frame) {
+  const _bind = layer.data;
+  switch (_bind.$tag) {
+    case 0: {
+      const _Shape = _bind;
+      const _shapes = _Shape._0;
+      self.current_paths = [];
+      _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player20render__shape__itemsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, _shapes);
+      return;
+    }
+    case 1: {
+      const _Solid = _bind;
+      const _color = _Solid._0;
+      const _w = _Solid._1;
+      const _h = _Solid._2;
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self.renderer, 0, 0);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, _w + 0, 0);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, _w + 0, _h + 0);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 0, _h + 0);
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
+      const _bind$2 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17parse__hex__color(_color);
+      const _r = _bind$2._0;
+      const _g = _bind$2._1;
+      const _b = _bind$2._2;
+      _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4fill(self.renderer, _r, _g, _b, 1);
+      return;
+    }
+    case 2: {
+      const _PreComp = _bind;
+      const _ref_id = _PreComp._0;
+      const _w$2 = _PreComp._1;
+      const _h$2 = _PreComp._2;
+      const _bind$3 = self.animation.assets;
+      if (_bind$3.$tag === 1) {
+        const _Some = _bind$3;
+        const _assets = _Some._0;
+        const _bind$4 = _assets.length;
+        let _tmp = 0;
+        while (true) {
+          const _ = _tmp;
+          if (_ < _bind$4) {
+            const asset = _assets[_];
+            if (asset.id === _ref_id) {
+              const saved_frame = self.current_frame;
+              const saved_comp_id = self.current_comp_id;
+              self.current_frame = precomp_frame;
+              self.current_comp_id = _ref_id;
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4save(self.renderer);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11begin__path(self.renderer);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8move__to(self.renderer, 0, 0);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, _w$2 + 0, 0);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, _w$2 + 0, _h$2 + 0);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer8line__to(self.renderer, 0, _h$2 + 0);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11close__path(self.renderer);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer15set__fill__rule(self.renderer, "nonzero");
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer4clip(self.renderer);
+              const _bind$5 = asset.layers;
+              if (_bind$5.$tag === 1) {
+                const _Some$2 = _bind$5;
+                const _layers = _Some$2._0;
+                let _tmp$2 = _layers.length - 1 | 0;
+                while (true) {
+                  const i = _tmp$2;
+                  if (i >= 0) {
+                    _L: {
+                      const child_layer = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_layers, i);
+                      if (_M0IPC16option6OptionPB2Eq5equalGbE(child_layer.hidden, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6995)) {
+                        break _L;
+                      }
+                      if (_M0IPC16option6OptionPB2Eq5equalGiE(child_layer.matte_inherit, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer38render__layer__content_2econstr_2f6996)) {
+                        break _L;
+                      }
+                      _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, child_layer, _layers);
+                      break _L;
+                    }
+                    _tmp$2 = i - 1 | 0;
+                    continue;
+                  } else {
+                    break;
+                  }
+                }
+              }
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer7restore(self.renderer);
+              self.current_frame = saved_frame;
+              self.current_comp_id = saved_comp_id;
+              return;
+            }
+            _tmp = _ + 1 | 0;
+            continue;
+          } else {
+            return;
+          }
+        }
+      } else {
+        return;
+      }
+    }
+    case 4: {
+      const _Image = _bind;
+      const _ref_id$2 = _Image._0;
+      const _bind$4 = self.animation.assets;
+      if (_bind$4.$tag === 1) {
+        const _Some = _bind$4;
+        const _assets = _Some._0;
+        let _tmp = 0;
+        while (true) {
+          const i = _tmp;
+          if (i < _assets.length) {
+            const asset = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(_assets, i);
+            if (asset.id === _ref_id$2) {
+              const _bind$5 = asset.width;
+              let w;
+              if (_bind$5 === undefined) {
+                w = 0;
+              } else {
+                const _Some$2 = _bind$5;
+                w = _Some$2;
+              }
+              const _bind$6 = asset.height;
+              let h;
+              if (_bind$6 === undefined) {
+                h = 0;
+              } else {
+                const _Some$2 = _bind$6;
+                h = _Some$2;
+              }
+              const src = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer26resolve__image__asset__src(asset);
+              _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11draw__image(self.renderer, src, w + 0, h + 0, i);
+              return;
+            }
+            _tmp = i + 1 | 0;
+            continue;
+          } else {
+            return;
+          }
+        }
+      } else {
+        return;
+      }
+    }
+    case 5: {
+      const _Text = _bind;
+      const _data = _Text._0;
+      const doc = _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime34evaluate__text__document__property(_data.text, self.current_comp_frame);
+      const _p = doc.text;
+      const _p$2 = "";
+      if (!(_p === _p$2)) {
+        const _bind$5 = self.animation.glyphs;
+        if (_bind$5.$tag === 1) {
+          const _Some = _bind$5;
+          const _glyphs = _Some._0;
+          _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player26render__text__with__glyphsGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, doc, _data.animators, _data.anchor_grouping, _data.grouping_alignment, _glyphs);
+          return;
+        } else {
+          const _bind$6 = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer21color__rgb__from__vec(doc.fill_color);
+          const _r$2 = _bind$6._0;
+          const _g$2 = _bind$6._1;
+          const _b$2 = _bind$6._2;
+          _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer10draw__text(self.renderer, doc.text, doc.font, doc.size, _r$2, _g$2, _b$2, 1, doc.justify);
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+    default: {
+      return;
+    }
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player6renderGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self) {
   if (self.debug_enabled || self.debug_logs.length > 0) {
     self.debug_logs = [];
@@ -21465,7 +23601,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player6renderGRP49cg_2dzho
     self.debug_shape = "";
     self.debug_property = "";
   }
-  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4709);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
   _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11clear__rect(self.renderer, 0, 0, self.animation.width + 0, self.animation.height + 0);
   self.current_comp_id = "";
   const layers = self.animation.layers;
@@ -21475,10 +23611,10 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player6renderGRP49cg_2dzho
     if (i >= 0) {
       _L: {
         const layer = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(layers, i);
-        if (_M0IPC16option6OptionPB2Eq5equalGbE(layer.hidden, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f6185)) {
+        if (_M0IPC16option6OptionPB2Eq5equalGbE(layer.hidden, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7056)) {
           break _L;
         }
-        if (_M0IPC16option6OptionPB2Eq5equalGiE(layer.matte_inherit, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f6186)) {
+        if (_M0IPC16option6OptionPB2Eq5equalGiE(layer.matte_inherit, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7057)) {
           break _L;
         }
         _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, layer, layers);
@@ -21491,7 +23627,43 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player6renderGRP49cg_2dzho
     }
   }
 }
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player6renderGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self) {
+  if (self.debug_enabled || self.debug_logs.length > 0) {
+    self.debug_logs = [];
+    self.debug_layer = "";
+    self.debug_shape = "";
+    self.debug_property = "";
+  }
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer14set__transform(self.renderer, _M0FP49cg_2dzhou13moon_2dlottie3lib4math24identity_2erecord_2f4721);
+  _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11clear__rect(self.renderer, 0, 0, self.animation.width + 0, self.animation.height + 0);
+  self.current_comp_id = "";
+  const layers = self.animation.layers;
+  let _tmp = layers.length - 1 | 0;
+  while (true) {
+    const i = _tmp;
+    if (i >= 0) {
+      _L: {
+        const layer = _M0MPC15array5Array2atGRP49cg_2dzhou13moon_2dlottie3lib5model5LayerE(layers, i);
+        if (_M0IPC16option6OptionPB2Eq5equalGbE(layer.hidden, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7064)) {
+          break _L;
+        }
+        if (_M0IPC16option6OptionPB2Eq5equalGiE(layer.matte_inherit, _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22render_2econstr_2f7065)) {
+          break _L;
+        }
+        _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player13render__layerGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, layer, layers);
+        break _L;
+      }
+      _tmp = i - 1 | 0;
+      continue;
+    } else {
+      return;
+    }
+  }
+}
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10set__frameGRP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererE(self, frame) {
+  self.current_frame = frame;
+}
+function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10set__frameGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(self, frame) {
   self.current_frame = frame;
 }
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRenderer3new() {}
@@ -21697,32 +23869,50 @@ function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer14CanvasRendererP49cg_2dzho
 function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime19get__json__from__js() {
   return _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime21js__get__json__string();
 }
+function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime26parse__animation__from__js() {
+  _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29install__expression__handlers((expression, frame, layer_index, comp_id, value) => _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime32js__evaluate__expression__double(expression, frame, layer_index, comp_id, value), (expression, frame, layer_index, comp_id, value) => _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime29js__evaluate__expression__vec(expression, frame, layer_index, comp_id, value), (expression, frame, layer_index, comp_id, value) => _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime30js__evaluate__expression__path(expression, frame, layer_index, comp_id, value));
+  const json_str = _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime19get__json__from__js();
+  const _bind = _M0FPC14json13parse_2einner(new _M0TPC16string10StringView(json_str, 0, json_str.length), 1024);
+  let json;
+  if (_bind.$tag === 1) {
+    const _ok = _bind;
+    json = _ok._0;
+  } else {
+    return _bind;
+  }
+  return _M0FP49cg_2dzhou13moon_2dlottie3lib6parser16parse__animation(json);
+}
 function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime24create__player__from__js() {
   let _try_err;
   _L: {
-    _M0FP49cg_2dzhou13moon_2dlottie3lib7runtime29install__expression__handlers((expression, frame, layer_index, comp_id, value) => _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime32js__evaluate__expression__double(expression, frame, layer_index, comp_id, value), (expression, frame, layer_index, comp_id, value) => _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime29js__evaluate__expression__vec(expression, frame, layer_index, comp_id, value), (expression, frame, layer_index, comp_id, value) => _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime30js__evaluate__expression__path(expression, frame, layer_index, comp_id, value));
-    const json_str = _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime19get__json__from__js();
-    const _bind = _M0FPC14json13parse_2einner(new _M0TPC16string10StringView(json_str, 0, json_str.length), 1024);
-    let json;
+    const _bind = _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime26parse__animation__from__js();
+    let anim;
     if (_bind.$tag === 1) {
       const _ok = _bind;
-      json = _ok._0;
+      anim = _ok._0;
     } else {
       const _err = _bind;
       _try_err = _err._0;
       break _L;
     }
-    const _bind$2 = _M0FP49cg_2dzhou13moon_2dlottie3lib6parser16parse__animation(json);
-    let anim;
-    if (_bind$2.$tag === 1) {
-      const _ok = _bind$2;
-      anim = _ok._0;
+    return _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22create__canvas__player(anim);
+  }
+  return undefined;
+}
+function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime32create__svg__animation__from__js() {
+  let _try_err;
+  _L: {
+    const _bind = _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime26parse__animation__from__js();
+    let animation;
+    if (_bind.$tag === 1) {
+      const _ok = _bind;
+      animation = _ok._0;
     } else {
-      const _err = _bind$2;
+      const _err = _bind;
       _try_err = _err._0;
       break _L;
     }
-    return _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer22create__canvas__player(anim);
+    return new _M0TP49cg_2dzhou13moon_2dlottie3cmd15player__runtime18SvgAnimationHandle(animation);
   }
   return undefined;
 }
@@ -21756,6 +23946,13 @@ function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14update__player(pl
 function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14get__in__point(player) {
   return player.animation.in_point;
 }
+function _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime18render__svg__frame(handle, frame) {
+  const renderer = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer3new(handle.animation.width + 0, handle.animation.height + 0);
+  const player = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player3newGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(handle.animation, renderer);
+  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player10set__frameGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(player, frame);
+  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer6Player6renderGRP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererE(player);
+  return _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer11get__output(renderer);
+}
 (() => {
 })();
-export { _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime24create__player__from__js as create_player_from_js, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime27update__player__with__speed as update_player_with_speed, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime17get__frame__count as get_frame_count, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime10get__width as get_width, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime11get__height as get_height, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime8get__fps as get_fps, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime12get__version as get_version, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14update__player as update_player, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14get__in__point as get_in_point }
+export { _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime24create__player__from__js as create_player_from_js, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime32create__svg__animation__from__js as create_svg_animation_from_js, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime27update__player__with__speed as update_player_with_speed, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime17get__frame__count as get_frame_count, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime10get__width as get_width, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime11get__height as get_height, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime8get__fps as get_fps, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime12get__version as get_version, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14update__player as update_player, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime14get__in__point as get_in_point, _M0FP49cg_2dzhou13moon_2dlottie3cmd15player__runtime18render__svg__frame as render_svg_frame }
