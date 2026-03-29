@@ -345,7 +345,7 @@ fn SvgRenderer::append_markup(self : SvgRenderer, markup : String) -> Unit {
 }
 
 ///|
-fn SvgRenderer::mask_rect_markup(self : SvgRenderer) -> String {
+fn SvgRenderer::mask_base_rect_markup(self : SvgRenderer) -> String {
   "<rect fill=\"#ffffff\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\"></rect>"
 }
 
@@ -591,6 +591,8 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
 pub impl Renderer for SvgRenderer with supports_mask_composite(
   self : SvgRenderer,
 ) -> Bool {
+  // The SVG renderer now emits lottie-web-style <mask> trees for the supported
+  // add/subtract/intersect mask stack used by Player::apply_layer_mask_composite.
   let _ = self
   true
 }
@@ -629,7 +631,7 @@ pub impl Renderer for SvgRenderer with apply_mask_path(
     Some(state) => {
       let items = state.items
       if (mode == 2 || mode == 3) && items.length() == 0 {
-        items.push(self.mask_rect_markup())
+        items.push(self.mask_base_rect_markup())
       }
       let path_markup = self.mask_path_markup(
         path_data,
@@ -674,6 +676,8 @@ pub impl Renderer for SvgRenderer with end_mask_composite(
   match self.mask_stack.pop() {
     Some(state) => {
       if state.content_markup.length() == 0 || state.items.length() == 0 {
+        // If every mask path evaluated to empty geometry, lottie-web leaves the
+        // isolated layer content unchanged because there is no effective mask.
         self.buffer.write_string(state.content_markup)
         return
       }
