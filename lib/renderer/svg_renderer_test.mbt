@@ -11,7 +11,7 @@ test "svg_renderer/regression_0" {
   player.render() // Must call render to fill the buffer
   let svg = renderer.get_output()
   // Actual output from renderer
-  let expected = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\" overflow=\"hidden\"><g><g opacity=\"1\"><g><path d=\"M40,40 C40,40 60,40 60,40 C60,40 60,60 60,60 C60,60 40,60 40,60 C40,60 40,40 40,40 Z\" fill=\"#FF0000\" fill-opacity=\"1\" fill-rule=\"nonzero\" /></g></g></g></svg>"
+  let expected = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\" overflow=\"hidden\"><defs><clipPath id=\"frame_clip\"><rect x=\"0\" y=\"0\" width=\"100\" height=\"100\" /></clipPath></defs><g clip-path=\"url(#frame_clip)\"><g><g opacity=\"1\"><g><path d=\"M40,40 C40,40 60,40 60,40 C60,40 60,60 60,60 C60,60 40,60 40,60 C40,60 40,40 40,40 Z\" fill=\"#FF0000\" fill-opacity=\"1\" fill-rule=\"nonzero\" /></g></g></g></g></svg>"
   if svg != expected {
     fail("svg output mismatch: \{svg}")
   }

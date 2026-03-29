@@ -84,12 +84,20 @@ pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
   output.write_string(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" viewBox=\"0 0 \{fmt(self.width)} \{fmt(self.height)}\" overflow=\"hidden\">",
   )
-  if self.defs_buffer.to_string().length() > 0 {
-    output.write_string("<defs>")
-    output.write_string(self.defs_buffer.to_string())
-    output.write_string("</defs>")
-  }
+  // Always emit a <defs> block that contains an explicit frame-boundary clip
+  // path. The SVG root already has overflow="hidden", but using an explicit
+  // clipPath guarantees that content outside the viewport is clipped even when
+  // the SVG is embedded inside a DOM container (e.g. a <div>) whose CSS may
+  // not propagate the overflow constraint.
+  output.write_string("<defs>")
+  output.write_string(self.defs_buffer.to_string())
+  output.write_string(
+    "<clipPath id=\"frame_clip\"><rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" /></clipPath>",
+  )
+  output.write_string("</defs>")
+  output.write_string("<g clip-path=\"url(#frame_clip)\">")
   output.write_string(self.buffer.to_string())
+  output.write_string("</g>")
   output.write_string("</svg>")
   output.to_string()
 }
@@ -308,7 +316,10 @@ fn SvgRenderer::append_markup(self : SvgRenderer, markup : String) -> Unit {
     )
     self.defs_buffer.write_string(existing)
     self.defs_buffer.write_string("</mask>")
-    self.buffer = StringBuilder::new()
+    // Keep the original destination content in the buffer so its alpha is
+    // preserved (source-atop result alpha equals the destination alpha, not
+    // the source alpha). This matters when the buffer is later used as an SVG
+    // alpha mask (e.g. for track-matte rendering).
     self.buffer.write_string("<g mask=\"url(#\{mask_id})\">")
     self.buffer.write_string(markup)
     self.buffer.write_string("</g>")
@@ -499,11 +510,20 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
         "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">",
       )
       if matte_type == 2 {
+        // Invert alpha matte: content is visible where the matte is ABSENT.
+        // Start with full-canvas alpha=1, then subtract the matte shape using
+        // destination-out compositing (result_alpha = dest * (1 - src)).
         self.defs_buffer.write_string(
           "<rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" fill=\"#FFFFFF\" />",
         )
+        self.defs_buffer.write_string(
+          "<g style=\"mix-blend-mode:destination-out\">",
+        )
+        self.defs_buffer.write_string(matte_markup)
+        self.defs_buffer.write_string("</g>")
+      } else {
+        self.defs_buffer.write_string(matte_markup)
       }
-      self.defs_buffer.write_string(matte_markup)
       self.defs_buffer.write_string("</mask>")
       self.buffer.write_string("<g mask=\"url(#\{mask_id})\">")
       self.buffer.write_string(matte.content_markup)

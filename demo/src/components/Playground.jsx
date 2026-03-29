@@ -442,6 +442,15 @@ export default function Playground({ active = true }) {
         setRuntimeAnimationJson: (value) => {
           runtimeJsonRef.current = value
         },
+        setFullAnimationJson: (fullJson) => {
+          // When using the SVG renderer the WASM runtime receives the animation
+          // JSON directly and needs embedded image data (base64 URIs) to render
+          // <image> elements. Override the stripped runtime JSON with the full
+          // JSON so the SVG renderer can access all embedded assets.
+          if (moonRenderer === "svg") {
+            runtimeJsonRef.current = fullJson
+          }
+        },
         setImageAssets: (assets) => {
           imageAssetsRef.current = assets
         },
