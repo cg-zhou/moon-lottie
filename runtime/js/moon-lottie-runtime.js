@@ -18792,7 +18792,7 @@ function _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(v) {
 }
 function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer11get__output(self) {
   const output = _M0MPB13StringBuilder11new_2einner(0);
-  _M0IPB13StringBuilderPB6Logger13write__string(output, `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" viewBox=\"0 0 ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)} ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\">`);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, `<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" viewBox=\"0 0 ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)} ${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" overflow=\"hidden\">`);
   const _p = self.defs_buffer;
   if (_p.val.length > 0) {
     _M0IPB13StringBuilderPB6Logger13write__string(output, "<defs>");
@@ -18988,7 +18988,7 @@ function _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer14append__mark
       return undefined;
     }
     const mask_id = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer8next__id(self, "blend_mask");
-    _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<mask id=\"${mask_id}\" maskUnits=\"userSpaceOnUse\">`);
+    _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<mask id=\"${mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">`);
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, existing);
     _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</mask>");
     self.buffer = _M0MPB13StringBuilder11new_2einner(0);
@@ -19119,7 +19119,7 @@ function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13
       return undefined;
     }
     const mask_id = _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer8next__id(self, "matte");
-    _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<mask id=\"${mask_id}\" maskUnits=\"userSpaceOnUse\">`);
+    _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<mask id=\"${mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">`);
     if (matte_type === 2) {
       _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<rect x=\"0\" y=\"0\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(self.height)}\" fill=\"#FFFFFF\" />`);
     }
@@ -19140,7 +19140,7 @@ function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13
 function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer20end__mask__composite(self) {}
 function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11clear__rect(self, x, y, w, h) {}
 function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer11draw__image(self, id, width, height, asset_index) {
-  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer14append__markup(self, `<image href=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(id)}\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(height)}\" preserveAspectRatio=\"none\" transform=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer26matrix__to__svg__transform(self.current_matrix)}\" />`);
+  _M0MP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRenderer14append__markup(self, `<image href=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(id)}\" xlink:href=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer17escape__xml__text(id)}\" width=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(width)}\" height=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer3fmt(height)}\" preserveAspectRatio=\"none\" transform=\"${_M0FP49cg_2dzhou13moon_2dlottie3lib8renderer26matrix__to__svg__transform(self.current_matrix)}\" />`);
 }
 function _M0IP49cg_2dzhou13moon_2dlottie3lib8renderer11SvgRendererP49cg_2dzhou13moon_2dlottie3lib8renderer8Renderer10draw__text(self, text, font, size, r, g, b, opacity, justify) {
   const color = _M0FP49cg_2dzhou13moon_2dlottie3lib8renderer14color__to__hex(r, g, b);
