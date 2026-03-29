@@ -483,6 +483,45 @@ test('default expression host resolves maskPath access through thisComp.layer', 
   assert.deepEqual(value, [20, 5]);
 });
 
+test('default expression host preserves mask closed state from mask.cl when path c is omitted', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
+
+  const animationData = {
+    fr: 30,
+    layers: [{
+      ind: 3,
+      nm: 'monster',
+      masksProperties: [{
+        nm: 'Mask 1',
+        cl: true,
+        pt: {
+          a: 0,
+          k: {
+            v: [[0, 0], [20, 5], [10, 10]],
+            i: [[0, 0], [0, 0], [0, 0]],
+            o: [[0, 0], [0, 0], [0, 0]],
+          },
+        },
+      }],
+    }],
+  };
+
+  const host = hostModule.createDefaultExpressionHost({
+    getAnimationData: () => animationData,
+    getPlaybackMeta: () => ({ fps: 30 }),
+  });
+
+  const isClosed = host.evaluateDouble(
+    "var $bm_rt; $bm_rt = thisComp.layer('monster').mask('Mask 1').maskPath.isClosed() ? 1 : 0;",
+    0,
+    3,
+    0,
+  );
+
+  assert.equal(isClosed, 1);
+});
+
 test('default expression host matches lottie-web velocityAtTime sampling at key boundaries', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
