@@ -264,8 +264,8 @@ test "SvgRenderer mask composite uses luminance root mask for subtract stacks" {
     output.contains("<mask id=\"mask_0\">"),
     "subtract stacks should create a root SVG mask",
   )
-  assert_false(
-    output.contains("<mask id=\"mask_0\" mask-type=\"alpha\">"),
+  assert_true(
+    not(output.contains("<mask id=\"mask_0\" mask-type=\"alpha\">")),
     "root SVG masks should use luminance semantics so black subtract paths remove alpha",
   )
   assert_true(
