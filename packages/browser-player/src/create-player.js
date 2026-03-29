@@ -13,6 +13,7 @@ export function createPlayer(options = {}) {
         setStatusMessage = () => {},
         setExpressionHost = () => {},
         setRuntimeAnimationJson = () => {},
+        setFullAnimationJson = () => {},
         setImageAssets = () => {},
         getSpeed = () => 1,
         getDirection = () => 1,
@@ -149,6 +150,11 @@ export function createPlayer(options = {}) {
 
         const runtimeAnimationData = createRuntimeAnimationData(animationData);
         setRuntimeAnimationJson(JSON.stringify(runtimeAnimationData));
+        // Provide the full (non-stripped) animation JSON for renderers that
+        // need embedded image data (e.g. the SVG renderer which embeds base64
+        // images directly in the <image> elements rather than using a canvas
+        // image asset index).
+        setFullAnimationJson(JSON.stringify(animationData));
 
         state.nativePlayer = createNativePlayer(runtime, getState());
         if (!state.nativePlayer) {

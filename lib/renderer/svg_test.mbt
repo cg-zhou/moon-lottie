@@ -242,3 +242,121 @@ test "precomp rendering applies composition clipping" {
     "Precomp layer should be clipped to its composition bounds",
   )
 }
+
+///|
+test "SvgRenderer get_output always includes frame boundary clip" {
+  let renderer = SvgRenderer::new(200.0, 150.0)
+  renderer.begin_path()
+  renderer.move_to(-50.0, -50.0)
+  renderer.line_to(300.0, -50.0)
+  renderer.line_to(300.0, 200.0)
+  renderer.line_to(-50.0, 200.0)
+  renderer.close_path()
+  renderer.fill(255, 0, 0, 1.0)
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("id=\"frame_clip\""),
+    "SVG output should always contain a frame_clip clipPath element",
+  )
+  assert_true(
+    output.contains("clip-path=\"url(#frame_clip)\""),
+    "SVG root content should be wrapped in the frame_clip",
+  )
+  assert_true(
+    output.contains("width=\"200\" height=\"150\""),
+    "frame_clip should use the animation dimensions",
+  )
+}
+
+///|
+test "SvgRenderer source-atop with matte preserves destination alpha" {
+  // Simulate the pattern used for track-matte with fill-effect on a solid
+  // layer: the matte source (solid black) is drawn first, then a fill effect
+  // applies source-atop to recolor it. The resulting matte buffer must retain
+  // full alpha (from the solid) so the matte mask is not nearly transparent.
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.prepare_matte_layer()
+  // Content: shape to be masked
+  renderer.begin_path()
+  renderer.move_to(20.0, 20.0)
+  renderer.line_to(80.0, 20.0)
+  renderer.line_to(80.0, 80.0)
+  renderer.line_to(20.0, 80.0)
+  renderer.close_path()
+  renderer.fill(0, 0, 255, 1.0)
+  renderer.begin_matte_exit()
+  // Matte source step 1: draw solid (like a Solid layer)
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(100.0, 0.0)
+  renderer.line_to(100.0, 100.0)
+  renderer.line_to(0.0, 100.0)
+  renderer.close_path()
+  renderer.fill(0, 0, 0, 1.0)
+  // Matte source step 2: fill effect applies source-atop recolor at low opacity
+  renderer.set_blend_mode("source-atop")
+  renderer.begin_path()
+  renderer.move_to(-10000.0, -10000.0)
+  renderer.line_to(10000.0, -10000.0)
+  renderer.line_to(10000.0, 10000.0)
+  renderer.line_to(-10000.0, 10000.0)
+  renderer.close_path()
+  renderer.fill(0, 0, 1, 0.01)
+  renderer.set_blend_mode("source-over")
+  renderer.end_matte_exit(1)
+  let output = renderer.get_output()
+  // The matte mask must contain BOTH the original solid (alpha=1) AND the
+  // source-atop overlay. If the solid is absent, the mask would only have
+  // fill-opacity=0.01, making the content 99% invisible.
+  assert_true(
+    output.contains("<mask id=\"matte_"),
+    "matte mask should exist",
+  )
+  assert_true(
+    output.contains("fill=\"#000000\""),
+    "matte mask must contain the original solid content to preserve alpha=1",
+  )
+  assert_true(
+    output.contains("blend_mask"),
+    "matte mask should contain source-atop blend mask for the fill overlay",
+  )
+}
+
+///|
+test "SvgRenderer invert matte uses destination-out to cut out matte shape" {
+  // For invert-alpha matte (tt=2), content should be visible where the matte
+  // source is ABSENT.  The SVG mask must subtract the matte via destination-out
+  // rather than simply adding it (which would make it always-visible).
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.prepare_matte_layer()
+  // Content: blue rectangle
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(100.0, 0.0)
+  renderer.line_to(100.0, 100.0)
+  renderer.line_to(0.0, 100.0)
+  renderer.close_path()
+  renderer.fill(0, 0, 255, 1.0)
+  renderer.begin_matte_exit()
+  // Matte source: small white square (at 20,20 – 80,80)
+  renderer.begin_path()
+  renderer.move_to(20.0, 20.0)
+  renderer.line_to(80.0, 20.0)
+  renderer.line_to(80.0, 80.0)
+  renderer.line_to(20.0, 80.0)
+  renderer.close_path()
+  renderer.fill(255, 255, 255, 1.0)
+  renderer.end_matte_exit(2) // invert matte
+  let output = renderer.get_output()
+  // The mask must contain a full-canvas white background (makes everything
+  // visible initially) ...
+  assert_true(
+    output.contains("<rect"),
+    "invert matte mask should have a white background rect",
+  )
+  // ... and wrap the matte shape with destination-out so it cuts the alpha.
+  assert_true(
+    output.contains("destination-out"),
+    "invert matte mask must use destination-out to subtract matte from alpha",
+  )
+}
