@@ -152,8 +152,8 @@ test "parse_mask_with_legacy_f_mode_treated_as_add" {
   }
   match ani.layers[0].masks {
     Some(masks) =>
-      if masks[0].mode != @model.MaskMode::Add {
-        fail("legacy mask mode f should be treated as Add")
+      if masks[0].mode != @model.MaskMode::LegacyAdd {
+        fail("legacy mask mode f should be treated as LegacyAdd")
       }
     None => fail("masks should be parsed")
   }

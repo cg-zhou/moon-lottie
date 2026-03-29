@@ -1853,7 +1853,7 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     // lottie-web canvas/SVG renderers treat legacy "f" mask mode as a normal
     // additive mask (anything except "n" participates in clipping, with only
     // "s"/"i" getting special handling for subtract/intersect-style compositing).
-    Some("f") => @model.MaskMode::Add
+    Some("f") => @model.MaskMode::LegacyAdd
     _ => @model.MaskMode::None
   }
   @model.Mask::new(

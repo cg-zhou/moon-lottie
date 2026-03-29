@@ -3,7 +3,8 @@
 ///| still use the composite path while simply skipping those entries.
 fn mask_mode_supported_by_composite(mode : @model.MaskMode) -> Bool {
   match mode {
-    @model.MaskMode::Add | @model.MaskMode::Subtract | @model.MaskMode::Intersect |
+    @model.MaskMode::Add | @model.MaskMode::LegacyAdd |
+    @model.MaskMode::Subtract | @model.MaskMode::Intersect |
     @model.MaskMode::None => true
     _ => false
   }
@@ -62,6 +63,7 @@ fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
       not(mask.inverted) &&
       mask_opacity_can_use_clip_fast_path(mask.opacity) &&
       mask_expansion_can_use_clip_fast_path(mask.expansion)
+    @model.MaskMode::LegacyAdd => false
     _ => false
   }
 }
@@ -91,6 +93,7 @@ let mask_compose_intersect = 3
 pub fn mask_mode_to_composite_code(mode : @model.MaskMode) -> Int {
   match mode {
     @model.MaskMode::Add => mask_compose_add
+    @model.MaskMode::LegacyAdd => mask_compose_add
     @model.MaskMode::Subtract => mask_compose_subtract
     @model.MaskMode::Intersect => mask_compose_intersect
     _ => 0
