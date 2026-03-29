@@ -1026,7 +1026,7 @@ function createMaskAccessor(layer, frame) {
             return {};
         }
         const rawPath = sampleKeyframedProperty(mask.pt, frame);
-        const normalizedPath = rawPath && typeof rawPath === 'object' && (rawPath.c == null && rawPath.closed == null) && mask?.cl != null
+        const normalizedPath = rawPath && typeof rawPath === 'object' && (rawPath.c == null && rawPath.closed == null) && mask.cl != null
             ? { ...rawPath, closed: !!mask.cl }
             : rawPath;
         const pathProxy = createPathProxy(normalizedPath);
