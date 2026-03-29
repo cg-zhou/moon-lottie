@@ -230,6 +230,92 @@ test "SvgRenderer track matte outputs masked content" {
 }
 
 ///|
+test "SvgRenderer mask composite uses luminance root mask for subtract stacks" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(100.0, 0.0)
+  renderer.line_to(100.0, 100.0)
+  renderer.line_to(0.0, 100.0)
+  renderer.close_path()
+  renderer.fill(255, 0, 0, 1.0)
+
+  renderer.begin_mask_composite()
+  renderer.begin_mask_path()
+  renderer.begin_path()
+  renderer.move_to(10.0, 10.0)
+  renderer.line_to(90.0, 10.0)
+  renderer.line_to(90.0, 90.0)
+  renderer.line_to(10.0, 90.0)
+  renderer.close_path()
+  renderer.apply_mask_path(1, 1.0, false, 0.0)
+  renderer.begin_mask_path()
+  renderer.begin_path()
+  renderer.move_to(30.0, 30.0)
+  renderer.line_to(70.0, 30.0)
+  renderer.line_to(70.0, 70.0)
+  renderer.line_to(30.0, 70.0)
+  renderer.close_path()
+  renderer.apply_mask_path(2, 1.0, false, 0.0)
+  renderer.end_mask_composite()
+
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("<mask id=\"mask_0\">"),
+    "subtract stacks should create a root SVG mask",
+  )
+  assert_true(
+    not(output.contains("<mask id=\"mask_0\" mask-type=\"alpha\">")),
+    "root SVG masks should use luminance semantics so black subtract paths remove alpha",
+  )
+  assert_true(
+    output.contains("fill=\"#000000\""),
+    "subtract masks should emit black mask paths",
+  )
+}
+
+///|
+test "SvgRenderer intersect mask nests prior stack inside alpha mask" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(100.0, 0.0)
+  renderer.line_to(100.0, 100.0)
+  renderer.line_to(0.0, 100.0)
+  renderer.close_path()
+  renderer.fill(255, 0, 0, 1.0)
+
+  renderer.begin_mask_composite()
+  renderer.begin_mask_path()
+  renderer.begin_path()
+  renderer.move_to(10.0, 10.0)
+  renderer.line_to(90.0, 10.0)
+  renderer.line_to(90.0, 90.0)
+  renderer.line_to(10.0, 90.0)
+  renderer.close_path()
+  renderer.apply_mask_path(1, 1.0, false, 0.0)
+  renderer.begin_mask_path()
+  renderer.begin_path()
+  renderer.move_to(20.0, 20.0)
+  renderer.line_to(80.0, 20.0)
+  renderer.line_to(80.0, 80.0)
+  renderer.line_to(20.0, 80.0)
+  renderer.close_path()
+  renderer.apply_mask_path(3, 1.0, false, 0.0)
+  renderer.end_mask_composite()
+
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("id=\"mask_intersect_0\" mask-type=\"alpha\""),
+    "intersect masks should use nested alpha masks like lottie-web",
+  )
+  assert_true(
+    output.contains("<g mask=\"url(#mask_intersect_0)\">"),
+    "intersect masks should wrap the prior stack in the nested alpha mask",
+  )
+}
+
+///|
 test "precomp rendering applies composition clipping" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"assets\":[{\"id\":\"comp_1\",\"w\":50,\"h\":50,\"layers\":[{\"ddd\":0,\"ind\":1,\"ty\":1,\"nm\":\"solid\",\"ks\":{\"a\":{\"a\":0,\"k\":[0,0,0]},\"p\":{\"a\":0,\"k\":[25,25,0]},\"s\":{\"a\":0,\"k\":[100,100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}},\"ip\":0,\"op\":10,\"st\":0,\"sc\":\"#ff0000\",\"sw\":100,\"sh\":100}]}],\"layers\":[{\"ddd\":0,\"ind\":1,\"ty\":0,\"nm\":\"precomp\",\"refId\":\"comp_1\",\"w\":50,\"h\":50,\"ks\":{\"a\":{\"a\":0,\"k\":[0,0,0]},\"p\":{\"a\":0,\"k\":[50,50,0]},\"s\":{\"a\":0,\"k\":[100,100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100}},\"ip\":0,\"op\":10,\"st\":0}]}"

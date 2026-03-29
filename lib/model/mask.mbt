@@ -1,6 +1,7 @@
 ///|
 pub(all) enum MaskMode {
   Add
+  LegacyAdd
   Subtract
   Intersect
   Lighten

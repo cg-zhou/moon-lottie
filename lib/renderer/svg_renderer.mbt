@@ -21,6 +21,7 @@ pub struct SvgRenderer {
   mut current_dash_offset : Double
   layer_stack : Array[SvgLayerCapture]
   matte_stack : Array[SvgMatteCapture]
+  mask_stack : Array[SvgMaskCompositeCapture]
 }
 
 ///|
@@ -48,6 +49,12 @@ struct SvgMatteCapture {
 }
 
 ///|
+struct SvgMaskCompositeCapture {
+  content_markup : String
+  items : Array[String]
+}
+
+///|
 pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
   {
     width,
@@ -68,6 +75,7 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
     current_dash_offset: 0.0,
     layer_stack: [],
     matte_stack: [],
+    mask_stack: [],
   }
 }
 
@@ -337,6 +345,52 @@ fn SvgRenderer::append_markup(self : SvgRenderer, markup : String) -> Unit {
 }
 
 ///|
+fn SvgRenderer::mask_base_rect_markup(self : SvgRenderer) -> String {
+  "<rect fill=\"#ffffff\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\"></rect>"
+}
+
+///|
+fn SvgRenderer::mask_solid_path(self : SvgRenderer) -> String {
+  "M0,0 h\{fmt(self.width)} v\{fmt(self.height)} h-\{fmt(self.width)} v-\{fmt(self.height)} "
+}
+
+///|
+fn SvgRenderer::mask_path_markup(
+  self : SvgRenderer,
+  path_data : String,
+  mode : Int,
+  opacity : Double,
+  inverted : Bool,
+  expansion : Double,
+) -> String {
+  let fill = if mode == 2 { "#000000" } else { "#ffffff" }
+  let attrs = StringBuilder::new()
+  let final_path = if inverted {
+    self.mask_solid_path() + path_data
+  } else {
+    path_data
+  }
+  attrs.write_string(
+    " fill=\"\{fill}\" clip-rule=\"nonzero\" fill-opacity=\"\{fmt(opacity)}\"",
+  )
+  if expansion != 0.0 {
+    attrs.write_string(" stroke=\"\{fill}\"")
+    if expansion < 0.0 {
+      let filter_id = self.next_id("mask_erode")
+      self.defs_buffer.write_string("<filter id=\"\{filter_id}\">")
+      self.defs_buffer.write_string(
+        "<feMorphology operator=\"erode\" in=\"SourceGraphic\" radius=\"\{fmt(-expansion)}\" />",
+      )
+      self.defs_buffer.write_string("</filter>")
+      attrs.write_string(" filter=\"url(#\{filter_id})\" stroke-width=\"1\"")
+    } else {
+      attrs.write_string(" stroke-width=\"\{fmt(expansion * 2.0)}\"")
+    }
+  }
+  "<path\{attrs.to_string()} d=\"\{final_path}\"></path>"
+}
+
+///|
 pub impl Renderer for SvgRenderer with fill(
   self : SvgRenderer,
   r : Int,
@@ -537,15 +591,21 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
 pub impl Renderer for SvgRenderer with supports_mask_composite(
   self : SvgRenderer,
 ) -> Bool {
+  // The SVG renderer now emits lottie-web-style <mask> trees for the supported
+  // add/subtract/intersect mask stack used by Player::apply_layer_mask_composite.
   let _ = self
-  false
+  true
 }
 
 ///|
 pub impl Renderer for SvgRenderer with begin_mask_composite(
   self : SvgRenderer,
 ) -> Unit {
-  let _ = self
+  self.mask_stack.push({
+    content_markup: self.buffer.to_string(),
+    items: [],
+  })
+  self.buffer = StringBuilder::new()
 }
 
 ///|
@@ -563,18 +623,76 @@ pub impl Renderer for SvgRenderer with apply_mask_path(
   inverted : Bool,
   expansion : Double,
 ) -> Unit {
-  let _ = self
-  let _ = mode
-  let _ = opacity
-  let _ = inverted
-  let _ = expansion
+  let path_data = self.path_buffer.to_string()
+  if path_data.length() == 0 {
+    return
+  }
+  match self.mask_stack.pop() {
+    Some(state) => {
+      let items = state.items
+      if (mode == 2 || mode == 3) && items.length() == 0 {
+        items.push(self.mask_base_rect_markup())
+      }
+      let path_markup = self.mask_path_markup(
+        path_data,
+        mode,
+        opacity,
+        inverted,
+        expansion,
+      )
+      if mode == 3 {
+        let mask_id = self.next_id("mask_intersect")
+        self.defs_buffer.write_string(
+          "<mask id=\"\{mask_id}\" mask-type=\"alpha\">",
+        )
+        self.defs_buffer.write_string(path_markup)
+        self.defs_buffer.write_string("</mask>")
+        let wrapped = StringBuilder::new()
+        wrapped.write_string("<g mask=\"url(#\{mask_id})\">")
+        for item in items {
+          wrapped.write_string(item)
+        }
+        wrapped.write_string("</g>")
+        self.mask_stack.push({
+          content_markup: state.content_markup,
+          items: [wrapped.to_string()],
+        })
+      } else {
+        items.push(path_markup)
+        self.mask_stack.push({
+          content_markup: state.content_markup,
+          items,
+        })
+      }
+    }
+    None => ()
+  }
 }
 
 ///|
 pub impl Renderer for SvgRenderer with end_mask_composite(
   self : SvgRenderer,
 ) -> Unit {
-  let _ = self
+  match self.mask_stack.pop() {
+    Some(state) => {
+      if state.content_markup.length() == 0 || state.items.length() == 0 {
+        // If every mask path evaluated to empty geometry, lottie-web leaves the
+        // isolated layer content unchanged because there is no effective mask.
+        self.buffer.write_string(state.content_markup)
+        return
+      }
+      let mask_id = self.next_id("mask")
+      self.defs_buffer.write_string("<mask id=\"\{mask_id}\">")
+      for item in state.items {
+        self.defs_buffer.write_string(item)
+      }
+      self.defs_buffer.write_string("</mask>")
+      self.buffer.write_string("<g mask=\"url(#\{mask_id})\">")
+      self.buffer.write_string(state.content_markup)
+      self.buffer.write_string("</g>")
+    }
+    None => ()
+  }
 }
 
 ///|

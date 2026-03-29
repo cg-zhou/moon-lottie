@@ -1836,7 +1836,7 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     _ => raise UnexpectedType("mask", "Object")
   }
   let inverted = decoded.inverted.unwrap_or(false)
-  let closed = decoded.closed.unwrap_or(false)
+  let closed = decoded.closed.unwrap_or(true)
   let path = parse_property_bezier(decoded.path, closed)
   let opacity = parse_property_double(decoded.opacity) catch {
     _ => @model.LottieProperty::new_static(100.0)
@@ -1853,7 +1853,7 @@ fn parse_mask(json : Json) -> @model.Mask raise LottieError {
     // lottie-web canvas/SVG renderers treat legacy "f" mask mode as a normal
     // additive mask (anything except "n" participates in clipping, with only
     // "s"/"i" getting special handling for subtract/intersect-style compositing).
-    Some("f") => @model.MaskMode::Add
+    Some("f") => @model.MaskMode::LegacyAdd
     _ => @model.MaskMode::None
   }
   @model.Mask::new(
