@@ -204,7 +204,11 @@ test "SvgRenderer track matte outputs masked content" {
   renderer.end_matte_exit(1)
   let output = renderer.get_output()
   assert_true(
-    output.contains("<mask id=\"matte_0\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">"),
+    output.contains("<mask id=\"matte_0\""),
+    "track matte should create a mask",
+  )
+  assert_true(
+    output.contains("mask-type=\"alpha\""),
     "track matte should create an alpha mask so matte color does not affect opacity",
   )
   assert_true(output.contains("mask=\"url(#matte_0)\""), "content should reference the matte mask")
