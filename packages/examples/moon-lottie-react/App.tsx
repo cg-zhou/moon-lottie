@@ -57,8 +57,8 @@ const App = () => {
           loop={loop}
           speed={speed}
           style={{ width: '100%', height: '100%' }}
-          wasmPath={`${assetBase}moon-lottie-runtime/moon-lottie.wasm`}
-          jsRuntimePath={`${assetBase}moon-lottie-runtime/moon-lottie.js`}
+          wasmPath={`${assetBase}runtime/wasm/moon-lottie-runtime.wasm`}
+          jsRuntimePath={`${assetBase}runtime/js/moon-lottie-runtime.js`}
         />
       </div>
       <div style={controlsStyle}>

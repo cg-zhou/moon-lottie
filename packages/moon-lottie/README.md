@@ -26,7 +26,7 @@ const player = loadAnimation({
   autoplay: true,
   loop: true,
   // Auto-loaded from CDN if not provided locally
-  wasmPath: 'https://unpkg.com/@moon-lottie/core/runtime/moon-lottie.wasm'
+  wasmPath: 'https://unpkg.com/@moon-lottie/core/runtime/moon-lottie-runtime.wasm'
 })
 
 await player.whenReady()

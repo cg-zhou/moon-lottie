@@ -7,8 +7,8 @@ const projectRoot = resolve(currentDir, '..')
 
 const files = [
   ['../../../samples/1_1_Super_Mario.json', 'public/samples/1_1_Super_Mario.json'],
-  ['node_modules/@moon-lottie/core/runtime/moon-lottie.wasm', 'public/moon-lottie-runtime/moon-lottie.wasm'],
-  ['node_modules/@moon-lottie/core/runtime/moon-lottie.js', 'public/moon-lottie-runtime/moon-lottie.js'],
+  ['node_modules/@moon-lottie/core/runtime/moon-lottie-runtime.wasm', 'public/runtime/wasm/moon-lottie-runtime.wasm'],
+  ['node_modules/@moon-lottie/core/runtime/moon-lottie-runtime.js', 'public/runtime/js/moon-lottie-runtime.js'],
 ]
 
 for (const [sourceRelativePath, targetRelativePath] of files) {

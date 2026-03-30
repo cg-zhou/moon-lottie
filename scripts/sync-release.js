@@ -6,14 +6,22 @@ const TARGET_DIR = path.resolve('packages/moon-lottie/runtime');
 
 const MAPPINGS = [
     {
-        src: 'wasm-gc/release/build/cmd/player_runtime/player_runtime.wasm',
-        dest: 'moon-lottie.wasm'
+        sources: [
+            'wasm-gc/release/build/cmd/player_runtime/player_runtime.wasm',
+            'wasm-gc/debug/build/cmd/player_runtime/player_runtime.wasm'
+        ],
+        dest: 'moon-lottie-runtime.wasm'
     },
     {
-        src: 'js/release/build/cmd/player_runtime/player_runtime.js',
-        dest: 'moon-lottie.js'
+        sources: [
+            'js/release/build/cmd/player_runtime/player_runtime.js',
+            'js/debug/build/cmd/player_runtime/player_runtime.js'
+        ],
+        dest: 'moon-lottie-runtime.js'
     }
 ];
+
+const LEGACY_FILES = ['moon-lottie.wasm', 'moon-lottie.js'];
 
 console.log('[Release Sync] Starting...');
 
@@ -21,16 +29,26 @@ if (!fs.existsSync(TARGET_DIR)) {
     fs.mkdirSync(TARGET_DIR, { recursive: true });
 }
 
+for (const legacyFile of LEGACY_FILES) {
+    const legacyPath = path.join(TARGET_DIR, legacyFile);
+    if (fs.existsSync(legacyPath)) {
+        fs.rmSync(legacyPath, { force: true });
+        console.log(`[Release Sync] Removed legacy file: ${legacyFile}`);
+    }
+}
+
 let success = true;
 MAPPINGS.forEach(mapping => {
-    const srcPath = path.join(SRC_DIR, mapping.src);
+    const srcPath = mapping.sources
+        .map(source => path.join(SRC_DIR, source))
+        .find(candidate => fs.existsSync(candidate));
     const destPath = path.join(TARGET_DIR, mapping.dest);
 
-    if (fs.existsSync(srcPath)) {
+    if (srcPath) {
         fs.copyFileSync(srcPath, destPath);
-        console.log(`[Release Sync] Copied: ${mapping.src} -> ${mapping.dest}`);
+        console.log(`[Release Sync] Copied: ${path.relative(SRC_DIR, srcPath)} -> ${mapping.dest}`);
     } else {
-        console.error(`[Release Sync] Missing source: ${srcPath}`);
+        console.error(`[Release Sync] Missing source candidates: ${mapping.sources.map(source => path.join(SRC_DIR, source)).join(', ')}`);
         success = false;
     }
 });

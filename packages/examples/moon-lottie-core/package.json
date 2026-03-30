@@ -8,6 +8,6 @@
     "build": "npm run sync:assets && npx vite build"
   },
   "dependencies": {
-    "@moon-lottie/core": "file:../../moon-lottie"
+    "@moon-lottie/core": "^0.1.4"
   }
 }

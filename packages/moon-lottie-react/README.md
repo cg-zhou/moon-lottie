@@ -20,7 +20,7 @@ function App() {
       autoplay
       loop
       // You can point to custom or CDN hosted runtime
-      wasmPath="https://unpkg.com/@moon-lottie/core/runtime/moon-lottie.wasm"
+      wasmPath="https://unpkg.com/@moon-lottie/core/runtime/moon-lottie-runtime.wasm"
     />
   )
 }

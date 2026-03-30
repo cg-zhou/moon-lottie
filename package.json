@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build:moon": "moon build --target wasm-gc && moon build --target js",
+    "build:moon": "moon build --target wasm-gc --release && moon build --target js --release",
     "sync:release": "node scripts/sync-release.js",
     "build:packages": "npm run build:moon && npm run sync:release",
     "build:site": "npm --workspace demo run build",
