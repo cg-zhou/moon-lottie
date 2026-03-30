@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
-import { loadAnimation } from "@moon-lottie/browser-player"
+import { loadAnimation } from "@moon-lottie/core"
 
 function normalizeSpeed(value) {
   const parsed = Number(value)

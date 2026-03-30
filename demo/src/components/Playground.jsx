@@ -10,7 +10,7 @@ import {
   loadSampleIndex,
   resizeCanvasForDpr,
   setExpressionHost,
-} from "@moon-lottie/browser-player"
+} from "@moon-lottie/core"
 
 function readPageAspectRatio() {
   const viewport = window.visualViewport

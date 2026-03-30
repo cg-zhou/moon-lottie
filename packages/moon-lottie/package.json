@@ -1,0 +1,30 @@
+{
+  "name": "@moon-lottie/core",
+  "version": "0.1.0",
+  "description": "High-performance Lottie animation player powered by MoonBit (Wasm-GC/JS)",
+  "type": "module",
+  "main": "./src/index.js",
+  "files": [
+    "src",
+    "runtime",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./src/index.js",
+    "./web-component": "./src/web-component.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cg-zhou/moon-lottie"
+  },
+  "keywords": [
+    "lottie",
+    "moonbit",
+    "wasm",
+    "wasm-gc",
+    "animation",
+    "rendering"
+  ],
+  "author": "cg-zhou",
+  "license": "MIT"
+}

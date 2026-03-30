@@ -1,12 +1,15 @@
 {
   "name": "moon-lottie-workspace",
   "private": true,
+  "type": "module",
   "workspaces": [
     "demo",
     "packages/*"
   ],
   "scripts": {
-    "build:moon:js": "moon build --target js",
+    "build:moon": "moon build --target wasm-gc && moon build --target js",
+    "sync:release": "node scripts/sync-release.js",
+    "build:packages": "npm run build:moon && npm run sync:release",
     "build:demo": "npm --workspace demo run build",
     "dev:demo": "npm --workspace demo run dev"
   }

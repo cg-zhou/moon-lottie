@@ -1,0 +1,26 @@
+{
+  "name": "@moon-lottie/react",
+  "version": "0.1.0",
+  "description": "The official React wrapper for Moon Lottie",
+  "type": "module",
+  "main": "./src/index.js",
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@moon-lottie/core": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cg-zhou/moon-lottie"
+  },
+  "keywords": [
+    "react",
+    "lottie",
+    "moonbit",
+    "animation"
+  ],
+  "author": "cg-zhou",
+  "license": "MIT"
+}

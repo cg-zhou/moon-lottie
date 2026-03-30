@@ -1,3 +1,5 @@
+export { createPlayer as loadAnimation } from './create-player.js';
+export { defineMoonLottieElement } from './moon-lottie-element.js';
 export { createPlaybackController } from './playback-controller.js';
 export { createRuntimeManager } from './runtime-manager.js';
 export { animationUsesExpressions, getAnimationPlaybackMeta, getPreferredRendererMode } from './render_mode.js';
@@ -20,5 +22,4 @@ export {
 	createMoonLottieWeb,
 	loadMoonLottieWebAnimation,
 	createBrowserPlayer,
-	loadAnimation,
 } from './moon-lottie-web.js';
