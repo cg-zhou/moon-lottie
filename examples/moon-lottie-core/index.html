@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>moon-lottie-core-example</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        #lottie-container {
+            width: 320px;
+            height: 320px;
+            border: 1px solid #ccc;
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        #status {
+            margin-top: 12px;
+            color: #555;
+        }
+    </style>
+  <script type="module" crossorigin src="./assets/index-Bj3_qFDr.js"></script>
+</head>
+<body>
+    <h1>moon-lottie-core-example</h1>
+    <div id="lottie-container"></div>
+    <div id="controls">
+        <button id="play">Play</button>
+        <button id="pause">Pause</button>
+        <button id="prev-frame">Prev Frame</button>
+        <button id="next-frame">Next Frame</button>
+        <button id="forward">Forward</button>
+        <button id="reverse">Reverse</button>
+        <label>
+            Speed
+            <select id="speed">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+            </select>
+        </label>
+        <label>
+            <input id="loop" type="checkbox" checked>
+            Loop
+        </label>
+    </div>
+    <p id="status">Frame: 0 | Speed: 1x | Direction: forward | Loop: on</p>
+    
+</body>
+</html>
