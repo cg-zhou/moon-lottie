@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { generateSampleIndex } from "../scripts/generate_sample_index.js";
 
 const WASM_SOURCE_DEBUG = path.join("..", "_build", "wasm-gc", "debug", "build", "cmd", "player_runtime", "player_runtime.wasm");
 const WASM_SOURCE_RELEASE = path.join("..", "_build", "wasm-gc", "release", "build", "cmd", "player_runtime", "player_runtime.wasm");
@@ -44,4 +45,6 @@ else copyFileSync(WASM_SOURCE_DEBUG, path.join(TARGET_DIR, "runtime", "wasm", "m
 if (fs.existsSync(JS_SOURCE_RELEASE)) copyFileSync(JS_SOURCE_RELEASE, path.join(TARGET_DIR, "runtime", "js", "moon-lottie-runtime.js"));
 else copyFileSync(JS_SOURCE_DEBUG, path.join(TARGET_DIR, "runtime", "js", "moon-lottie-runtime.js"));
 copyFolderSync(SAMPLES_SOURCE, path.join(TARGET_DIR, "samples"));
+const { outputFile, count } = generateSampleIndex();
+console.log(`[Sync] Generated sample index: ${outputFile} (${count} samples)`);
 console.log("[Sync] Finished.");
