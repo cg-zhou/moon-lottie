@@ -10,7 +10,7 @@ test("public sample index entries resolve to existing sample files", () => {
   const repoRoot = path.resolve(currentDir, "..");
   const sampleIndexPath = path.join(repoRoot, "demo", "public", "sample_index.json");
 
-  assert.equal(fs.existsSync(sampleIndexPath), true, "expected demo/public/sample_index.json to be generated");
+  assert.ok(fs.existsSync(sampleIndexPath), "expected demo/public/sample_index.json to be generated");
 
   const sampleIndex = JSON.parse(fs.readFileSync(sampleIndexPath, "utf8"));
   assert.ok(sampleIndex.length > 0, "expected generated sample index to include samples");
