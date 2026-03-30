@@ -1,4 +1,4 @@
-name: Deploy Demo to demo Branch
+name: Deploy Site Bundle
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: demo-deploy
+  group: site-bundle-deploy
   cancel-in-progress: true
 
 jobs:
@@ -39,13 +39,16 @@ jobs:
       - name: Build JS runtime
         run: moon build --target js --release
 
-      - name: Install demo dependencies
-        working-directory: demo
+      - name: Install workspace dependencies
         run: npm ci
 
-      - name: Build React demo shell
-        working-directory: demo
-        run: npm run build
+      - name: Install example dependencies
+        run: |
+          npm --prefix packages/examples/moon-lottie-core ci
+          npm --prefix packages/examples/moon-lottie-react ci
+
+      - name: Build unified deploy bundle
+        run: npm run build:deploy
 
       - name: Deploy to demo branch
         run: |
@@ -53,8 +56,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # Move build output to temporary location outside git project
-          mkdir -p /tmp/demo-dist
-          cp -a demo/dist/. /tmp/demo-dist/
+          mkdir -p /tmp/site-dist
+          cp -a deploy-dist/. /tmp/site-dist/
 
           # Fetch and checkout (or create) demo branch
           git fetch origin demo 2>/dev/null || true
@@ -70,8 +73,8 @@ jobs:
           git clean -fdx
           
           # Copy from temporary location back to root
-          cp -a /tmp/demo-dist/. .
+          cp -a /tmp/site-dist/. .
 
           git add .
-          git diff --staged --quiet || git commit -m "Deploy demo [skip ci]"
+          git diff --staged --quiet || git commit -m "Deploy site bundle [skip ci]"
           git push origin demo

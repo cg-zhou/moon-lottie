@@ -10,7 +10,11 @@
     "build:moon": "moon build --target wasm-gc && moon build --target js",
     "sync:release": "node scripts/sync-release.js",
     "build:packages": "npm run build:moon && npm run sync:release",
-    "build:demo": "npm --workspace demo run build",
-    "dev:demo": "npm --workspace demo run dev"
+    "build:site": "npm --workspace demo run build",
+    "dev:site": "npm --workspace demo run dev",
+    "build:demo": "npm run build:site",
+    "dev:demo": "npm run dev:site",
+    "build:examples": "npm --prefix packages/examples/moon-lottie-core run build && npm --prefix packages/examples/moon-lottie-react run build",
+    "build:deploy": "npm run build:packages && npm run build:site && npm run build:examples && node scripts/build-deploy-bundle.js"
   }
 }

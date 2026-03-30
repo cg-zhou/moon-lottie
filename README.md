@@ -25,14 +25,15 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 | `lib/` | **The Core**: Parsing, modeling, and platform-agnostic rendering. |
 | `cmd/player_runtime` | Wasm-GC and JS bridge for browser environments. |
 | `cmd/svg_cli` | CLI utility for SVG batch exporting. |
-| `packages/` | Official JS/TypeScript wrappers (Browser, React, Web Component). |
-| `demo/` | An interactive playground built with Vite and React. |
+| `packages/` | Official wrappers for Vanilla JS, React, and Web Components. |
+| `demo/` | The project site (Preview, Playground, and features). |
+| `packages/examples/` | Standalone integration examples to verify SDK behavior. |
 
 ## Quick Start
 
-### Prerequisites
+### Development Environment
 - [MoonBit toolchain](https://www.moonbitlang.com/download/)
-- Node.js 20+
+- [Node.js](https://nodejs.org/) 20+
 
 ### Installation & Test
 ```bash
@@ -41,23 +42,33 @@ npm install
 moon test
 ```
 
-### Build & Run Demo
-1. Build the engine runtimes:
+### Local Development
+1. Build runtimes:
    ```bash
    moon build --target wasm-gc
    moon build --target js
    ```
-2. Launch the dev playground:
+2. Start development server:
    ```bash
-   npm run dev:demo
+   npm run dev:site
    ```
 
-## Usage
+### Build & Deployment
+```bash
+# Full build pipeline (Packages + Site + Examples)
+npm run build:deploy
+```
 
-### Web SDK (TODO: Pending Release)
-The SDKs in `packages/*` are currently consumed within this workspace.
+Build artifacts will be generated in `deploy-dist/` with the following structure:
+- Site: `/`
+- Independent Examples: `/examples/moon-lottie-core/` and `/examples/moon-lottie-react/`
 
-**React Component:**
+## Usage Guide
+
+### Web SDK (Coming Soon)
+SDKs in `packages/*` are currently under active development.
+
+**React Integration Example:**
 ```jsx
 import MoonLottiePlayer from '@moon-lottie/react'
 

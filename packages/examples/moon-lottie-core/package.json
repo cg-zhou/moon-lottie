@@ -1,0 +1,13 @@
+{
+  "name": "moon-lottie-core-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync:assets": "node ./scripts/sync-assets.js",
+    "dev": "npm run sync:assets && npx vite",
+    "build": "npm run sync:assets && npx vite build"
+  },
+  "dependencies": {
+    "@moon-lottie/core": "file:../../moon-lottie"
+  }
+}

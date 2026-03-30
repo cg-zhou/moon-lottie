@@ -57,6 +57,7 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
     onLoopComplete,
     onPlay,
     onPause,
+    style = {},
   },
   ref,
 ) {
@@ -210,7 +211,7 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
     playerRef.current.setBackground(background)
   }, [background, isReady])
 
-  return <div ref={containerRef} className={["moon-lottie-react-player", className].filter(Boolean).join(" ")} />
+  return <div ref={containerRef} style={style} className={["moon-lottie-react-player", className].filter(Boolean).join(" ")} />
 })
 
 export default MoonLottiePlayer

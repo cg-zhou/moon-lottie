@@ -2,6 +2,7 @@
 demo/public/runtime/
 demo/public/samples/
 demo/public/sample_index.json
+deploy-dist/
 
 # Build and local files
 .DS_Store
@@ -23,8 +24,11 @@ scripts/snapshot_tool/test_lottie_shadow.js
 
 # Demo dist folders
 demo/dist/
+packages/examples/**/dist/
+packages/examples/**/node_modules/
 
 # Third party
 3rd_repos/
 
 *.wasm
+*.tgz

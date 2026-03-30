@@ -1,15 +1,26 @@
 {
   "name": "@moon-lottie/react",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "The official React wrapper for Moon Lottie",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@moon-lottie/core": "0.1.0"
+    "@moon-lottie/core": "0.1.2"
   },
   "repository": {
     "type": "git",

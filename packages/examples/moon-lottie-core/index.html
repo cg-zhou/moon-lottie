@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>moon-lottie-core-example</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        #lottie-container {
+            width: 320px;
+            height: 320px;
+            border: 1px solid #ccc;
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        #status {
+            margin-top: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>moon-lottie-core-example</h1>
+    <div id="lottie-container"></div>
+    <div id="controls">
+        <button id="play">Play</button>
+        <button id="pause">Pause</button>
+        <button id="prev-frame">Prev Frame</button>
+        <button id="next-frame">Next Frame</button>
+        <button id="forward">Forward</button>
+        <button id="reverse">Reverse</button>
+        <label>
+            Speed
+            <select id="speed">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+            </select>
+        </label>
+        <label>
+            <input id="loop" type="checkbox" checked>
+            Loop
+        </label>
+    </div>
+    <p id="status">Frame: 0 | Speed: 1x | Direction: forward | Loop: on</p>
+    
+    <script type="module">
+        import { loadAnimation } from '@moon-lottie/core';
+
+        const assetBase = import.meta.env.BASE_URL;
+        const status = document.getElementById('status');
+        const speedSelect = document.getElementById('speed');
+        const loopCheckbox = document.getElementById('loop');
+        let currentSpeed = 1;
+        let currentDirection = 1;
+        let currentLoop = true;
+
+        const updateStatus = () => {
+            status.textContent = `Frame: ${Math.round(player.getCurrentFrame())} | Speed: ${currentSpeed}x | Direction: ${currentDirection > 0 ? 'forward' : 'reverse'} | Loop: ${currentLoop ? 'on' : 'off'}`;
+        };
+
+        const player = loadAnimation({
+            container: document.getElementById('lottie-container'),
+            path: `${assetBase}samples/1_1_Super_Mario.json`,
+            autoplay: true,
+            loop: true,
+            wasmPath: `${assetBase}moon-lottie-runtime/moon-lottie.wasm`,
+            jsRuntimePath: `${assetBase}moon-lottie-runtime/moon-lottie.js`
+        });
+
+        document.getElementById('play').addEventListener('click', () => player.play());
+        document.getElementById('pause').addEventListener('click', () => player.pause());
+        document.getElementById('prev-frame').addEventListener('click', () => {
+            player.stepFrame(-1);
+            updateStatus();
+        });
+        document.getElementById('next-frame').addEventListener('click', () => {
+            player.stepFrame(1);
+            updateStatus();
+        });
+        document.getElementById('forward').addEventListener('click', () => {
+            currentDirection = 1;
+            player.setDirection(1);
+            updateStatus();
+        });
+        document.getElementById('reverse').addEventListener('click', () => {
+            currentDirection = -1;
+            player.setDirection(-1);
+            updateStatus();
+        });
+        speedSelect.addEventListener('change', (event) => {
+            currentSpeed = Number(event.target.value);
+            player.setSpeed(currentSpeed);
+            updateStatus();
+        });
+        loopCheckbox.addEventListener('change', (event) => {
+            currentLoop = event.target.checked;
+            player.setLoop(currentLoop);
+            updateStatus();
+        });
+
+        window.setInterval(updateStatus, 150);
+        updateStatus();
+
+        console.log('Player initialized:', player);
+    </script>
+</body>
+</html>

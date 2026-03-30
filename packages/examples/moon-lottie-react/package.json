@@ -1,0 +1,18 @@
+{
+  "name": "moon-lottie-react-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync:runtime": "node ./scripts/sync-runtime.js",
+    "dev": "npm run sync:runtime && npx vite",
+    "build": "npm run sync:runtime && npx vite build"
+  },
+  "dependencies": {
+    "@moon-lottie/core": "file:../../moon-lottie",
+    "@moon-lottie/react": "file:../../moon-lottie-react",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  }
+}

@@ -1,4 +1,9 @@
-export { createPlayer as loadAnimation } from './create-player.js';
+export {
+	createBrowserPlayer,
+	createBrowserPlayer as createMoonLottieWeb,
+	loadAnimation,
+	loadAnimation as loadMoonLottieWebAnimation,
+} from './browser-player.js';
 export { defineMoonLottieElement } from './moon-lottie-element.js';
 export { createPlaybackController } from './playback-controller.js';
 export { createRuntimeManager } from './runtime-manager.js';
@@ -18,8 +23,3 @@ export { createOfficialPlayerController } from './official-player.js';
 export { createViewportPresenter } from './viewport-presenter.js';
 export { createPlayer } from './create-player.js';
 export { createCanvasRuntimeBridge } from './canvas-runtime-bridge.js';
-export {
-	createMoonLottieWeb,
-	loadMoonLottieWebAnimation,
-	createBrowserPlayer,
-} from './moon-lottie-web.js';

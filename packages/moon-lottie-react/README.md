@@ -1,17 +1,17 @@
-# moon-lottie-react
+# @moon-lottie/react
 
-The official **React** wrapper for [moon-lottie](https://www.npmjs.com/package/moon-lottie).
+The **React** wrapper for [@moon-lottie/core](https://www.npmjs.com/package/@moon-lottie/core).
 
 ## Installation
 
 ```bash
-npm install moon-lottie moon-lottie-react
+npm install @moon-lottie/core @moon-lottie/react
 ```
 
 ## Usage
 
 ```jsx
-import MoonLottiePlayer from 'moon-lottie-react'
+import MoonLottiePlayer from '@moon-lottie/react'
 
 function App() {
   return (
@@ -19,7 +19,8 @@ function App() {
       src="/animation.json"
       autoplay
       loop
-      wasmPath="/runtime/wasm/moon-lottie.wasm"
+      // You can point to custom or CDN hosted runtime
+      wasmPath="https://unpkg.com/@moon-lottie/core/runtime/moon-lottie.wasm"
     />
   )
 }
@@ -27,6 +28,7 @@ function App() {
 
 ## Features
 
+- **Blazing Fast**: Leverages MoonBit Engine (Wasm-GC).
 - **Ref Support**: Access the underlying player via `useRef`.
 - **Props-driven**: Control playback and segments via React props.
 - **Wasm-GC optimized**: Pre-checks for Wasm-GC support and falls back to JS automatically.

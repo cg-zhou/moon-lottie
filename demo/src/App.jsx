@@ -6,6 +6,7 @@ import Playground from "./components/Playground.jsx"
 const NAV_ITEMS = [
   { id: "overview", label: "概览" },
   { id: "playground", label: "演示" },
+  { id: "examples", label: "Examples" },
   { id: "features", label: "特性支持" },
   { id: "architecture", label: "架构设计" },
 ]
@@ -29,6 +30,21 @@ const QUICK_START_STEPS = [
     icon: "solar:widget-5-bold",
     title: "3. 浏览器运行",
     code: `<moon-lottie src=\"ani.json\" autoplay></moon-lottie>`,
+  },
+]
+
+const EXAMPLE_LINKS = [
+  {
+    id: "moon-lottie-core",
+    title: "moon-lottie-core-example",
+    description: "独立验证 @moon-lottie/core 的最小接入、运行时资源和基础控制 API。",
+    tags: ["@moon-lottie/core", "vanilla", "smoke test"],
+  },
+  {
+    id: "moon-lottie-react",
+    title: "moon-lottie-react-example",
+    description: "独立验证 @moon-lottie/react 的 ref 控制、类型声明和基础交互。",
+    tags: ["@moon-lottie/react", "react", "integration"],
   },
 ]
 
@@ -159,6 +175,11 @@ function getPathForPage(pageId) {
   return `${prefix}/${pageId}`
 }
 
+function getExampleHref(exampleId) {
+  const prefix = BASE_PATH || ""
+  return `${prefix}/examples/${exampleId}/`
+}
+
 function OverviewPage({ onNavigate }) {
   return (
     <div className="page-stack">
@@ -169,6 +190,9 @@ function OverviewPage({ onNavigate }) {
       <div className="hero-card__actions">
         <Button type="primary" size="large" onClick={() => onNavigate("playground")}>
           在线演示
+        </Button>
+        <Button size="large" onClick={() => onNavigate("examples")}>
+          查看示例
         </Button>
         <Button size="large" onClick={() => onNavigate("features")}>
           查看支持矩阵
@@ -183,6 +207,40 @@ function OverviewPage({ onNavigate }) {
         </div>
         <div className="quickstart-grid">
           {QUICK_START_STEPS.map((step) => <QuickStartCard key={step.title} step={step} />)}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function ExamplesPage() {
+  return (
+    <div className="page-stack">
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <Typography.Title level={2}>独立消费示例</Typography.Title>
+            <Typography.Paragraph>
+              这些示例与主站点分离构建，用来验证 npm 包在真实外部项目中的接入是否正常。统一部署后会进入同一份站点产物，并挂在 /examples/* 子路径。
+            </Typography.Paragraph>
+          </div>
+        </div>
+
+        <div className="examples-grid">
+          {EXAMPLE_LINKS.map((item) => (
+            <Card key={item.id} className="feature-card examples-card">
+              <Typography.Title level={4}>{item.title}</Typography.Title>
+              <Typography.Paragraph>{item.description}</Typography.Paragraph>
+              <div className="examples-card__tags">
+                {item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}
+              </div>
+              <div className="examples-card__actions">
+                <Button type="primary" href={getExampleHref(item.id)} target="_blank" rel="noreferrer">
+                  打开示例
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
       </section>
     </div>
@@ -366,6 +424,7 @@ export default function App() {
                 <PlaygroundPage active={currentPage === "playground"} />
               </div>
             ) : null}
+            {currentPage === "examples" ? <ExamplesPage /> : null}
             {currentPage === "features" ? <FeaturesPage /> : null}
             {currentPage === "architecture" ? <ArchitecturePage /> : null}
           </div>
