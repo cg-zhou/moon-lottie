@@ -2,6 +2,9 @@
 demo/public/runtime/
 demo/public/samples/
 demo/public/sample_index.json
+packages/moon-lottie/runtime/
+packages/examples/**/public/runtime/
+packages/examples/**/public/samples/
 deploy-dist/
 
 # Build and local files
