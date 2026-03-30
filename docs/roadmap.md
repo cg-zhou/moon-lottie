@@ -56,18 +56,18 @@
 - 主站 Playground 已迁移到 `demo/src/components/Playground.jsx`，复用共享的 `createCanvasRuntimeBridge(...)` 与 `createPlayer(...)`。
 - 为多实例场景补上了 Wasm 模块缓存，避免反复从原始字节重复 instantiate 导致内存压力过大。这一点对后续 Web Component、React 多实例和预览卡片都很关键。
 
-#### 已落地的封装层雏形
-- `Web Component` 最小可用版已经落地：`demo/public/player/moon-lottie-element.js`。
-- 浏览器命令式播放器最小可用版已经落地：`demo/public/player/moon-lottie-web.js`，使用心智模型对齐 `lottie-web` 的 `loadAnimation(...)`。
-- React 薄封装第一版已经落地：`demo/src/components/MoonLottiePlayer.jsx`。
-- React 站点里已经接入一个真实预览卡片，用它直接消费 `public/player` 暴露出的 browser player API，而不是重新写一套 React 专用播放器逻辑。
+#### 已落地的封装层与工程化
+- `Web Component` 最小可用版已经落地：`packages/browser-player/src/element.js`。
+- 浏览器命令式播放器 `loadAnimation` 已支持：`packages/browser-player/src/index.js`。
+- React 薄封装已支持：`packages/react/src/MoonLottiePlayer.tsx`。
+- 统一运行时命名：所有构建产物已统一命名为 `moon-lottie-runtime.js` 和 `moon-lottie-runtime.wasm`。
+- 工程化收口：建立了 `deploy-dist/` 统一分发目录，并修复了 CI 自动同步与构建链路。
 
 #### 本轮修复过的具体问题
-- 单实例播放器在早期封装阶段出现过同一个空指针问题：`viewport-presenter.js` 在单实例模式下仍访问了 compare-only DOM 节点的 `style`。
-- 上述问题已经修复，当前 `viewport-presenter.js` 能处理 `officialContainer` 为 `null` 的场景。
-- React 薄封装初版接入时，Vite 会在构建期错误解析 `/player/index.js`。
-- 这一点也已经修复：改成运行时动态导入 public 目录入口，而不是让构建器把它当成源码依赖去解析。
-- 当前 `demo` 目录下 `npm run build` 已通过，说明这轮抽取和薄封装至少在构建层面是闭合的。
+- 修复了 CI 构建产物路径不匹配（Debug/Release 混用）的问题。
+- 修复了 Git 追踪生成文件导致 CI 切换分支失败的问题。
+- 统一了主站与示例项目的 `runtime/` 目录结构。
+- 完善了 Wasm 模块缓存与多实例加载逻辑。
 
 #### 当前代码形态的判断
 - 这轮工作仍然符合本路线文档的“优先级 4：封装与接入层”，但做法是先收边界、后拆包，而不是一上来就铺更多 npm 包工程。

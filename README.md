@@ -60,17 +60,19 @@ npm run build:deploy
 ```
 
 Build artifacts will be generated in `deploy-dist/` with the following structure:
-- Site: `/`
-- Independent Examples: `/examples/moon-lottie-core/` and `/examples/moon-lottie-react/`
+- Site (Preview & Features): `/`
+- Core SDK Example: `/examples/moon-lottie-core/`
+- React SDK Example: `/examples/moon-lottie-react/`
+- Unified Runtimes: `/runtime/js/` and `/runtime/wasm/`
 
 ## Usage Guide
 
-### Web SDK (Coming Soon)
-SDKs in `packages/*` are currently under active development.
+### Web SDK (Alpha)
+SDKs are located in `packages/*`.
 
-**React Integration Example:**
+**React Integration:**
 ```jsx
-import MoonLottiePlayer from '@moon-lottie/react'
+import { MoonLottiePlayer } from '@moon-lottie/react'
 
 function App() {
   return (

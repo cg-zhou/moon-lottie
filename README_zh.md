@@ -60,17 +60,19 @@ npm run build:deploy
 ```
 
 构建产物位于 `deploy-dist/` 目录，其部署结构如下：
-- 主站 (Site): `/`
-- 独立示例 (Examples): `/examples/moon-lottie-core/` 与 `/examples/moon-lottie-react/`
+- 主站 (预览与特性): `/`
+- Core SDK 示例: `/examples/moon-lottie-core/`
+- React SDK 示例: `/examples/moon-lottie-react/`
+- 统一运行时: `/runtime/js/` 与 `/runtime/wasm/`
 
 ## 使用指南
 
-### Web SDK (即将发布)
-目前 `packages/*` 下的 SDK 均在仓库工作区内直接开发。
+### Web SDK (Alpha)
+SDKs 位于 `packages/*` 目录下。
 
 **React 接入示例：**
 ```jsx
-import MoonLottiePlayer from '@moon-lottie/react'
+import { MoonLottiePlayer } from '@moon-lottie/react'
 
 function App() {
   return (

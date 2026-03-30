@@ -11,7 +11,7 @@ npm install @moon-lottie/core @moon-lottie/react
 ## Usage
 
 ```jsx
-import MoonLottiePlayer from '@moon-lottie/react'
+import { MoonLottiePlayer } from '@moon-lottie/react'
 
 function App() {
   return (
@@ -19,8 +19,8 @@ function App() {
       src="/animation.json"
       autoplay
       loop
-      // You can point to custom or CDN hosted runtime
-      wasmPath="https://unpkg.com/@moon-lottie/core/runtime/moon-lottie-runtime.wasm"
+      // Recommended local or unified path
+      wasmPath="/runtime/wasm/moon-lottie-runtime.wasm"
     />
   )
 }
