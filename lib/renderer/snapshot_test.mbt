@@ -24,30 +24,6 @@ test "snapshot_render_circle" {
 }
 
 ///|
-test "snapshot_render_parent_opacity_accumulates_like_lottie_web" {
-  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":200,\"h\":200,\"layers\":[{\"ty\":4,\"ind\":2,\"parent\":1,\"ip\":0,\"op\":100,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[20,30]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":50}},\"shapes\":[{\"ty\":\"el\",\"nm\":\"circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[40,40]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]},{\"ty\":3,\"ind\":1,\"ip\":0,\"op\":100,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[10,15]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":50}}}]}"
-  let json = @json.parse(json_str)
-  let ani = @parser.parse_animation(json) catch {
-    e => fail("Failed to parse: \{e}")
-  }
-
-  let recorder = @renderer.CommandRecorder::new()
-  let player = @renderer.Player::new(ani, recorder)
-
-  player.set_frame(0.0)
-  player.render()
-
-  let commands = recorder.get_commands()
-  inspect(
-    commands,
-    content=(
-      #|[SetTransform({a: 1, b: 0, c: 0, d: 1, e: 0, f: 0}), ClearRect(0, 0, 200, 200), Save, ConcatTransform({a: 1, b: 0, c: 0, d: 1, e: 10, f: 15}), SetOpacity(0.5), Restore, Save, ConcatTransform({a: 1, b: 0, c: 0, d: 1, e: 10, f: 15}), ConcatTransform({a: 1, b: 0, c: 0, d: 1, e: 20, f: 30}), SetOpacity(0.25), SetFillRule("nonzero"), BeginPath, MoveTo(0, -20), CubicTo(11.045695, -20, 20, -11.045695, 20, 0), CubicTo(20, 11.045695, 11.045695, 20, 0, 20), CubicTo(-11.045695, 20, -20, 11.045695, -20, 0), CubicTo(-20, -11.045695, -11.045695, -20, 0, -20), ClosePath, Fill(255, 0, 0, 1), Restore]
-
-    ),
-  )
-}
-
-///|
 test "snapshot_render_static_full_opacity_zero_expansion_add_mask_keeps_clip_fast_path" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0]],\"o\":[[0,0],[0,0]],\"v\":[[0,0],[100,100]],\"c\":true}},\"o\":{\"k\":100}}],\"shapes\":[{\"ty\":\"el\",\"nm\":\"circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]}}]}]}"
   let json = @json.parse(json_str)

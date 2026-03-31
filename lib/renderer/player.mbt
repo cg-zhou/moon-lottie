@@ -194,12 +194,12 @@ fn[R : Renderer] Player::apply_parent_transform(
   parent_ind : Int,
   scope : Array[@model.Layer],
   comp_frame : Double,
-) -> Double {
+) -> Unit {
   for layer in scope {
     if layer.index == parent_ind {
-      let parent_opacity_factor = match layer.parent {
+      match layer.parent {
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
-        None => 1.0
+        None => ()
       }
       let matrix = @runtime.evaluate_transform_with_context(
         layer.transform,
@@ -208,16 +208,9 @@ fn[R : Renderer] Player::apply_parent_transform(
         self.current_comp_id,
       )
       self.renderer.concat_transform(matrix)
-      let opacity = @runtime.evaluate_double_property_with_context(
-        layer.transform.opacity,
-        comp_frame,
-        layer.index,
-        self.current_comp_id,
-      )
-      return parent_opacity_factor * opacity / 100.0
+      return
     }
   }
-  1.0
 }
 
 ///|
@@ -313,9 +306,9 @@ fn[R : Renderer] Player::render_layer(
   self.renderer.save()
 
   // 1. Apply Parent Transform
-  let parent_opacity_factor = match layer.parent {
+  match layer.parent {
     Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
-    None => 1.0
+    None => ()
   }
 
   // 2. Apply Layer Transform
@@ -330,7 +323,7 @@ fn[R : Renderer] Player::render_layer(
     layer.transform.opacity,
     comp_frame,
   )
-  self.renderer.set_opacity(parent_opacity_factor * opacity / 100.0)
+  self.renderer.set_opacity(opacity / 100.0)
 
   // 3. Apply Layer Masks
   let mut mask_restore_count = 0
