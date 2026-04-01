@@ -30,7 +30,7 @@ test "starfish integration" {
 
 ///|
 fn assert_true(cond : Bool, msg : String) -> Unit raise {
-  if not(cond) {
+  if !cond {
     fail(msg)
   }
 }

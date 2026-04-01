@@ -54,7 +54,7 @@ test "snapshot_render_static_full_opacity_zero_expansion_add_mask_keeps_clip_fas
         _ => false
       }
     })
-  if not(has_clip) || has_begin_mask {
+  if !has_clip || has_begin_mask {
     fail(
       "Simple add-only mask should stay on the clip fast path. Commands: \{commands}",
     )
@@ -92,7 +92,7 @@ test "snapshot_render_add_mask_with_partial_opacity_uses_mask_composite" {
         _ => false
       }
     })
-  if has_clip || not(has_partial_add_mask) {
+  if has_clip || !has_partial_add_mask {
     fail(
       "Add mask with partial opacity should use SVG-style mask compositing. Commands: \{commands}",
     )
@@ -130,7 +130,7 @@ test "snapshot_render_add_mask_with_animated_opacity_uses_mask_composite" {
         _ => false
       }
     })
-  if has_clip || not(has_animated_add_mask) {
+  if has_clip || !has_animated_add_mask {
     fail(
       "Animated add mask opacity should use SVG-style mask compositing. Commands: \{commands}",
     )
@@ -218,7 +218,7 @@ test "snapshot_render_add_mask_with_expansion_uses_mask_composite" {
         _ => false
       }
     })
-  if has_clip || not(has_expanded_add_mask) {
+  if has_clip || !has_expanded_add_mask {
     fail(
       "Add mask with expansion should use SVG-style mask compositing. Commands: \{commands}",
     )
@@ -256,7 +256,7 @@ test "snapshot_render_add_mask_with_animated_zero_expansion_still_uses_mask_comp
         _ => false
       }
     })
-  if has_clip || not(has_composite_mask) {
+  if has_clip || !has_composite_mask {
     fail(
       "Animated mask expansion should force SVG-style mask compositing even at zero. Commands: \{commands}",
     )
@@ -284,7 +284,7 @@ test "snapshot_render_shape_closed_flag_without_path_c" {
         _ => false
       }
     })
-  if not(has_close_path) {
+  if !has_close_path {
     fail(
       "Expected ClosePath from shape.closed fallback, but none was emitted. Commands: \{commands}",
     )
@@ -332,7 +332,7 @@ test "snapshot_merge_paths_noop" {
         _ => false
       }
     })
-  if not(has_nonzero) {
+  if !(has_nonzero) {
     fail(
       "SetFillRule('nonzero') from fill shape r=1 missing. Commands: \{commands}",
     )
@@ -365,7 +365,7 @@ test "snapshot_fill_rule_evenodd" {
         _ => false
       }
     })
-  if not(has_evenodd) {
+  if !(has_evenodd) {
     fail(
       "SetFillRule('evenodd') missing for fill with r=2. Commands: \{commands}",
     )
@@ -414,7 +414,7 @@ test "snapshot_render_alpha_matte" {
         _ => false
       }
     })
-  if not(has_prepare && has_begin_exit && has_end_exit) {
+  if !(has_prepare && has_begin_exit && has_end_exit) {
     fail("Two-buffer matte pattern missing. Commands: \{commands}")
   }
 }
@@ -456,7 +456,7 @@ test "snapshot_render_matte_in_comp_space" {
       _ => ()
     }
   }
-  if not(matte_source_at_comp_pos) {
+  if !matte_source_at_comp_pos {
     fail(
       "Matte source should be rendered from composition transform space. Commands: \{commands}",
     )
@@ -496,7 +496,7 @@ test "snapshot_group_without_paint_contributes_paths" {
         _ => false
       }
     })
-  if not(has_fill) {
+  if !has_fill {
     fail(
       "Fill command missing – group without paint did not contribute paths. Commands: \{commands}",
     )
@@ -510,7 +510,7 @@ test "snapshot_group_without_paint_contributes_paths" {
         _ => false
       }
     })
-  if not(has_cubic) {
+  if !has_cubic {
     fail(
       "CubicTo command missing – group ellipse paths not rendered. Commands: \{commands}",
     )
@@ -550,7 +550,7 @@ test "snapshot_group_without_paint_applies_transform" {
         _ => false
       }
     })
-  if not(has_translated_path) {
+  if !has_translated_path {
     fail(
       "Paths from group without paint were not transformed by group's local matrix. Commands: \{commands}",
     )
@@ -600,7 +600,7 @@ test "snapshot_merge_paths_add_with_path_groups" {
         _ => false
       }
     })
-  if not(has_pants_fill) {
+  if !has_pants_fill {
     fail(
       "Pants-colored fill missing from MergePaths Add rendering. Commands: \{commands}",
     )
@@ -685,7 +685,7 @@ test "snapshot_ellipse_direction_ccw_d3" {
           move_y = y
         }
       CubicTo(_, _, _, _, ex, ey) =>
-        if after_begin && not(found_first_cubic) {
+        if after_begin && !found_first_cubic {
           first_cubic_ex = ex
           first_cubic_ey = ey
           found_first_cubic = true
@@ -742,7 +742,7 @@ test "snapshot_ellipse_direction_cw_d1" {
           move_y = y
         }
       CubicTo(_, _, _, _, ex, ey) =>
-        if after_begin && not(found_first_cubic) {
+        if after_begin && !found_first_cubic {
           first_cubic_ex = ex
           first_cubic_ey = ey
           found_first_cubic = true

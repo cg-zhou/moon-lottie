@@ -171,7 +171,7 @@ test "parse_mask_path_closed_from_mask_cl_flag" {
     Some(masks) =>
       match masks[0].path.value {
         @model.PropertyValue::Static(path) =>
-          if not(path.closed) {
+          if !path.closed {
             fail("Mask path should inherit closed=true from mask.cl")
           }
         _ => fail("Mask path should be static")
@@ -192,7 +192,7 @@ test "parse_mask_path_defaults_to_closed_when_cl_missing" {
     Some(masks) =>
       match masks[0].path.value {
         @model.PropertyValue::Static(path) =>
-          if not(path.closed) {
+          if !path.closed {
             fail("Mask path should default to closed=true when cl is absent")
           }
         _ => fail("Mask path should be static")
@@ -268,7 +268,7 @@ test "parse_path_shape_closed_from_shape_flag" {
         @model.ShapeData::Path(p) =>
           match p.path.value {
             @model.PropertyValue::Static(bp) =>
-              if not(bp.closed) {
+              if !bp.closed {
                 fail("Path should inherit closed=true from shape.closed")
               }
             _ => fail("Path should be static")

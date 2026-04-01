@@ -130,7 +130,7 @@ fn[R : Renderer] Player::apply_layer_mask_composite(
     if mask.mode == @model.MaskMode::None {
       continue
     }
-    if not(has_effective_mask) {
+    if !has_effective_mask {
       self.renderer.begin_mask_composite()
       has_effective_mask = true
     }
@@ -335,12 +335,12 @@ fn[R : Renderer] Player::render_layer(
         let mask = masks[i]
 
         // Group contiguous Add masks
-        if mask.mode == @model.MaskMode::Add && not(mask.inverted) {
+        if mask.mode == @model.MaskMode::Add && !mask.inverted {
           self.renderer.begin_path()
           self.renderer.set_fill_rule("nonzero")
           while i < masks.length() {
             let m = masks[i]
-            if m.mode == @model.MaskMode::Add && not(m.inverted) {
+            if m.mode == @model.MaskMode::Add && !m.inverted {
               let path_val = self.evaluate_path(
                 m.path,
                 self.current_comp_frame,
@@ -359,7 +359,7 @@ fn[R : Renderer] Player::render_layer(
         match mask.mode {
           @model.MaskMode::Subtract | @model.MaskMode::Add => {
             let is_inv = (mask.mode == @model.MaskMode::Add && mask.inverted) ||
-              (mask.mode == @model.MaskMode::Subtract && not(mask.inverted))
+              (mask.mode == @model.MaskMode::Subtract && !mask.inverted)
 
             if is_inv {
               // Difference: Save current state, then clip with a hole
@@ -800,7 +800,7 @@ fn[R : Renderer] Player::render_shape_items(
     match item.data {
       Transform(_) => ()
       Group(nested) =>
-        if not(shape_group_has_paint(nested)) {
+        if !shape_group_has_paint(nested) {
           // Path-only group: render now so its paths accumulate into
           // current_paths before the next paint op snapshots them.
           self.render_shape(item)
@@ -1006,7 +1006,7 @@ pub fn[R : Renderer] Player::render_shape(
       // parent's coordinate space.
       let inner_paths = self.current_paths
       self.current_paths = old_paths
-      if not(group_has_paint_ops) {
+      if !group_has_paint_ops {
         for p in inner_paths {
           self.current_paths.push(transform_path(p, group_matrix))
         }
@@ -1314,8 +1314,8 @@ pub fn apply_rounding_to_path(
 
   let count = n
   for idx = 0; idx < count; idx = idx + 1 {
-    let is_first = idx == 0 && not(path.closed)
-    let is_last = idx == n - 1 && not(path.closed)
+    let is_first = idx == 0 && !path.closed
+    let is_last = idx == n - 1 && !path.closed
 
     // Check if this is a sharp corner (zero tangents)
     let it0 = get_pt_at(i_t, idx, 0)
@@ -1327,7 +1327,7 @@ pub fn apply_rounding_to_path(
       ot0.abs() < shape_epsilon &&
       ot1.abs() < shape_epsilon
 
-    if not(is_sharp) || is_first || is_last {
+    if !is_sharp || is_first || is_last {
       // Non-sharp corner or endpoint: keep as-is
       new_v.push([get_pt_at(v, idx, 0), get_pt_at(v, idx, 1)])
       new_i.push([it0, it1])
@@ -2456,7 +2456,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         break
       }
     }
-    if not(found) {
+    if !found {
       let fallback = doc.size * glyph_fallback_advance_ratio
       char_advances.push(fallback)
       total_width += fallback

@@ -428,7 +428,7 @@ test "dash_stroke/rendering" {
       _ => ()
     }
   }
-  if not(found_dash) { fail("SetLineDash command should be emitted") }
+  if !found_dash { fail("SetLineDash command should be emitted") }
 }
 
 ///|
@@ -522,7 +522,7 @@ test "gradient_dash_stroke/rendering" {
       _ => ()
     }
   }
-  if not(found_dash) { fail("SetLineDash command should be emitted for gradient stroke") }
+  if !found_dash { fail("SetLineDash command should be emitted for gradient stroke") }
 }
 
 ///|
@@ -682,7 +682,7 @@ test "merge_paths/noop" {
     }
   }
   if found_evenodd { fail("MergePaths must not set fill-rule to evenodd") }
-  if not(found_nonzero) { fail("Fill with r=1 should set fill-rule to nonzero") }
+  if !found_nonzero { fail("Fill with r=1 should set fill-rule to nonzero") }
 }
 
 ///|
@@ -743,5 +743,5 @@ test "fill_rule/evenodd_from_r_property" {
       _ => ()
     }
   }
-  if not(found_evenodd) { fail("Fill with r=2 should set fill-rule to evenodd") }
+  if !found_evenodd { fail("Fill with r=2 should set fill-rule to evenodd") }
 }

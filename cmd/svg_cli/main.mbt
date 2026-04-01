@@ -92,7 +92,7 @@ fn ArgReader::int(self : ArgReader, key : String) -> Int? raise {
     Some(value) =>
       Some(
         try {
-          @strconv.parse_int(value)
+          @string.parse_int(value)
         } catch {
           _ => fail("Invalid --\{key} value: \{value}")
         },

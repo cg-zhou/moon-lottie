@@ -410,7 +410,7 @@ test "precomp layer time remap expression drives child frame" {
       }
     None => fail("No translated child transform found")
   }
-  if not(handler_received_layer_context.val) {
+  if !handler_received_layer_context.val {
     fail("Time remap expression handler should receive the current layer context")
   }
 }
@@ -696,10 +696,10 @@ test "gradient stroke with trim path emits visible stroke commands" {
     }
   }
 
-  if not(saw_path_command) {
+  if !saw_path_command {
     fail("Expected visible trimmed ellipse path commands before gradient stroke")
   }
-  if not(saw_gradient_stroke) {
+  if !saw_gradient_stroke {
     fail("Expected StrokeLinearGradient command for gradient stroke sample")
   }
 }
@@ -875,7 +875,7 @@ fn bounds_for_fills(
   let mut has_point = false
   let add_point = fn(x : Double, y : Double) {
     let (tx, ty) = current_matrix.transform_point(x, y)
-    if not(has_point) {
+    if !has_point {
       min_x = tx
       min_y = ty
       max_x = tx

@@ -4,9 +4,9 @@ import {
   "cg-zhou/moon-lottie/lib/renderer",
   "moonbitlang/core/json",
   "moonbitlang/core/builtin",
-  "moonbitlang/core/strconv",
   "moonbitlang/core/argparse",
   "moonbitlang/core/env",
+  "moonbitlang/core/string",
   "moonbitlang/x/fs"
 }
 

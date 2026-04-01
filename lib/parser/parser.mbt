@@ -694,7 +694,7 @@ pub fn report_unknown_keys(json : Json) -> Array[String] {
     match j {
       Object(obj) =>
         for k, v in obj {
-          if not(contains_key(known_keys, k)) {
+          if !contains_key(known_keys, k) {
             unknown.push(if path == "" { k } else { path + "." + k })
           }
           traverse(v, if path == "" { k } else { path + "." + k })
@@ -1881,7 +1881,7 @@ fn parse_layer_fill_effect(
         }
         let is_fill = effect.match_name == Some("ADBE Fill") ||
           effect.effect_type == Some(21)
-        if not(is_fill) {
+        if !is_fill {
           continue
         }
         let mut color = @model.LottieProperty::new_static([0.0, 0.0, 0.0, 1.0])

@@ -14,7 +14,7 @@ fn mask_mode_supported_by_composite(mode : @model.MaskMode) -> Bool {
 ///| renderer path instead of falling back to the legacy clip approximation.
 pub fn layer_masks_support_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
-    if not(mask_mode_supported_by_composite(mask.mode)) {
+    if !mask_mode_supported_by_composite(mask.mode) {
       return false
     }
   }
@@ -60,7 +60,7 @@ fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
   match mask.mode {
     @model.MaskMode::None => true
     @model.MaskMode::Add =>
-      not(mask.inverted) &&
+      !mask.inverted &&
       mask_opacity_can_use_clip_fast_path(mask.opacity) &&
       mask_expansion_can_use_clip_fast_path(mask.expansion)
     @model.MaskMode::LegacyAdd => false
@@ -73,7 +73,7 @@ fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
 ///| pipeline instead of clip-only approximation.
 pub fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
-    if not(mask_can_use_clip_fast_path(mask)) {
+    if !mask_can_use_clip_fast_path(mask) {
       return true
     }
   }

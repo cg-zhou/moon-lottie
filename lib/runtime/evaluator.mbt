@@ -195,7 +195,7 @@ fn parse_double_array(input : String) -> Array[Double] {
     if part.length() == 0 {
       continue
     }
-    let value = (@strconv.parse_double(part)) catch {
+    let value = (@string.parse_double(part)) catch {
       // Keep the bridge resilient to malformed host payloads and fall back to
       // moon-lottie's non-expression value for that component.
       _ => 0.0
