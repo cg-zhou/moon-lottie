@@ -75,7 +75,7 @@ export function createPlayer(options = {}) {
             return null;
         }
 
-        return officialPlayerController.load(state.currentAnimationData);
+        return officialPlayerController.load(cloneAnimationData(state.currentAnimationData));
     }
 
     const runtimeManager = createRuntimeManager({
@@ -95,7 +95,6 @@ export function createPlayer(options = {}) {
         canRender: () => Boolean(state.nativePlayer && runtimeManager.getRuntime()),
         onRenderFrame: (frame) => {
             renderFrame(frame, getState());
-            officialPlayerController.seek(frame);
         },
         onFrameChange: (detail) => {
             onFrameChange({ ...detail, state: getState() });
