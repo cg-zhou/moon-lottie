@@ -6,8 +6,8 @@
 
 ### 1.1 当前项目状态
 - 现有状态已经不再只是概念验证，而是一个已具备核心引擎、在线演示和双运行时路径的 MoonBit Lottie 项目。
-- 已完成的主干包括：MoonBit 解析/求值/渲染主流程、浏览器 Canvas 播放链路、Wasm-GC 与 JS fallback、站点基础信息架构、截图/像素比对类验证工具雏形。
-- 尚未完成但已经明确暴露出来的问题包括：特性边界说明不足、Playground 偏调试台而非播放器、移动端体验偏弱、SVG 输出尚未升格为正式能力、封装层与接入文档仍薄弱。
+- 已完成的主干包括：MoonBit 解析/求值/渲染主流程、浏览器 Canvas 播放链路、Wasm-GC 与 JS fallback、npm 包发布、SVG 输出链路与 CLI、站点基础信息架构、截图/像素比对类验证工具。
+- 尚未完成但已经明确暴露出来的问题包括：特性边界说明不足、Playground 仍可继续收口为更轻量的播放器、SVG/CLI 的对外说明还不完整、封装层文档与类型定义仍需打磨。
 - 当前最大的风险，不是“做得不够多”，而是“重点过多、叙事不够收束”。
 
 ### 1.2 当前阶段目标
@@ -27,14 +27,16 @@
 - MoonBit 核心引擎主干已经成立：`parser`、`runtime`、`renderer` 和 `player` 已经形成主流程。
 - 浏览器播放链路已经成立：当前 Demo 已支持上传、播放、调速、背景切换、官方对比等基本能力。
 - 双运行时方向已经成立：当前不仅有 Wasm-GC 路径，也有 JS fallback 路径。
+- npm 封装层已经成立：`@moon-lottie/core` 与 `@moon-lottie/react` 已发布，Web Component 作为 core 的一部分对外导出。
+- SVG 输出链路已经成立：当前不仅有 `svg_renderer`，也已有 `svg_cli` 作为非 Web 出口。
 - 站点已经不只是 Demo 页面，而是具备概览、特性、架构、路线等说明页的产品入口。
-- 测试与验证不再是空白：已有 MoonBit 测试与浏览器截图/像素对比工具雏形。
+- 测试与验证不再是空白：当前 `moon test` 已有 174 条测试通过，并已有浏览器截图/像素对比工具。
 
 ### 2.2 还没有完成的部分
 - 对“支持了什么、没支持什么、支持到什么程度”的说明仍然不够清楚。
-- Playground 目前更像调试工作台，不够像一个轻量、移动端友好的播放器。
-- SVG 渲染器已有雏形，但还没有整理成可以正式对外描述的输出能力。
-- `Web Component`、`React` 薄封装已经进入最小可用实现阶段，但还没有形成稳定交付面，也还没有整理成独立包与正式接入文档。
+- Playground 已完成一轮移动端与小屏调试，但整体上仍偏工作台，还可以继续往“轻量播放器”方向收口。
+- SVG 输出与 CLI 已经可用，但还没有整理成正式对外说明、示例与支持边界文档。
+- `Web Component` 与 `React` 包已经发布，但 API 文档、TypeScript 类型质量与 `lottie-web` 对齐度仍不够完整。
 - 表达式方向当前仍是 JS 宿主 MVP，SerenadeJS 还属于长期路线而不是现成能力。
 
 ### 2.3 当前状态快照
@@ -43,6 +45,7 @@
 
 #### 已完成的收敛工作
 - Playground 页面做过一轮收口：恢复了原生数字输入箭头，改成 JS 驱动的动态布局与等比缩放，并把标题区与画布区拆开，整体比之前更清爽，也更接近“播放器”而不是“调试面板”。
+- Playground 的移动端与小屏适配已经完成一轮集中调试，当前主要剩余的是交互细节和文档同步，而不是结构性阻塞。
 - 已明确当前分层：MoonBit core -> browser player/runtime -> Web Component -> React thin wrapper -> demo site。这个分层已经成为后续工作的收口方向，而不是继续让 Playground 自己长成一套独立逻辑。
 - 为浏览器播放层完成了一轮内部抽取，当前 `demo/public/player/` 下已经有可复用模块：
 	- `event-emitter.js`
@@ -57,9 +60,9 @@
 - 为多实例场景补上了 Wasm 模块缓存，避免反复从原始字节重复 instantiate 导致内存压力过大。这一点对后续 Web Component、React 多实例和预览卡片都很关键。
 
 #### 已落地的封装层与工程化
-- `Web Component` 最小可用版已经落地：`packages/browser-player/src/element.js`。
-- 浏览器命令式播放器 `loadAnimation` 已支持：`packages/browser-player/src/index.js`。
-- React 薄封装已支持：`packages/react/src/MoonLottiePlayer.tsx`。
+- `@moon-lottie/core` 已发布，提供浏览器命令式播放器、运行时切换能力与 Web Component 导出。
+- `@moon-lottie/react` 已发布，当前版本处于 `0.1.x`，已支持常见播放控制与 Ref 转发。
+- SVG CLI 已落地：仓库内已有 `cmd/svg_cli`，可作为非 Web 输出路径。
 - 统一运行时命名：所有构建产物已统一命名为 `moon-lottie-runtime.js` 和 `moon-lottie-runtime.wasm`。
 - 工程化收口：建立了 `deploy-dist/` 统一分发目录，并修复了 CI 自动同步与构建链路。
 
@@ -70,32 +73,34 @@
 - 完善了 Wasm 模块缓存与多实例加载逻辑。
 
 #### 当前代码形态的判断
-- 这轮工作仍然符合本路线文档的“优先级 4：封装与接入层”，但做法是先收边界、后拆包，而不是一上来就铺更多 npm 包工程。
+- 这轮工作已经完成了封装层拆包与 npm 发布，当前重点不再是“有没有包”，而是“包是否足够稳、说明是否足够清楚”。
 - 现阶段已经有：
-	- browser player 内核
-	- Web Component 雏形
-	- React thin wrapper 雏形
-- 现阶段还没有：
-	- 正式的 `moon-lottie-react` 独立包
-	- 正式的 Web Component 发布包
-	- 完整的接入文档与 API 文档
-	- 全量对齐 `lottie-web` 的方法面
+	- browser player 内核（`@moon-lottie/core`）
+	- Web Component 导出
+	- 官方 React 封装包（`@moon-lottie/react`）
+	- SVG 输出能力与 CLI 入口
+- 现阶段仍然欠缺：
+	- 更完整的接入文档与 API 文档
+	- 更扎实的 TypeScript 类型定义
+	- 更高的 `lottie-web` 方法面与事件语义对齐度
+	- 对 SVG/CLI 的正式产品化说明
 
 #### 仍待继续的事项
-- Playground 现在虽然比之前更清爽，但还没有完全完成“轻量播放器化”，目前依然保留 iframe 结构，尚未完全并入 React 页面内部。
-- browser player API 目前只覆盖了常见播放控制能力，后续仍需要继续向 `lottie-web` 靠拢，例如更完整的分段播放、子帧控制与更细的事件语义。
-- React 薄封装已经能工作，但仍属于“最小可用版”，目标应该是覆盖最常见播放控制能力，而不是现在就扩成一个重量级 React 生态工程。
-- 这一层的后续工作应继续受第 4 节“当前明确不做的事情”约束，避免因为封装层初步成立，就转向新的大规模支线开发。
+- Playground 现在虽然已经完成一轮移动端和小屏调试，但仍有继续轻量化和交互打磨的空间。
+- browser player API 目前覆盖了常见播放控制能力，后续仍需要继续向 `lottie-web` 靠拢，例如更完整的事件语义和更清晰的方法约定。
+- React 封装已经能工作并已发布，但从 `0.1.x` 走向 `1.0` 仍需要继续补强类型定义、异常处理与文档。
+- SVG 与 CLI 已经存在，但还需要补足 README、示例和支持边界说明，避免能力存在但对外不可见。
 
 #### 建议的后续起点
 - 如果后续继续沿这条线推进，建议优先顺序仍然保持克制：
-	- 先补 Playground 轻量化与移动端体验
-	- 再补 browser player / Web Component / React wrapper 的接入说明
-	- 然后再决定是否把现有实现拆成真正独立发布的包
+	- 先补 `@moon-lottie/core` / `@moon-lottie/react` / Web Component / SVG CLI 的正式接入说明
+	- 再补 React 类型定义、事件语义和 `lottie-web` 常见 API 对齐
+	- 然后继续打磨 Playground 的轻量化和小屏交互细节
 - 如果需要快速恢复上下文，可以优先看这几个位置：
 	- `demo/public/player/`
 	- `demo/src/components/Playground.jsx`
-	- `demo/src/components/MoonLottiePlayer.jsx`
+	- `packages/moon-lottie-react/src/MoonLottiePlayer.jsx`
+	- `cmd/svg_cli/`
 	- `demo/src/App.jsx`
 
 ## 3. 优先级排序
@@ -107,18 +112,18 @@
 
 ### 3.2 优先级 2：产品体验
 - 把 Playground 收敛成更轻量的播放器，而不是继续堆成更重的调试面板。
-- 优先改善手机端和小屏设备上的播放控制体验。
+- 继续打磨手机端和小屏设备上的播放控制细节与交互手感。
 - 在 Feature 页面中补充“这是什么、当前支持到什么程度、对应示例是什么”的说明。
 
 ### 3.3 优先级 3：输出能力
-- 让 SVG 渲染器从“已有雏形”升级为“可正式描述的输出后端”。
-- 视情况整理一条非 Web 使用路径，例如命令行或桌面侧的 SVG 导出。
+- 把 SVG 渲染器和 `svg_cli` 从“仓库内已有能力”整理成“对外可理解、可复用的输出后端”。
+- 补充非 Web 使用路径的示例、说明与边界文档，例如命令行 SVG 导出。
 - 继续保持 Wasm 与 JS 双运行时路径的一致性与可维护性。
 
-### 3.4 优先级 4：封装与接入层
-- 提供 `Web Component` 最小可用版，形成跨框架基础接入方式。
-- 提供 `moon-lottie-react` 薄封装，先覆盖最常见播放控制能力。
-- 补充更清晰的嵌入、安装与集成示例。
+### 3.4 优先级 4：封装与标准化
+- 完善 `@moon-lottie/react` 和 Web Component 的接入说明。
+- 对齐 `lottie-web` 的常见 API 与事件语义。
+- 实现更稳定的 TS 类型导出。
 
 ### 3.5 优先级 5：长期探索
 - SerenadeJS 继续作为表达式后端路线保留，但不转成当前主线工程。
@@ -141,13 +146,13 @@
 
 ### 5.2 第二组：补强输出与验证
 - SVG 输出能力整理。
-- CLI / 桌面 SVG 导出可行性。
+- SVG CLI 使用说明与示例补全。
 - 测试与回归说明整理。
 
-### 5.3 第三组：封装与长期路线
-- `Web Component` 最小可用版。
-- `moon-lottie-react` 薄封装。
-- SerenadeJS 路线页或最小验证结论。
+### 5.3 第三组：封装与标准化
+- npm 包 README 与集成示例补全。
+- `lottie-web` 常见接口与事件对齐。
+- 类型定义、运行时切换与资源释放细节打磨。
 
 ## 6. 本阶段执行原则
 

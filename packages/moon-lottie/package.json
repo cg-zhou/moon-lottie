@@ -4,14 +4,21 @@
   "description": "High-performance Lottie animation player powered by MoonBit (Wasm-GC/JS)",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "files": [
     "src",
     "runtime",
     "README.md"
   ],
   "exports": {
-    ".": "./src/index.js",
-    "./web-component": "./src/web-component.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./web-component": {
+      "types": "./src/web-component.d.ts",
+      "default": "./src/web-component.js"
+    }
   },
   "repository": {
     "type": "git",

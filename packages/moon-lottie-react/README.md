@@ -8,7 +8,7 @@ The **React** wrapper for [@moon-lottie/core](https://www.npmjs.com/package/@moo
 npm install @moon-lottie/core @moon-lottie/react
 ```
 
-## Usage
+## Basic Usage
 
 ```jsx
 import { MoonLottiePlayer } from '@moon-lottie/react'
@@ -19,16 +19,83 @@ function App() {
       src="/animation.json"
       autoplay
       loop
-      // Recommended local or unified path
-      wasmPath="/runtime/wasm/moon-lottie-runtime.wasm"
+      wasmPath="/runtime/moon-lottie-runtime.wasm"
+      jsRuntimePath="/runtime/moon-lottie-runtime.js"
     />
   )
 }
 ```
 
-## Features
+## Ref API
 
-- **Blazing Fast**: Leverages MoonBit Engine (Wasm-GC).
-- **Ref Support**: Access the underlying player via `useRef`.
-- **Props-driven**: Control playback and segments via React props.
-- **Wasm-GC optimized**: Pre-checks for Wasm-GC support and falls back to JS automatically.
+```jsx
+import { useEffect, useRef } from 'react'
+import { MoonLottiePlayer } from '@moon-lottie/react'
+
+function App() {
+  const playerRef = useRef(null)
+
+  useEffect(() => {
+    playerRef.current?.whenReady()?.then(() => {
+      playerRef.current?.playSegments([[0, 30], [45, 90]], true)
+    })
+  }, [])
+
+  return (
+    <MoonLottiePlayer
+      ref={playerRef}
+      src="/animation.json"
+      wasmPath="/runtime/moon-lottie-runtime.wasm"
+      jsRuntimePath="/runtime/moon-lottie-runtime.js"
+    />
+  )
+}
+```
+
+Common handle methods:
+
+- `whenReady()`
+- `play()` / `pause()` / `stop()` / `toggle()`
+- `seek(frame)`
+- `goToAndPlay(value, isFrame)` / `goToAndStop(value, isFrame)`
+- `playSegments(segments, forceFlag)`
+- `switchRuntime('auto' | 'wasm' | 'js')`
+- `getState()` / `getBackend()` / `getPreference()`
+
+## Props
+
+Common props:
+
+- `src` / `path`
+- `animationData`
+- `autoplay`
+- `loop`
+- `speed`
+- `direction`
+- `background`
+- `rendererSettings`
+- `initialSegment`
+- `wasmPath`
+- `jsRuntimePath`
+- `className`
+- `style`
+
+## Events
+
+React callback props:
+
+- `onLoad`
+- `onError`
+- `onRuntimeChange`
+- `onEnterFrame`
+- `onPlay`
+- `onPause`
+- `onComplete`
+- `onLoopComplete`
+- `onDestroy`
+
+## Notes
+
+- The current public renderer is `canvas`.
+- Runtime preference defaults to `auto`, which tries Wasm first and falls back to JS.
+- If you need direct imperative control outside React, use `loadAnimation` from `@moon-lottie/core`.
