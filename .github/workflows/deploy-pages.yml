@@ -33,19 +33,8 @@ jobs:
       - name: Update MoonBit dependencies
         run: moon update
 
-      - name: Build Wasm
-        run: moon build --target wasm-gc --release
-
-      - name: Build JS runtime
-        run: moon build --target js --release
-
       - name: Install workspace dependencies
-        run: npm ci
-
-      - name: Install example dependencies
-        run: |
-          npm --prefix packages/examples/moon-lottie-core ci
-          npm --prefix packages/examples/moon-lottie-react ci
+        run: npm install
 
       - name: Build unified deploy bundle
         run: npm run build:deploy

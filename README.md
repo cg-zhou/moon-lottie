@@ -43,19 +43,20 @@ moon test
 ```
 
 ### Local Development
-1. Build runtimes:
+1. Preparation:
    ```bash
-   moon build --target wasm-gc
-   moon build --target js
+   moon update
+   npm install
    ```
 2. Start development server:
    ```bash
-   npm run dev:site
+   # Automatically builds MoonBit core and syncs products
+   npm run dev
    ```
 
-### Build & Deployment
+### Build & Deploy
 ```bash
-# Full build pipeline (Packages + Site + Examples)
+# Full build process (core compilation, package sync, site, and examples)
 npm run build:deploy
 ```
 

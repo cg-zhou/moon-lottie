@@ -43,19 +43,20 @@ moon test
 ```
 
 ### 本地开发
-1. 构建运行时：
+1. 环境准备：
    ```bash
-   moon build --target wasm-gc
-   moon build --target js
+   moon update
+   npm install
    ```
 2. 启动开发服务：
    ```bash
-   npm run dev:site
+   # 内部会自动构建 MoonBit 核心并同步产物到各包
+   npm run dev
    ```
 
 ### 构建与部署
 ```bash
-# 执行完整构建流程（包含包构建、主站及示例集成）
+# 执行完整构建流程（包含核心编译、包同步、主站及示例集成）
 npm run build:deploy
 ```
 
