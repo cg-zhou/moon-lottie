@@ -1,8 +1,8 @@
 import {
-  "cg-zhou/moon-lottie/lib/model",
-  "cg-zhou/moon-lottie/lib/parser",
-  "cg-zhou/moon-lottie/lib/renderer",
-  "cg-zhou/moon-lottie/lib/runtime",
+  "cg-zhou/moon_lottie/lib/model",
+  "cg-zhou/moon_lottie/lib/parser",
+  "cg-zhou/moon_lottie/lib/renderer",
+  "cg-zhou/moon_lottie/lib/runtime",
   "moonbitlang/core/json",
   "moonbitlang/core/builtin",
 }

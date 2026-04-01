@@ -767,7 +767,7 @@ export default function Playground({ active = true }) {
               <Tag className="playground-canvas-tag" color="blue" icon={<IconifyIcon name="solar:stars-bold" size={14} />}>
                 MoonLottie
               </Tag>
-              <RendererToggle label="渲染器" value={moonRenderer} onChange={setMoonRenderer} />
+              <RendererToggle value={moonRenderer} onChange={setMoonRenderer} />
             </div>
             <div ref={wasmStageRef} className="playground-canvas-stage">
               <canvas ref={canvasRef} style={{ display: moonRenderer === "canvas" ? "block" : "none" }} />
@@ -779,7 +779,7 @@ export default function Playground({ active = true }) {
               <Tag className="playground-canvas-tag" icon={<IconifyIcon name="mdi:animation-play-outline" size={14} />}>
                 官方 lottie-web
               </Tag>
-              <RendererToggle label="渲染器" value={officialRenderer} onChange={setOfficialRenderer} />
+              <RendererToggle value={officialRenderer} onChange={setOfficialRenderer} />
             </div>
             <div ref={officialStageRef} className="playground-canvas-stage">
               <div ref={officialContainerRef} className="playground-official-container" />

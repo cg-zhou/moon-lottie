@@ -1,17 +1,25 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "cg-zhou/moon-lottie/lib/renderer"
+package "cg-zhou/moon_lottie/lib/renderer"
 
 import {
-  "cg-zhou/moon-lottie/lib/math",
-  "cg-zhou/moon-lottie/lib/model",
+  "cg-zhou/moon_lottie/lib/math",
+  "cg-zhou/moon_lottie/lib/model",
 }
 
 // Values
+pub fn apply_rounding_to_path(@model.BezierPath, Double) -> @model.BezierPath
+
 pub fn apply_trim_path(Array[@model.BezierPath], Double, Double, Double) -> Array[@model.BezierPath]
 
 pub fn apply_trim_path_with_mode(Array[@model.BezierPath], Double, Double, Double, Int) -> Array[@model.BezierPath]
 
 pub fn create_canvas_player(@model.Animation) -> Player[CanvasRenderer]
+
+pub fn layer_masks_require_composite(Array[@model.Mask]) -> Bool
+
+pub fn layer_masks_support_composite(Array[@model.Mask]) -> Bool
+
+pub fn mask_mode_to_composite_code(@model.MaskMode) -> Int
 
 pub fn render_animation_to_svgs(@model.Animation, Int) -> Array[String]
 
@@ -45,11 +53,12 @@ pub enum DrawCommand {
   Fill(Int, Int, Int, Double)
   Stroke(Int, Int, Int, Double, Double)
   SetStrokeStyle(Int, Int, Double)
+  SetLineDash(Array[Double], Double)
   FillLinearGradient(Double, Double, Double, Double, Int, Array[Double], Double)
   StrokeLinearGradient(Double, Double, Double, Double, Int, Array[Double], Double, Double)
   FillRadialGradient(Double, Double, Double, Double, Double, Double, Int, Array[Double], Double)
   StrokeRadialGradient(Double, Double, Double, Double, Double, Double, Int, Array[Double], Double, Double)
-  DrawImage(String, Double, Double)
+  DrawImage(String, Double, Double, Int)
   DrawText(String, String, Double, Int, Int, Int, Double, Int)
   Clip
   ClearRect(Double, Double, Double, Double)
@@ -58,14 +67,22 @@ pub enum DrawCommand {
   SetOpacity(Double)
   BeginLayer
   EndLayer(String)
-}
-pub impl Eq for DrawCommand
-pub impl Show for DrawCommand
+  PrepareMatteLayer
+  BeginMatteExit
+  EndMatteExit(Int)
+  BeginMaskComposite
+  BeginMaskPath
+  ApplyMaskPath(Int, Double, Bool, Double)
+  EndMaskComposite
+} derive(Eq, Show)
 
 pub struct Player[R] {
   animation : @model.Animation
   renderer : R
   mut current_frame : Double
+  mut current_comp_frame : Double
+  mut current_layer_index : Int
+  mut current_comp_id : String
   mut current_paths : Array[@model.BezierPath]
   mut debug_enabled : Bool
   mut debug_logs : Array[String]
@@ -80,21 +97,38 @@ pub fn[R : Renderer] Player::render_shape(Self[R], @model.Shape) -> Unit
 pub fn[R] Player::set_debug(Self[R], Bool) -> Unit
 pub fn[R] Player::set_frame(Self[R], Double) -> Unit
 
+type SvgLayerCapture
+
+type SvgMaskCompositeCapture
+
+type SvgMatteCapture
+
 pub struct SvgRenderer {
   width : Double
   height : Double
-  buffer : StringBuilder
+  mut buffer : StringBuilder
   defs_buffer : StringBuilder
-  state_stack : Array[(@math.Matrix, String, Int)]
+  state_stack : Array[SvgRendererState]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
   mut gradient_count : Int
   mut group_depth : Int
   mut current_fill_rule : String
+  mut current_blend_mode : String
+  mut current_line_cap : Int
+  mut current_line_join : Int
+  mut current_miter_limit : Double
+  mut current_dash_array : Array[Double]
+  mut current_dash_offset : Double
+  layer_stack : Array[SvgLayerCapture]
+  matte_stack : Array[SvgMatteCapture]
+  mask_stack : Array[SvgMaskCompositeCapture]
 }
 pub fn SvgRenderer::get_output(Self) -> String
 pub fn SvgRenderer::new(Double, Double) -> Self
 pub impl Renderer for SvgRenderer
+
+type SvgRendererState
 
 // Type aliases
 
@@ -112,12 +146,13 @@ pub trait Renderer {
   fill(Self, Int, Int, Int, Double) -> Unit
   stroke(Self, Int, Int, Int, Double, Double) -> Unit
   set_stroke_style(Self, Int, Int, Double) -> Unit
+  set_line_dash(Self, Array[Double], Double) -> Unit
   fill_linear_gradient(Self, Double, Double, Double, Double, Int, Array[Double], Double) -> Unit
   stroke_linear_gradient(Self, Double, Double, Double, Double, Int, Array[Double], Double, Double) -> Unit
   fill_radial_gradient(Self, Double, Double, Double, Double, Double, Double, Int, Array[Double], Double) -> Unit
   stroke_radial_gradient(Self, Double, Double, Double, Double, Double, Double, Int, Array[Double], Double, Double) -> Unit
   clip(Self) -> Unit
-  draw_image(Self, String, Double, Double) -> Unit
+  draw_image(Self, String, Double, Double, Int) -> Unit
   draw_text(Self, String, String, Double, Int, Int, Int, Double, Int) -> Unit
   clear_rect(Self, Double, Double, Double, Double) -> Unit
   set_blend_mode(Self, String) -> Unit
@@ -125,5 +160,13 @@ pub trait Renderer {
   set_opacity(Self, Double) -> Unit
   begin_layer(Self) -> Unit
   end_layer(Self, String) -> Unit
+  prepare_matte_layer(Self) -> Unit
+  begin_matte_exit(Self) -> Unit
+  end_matte_exit(Self, Int) -> Unit
+  supports_mask_composite(Self) -> Bool
+  begin_mask_composite(Self) -> Unit
+  begin_mask_path(Self) -> Unit
+  apply_mask_path(Self, Int, Double, Bool, Double) -> Unit
+  end_mask_composite(Self) -> Unit
 }
 

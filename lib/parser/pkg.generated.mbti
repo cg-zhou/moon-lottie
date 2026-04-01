@@ -1,8 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "cg-zhou/moon-lottie/lib/parser"
+package "cg-zhou/moon_lottie/lib/parser"
 
 import {
-  "cg-zhou/moon-lottie/lib/model",
+  "cg-zhou/moon_lottie/lib/model",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -19,17 +20,94 @@ pub suberror LottieError {
   InvalidJson(String)
   MissingKey(String)
   UnexpectedType(String, String)
-}
-pub impl Show for LottieError
+} derive(Show)
 
 // Types and methods
+type AnimationRootJson derive(@json.FromJson)
+
+type AssetJson derive(@json.FromJson)
+
+type BezierPathJson derive(@json.FromJson)
+
+type BezierTangentJson derive(@json.FromJson)
+
+type DashItemJson derive(@json.FromJson)
+
+type FontInfoJson derive(@json.FromJson)
+
+type FontsJson derive(@json.FromJson)
+
+type GlyphCharJson derive(@json.FromJson)
+
+type GlyphDataJson derive(@json.FromJson)
+
+type GradientJson derive(@json.FromJson)
+
+type LayerEffectJson derive(@json.FromJson)
+
+type LayerEffectParamJson derive(@json.FromJson)
+
+type LayerJson derive(@json.FromJson)
+
+type MaskJson derive(@json.FromJson)
+
+type PropertyJson derive(@json.FromJson)
+
+type PropertyKeyframeJson derive(@json.FromJson)
+
+type RepeaterTransformExtraJson derive(@json.FromJson)
+
+type ShapeEllipseJson derive(@json.FromJson)
+
+type ShapeFillJson derive(@json.FromJson)
+
+type ShapeGradientFillJson derive(@json.FromJson)
+
+type ShapeGradientStrokeJson derive(@json.FromJson)
+
+type ShapeGroupJson derive(@json.FromJson)
+
+type ShapeJson derive(@json.FromJson)
+
+type ShapeMergePathsJson derive(@json.FromJson)
+
+type ShapePathJson derive(@json.FromJson)
+
+type ShapePolystarJson derive(@json.FromJson)
+
+type ShapeRectJson derive(@json.FromJson)
+
+type ShapeRepeaterJson derive(@json.FromJson)
+
+type ShapeRoundingJson derive(@json.FromJson)
+
+type ShapeStrokeJson derive(@json.FromJson)
+
+type ShapeTrimPathJson derive(@json.FromJson)
+
+type SplitPositionJson derive(@json.FromJson)
+
+type TextAnimatorJson derive(@json.FromJson)
+
+type TextAnimatorPropertiesJson derive(@json.FromJson)
+
+type TextAnimatorSelectorJson derive(@json.FromJson)
+
+type TextDataJson derive(@json.FromJson)
+
+type TextDocumentJson derive(@json.FromJson)
+
+type TextMoreOptionsJson derive(@json.FromJson)
+
+type TextPropertyJson derive(@json.FromJson)
+
+type TransformJson derive(@json.FromJson)
+
 pub struct UnknownKeyReport {
   total_keys : Int
   known_keys : Int
   unknown_paths : Array[String]
-}
-pub impl Eq for UnknownKeyReport
-pub impl Show for UnknownKeyReport
+} derive(Eq, Show)
 
 // Type aliases
 

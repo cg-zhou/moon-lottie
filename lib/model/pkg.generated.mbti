@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "cg-zhou/moon-lottie/lib/model"
+package "cg-zhou/moon_lottie/lib/model"
 
 // Values
 
@@ -7,27 +7,29 @@ package "cg-zhou/moon-lottie/lib/model"
 
 // Types and methods
 pub struct Animation {
-  v : String
-  fr : Double
-  ip : Double
-  op : Double
-  w : Int
-  h : Int
-  nm : String?
-  ddd : Int?
+  version : String
+  frame_rate : Double
+  in_point : Double
+  out_point : Double
+  width : Int
+  height : Int
+  name : String?
+  three_d : Int?
   assets : Array[Asset]?
   layers : Array[Layer]
   markers : Array[Marker]?
+  fonts : Array[FontInfo]?
+  glyphs : Array[GlyphInfo]?
 }
-pub fn Animation::new(v~ : String, fr~ : Double, ip~ : Double, op~ : Double, w~ : Int, h~ : Int, nm? : String?, ddd? : Int?, assets? : Array[Asset]?, layers~ : Array[Layer], markers? : Array[Marker]?) -> Self
+pub fn Animation::new(version~ : String, frame_rate~ : Double, in_point~ : Double, out_point~ : Double, width~ : Int, height~ : Int, name? : String?, three_d? : Int?, assets? : Array[Asset]?, layers~ : Array[Layer], markers? : Array[Marker]?, fonts? : Array[FontInfo]?, glyphs? : Array[GlyphInfo]?) -> Self
 
 pub(all) struct Asset {
   id : String
   layers : Array[Layer]?
-  p : String?
-  u : String?
-  w : Int?
-  h : Int?
+  path : String?
+  folder : String?
+  width : Int?
+  height : Int?
 }
 
 pub struct Bezier {
@@ -37,13 +39,14 @@ pub struct Bezier {
 pub fn Bezier::new(BezierValue, BezierValue) -> Self
 
 pub struct BezierPath {
-  v : Array[Array[Double]]
-  i : Array[Array[Double]]
-  o : Array[Array[Double]]
-  c : Bool
+  vertices : Array[Array[Double]]
+  in_tangents : Array[Array[Double]]
+  out_tangents : Array[Array[Double]]
+  closed : Bool
 }
-pub fn BezierPath::new(v~ : Array[Array[Double]], i~ : Array[Array[Double]], o~ : Array[Array[Double]], c~ : Bool) -> Self
+pub fn BezierPath::new(vertices~ : Array[Array[Double]], in_tangents~ : Array[Array[Double]], out_tangents~ : Array[Array[Double]], closed~ : Bool) -> Self
 pub fn BezierPath::new_rect(Double, Double, Double, Double) -> Self
+pub fn BezierPath::new_rect_ccw(Double, Double, Double, Double) -> Self
 
 pub enum BezierValue {
   Single(Double)
@@ -80,7 +83,7 @@ pub struct Color {
   g : Double
   b : Double
   a : Double
-}
+} derive(Eq, Show)
 pub fn Color::black() -> Self
 pub fn Color::from_array(Array[Double]) -> Self
 pub fn Color::lerp(Self, Self, Double) -> Self
@@ -90,14 +93,19 @@ pub fn Color::to_array(Self) -> Array[Double]
 pub fn Color::to_hex_string(Self) -> String
 pub fn Color::transparent() -> Self
 pub fn Color::white() -> Self
-pub impl Eq for Color
-pub impl Show for Color
+
+pub struct DashItem {
+  name : String
+  value : LottieProperty[Double]
+}
+pub fn DashItem::new(name~ : String, value~ : LottieProperty[Double]) -> Self
 
 pub struct EllipseShape {
-  p : LottieProperty[Array[Double]]
-  s : LottieProperty[Array[Double]]
+  position : LottieProperty[Array[Double]]
+  size : LottieProperty[Array[Double]]
+  direction : Int
 }
-pub fn EllipseShape::new(p~ : LottieProperty[Array[Double]], s~ : LottieProperty[Array[Double]]) -> Self
+pub fn EllipseShape::new(position~ : LottieProperty[Array[Double]], size~ : LottieProperty[Array[Double]], direction? : Int) -> Self
 
 pub enum FillRule {
   NonZeroFill
@@ -108,38 +116,57 @@ pub fn FillRule::to_int(Self) -> Int
 pub fn FillRule::to_svg_string(Self) -> String
 
 pub struct FillShape {
-  c : LottieProperty[Array[Double]]
-  o : LottieProperty[Double]
+  color : LottieProperty[Array[Double]]
+  opacity : LottieProperty[Double]
+  fill_rule : Int
 }
-pub fn FillShape::new(c~ : LottieProperty[Array[Double]], o~ : LottieProperty[Double]) -> Self
+pub fn FillShape::new(color~ : LottieProperty[Array[Double]], opacity~ : LottieProperty[Double], fill_rule? : Int) -> Self
+
+pub(all) struct FontInfo {
+  name : String
+  family : String
+  style : String
+  ascent : Double
+}
+
+pub(all) struct GlyphInfo {
+  ch : String
+  style : String
+  family : String
+  size : Double
+  advance_width : Double
+  shapes : Array[Shape]
+}
 
 pub struct GradientColors {
-  p : Int
-  k : LottieProperty[Array[Double]]
+  color_count : Int
+  color_stops : LottieProperty[Array[Double]]
 }
-pub fn GradientColors::new(p~ : Int, k~ : LottieProperty[Array[Double]]) -> Self
+pub fn GradientColors::new(color_count~ : Int, color_stops~ : LottieProperty[Array[Double]]) -> Self
 
 pub struct GradientFillShape {
-  t : GradientType
-  o : LottieProperty[Double]
-  s : LottieProperty[Array[Double]]
-  e : LottieProperty[Array[Double]]
-  g : GradientColors
+  gradient_type : GradientType
+  opacity : LottieProperty[Double]
+  start_point : LottieProperty[Array[Double]]
+  end_point : LottieProperty[Array[Double]]
+  gradient_colors : GradientColors
+  fill_rule : Int
 }
-pub fn GradientFillShape::new(t~ : Int, o~ : LottieProperty[Double], s~ : LottieProperty[Array[Double]], e~ : LottieProperty[Array[Double]], g~ : GradientColors) -> Self
+pub fn GradientFillShape::new(gradient_type~ : Int, opacity~ : LottieProperty[Double], start_point~ : LottieProperty[Array[Double]], end_point~ : LottieProperty[Array[Double]], gradient_colors~ : GradientColors, fill_rule? : Int) -> Self
 
 pub struct GradientStrokeShape {
-  t : GradientType
-  o : LottieProperty[Double]
-  s : LottieProperty[Array[Double]]
-  e : LottieProperty[Array[Double]]
-  g : GradientColors
-  w : LottieProperty[Double]
-  lc : Int
-  lj : Int
-  ml : Double
+  gradient_type : GradientType
+  opacity : LottieProperty[Double]
+  start_point : LottieProperty[Array[Double]]
+  end_point : LottieProperty[Array[Double]]
+  gradient_colors : GradientColors
+  width : LottieProperty[Double]
+  line_cap : Int
+  line_join : Int
+  miter_limit : Double
+  dashes : Array[DashItem]
 }
-pub fn GradientStrokeShape::new(t~ : Int, o~ : LottieProperty[Double], s~ : LottieProperty[Array[Double]], e~ : LottieProperty[Array[Double]], g~ : GradientColors, w~ : LottieProperty[Double], lc? : Int, lj? : Int, ml? : Double) -> Self
+pub fn GradientStrokeShape::new(gradient_type~ : Int, opacity~ : LottieProperty[Double], start_point~ : LottieProperty[Array[Double]], end_point~ : LottieProperty[Array[Double]], gradient_colors~ : GradientColors, width~ : LottieProperty[Double], line_cap? : Int, line_join? : Int, miter_limit? : Double, dashes? : Array[DashItem]) -> Self
 
 pub enum GradientType {
   Linear
@@ -148,24 +175,26 @@ pub enum GradientType {
 pub fn GradientType::from_int(Int) -> Self
 
 pub struct Layer {
-  ddd : Int?
-  ind : Int
-  ty : Int
-  nm : String?
+  three_d : Int?
+  index : Int
+  layer_type : Int
+  name : String?
   parent : Int?
-  ks : Transform
-  ao : Int?
-  ip : Double
-  op : Double
-  st : Double
-  bm : Int?
-  hd : Bool?
+  transform : Transform
+  auto_orient : Int?
+  in_point : Double
+  out_point : Double
+  start_time : Double
+  blend_mode : Int?
+  hidden : Bool?
   masks : Array[Mask]?
-  tt : Int?
-  td : Int?
+  matte_type : Int?
+  matte_inherit : Int?
+  fill_effect : LayerFillEffect?
+  time_remap : LottieProperty[Double]?
   data : LayerData
 }
-pub fn Layer::new(ind~ : Int, ty~ : Int, ks~ : Transform, ip~ : Double, op~ : Double, st~ : Double, ddd? : Int?, nm? : String?, parent? : Int?, ao? : Int?, bm? : Int?, hd? : Bool?, masks? : Array[Mask]?, tt? : Int?, td? : Int?, data? : LayerData) -> Self
+pub fn Layer::new(index~ : Int, layer_type~ : Int, transform~ : Transform, in_point~ : Double, out_point~ : Double, start_time~ : Double, three_d? : Int?, name? : String?, parent? : Int?, auto_orient? : Int?, blend_mode? : Int?, hidden? : Bool?, masks? : Array[Mask]?, matte_type? : Int?, matte_inherit? : Int?, fill_effect? : LayerFillEffect?, time_remap? : LottieProperty[Double]?, data? : LayerData) -> Self
 
 pub(all) enum LayerData {
   Shape(Array[Shape])
@@ -178,6 +207,12 @@ pub(all) enum LayerData {
 pub fn LayerData::new_null() -> Self
 pub fn LayerData::new_shape(Array[Shape]) -> Self
 pub fn LayerData::new_solid(String, Int, Int) -> Self
+
+pub(all) struct LayerFillEffect {
+  color : LottieProperty[Array[Double]]
+  opacity : LottieProperty[Double]
+}
+pub fn LayerFillEffect::new(color~ : LottieProperty[Array[Double]], opacity~ : LottieProperty[Double]) -> Self
 
 pub enum LineCap {
   Butt
@@ -205,7 +240,7 @@ pub struct LottieKeyframe[T] {
   value_out_tangent : Array[Double]?
   hold : Int?
 }
-pub fn[T] LottieKeyframe::new(frame~ : Int, start_value~ : T, end_value? : T?, in_tangent? : Bezier?, out_tangent? : Bezier?, value_in_tangent? : Array[Double]?, value_out_tangent? : Array[Double]?, hold? : Int?) -> Self[T]
+pub fn[T] LottieKeyframe::new(frame~ : Double, start_value~ : T, end_value? : T?, in_tangent? : Bezier?, out_tangent? : Bezier?, value_in_tangent? : Array[Double]?, value_out_tangent? : Array[Double]?, hold? : Int?) -> Self[T]
 
 pub struct LottieProperty[T] {
   animated : Int
@@ -216,31 +251,31 @@ pub fn[T] LottieProperty::new_animated(Array[LottieKeyframe[T]], expression? : S
 pub fn[T] LottieProperty::new_static(T, expression? : String?) -> Self[T]
 
 pub struct Marker {
-  tm : Double
-  dur : Double
-  dr : Double?
+  time : Double
+  duration : Double
+  marker_type : Double?
 }
 
 pub struct Mask {
-  nm : String?
-  inv : Bool
-  pt : LottieProperty[BezierPath]
-  o : LottieProperty[Double]
+  name : String?
+  inverted : Bool
+  path : LottieProperty[BezierPath]
+  opacity : LottieProperty[Double]
+  expansion : LottieProperty[Double]
   mode : MaskMode
 }
-pub fn Mask::new(inv~ : Bool, pt~ : LottieProperty[BezierPath], o~ : LottieProperty[Double], mode~ : MaskMode, nm? : String?) -> Self
+pub fn Mask::new(inverted~ : Bool, path~ : LottieProperty[BezierPath], opacity~ : LottieProperty[Double], expansion~ : LottieProperty[Double], mode~ : MaskMode, name? : String?) -> Self
 
 pub(all) enum MaskMode {
   Add
+  LegacyAdd
   Subtract
   Intersect
   Lighten
   Darken
   Difference
   None
-}
-pub impl Eq for MaskMode
-pub impl Show for MaskMode
+} derive(Eq, Show)
 
 pub enum MatteMode {
   Normal
@@ -261,26 +296,26 @@ pub enum MergeMode {
 }
 
 pub struct MergePaths {
-  mm : MergeMode
+  merge_mode : MergeMode
 }
 pub fn MergePaths::new(Int) -> Self
 
 pub struct PathShape {
-  ks : LottieProperty[BezierPath]
+  path : LottieProperty[BezierPath]
 }
-pub fn PathShape::new(ks~ : LottieProperty[BezierPath]) -> Self
+pub fn PathShape::new(path~ : LottieProperty[BezierPath]) -> Self
 
 pub struct PolystarShape {
-  pt : LottieProperty[Double]
-  p : LottieProperty[Array[Double]]
-  r : LottieProperty[Double]
-  ir : LottieProperty[Double]
-  ir_round : LottieProperty[Double]
-  or : LottieProperty[Double]
-  or_round : LottieProperty[Double]
-  sy : Int
+  points : LottieProperty[Double]
+  position : LottieProperty[Array[Double]]
+  rotation : LottieProperty[Double]
+  inner_radius : LottieProperty[Double]
+  inner_roundness : LottieProperty[Double]
+  outer_radius : LottieProperty[Double]
+  outer_roundness : LottieProperty[Double]
+  star_type : Int
 }
-pub fn PolystarShape::new(pt~ : LottieProperty[Double], p~ : LottieProperty[Array[Double]], r~ : LottieProperty[Double], ir~ : LottieProperty[Double], ir_round~ : LottieProperty[Double], or~ : LottieProperty[Double], or_round~ : LottieProperty[Double], sy~ : Int) -> Self
+pub fn PolystarShape::new(points~ : LottieProperty[Double], position~ : LottieProperty[Array[Double]], rotation~ : LottieProperty[Double], inner_radius~ : LottieProperty[Double], inner_roundness~ : LottieProperty[Double], outer_radius~ : LottieProperty[Double], outer_roundness~ : LottieProperty[Double], star_type~ : Int) -> Self
 
 pub enum PropertyValue[T] {
   Static(T)
@@ -288,33 +323,36 @@ pub enum PropertyValue[T] {
 }
 
 pub struct RectShape {
-  p : LottieProperty[Array[Double]]
-  s : LottieProperty[Array[Double]]
-  r : LottieProperty[Double]
+  position : LottieProperty[Array[Double]]
+  size : LottieProperty[Array[Double]]
+  roundness : LottieProperty[Double]
+  direction : Int
 }
-pub fn RectShape::new(p~ : LottieProperty[Array[Double]], s~ : LottieProperty[Array[Double]], r~ : LottieProperty[Double]) -> Self
+pub fn RectShape::new(position~ : LottieProperty[Array[Double]], size~ : LottieProperty[Array[Double]], roundness~ : LottieProperty[Double], direction? : Int) -> Self
 
 pub struct Repeater {
-  c : LottieProperty[Double]
-  o : LottieProperty[Double]
-  m : Int
-  tr : Transform
+  copies : LottieProperty[Double]
+  offset : LottieProperty[Double]
+  composite : Int
+  transform : Transform
+  start_opacity : LottieProperty[Double]
+  end_opacity : LottieProperty[Double]
 }
-pub fn Repeater::new(c~ : LottieProperty[Double], o~ : LottieProperty[Double], m? : Int, tr~ : Transform) -> Self
+pub fn Repeater::new(copies~ : LottieProperty[Double], offset~ : LottieProperty[Double], composite? : Int, transform~ : Transform, start_opacity? : LottieProperty[Double], end_opacity? : LottieProperty[Double]) -> Self
 
 pub struct Rounding {
-  r : LottieProperty[Double]
+  radius : LottieProperty[Double]
 }
-pub fn Rounding::new(r~ : LottieProperty[Double]) -> Self
+pub fn Rounding::new(radius~ : LottieProperty[Double]) -> Self
 
 pub struct Shape {
-  nm : String?
-  ty : String
-  d : Int?
-  hd : Bool?
+  name : String?
+  shape_type : String
+  direction : Int?
+  hidden : Bool?
   data : ShapeData
 }
-pub fn Shape::new(ty~ : String, data~ : ShapeData, nm? : String?, d? : Int?, hd? : Bool?) -> Self
+pub fn Shape::new(shape_type~ : String, data~ : ShapeData, name? : String?, direction? : Int?, hidden? : Bool?) -> Self
 
 pub enum ShapeData {
   Group(Array[Shape])
@@ -348,28 +386,64 @@ pub fn ShapeData::new_transform(Transform) -> Self
 pub fn ShapeData::new_trim_path(TrimPath) -> Self
 
 pub struct StrokeShape {
-  c : LottieProperty[Array[Double]]
-  o : LottieProperty[Double]
-  w : LottieProperty[Double]
-  lc : Int
-  lj : Int
-  ml : Double
+  color : LottieProperty[Array[Double]]
+  opacity : LottieProperty[Double]
+  width : LottieProperty[Double]
+  line_cap : Int
+  line_join : Int
+  miter_limit : Double
+  dashes : Array[DashItem]
 }
-pub fn StrokeShape::new(c~ : LottieProperty[Array[Double]], o~ : LottieProperty[Double], w~ : LottieProperty[Double], lc? : Int, lj? : Int, ml? : Double) -> Self
+pub fn StrokeShape::new(color~ : LottieProperty[Array[Double]], opacity~ : LottieProperty[Double], width~ : LottieProperty[Double], line_cap? : Int, line_join? : Int, miter_limit? : Double, dashes? : Array[DashItem]) -> Self
+
+pub(all) struct TextAnimator {
+  selector : TextAnimatorSelector
+  properties : TextAnimatorProperties
+}
+
+pub(all) struct TextAnimatorProperties {
+  scale : LottieProperty[Array[Double]]?
+  position : LottieProperty[Array[Double]]?
+  rotation : LottieProperty[Double]?
+  opacity : LottieProperty[Double]?
+  tracking : LottieProperty[Double]?
+  fill_color : LottieProperty[Array[Double]]?
+  stroke_color : LottieProperty[Array[Double]]?
+  stroke_width : LottieProperty[Double]?
+}
+
+pub(all) struct TextAnimatorSelector {
+  based_on : Int
+  shape : Int
+  range_units : Int
+  randomize : Int
+  range_start : LottieProperty[Double]
+  range_end : LottieProperty[Double]
+  ease_high : LottieProperty[Double]
+  ease_low : LottieProperty[Double]
+  amount : LottieProperty[Double]
+  offset : LottieProperty[Double]
+}
 
 pub(all) struct TextData {
   text : LottieProperty[TextDocument]
+  animators : Array[TextAnimator]
+  anchor_grouping : Int
+  grouping_alignment : LottieProperty[Array[Double]]
 }
 
 pub(all) struct TextDocument {
-  s : Double
-  f : String
-  t : String
-  j : Int
-  tr : Double
-  lh : Double
-  ls : Double
-  fc : Array[Double]
+  size : Double
+  font : String
+  text : String
+  justify : Int
+  tracking : Double
+  line_height : Double
+  baseline_shift : Double
+  fill_color : Array[Double]
+  stroke_color : Array[Double]
+  stroke_width : Double
+  stroke_over_fill : Bool
 }
 
 pub struct Transform {
@@ -377,24 +451,25 @@ pub struct Transform {
   position : LottieProperty[Array[Double]]
   px : LottieProperty[Double]?
   py : LottieProperty[Double]?
-  s : Bool?
+  split : Bool?
   scale : LottieProperty[Array[Double]]
   rotation : LottieProperty[Double]
   opacity : LottieProperty[Double]
   skew : LottieProperty[Double]?
   skew_axis : LottieProperty[Double]?
 }
-pub fn Transform::new(anchor~ : LottieProperty[Array[Double]], position~ : LottieProperty[Array[Double]], scale~ : LottieProperty[Array[Double]], rotation~ : LottieProperty[Double], opacity~ : LottieProperty[Double], px? : LottieProperty[Double]?, py? : LottieProperty[Double]?, s? : Bool?, skew? : LottieProperty[Double]?, skew_axis? : LottieProperty[Double]?) -> Self
+pub fn Transform::new(anchor~ : LottieProperty[Array[Double]], position~ : LottieProperty[Array[Double]], scale~ : LottieProperty[Array[Double]], rotation~ : LottieProperty[Double], opacity~ : LottieProperty[Double], px? : LottieProperty[Double]?, py? : LottieProperty[Double]?, split? : Bool?, skew? : LottieProperty[Double]?, skew_axis? : LottieProperty[Double]?) -> Self
 pub fn Transform::new_default() -> Self
 
 pub struct TrimPath {
-  s : LottieProperty[Double]
-  e : LottieProperty[Double]
-  o : LottieProperty[Double]
-  m : Int
+  start : LottieProperty[Double]
+  end : LottieProperty[Double]
+  offset : LottieProperty[Double]
+  multiple : Int
 }
-pub fn TrimPath::new(s~ : LottieProperty[Double], e~ : LottieProperty[Double], o~ : LottieProperty[Double], m? : Int) -> Self
+pub fn TrimPath::new(start~ : LottieProperty[Double], end~ : LottieProperty[Double], offset~ : LottieProperty[Double], multiple? : Int) -> Self
 
 // Type aliases
 
 // Traits
+

@@ -1,12 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "cg-zhou/moon-lottie/cmd/main"
+package "cg-zhou/moon_lottie/cmd/player_runtime"
 
 import {
-  "cg-zhou/moon-lottie/lib/renderer",
+  "cg-zhou/moon_lottie/lib/renderer",
 }
 
 // Values
 pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]?
+
+pub fn create_svg_animation_from_js() -> SvgAnimationHandle?
 
 pub fn get_fps(@renderer.Player[@renderer.CanvasRenderer]) -> Double
 
@@ -20,6 +22,8 @@ pub fn get_version(@renderer.Player[@renderer.CanvasRenderer]) -> String
 
 pub fn get_width(@renderer.Player[@renderer.CanvasRenderer]) -> Int
 
+pub fn render_svg_frame(SvgAnimationHandle, Double) -> String
+
 pub fn update_player(@renderer.Player[@renderer.CanvasRenderer], Double) -> Unit
 
 pub fn update_player_with_speed(@renderer.Player[@renderer.CanvasRenderer], Double, Double) -> Double
@@ -27,6 +31,7 @@ pub fn update_player_with_speed(@renderer.Player[@renderer.CanvasRenderer], Doub
 // Errors
 
 // Types and methods
+type SvgAnimationHandle
 
 // Type aliases
 

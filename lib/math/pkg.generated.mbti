@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "cg-zhou/moon-lottie/lib/math"
+package "cg-zhou/moon_lottie/lib/math"
 
 // Values
 pub fn get_cubic_bezier_length(Vector2, Vector2, Vector2, Vector2, Int) -> Double
@@ -28,7 +28,7 @@ pub struct Matrix {
   d : Double
   e : Double
   f : Double
-}
+} derive(Eq, Show)
 pub fn Matrix::identity() -> Self
 pub fn Matrix::multiply(Self, Self) -> Self
 pub fn Matrix::new(Double, Double, Double, Double, Double, Double) -> Self
@@ -36,8 +36,6 @@ pub fn Matrix::rotate(Self, Double) -> Self
 pub fn Matrix::scale(Self, Double, Double) -> Self
 pub fn Matrix::transform_point(Self, Double, Double) -> (Double, Double)
 pub fn Matrix::translate(Self, Double, Double) -> Self
-pub impl Eq for Matrix
-pub impl Show for Matrix
 
 pub struct Vector2 {
   x : Double

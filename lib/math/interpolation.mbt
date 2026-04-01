@@ -57,6 +57,6 @@ pub fn solve_cubic_bezier_easing(
 
   let safe_x1 = if x1 < 0.0 { 0.0 } else if x1 > 1.0 { 1.0 } else { x1 }
   let safe_x2 = if x2 < 0.0 { 0.0 } else if x2 > 1.0 { 1.0 } else { x2 }
-  let easing = @bezier.bezier(safe_x1, y1, safe_x2, y2)
+  let easing = @bezier_easing.bezier(safe_x1, y1, safe_x2, y2)
   easing(target_x)
 }
