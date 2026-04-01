@@ -4,7 +4,8 @@
   "type": "module",
   "workspaces": [
     "demo",
-    "packages/*"
+    "packages/*",
+    "packages/examples/*"
   ],
   "scripts": {
     "build:core": "moon build --target wasm-gc --release && moon build --target js --release && node scripts/sync-release.js",
