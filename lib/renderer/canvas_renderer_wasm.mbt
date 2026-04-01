@@ -604,7 +604,7 @@ pub impl Renderer for CanvasRenderer with supports_mask_composite(
   self : CanvasRenderer,
 ) -> Bool {
   let _ = self
-  canvas_supports_mask_composite()
+  false
 }
 
 ///|
