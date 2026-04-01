@@ -82,7 +82,7 @@ fn main {
 ///|
 #cfg(any(target="wasm", target="wasm-gc", target="js"))
 struct SvgAnimationHandle {
-  animation : @model.Animation
+  player : @renderer.Player[@renderer.SvgRenderer]
 }
 
 ///|
@@ -123,7 +123,12 @@ pub fn create_player_from_js() -> @renderer.Player[@renderer.CanvasRenderer]? {
 pub fn create_svg_animation_from_js() -> SvgAnimationHandle? {
   try {
     let animation = parse_animation_from_js()
-    Some({ animation, })
+    let renderer = @renderer.SvgRenderer::new(
+      animation.width.to_double(),
+      animation.height.to_double(),
+    )
+    let player = @renderer.Player::new(animation, renderer)
+    Some({ player, })
   } catch {
     _ => None
   }
@@ -202,12 +207,8 @@ pub fn render_svg_frame(
   handle : SvgAnimationHandle,
   frame : Double,
 ) -> String {
-  let renderer = @renderer.SvgRenderer::new(
-    handle.animation.width.to_double(),
-    handle.animation.height.to_double(),
-  )
-  let player = @renderer.Player::new(handle.animation, renderer)
+  let player = handle.player
   player.set_frame(frame)
   player.render()
-  renderer.get_output()
+  player.renderer.get_output()
 }

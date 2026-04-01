@@ -6,8 +6,8 @@ pub struct SvgRenderer {
   width : Double
   height : Double
   mut buffer : StringBuilder
-  defs_buffer : StringBuilder
-  state_stack : Array[SvgRendererState]
+  mut defs_buffer : StringBuilder
+  mut state_stack : Array[SvgRendererState]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
   mut gradient_count : Int
@@ -19,9 +19,9 @@ pub struct SvgRenderer {
   mut current_miter_limit : Double
   mut current_dash_array : Array[Double]
   mut current_dash_offset : Double
-  layer_stack : Array[SvgLayerCapture]
-  matte_stack : Array[SvgMatteCapture]
-  mask_stack : Array[SvgMaskCompositeCapture]
+  mut layer_stack : Array[SvgLayerCapture]
+  mut matte_stack : Array[SvgMatteCapture]
+  mut mask_stack : Array[SvgMaskCompositeCapture]
 }
 
 ///|
@@ -77,6 +77,27 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
     matte_stack: [],
     mask_stack: [],
   }
+}
+
+///|
+fn SvgRenderer::reset(self : SvgRenderer) -> Unit {
+  self.buffer = StringBuilder::new()
+  self.defs_buffer = StringBuilder::new()
+  self.state_stack = []
+  self.current_matrix = @math.Matrix::identity()
+  self.path_buffer = StringBuilder::new()
+  self.gradient_count = 0
+  self.group_depth = 0
+  self.current_fill_rule = "nonzero"
+  self.current_blend_mode = "source-over"
+  self.current_line_cap = 1
+  self.current_line_join = 1
+  self.current_miter_limit = 4.0
+  self.current_dash_array = []
+  self.current_dash_offset = 0.0
+  self.layer_stack = []
+  self.matte_stack = []
+  self.mask_stack = []
 }
 
 ///|
@@ -643,7 +664,7 @@ pub impl Renderer for SvgRenderer with apply_mask_path(
       if mode == 3 {
         let mask_id = self.next_id("mask_intersect")
         self.defs_buffer.write_string(
-          "<mask id=\"\{mask_id}\" mask-type=\"alpha\">",
+          "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">",
         )
         self.defs_buffer.write_string(path_markup)
         self.defs_buffer.write_string("</mask>")
@@ -682,7 +703,9 @@ pub impl Renderer for SvgRenderer with end_mask_composite(
         return
       }
       let mask_id = self.next_id("mask")
-      self.defs_buffer.write_string("<mask id=\"\{mask_id}\">")
+      self.defs_buffer.write_string(
+        "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\">",
+      )
       for item in state.items {
         self.defs_buffer.write_string(item)
       }
@@ -703,7 +726,7 @@ pub impl Renderer for SvgRenderer with clear_rect(
   w : Double,
   h : Double,
 ) -> Unit {
-  let _ = self
+  self.reset()
   let _ = x
   let _ = y
   let _ = w
