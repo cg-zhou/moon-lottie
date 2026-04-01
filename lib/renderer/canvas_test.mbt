@@ -16,10 +16,3 @@ test "canvas_renderer_impl" {
     r,
   )
 }
-
-///|
-#cfg(any(target="wasm", target="wasm-gc"))
-test "canvas renderer keeps clip-based layer masks" {
-  let r = CanvasRenderer::new()
-  assert_false(r.supports_mask_composite())
-}
