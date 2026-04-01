@@ -516,7 +516,7 @@ export default function Playground({ active = true }) {
             },
           )
           if (disposed) return
-          const restoreFrame = Number.isFinite(snapshot.currentFrame) ? snapshot.currentFrame : restoredState.currentAnimationMeta?.inPoint || 0
+          const restoreFrame = Number.isFinite(snapshot.currentFrame) ? snapshot.currentFrame : (restoredState.currentAnimationMeta?.inPoint ?? 0)
           controllerRef.current.seek(restoreFrame)
           if (snapshot.isPlaying) {
             controllerRef.current.play()
