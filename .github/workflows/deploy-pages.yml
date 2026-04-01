@@ -34,7 +34,7 @@ jobs:
         run: moon update
 
       - name: Install workspace dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build unified deploy bundle
         run: npm run build:deploy
