@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button, Descriptions, Empty, Input, Radio, Switch, Tag } from "antd"
 import {
   animationUsesExpressions,
+  cloneAnimationData,
   createCanvasRuntimeBridge,
   createOfficialPlayerController,
   createPlayer,
@@ -188,6 +189,11 @@ export default function Playground({ active = true }) {
 
   compareEnabledRef.current = compareEnabled
   currentSpeedRef.current = currentSpeed
+  const playbackSnapshot = animationSnapshotRef.current
+  if (playbackSnapshot) {
+    playbackSnapshot.currentFrame = currentFrame
+    playbackSnapshot.isPlaying = isPlaying
+  }
 
   function syncPlayerState(state) {
     stateRef.current = {
@@ -220,18 +226,22 @@ export default function Playground({ active = true }) {
       animationSnapshotRef.current = {
         filename: stateRef.current.currentFileName,
         size: stateRef.current.currentFileSize,
-        animationData: stateRef.current.currentAnimationData,
+        animationData: cloneAnimationData(stateRef.current.currentAnimationData),
+        currentFrame: state?.currentFrame ?? currentFrame,
+        isPlaying: state?.isPlaying ?? isPlaying,
       }
     }
   }
 
-  function renderCurrentFrame() {
-    const runtime = stateRef.current.runtime
-    const player = stateRef.current.nativePlayer
+  function renderCurrentFrame(frame = controllerRef.current?.getCurrentFrame() || 0, options = {}) {
+    const runtime = options.runtime ?? stateRef.current.runtime
+    const player = options.player ?? stateRef.current.nativePlayer
     if (runtime && player) {
-      runtimeBridgeRef.current?.renderFrame(runtime, player, controllerRef.current?.getCurrentFrame() || 0)
+      runtimeBridgeRef.current?.renderFrame(runtime, player, frame)
     }
-    officialControllerRef.current?.seek(controllerRef.current?.getCurrentFrame() || 0)
+    if (options.syncOfficial !== false) {
+      officialControllerRef.current?.seek(frame)
+    }
   }
 
   function updateStatus(message, color = null) {
@@ -456,8 +466,11 @@ export default function Playground({ active = true }) {
         },
         getSpeed: () => currentSpeedRef.current,
         getCompareEnabled: () => compareEnabledRef.current,
-        renderFrame: () => {
-          renderCurrentFrame()
+        renderFrame: (frame, state) => {
+          renderCurrentFrame(frame, {
+            runtime: state?.runtime,
+            player: state?.nativePlayer,
+          })
         },
         createNativePlayer: (runtime) => moonRenderer === "svg"
           ? runtime.create_svg_animation_from_js()
@@ -471,9 +484,15 @@ export default function Playground({ active = true }) {
           syncPlayerState(state)
         },
         onFrameChange: ({ currentFrame: nextFrame }) => {
+          if (animationSnapshotRef.current) {
+            animationSnapshotRef.current.currentFrame = nextFrame
+          }
           setCurrentFrame((previousFrame) => (previousFrame === nextFrame ? previousFrame : nextFrame))
         },
         onPlayStateChange: ({ isPlaying: nextIsPlaying }) => {
+          if (animationSnapshotRef.current) {
+            animationSnapshotRef.current.isPlaying = nextIsPlaying
+          }
           setIsPlaying(nextIsPlaying)
         },
       })
@@ -497,9 +516,15 @@ export default function Playground({ active = true }) {
             },
           )
           if (disposed) return
-          syncPlayerState(restoredState)
+          const restoreFrame = Number.isFinite(snapshot.currentFrame) ? snapshot.currentFrame : (restoredState.currentAnimationMeta?.inPoint ?? 0)
+          controllerRef.current.seek(restoreFrame)
+          if (snapshot.isPlaying) {
+            controllerRef.current.play()
+          } else {
+            controllerRef.current.pause()
+          }
           updateStatus(`已切换 MoonLottie 渲染器: ${moonRenderer}`, "#34c759")
-          renderCurrentFrame()
+          renderCurrentFrame(restoreFrame)
         } else {
           await initAnimationList()
         }
