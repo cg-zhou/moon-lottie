@@ -1,6 +1,6 @@
 {
   "name": "@moon-lottie/react",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "The official React wrapper for Moon Lottie",
   "type": "module",
   "main": "./src/index.js",
@@ -20,7 +20,7 @@
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@moon-lottie/core": "0.1.4"
+    "@moon-lottie/core": "0.1.5"
   },
   "repository": {
     "type": "git",
