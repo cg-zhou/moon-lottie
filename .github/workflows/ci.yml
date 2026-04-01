@@ -90,7 +90,7 @@ jobs:
           printf '{"schemaVersion":1,"label":"source lines","message":"%s","color":"blue"}\n' "${LINES_SOURCE:-0}" > badges/lines-source.json
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build unified deploy bundle
         run: npm run build:deploy
