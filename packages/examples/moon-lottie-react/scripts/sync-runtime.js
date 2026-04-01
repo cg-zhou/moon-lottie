@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, resolve } from 'node:path'
+import { dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
@@ -16,7 +16,7 @@ const files = [
 ]
 
 for (const [sourceRelativePath, targetRelativePath] of files) {
-  const sourcePath = sourceRelativePath.startsWith('/') ? sourceRelativePath : resolve(projectRoot, sourceRelativePath)
+  const sourcePath = isAbsolute(sourceRelativePath) ? sourceRelativePath : resolve(projectRoot, sourceRelativePath)
   const targetPath = resolve(projectRoot, targetRelativePath)
 
   if (!existsSync(sourcePath)) {
