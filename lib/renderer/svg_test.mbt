@@ -123,6 +123,22 @@ test "render_animation_to_svgs utility" {
 }
 
 ///|
+test "SvgRenderer reuses renderer state without duplicating previous frame markup" {
+  let json_str = "{\"v\":\"5.5.2\",\"fr\":30,\"ip\":0,\"op\":10,\"w\":100,\"h\":100,\"nm\":\"test\",\"ddd\":0,\"assets\":[],\"layers\":[{\"ty\":4,\"ks\":{\"p\":{\"a\":0,\"k\":[50,50]},\"s\":{\"a\":0,\"k\":[100,100]},\"r\":{\"a\":0,\"k\":0},\"o\":{\"a\":0,\"k\":100},\"a\":{\"a\":0,\"k\":[0,0]}},\"nm\":\"r\",\"shapes\":[{\"ty\":\"gr\",\"it\":[{\"ty\":\"rc\",\"s\":{\"a\":0,\"k\":[20,20]},\"p\":{\"a\":0,\"k\":[0,0]},\"r\":{\"a\":0,\"k\":0},\"nm\":\"r\"},{\"ty\":\"fl\",\"c\":{\"a\":0,\"k\":[1,0,0]},\"o\":{\"a\":0,\"k\":100},\"nm\":\"f\"}]}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch { _ => fail("Parse failed") }
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  let player = @renderer.Player::new(ani, renderer)
+  player.set_frame(0.0)
+  player.render()
+  let first = renderer.get_output()
+  player.set_frame(0.0)
+  player.render()
+  let second = renderer.get_output()
+  assert_eq(second, first)
+}
+
+///|
 test "SvgRenderer escapes text content" {
   let renderer = SvgRenderer::new(100.0, 100.0)
   renderer.draw_text("A&B<test>\"'", "Arial\"'", 16.0, 255, 255, 255, 1.0, 0)
@@ -261,8 +277,8 @@ test "SvgRenderer mask composite uses luminance root mask for subtract stacks" {
 
   let output = renderer.get_output()
   assert_true(
-    output.contains("<mask id=\"mask_0\">"),
-    "subtract stacks should create a root SVG mask",
+    output.contains("<mask id=\"mask_0\" maskUnits=\"userSpaceOnUse\">"),
+    "subtract stacks should create a root SVG mask in user space",
   )
   assert_true(
     !output.contains("<mask id=\"mask_0\" mask-type=\"alpha\">"),
@@ -314,8 +330,8 @@ test "SvgRenderer intersect mask nests prior stack inside alpha mask" {
 
   let output = renderer.get_output()
   assert_true(
-    output.contains("id=\"mask_intersect_0\" mask-type=\"alpha\""),
-    "intersect masks should use nested alpha masks like lottie-web",
+    output.contains("id=\"mask_intersect_0\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\""),
+    "intersect masks should use nested alpha masks in user space like lottie-web",
   )
   assert_true(
     output.contains("<g mask=\"url(#mask_intersect_0)\">"),

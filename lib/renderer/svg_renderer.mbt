@@ -80,6 +80,27 @@ pub fn SvgRenderer::new(width : Double, height : Double) -> SvgRenderer {
 }
 
 ///|
+fn SvgRenderer::reset(self : SvgRenderer) -> Unit {
+  self.buffer = StringBuilder::new()
+  self.defs_buffer = StringBuilder::new()
+  self.state_stack = []
+  self.current_matrix = @math.Matrix::identity()
+  self.path_buffer = StringBuilder::new()
+  self.gradient_count = 0
+  self.group_depth = 0
+  self.current_fill_rule = "nonzero"
+  self.current_blend_mode = "source-over"
+  self.current_line_cap = 1
+  self.current_line_join = 1
+  self.current_miter_limit = 4.0
+  self.current_dash_array = []
+  self.current_dash_offset = 0.0
+  self.layer_stack = []
+  self.matte_stack = []
+  self.mask_stack = []
+}
+
+///|
 fn fmt(v : Double) -> String {
   let factor = 100.0
   let rounded = (v * factor).to_int().to_double() / factor
@@ -643,7 +664,7 @@ pub impl Renderer for SvgRenderer with apply_mask_path(
       if mode == 3 {
         let mask_id = self.next_id("mask_intersect")
         self.defs_buffer.write_string(
-          "<mask id=\"\{mask_id}\" mask-type=\"alpha\">",
+          "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">",
         )
         self.defs_buffer.write_string(path_markup)
         self.defs_buffer.write_string("</mask>")
@@ -682,7 +703,9 @@ pub impl Renderer for SvgRenderer with end_mask_composite(
         return
       }
       let mask_id = self.next_id("mask")
-      self.defs_buffer.write_string("<mask id=\"\{mask_id}\">")
+      self.defs_buffer.write_string(
+        "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\">",
+      )
       for item in state.items {
         self.defs_buffer.write_string(item)
       }
@@ -703,7 +726,7 @@ pub impl Renderer for SvgRenderer with clear_rect(
   w : Double,
   h : Double,
 ) -> Unit {
-  let _ = self
+  self.reset()
   let _ = x
   let _ = y
   let _ = w
