@@ -6,8 +6,8 @@ pub struct SvgRenderer {
   width : Double
   height : Double
   mut buffer : StringBuilder
-  defs_buffer : StringBuilder
-  state_stack : Array[SvgRendererState]
+  mut defs_buffer : StringBuilder
+  mut state_stack : Array[SvgRendererState]
   mut current_matrix : @math.Matrix
   mut path_buffer : StringBuilder
   mut gradient_count : Int
@@ -19,9 +19,9 @@ pub struct SvgRenderer {
   mut current_miter_limit : Double
   mut current_dash_array : Array[Double]
   mut current_dash_offset : Double
-  layer_stack : Array[SvgLayerCapture]
-  matte_stack : Array[SvgMatteCapture]
-  mask_stack : Array[SvgMaskCompositeCapture]
+  mut layer_stack : Array[SvgLayerCapture]
+  mut matte_stack : Array[SvgMatteCapture]
+  mut mask_stack : Array[SvgMaskCompositeCapture]
 }
 
 ///|
