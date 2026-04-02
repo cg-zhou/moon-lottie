@@ -2010,7 +2010,7 @@ const _M0FP49cg_2dzhou12moon__lottie3lib4math24identity_2erecord_2f4662 = new _M
 const _M0FP49cg_2dzhou12moon__lottie3lib7runtime27expression__double__handler = new _M0TPC13ref3RefGOWsdisdEdE(undefined);
 const _M0FP49cg_2dzhou12moon__lottie3lib7runtime24expression__vec__handler = new _M0TPC13ref3RefGOWsdissEsE(undefined);
 const _M0FP49cg_2dzhou12moon__lottie3lib7runtime25expression__path__handler = new _M0TPC13ref3RefGOWsdissEsE(undefined);
-const _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1477 = "0123456789ABCDEF";
+const _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1986 = "0123456789ABCDEF";
 const _M0FPB33brute__force__find_2econstr_2f274 = 0;
 const _M0FPB43boyer__moore__horspool__find_2econstr_2f260 = 0;
 const _M0FPC28internal7strconv25max__mantissa__fast__path = _M0IPC16uint646UInt64PB3Shl3shl($2L, 52);
@@ -18473,19 +18473,19 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
   const p = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, x, y);
   _M0IPB13StringBuilderPB6Logger13write__string(self.path_buffer, `C${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(p1._0)},${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(p1._1)} ${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(p2._0)},${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(p2._1)} ${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(p._0)},${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(p._1)} `);
 }
-function _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1475(v) {
+function _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1984(v) {
   const v$2 = v < 0 ? 0 : v > 255 ? 255 : v;
   const high = v$2 / 16 | 0;
   const low = v$2 % 16 | 0;
   const s = _M0MPB13StringBuilder11new_2einner(0);
-  $bound_check(_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1477, high);
-  _M0IPB13StringBuilderPB6Logger11write__char(s, _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1477.charCodeAt(high));
-  $bound_check(_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1477, low);
-  _M0IPB13StringBuilderPB6Logger11write__char(s, _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1477.charCodeAt(low));
+  $bound_check(_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1986, high);
+  _M0IPB13StringBuilderPB6Logger11write__char(s, _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1986.charCodeAt(high));
+  $bound_check(_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1986, low);
+  _M0IPB13StringBuilderPB6Logger11write__char(s, _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS1986.charCodeAt(low));
   return s.val;
 }
 function _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hex(r, g, b) {
-  return `#${_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1475(r)}${_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1475(g)}${_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1475(b)}`;
+  return `#${_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1984(r)}${_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1984(g)}${_M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN3hexS1984(b)}`;
 }
 function _M0FP49cg_2dzhou12moon__lottie3lib8renderer17escape__xml__text(value) {
   const buffer = _M0MPB13StringBuilder11new_2einner(0);
@@ -19472,7 +19472,7 @@ function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player19evaluate__transform
 function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player19evaluate__transformGRP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererE(self, transform, frame) {
   return _M0FP49cg_2dzhou12moon__lottie3lib7runtime34evaluate__transform__with__context(transform, frame, self.current_layer_index, self.current_comp_id);
 }
-function _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(c) {
+function _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(c) {
   return c >= 48 && c <= 57 ? c - 48 | 0 : c >= 97 && c <= 102 ? (c - 97 | 0) + 10 | 0 : c >= 65 && c <= 70 ? (c - 65 | 0) + 10 | 0 : 0;
 }
 function _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__color(hex) {
@@ -19489,17 +19489,17 @@ function _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__color(hex) {
     return _M0FP49cg_2dzhou12moon__lottie3lib8renderer32parse__hex__color_2etuple_2f5498;
   }
   $bound_check(hex, 1);
-  const _tmp$2 = Math.imul(_M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(1)), 16) | 0;
+  const _tmp$2 = Math.imul(_M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(hex.charCodeAt(1)), 16) | 0;
   $bound_check(hex, 2);
-  const r = _tmp$2 + _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(2)) | 0;
+  const r = _tmp$2 + _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(hex.charCodeAt(2)) | 0;
   $bound_check(hex, 3);
-  const _tmp$3 = Math.imul(_M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(3)), 16) | 0;
+  const _tmp$3 = Math.imul(_M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(hex.charCodeAt(3)), 16) | 0;
   $bound_check(hex, 4);
-  const g = _tmp$3 + _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(4)) | 0;
+  const g = _tmp$3 + _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(hex.charCodeAt(4)) | 0;
   $bound_check(hex, 5);
-  const _tmp$4 = Math.imul(_M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(5)), 16) | 0;
+  const _tmp$4 = Math.imul(_M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(hex.charCodeAt(5)), 16) | 0;
   $bound_check(hex, 6);
-  const b = _tmp$4 + _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1056(hex.charCodeAt(6)) | 0;
+  const b = _tmp$4 + _M0FP49cg_2dzhou12moon__lottie3lib8renderer17parse__hex__colorN12hex__to__intS1565(hex.charCodeAt(6)) | 0;
   return { _0: r, _1: g, _2: b };
 }
 function _M0FP49cg_2dzhou12moon__lottie3lib8renderer26resolve__image__asset__src(asset) {
