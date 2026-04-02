@@ -28,7 +28,7 @@
 - 浏览器播放链路已经成立：当前 Demo 已支持上传、播放、调速、背景切换、官方对比等基本能力。
 - 双运行时方向已经成立：当前不仅有 Wasm-GC 路径，也有 JS fallback 路径。
 - npm 封装层已经成立：`@moon-lottie/core` 与 `@moon-lottie/react` 已发布，Web Component 作为 core 的一部分对外导出。
-- SVG 输出链路已经成立：当前不仅有 `svg_renderer`，也已有 `svg_cli` 作为非 Web 出口。
+- SVG 输出链路已经成立：当前不仅有 `svg_renderer`，也已有统一 `cmd/cli` 作为非 Web 出口，可导出 SVG 或终端渲染。
 - 站点已经不只是 Demo 页面，而是具备概览、特性、架构、路线等说明页的产品入口。
 - 测试与验证不再是空白：当前 `moon test` 已有 174 条测试通过，并已有浏览器截图/像素对比工具。
 
@@ -62,7 +62,7 @@
 #### 已落地的封装层与工程化
 - `@moon-lottie/core` 已发布，提供浏览器命令式播放器、运行时切换能力与 Web Component 导出。
 - `@moon-lottie/react` 已发布，当前版本处于 `0.1.x`，已支持常见播放控制与 Ref 转发。
-- SVG CLI 已落地：仓库内已有 `cmd/svg_cli`，可作为非 Web 输出路径。
+- 统一 CLI 已落地：仓库内已有 `cmd/cli`，可作为非 Web 输出路径，支持 SVG 导出与终端渲染。
 - 统一运行时命名：所有构建产物已统一命名为 `moon-lottie-runtime.js` 和 `moon-lottie-runtime.wasm`。
 - 工程化收口：建立了 `deploy-dist/` 统一分发目录，并修复了 CI 自动同步与构建链路。
 
@@ -100,7 +100,7 @@
 	- `demo/public/player/`
 	- `demo/src/components/Playground.jsx`
 	- `packages/moon-lottie-react/src/MoonLottiePlayer.jsx`
-	- `cmd/svg_cli/`
+	- `cmd/cli/`
 	- `demo/src/App.jsx`
 
 ## 3. 优先级排序
@@ -116,7 +116,7 @@
 - 在 Feature 页面中补充“这是什么、当前支持到什么程度、对应示例是什么”的说明。
 
 ### 3.3 优先级 3：输出能力
-- 把 SVG 渲染器和 `svg_cli` 从“仓库内已有能力”整理成“对外可理解、可复用的输出后端”。
+- 把 SVG 渲染器和统一 CLI 从“仓库内已有能力”整理成“对外可理解、可复用的输出后端”。
 - 补充非 Web 使用路径的示例、说明与边界文档，例如命令行 SVG 导出。
 - 继续保持 Wasm 与 JS 双运行时路径的一致性与可维护性。
 

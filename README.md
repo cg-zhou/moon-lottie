@@ -16,7 +16,7 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 - **Core Engine**: Typed Lottie model, parser, and rendering logic written in native MoonBit.
 - **Runtime**: High-performance execution via Wasm-GC and fallback JS.
 - **Frontend SDKs**: Modern wrappers for Vanilla JS, React, and Web Components.
-- **Toolchain**: A CLI tool for server-side or local frame-by-frame SVG exporting.
+- **Toolchain**: A unified CLI for server-side SVG exporting and terminal animation playback.
 
 ## Project Structure
 
@@ -24,7 +24,7 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 | --- | --- |
 | `lib/` | **The Core**: Parsing, modeling, and platform-agnostic rendering. |
 | `cmd/player_runtime` | Wasm-GC and JS bridge for browser environments. |
-| `cmd/svg_cli` | CLI utility for SVG batch exporting. |
+| `cmd/cli` | Unified CLI for SVG export and console rendering. |
 | `packages/` | Official wrappers for Vanilla JS, React, and Web Components. |
 | `demo/` | The project site (Preview, Playground, and features). |
 | `packages/examples/` | Standalone integration examples to verify SDK behavior. |
@@ -86,11 +86,18 @@ function App() {
 }
 ```
 
-### SVG Export CLI
-Export animations to individual SVG frames directly from your terminal:
+### Moon Lottie CLI
+Export animations to SVG frames or render them directly in the terminal:
 ```bash
-# Export all frames from a JSON file
-moon run cmd/svg_cli -- input.json -o ./output_frames
+# Export frames as SVG files
+moon run cmd/cli -- export svg input.json -o ./output_frames
+
+# Render a console animation with Drawille/Braille cells.
+# The animation always fits inside the requested width/height while preserving aspect ratio.
+moon run cmd/cli -- render console input.json --width 80 --height 40 --fps 30
+
+# Disable ANSI colors when capturing output
+moon run cmd/cli -- render console input.json --ansi off
 ```
 
 ## Features & Roadmap
@@ -101,7 +108,7 @@ Moon-lottie aims for full Lottie spec coverage. Current capabilities include:
 - ✅ **Compositing**: Layer masks, track mattes, and nested pre-compositions.
 - ✅ **Assets**: Full image layer support.
 - ✅ **Expressions**: JS-hosted expression evaluation.
-- 🚧 **Dashes (TODO)**: Dashed stroke implementation (in progress).
+- ✅ **Strokes**: Line caps, line joins, and dashed strokes across renderers.
 
 For detail coverage, please refer to our [Feature Matrix](https://lottie.cg-zhou.top/features).
 

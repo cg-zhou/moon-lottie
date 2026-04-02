@@ -9,7 +9,7 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 - **Core Engine**: Typed Lottie model, parser, and rendering logic written in native MoonBit.
 - **Runtime**: High-performance execution via Wasm-GC and fallback JS.
 - **Frontend SDKs**: Modern wrappers for Vanilla JS, React, and Web Components.
-- **Toolchain**: A CLI tool for server-side or local frame-by-frame SVG exporting.
+- **Toolchain**: A unified CLI for frame-by-frame SVG exporting and Drawille console rendering.
 
 ## Features
 
@@ -18,6 +18,7 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 - **Flexible Rendering**:
   - `SvgRenderer`: Frame-by-frame SVG string generation.
   - `CanvasRenderer`: High-performance rendering for browser Canvas.
+  - `DrawilleRenderer`: Terminal Braille/Drawille rendering for console playback.
 - **Expression Support**: Pluggable expression evaluation via host-provided handlers.
 
 ## Package Layout
@@ -69,7 +70,6 @@ fn render_svg(json_text : String) -> String raise {
 
 ## Known Gaps
 
-- 🚧 **Dashes (TODO)**: Dashed strokes are not implemented in the MoonBit renderer yet.
 - **Auto-orient**: Not yet implemented.
 - **Marker Support**: Under active development.
 - **Expressions**: Current implementation relies on JS host hooks for evaluation.

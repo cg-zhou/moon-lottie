@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/math" @std_math,
+  "cg-zhou/drawille",
   "cg-zhou/moon_lottie/lib/math",
   "cg-zhou/moon_lottie/lib/model",
   "cg-zhou/moon_lottie/lib/runtime",
