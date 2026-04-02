@@ -13,6 +13,8 @@ pub struct Player[R] {
   mut current_layer_index : Int
   mut current_comp_id : String
   mut current_paths : Array[@model.BezierPath]
+  mut renderer_matrix : @math.Matrix
+  mut renderer_matrix_stack : Array[@math.Matrix]
   mut debug_enabled : Bool
   mut debug_logs : Array[String]
   mut debug_layer : String
@@ -30,6 +32,8 @@ pub fn[R] Player::new(animation : @model.Animation, renderer : R) -> Player[R] {
     current_layer_index: -1,
     current_comp_id: "",
     current_paths: [],
+    renderer_matrix: @math.Matrix::identity(),
+    renderer_matrix_stack: [],
     debug_enabled: false,
     debug_logs: [],
     debug_layer: "",
@@ -110,6 +114,39 @@ pub fn[R] Player::get_debug_logs(self : Player[R]) -> Array[String] {
 }
 
 ///|
+fn[R : Renderer] Player::renderer_save(self : Player[R]) -> Unit {
+  self.renderer.save()
+  self.renderer_matrix_stack.push(self.renderer_matrix)
+}
+
+///|
+fn[R : Renderer] Player::renderer_restore(self : Player[R]) -> Unit {
+  self.renderer.restore()
+  match self.renderer_matrix_stack.pop() {
+    Some(matrix) => self.renderer_matrix = matrix
+    None => ()
+  }
+}
+
+///|
+fn[R : Renderer] Player::renderer_set_transform(
+  self : Player[R],
+  matrix : @math.Matrix,
+) -> Unit {
+  self.renderer.set_transform(matrix)
+  self.renderer_matrix = matrix
+}
+
+///|
+fn[R : Renderer] Player::renderer_concat_transform(
+  self : Player[R],
+  matrix : @math.Matrix,
+) -> Unit {
+  self.renderer.concat_transform(matrix)
+  self.renderer_matrix = self.renderer_matrix.multiply(matrix)
+}
+
+///|
 fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
   if self.debug_enabled {
     self.debug_logs.push(
@@ -123,8 +160,19 @@ fn[R] Player::debug_log(self : Player[R], stage : String) -> Unit {
 ///| dedicated mask buffer before applying it back to the isolated layer.
 fn[R : Renderer] Player::apply_layer_mask_composite(
   self : Player[R],
+  layer : @model.Layer,
+  scope : Array[@model.Layer],
+  comp_frame : Double,
   masks : Array[@model.Mask],
 ) -> Unit {
+  let base_matrix = self.renderer_matrix
+  match layer.parent {
+    Some(parent_ind) => self.apply_parent_transform(parent_ind, scope, comp_frame)
+    None => ()
+  }
+  let layer_matrix = self.evaluate_transform(layer.transform, comp_frame)
+  self.renderer_concat_transform(layer_matrix)
+
   let mut has_effective_mask = false
   for mask in masks {
     if mask.mode == @model.MaskMode::None {
@@ -153,6 +201,7 @@ fn[R : Renderer] Player::apply_layer_mask_composite(
   if has_effective_mask {
     self.renderer.end_mask_composite()
   }
+  self.renderer_set_transform(base_matrix)
 }
 
 ///|
@@ -163,7 +212,8 @@ pub fn[R : Renderer] Player::render(self : Player[R]) -> Unit {
     self.debug_shape = ""
     self.debug_property = ""
   }
-  self.renderer.set_transform(@math.Matrix::identity())
+  self.renderer_matrix_stack = []
+  self.renderer_set_transform(@math.Matrix::identity())
   self.renderer.clear_rect(
     0.0,
     0.0,
@@ -207,7 +257,7 @@ fn[R : Renderer] Player::apply_parent_transform(
         layer.index,
         self.current_comp_id,
       )
-      self.renderer.concat_transform(matrix)
+      self.renderer_concat_transform(matrix)
       return
     }
   }
@@ -303,7 +353,7 @@ fn[R : Renderer] Player::render_layer(
     None => ()
   }
 
-  self.renderer.save()
+  self.renderer_save()
 
   // 1. Apply Parent Transform
   match layer.parent {
@@ -316,7 +366,7 @@ fn[R : Renderer] Player::render_layer(
   // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
   // comp_frame vs t.
   let matrix = self.evaluate_transform(layer.transform, comp_frame)
-  self.renderer.concat_transform(matrix)
+  self.renderer_concat_transform(matrix)
 
   // 2.2 Apply Layer Opacity
   let opacity = self.evaluate_double(
@@ -363,7 +413,7 @@ fn[R : Renderer] Player::render_layer(
 
             if is_inv {
               // Difference: Save current state, then clip with a hole
-              self.renderer.save()
+              self.renderer_save()
               mask_restore_count = mask_restore_count + 1
               self.renderer.begin_path()
               self.renderer.move_to(-10000.0, -10000.0)
@@ -425,10 +475,10 @@ fn[R : Renderer] Player::render_layer(
 
   // 5. Restore clip-based mask states
   for _ in 0..<mask_restore_count {
-    self.renderer.restore()
+    self.renderer_restore()
   }
 
-  self.renderer.restore()
+  self.renderer_restore()
 
   // 6. Apply Layer Effects after restore() so isolated renderers (like SVG)
   // can composite against a balanced layer subtree.
@@ -439,7 +489,7 @@ fn[R : Renderer] Player::render_layer(
 
   // 7. Apply SVG-style layer mask compositing on the isolated layer content.
   match (layer.masks, use_mask_composite) {
-    (Some(masks), true) => self.apply_layer_mask_composite(masks)
+    (Some(masks), true) => self.apply_layer_mask_composite(layer, scope, comp_frame, masks)
     _ => ()
   }
 
@@ -456,10 +506,10 @@ fn[R : Renderer] Player::render_layer(
       // matching lottie-web's mask.renderFrame(true) called from exitLayer.
       let matte_saved_frame = self.current_frame
       self.current_frame = comp_frame
-      self.renderer.save()
-      self.renderer.set_transform(@math.Matrix::identity())
+      self.renderer_save()
+      self.renderer_set_transform(@math.Matrix::identity())
       self.render_layer(m_layer, scope)
-      self.renderer.restore()
+      self.renderer_restore()
       self.current_frame = matte_saved_frame
       // end_matte_exit: source-in composite buffer[1] (layer content) with
       // matte on canvas, then destination-over buffer[0] (background).
@@ -693,7 +743,7 @@ fn[R : Renderer] Player::render_layer_content(
               let saved_comp_id = self.current_comp_id
               self.current_frame = precomp_frame
               self.current_comp_id = ref_id
-              self.renderer.save()
+              self.renderer_save()
               self.renderer.begin_path()
               self.renderer.move_to(0.0, 0.0)
               self.renderer.line_to(w.to_double(), 0.0)
@@ -716,7 +766,7 @@ fn[R : Renderer] Player::render_layer_content(
                   }
                 None => ()
               }
-              self.renderer.restore()
+              self.renderer_restore()
               self.current_frame = saved_frame
               self.current_comp_id = saved_comp_id
               break
@@ -921,8 +971,8 @@ fn[R : Renderer] Player::render_shape_items(
     let needs_wrapper = draw_opacity < repeater_opacity_threshold ||
       draw_matrix != @math.Matrix::identity()
     if needs_wrapper {
-      self.renderer.save()
-      self.renderer.concat_transform(draw_matrix)
+      self.renderer_save()
+      self.renderer_concat_transform(draw_matrix)
       if draw_opacity < repeater_opacity_threshold {
         self.renderer.set_opacity(draw_opacity)
       }
@@ -954,7 +1004,7 @@ fn[R : Renderer] Player::render_shape_items(
       _ => ()
     }
     if needs_wrapper {
-      self.renderer.restore()
+      self.renderer_restore()
     }
   }
 
@@ -979,7 +1029,7 @@ pub fn[R : Renderer] Player::render_shape(
   }
   match shape.data {
     Group(items) => {
-      self.renderer.save()
+      self.renderer_save()
       let old_paths = self.current_paths
       self.current_paths = []
       let group_has_paint_ops = shape_group_has_paint(items)
@@ -1011,7 +1061,7 @@ pub fn[R : Renderer] Player::render_shape(
           self.current_paths.push(transform_path(p, group_matrix))
         }
       }
-      self.renderer.restore()
+      self.renderer_restore()
     }
     Rect(r) => {
       let p = self.evaluate_vec(r.position, self.current_comp_frame)
@@ -1182,7 +1232,7 @@ pub fn[R : Renderer] Player::render_shape(
     }
     Transform(tr) => {
       let matrix = self.evaluate_transform(tr, self.current_comp_frame)
-      self.renderer.concat_transform(matrix)
+      self.renderer_concat_transform(matrix)
       let opacity = self.evaluate_double(
         tr.opacity,
         self.current_comp_frame,
@@ -1241,7 +1291,7 @@ pub fn[R : Renderer] Player::render_shape(
             0.0
           }
           let copy_opacity = so + (eo - so) * t
-          self.renderer.save()
+          self.renderer_save()
           self.renderer.set_opacity(copy_opacity / 100.0)
         }
 
@@ -1250,7 +1300,7 @@ pub fn[R : Renderer] Player::render_shape(
         }
 
         if needs_opacity {
-          self.renderer.restore()
+          self.renderer_restore()
         }
 
         i = i + step
@@ -2684,7 +2734,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         )
         let saved_paths = self.current_paths
         self.current_paths = []
-        self.renderer.save()
+        self.renderer_save()
         let mut glyph_matrix = @math.Matrix::identity()
         glyph_matrix = glyph_matrix.translate(cursor_x, 0.0)
         glyph_matrix = glyph_matrix.translate(0.0, -doc.baseline_shift)
@@ -2699,7 +2749,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
         glyph_matrix = glyph_matrix.translate(-pivot_x, -pivot_y)
         glyph_matrix = glyph_matrix.translate(-offf, 0.0)
         glyph_matrix = glyph_matrix.scale(char_scale_x, char_scale_y)
-        self.renderer.concat_transform(glyph_matrix)
+        self.renderer_concat_transform(glyph_matrix)
         self.renderer.begin_path()
         self.emit_glyph_shape_paths(g.shapes)
         self.renderer.set_fill_rule("nonzero")
@@ -2717,7 +2767,7 @@ fn[R : Renderer] Player::render_text_with_glyphs(
           doc.stroke_over_fill,
         )
         self.current_paths = saved_paths
-        self.renderer.restore()
+        self.renderer_restore()
         break
       }
     }

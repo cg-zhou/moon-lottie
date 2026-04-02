@@ -188,6 +188,57 @@ test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
 }
 
 ///|
+test "snapshot_render_composite_mask_uses_layer_transform_space" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":10,\"w\":200,\"h\":200,\"layers\":[{\"ty\":3,\"ind\":1,\"ip\":0,\"op\":10,\"st\":0,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[40,30]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}},{\"ty\":1,\"ind\":2,\"parent\":1,\"ip\":0,\"op\":10,\"st\":0,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[20,10]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":100,\"sh\":100,\"sc\":\"#ff00ff\",\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[0,0],[40,0],[40,40],[0,40]],\"c\":true}},\"o\":{\"k\":100}},{\"inv\":false,\"mode\":\"i\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[10,10],[30,10],[30,30],[10,30]],\"c\":true}},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let matrix_stack : Array[@math.Matrix] = []
+  let mut current_matrix = @math.Matrix::identity()
+  let mut first_mask_matrix : @math.Matrix? = None
+  for command in commands {
+    match command {
+      Save => matrix_stack.push(current_matrix)
+      Restore =>
+        match matrix_stack.pop() {
+          Some(previous_matrix) => current_matrix = previous_matrix
+          None => ()
+        }
+      SetTransform(matrix) => current_matrix = matrix
+      ConcatTransform(matrix) => current_matrix = current_matrix.multiply(matrix)
+      BeginMaskPath =>
+        if first_mask_matrix is None {
+          first_mask_matrix = Some(current_matrix)
+        }
+      _ => ()
+    }
+  }
+
+  match first_mask_matrix {
+    Some(matrix) => {
+      assert_eq(matrix.a, 1.0)
+      assert_eq(matrix.d, 1.0)
+      assert_eq(matrix.e, 60.0)
+      assert_eq(matrix.f, 40.0)
+    }
+    None =>
+      fail(
+        "Expected composite mask path commands to be emitted for parented layer. Commands: \{commands}",
+      )
+  }
+}
+
+///|
 test "snapshot_render_add_mask_with_expansion_uses_mask_composite" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-20,-20],[20,-20],[20,20],[-20,20]],\"c\":true}},\"o\":{\"k\":100},\"x\":{\"k\":10}}],\"shapes\":[{\"ty\":\"rc\",\"s\":{\"k\":[120,120]},\"p\":{\"k\":[0,0]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]},\"o\":{\"k\":100}}]}]}"
   let json = @json.parse(json_str)
