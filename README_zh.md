@@ -89,15 +89,14 @@ function App() {
 ### Moon Lottie CLI
 在终端中可以直接将 Lottie 动画导出为逐帧 SVG，或以 Braille 形式播放：
 ```bash
-# 导出 SVG 帧
-moon run cmd/cli -- export svg input.json -o ./output_frames
+# 输出动画基本信息
+moon run cmd/cli -- ./samples/4_fireworks.json
 
 # 在终端中播放 Drawille/Braille 动画。
-# 动画始终按 fit 方式缩放到给定宽高范围内，并保持原始宽高比。
-moon run cmd/cli -- render console input.json --width 80 --height 40 --fps 30
+moon run cmd/cli -- play ./samples/4_fireworks.json
 
-# 抓取纯文本输出时可关闭 ANSI 颜色
-moon run cmd/cli -- render console input.json --ansi off
+# 导出 SVG 帧
+moon run cmd/cli -- svg ./samples/4_fireworks.json -o ./output_frames
 ```
 
 ## 功能与路线图

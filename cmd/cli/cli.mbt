@@ -25,20 +25,23 @@ priv struct ExportSvgRequest {
 }
 
 ///|
-priv struct RenderConsoleRequest {
+priv struct PlayRequest {
   input_path : String
-  frame_window : FrameWindowConfig
-  fps : Int
   target_width : Int?
   target_height : Int?
-  repeat : Int
   ansi : Bool
 }
 
 ///|
+priv struct AnimationInfoRequest {
+  input_path : String
+}
+
+///|
 priv enum CliRequest {
+  ShowInfo(AnimationInfoRequest)
   ExportSvg(ExportSvgRequest)
-  RenderConsole(RenderConsoleRequest)
+  Play(PlayRequest)
 }
 
 ///|
@@ -54,26 +57,15 @@ priv struct ExportPlan {
 fn command() -> @argparse.Command {
   @argparse.Command::new(
     "cli",
-    about="[Moon Lottie] Export animation assets or render them in the console",
+    about="[Moon Lottie] Inspect animations, export SVG frames, or play them in the console",
     arg_required_else_help=true,
     subcommand_required=true,
-    subcommands=[export_command(), render_command()],
+    subcommands=[play_command(), svg_command()],
   )
 }
 
 ///|
-fn export_command() -> @argparse.Command {
-  @argparse.Command::new(
-    "export",
-    about="Export animation output to files",
-    arg_required_else_help=true,
-    subcommand_required=true,
-    subcommands=[export_svg_command()],
-  )
-}
-
-///|
-fn export_svg_command() -> @argparse.Command {
+fn svg_command() -> @argparse.Command {
   @argparse.Command::new(
     "svg",
     about="Export animation frames as SVG files",
@@ -113,44 +105,11 @@ fn export_svg_command() -> @argparse.Command {
 }
 
 ///|
-fn render_command() -> @argparse.Command {
+fn play_command() -> @argparse.Command {
   @argparse.Command::new(
-    "render",
-    about="Render animation output directly to the terminal",
-    arg_required_else_help=true,
-    subcommand_required=true,
-    subcommands=[render_console_command()],
-  )
-}
-
-///|
-fn render_console_command() -> @argparse.Command {
-  @argparse.Command::new(
-    "console",
+    "play",
     about="Render braille frames in the terminal via Drawille",
     options=[
-      @argparse.OptionArg::new(
-        "start",
-        short='s',
-        about="Start frame index, inclusive",
-        allow_hyphen_values=true,
-      ),
-      @argparse.OptionArg::new(
-        "end",
-        short='e',
-        about="End frame index, inclusive",
-        allow_hyphen_values=true,
-      ),
-      @argparse.OptionArg::new(
-        "step",
-        short='t',
-        about="Frame increment between renders",
-      ),
-      @argparse.OptionArg::new(
-        "fps",
-        long="fps",
-        about="Console playback frames per second",
-      ),
       @argparse.OptionArg::new(
         "width",
         long="width",
@@ -160,11 +119,6 @@ fn render_console_command() -> @argparse.Command {
         "height",
         long="height",
         about="Console render height in logical pixels",
-      ),
-      @argparse.OptionArg::new(
-        "repeat",
-        long="repeat",
-        about="Console playback repeat count",
       ),
       @argparse.OptionArg::new(
         "ansi",
@@ -235,29 +189,13 @@ fn parse_step(args : ArgReader) -> Int raise {
 }
 
 ///|
-fn parse_fps(args : ArgReader) -> Int raise {
-  match args.int("fps") {
-    Some(value) => {
-      guard value > 0 else {
-        fail("--fps must be greater than 0")
-      }
-      value
-    }
-    None => 12
-  }
+fn is_option_token(value : String) -> Bool {
+  value.length() > 0 && value[0].to_int().unsafe_to_char() == '-'
 }
 
 ///|
-fn parse_repeat(args : ArgReader) -> Int raise {
-  match args.int("repeat") {
-    Some(value) => {
-      guard value > 0 else {
-        fail("--repeat must be greater than 0")
-      }
-      value
-    }
-    None => 1
-  }
+fn looks_like_json_path(value : String) -> Bool {
+  value.length() >= 5 && value[value.length() - 5:value.length()].to_string() == ".json"
 }
 
 ///|
@@ -284,50 +222,52 @@ fn parse_frame_window(args : ArgReader) -> FrameWindowConfig raise {
 }
 
 ///|
+fn should_show_animation_info(argv : Array[String]) -> Bool {
+  if argv.length() != 2 {
+    return false
+  }
+
+  let candidate = argv[1]
+  !is_option_token(candidate) &&
+  candidate != "play" &&
+  candidate != "svg" &&
+  looks_like_json_path(candidate)
+}
+
+///|
 fn parse_request(argv : Array[String]) -> CliRequest raise {
+  if should_show_animation_info(argv) {
+    return ShowInfo({ input_path: argv[1] })
+  }
+
   let matches = @argparse.parse(command(), argv=argv[1:])
   match matches.subcommand {
-    Some((name, export_matches)) if name == "export" => parse_export_request(export_matches)
-    Some((name, render_matches)) if name == "render" => parse_render_request(render_matches)
+    Some((name, svg_matches)) if name == "svg" => parse_svg_request(svg_matches)
+    Some((name, play_matches)) if name == "play" => parse_play_request(play_matches)
     Some((name, _)) => fail("Unsupported command: \{name}")
     None => fail("Missing command")
   }
 }
 
 ///|
-fn parse_export_request(matches : @argparse.Matches) -> CliRequest raise {
-  match matches.subcommand {
-    Some((name, svg_matches)) if name == "svg" => {
-      let args = ArgReader::new(svg_matches)
-      ExportSvg({
-        input_path: args.required_string("input"),
-        output_dir: args.string("output_dir"),
-        frame_window: parse_frame_window(args),
-      })
-    }
-    Some((name, _)) => fail("Unsupported export target: \{name}")
-    None => fail("Missing export target")
-  }
+fn parse_svg_request(matches : @argparse.Matches) -> CliRequest raise {
+  let args = ArgReader::new(matches)
+  ExportSvg({
+    input_path: args.required_string("input"),
+    output_dir: args.string("output_dir"),
+    frame_window: parse_frame_window(args),
+  })
 }
 
 ///|
-fn parse_render_request(matches : @argparse.Matches) -> CliRequest raise {
-  match matches.subcommand {
-    Some((name, console_matches)) if name == "console" => {
-      let args = ArgReader::new(console_matches)
-      RenderConsole({
-        input_path: args.required_string("input"),
-        frame_window: parse_frame_window(args),
-        fps: parse_fps(args),
-        target_width: args.int("width"),
-        target_height: args.int("height"),
-        repeat: parse_repeat(args),
-        ansi: parse_ansi(args),
-      })
-    }
-    Some((name, _)) => fail("Unsupported render target: \{name}")
-    None => fail("Missing render target")
-  }
+fn parse_play_request(matches : @argparse.Matches) -> CliRequest raise {
+  let args = ArgReader::new(matches)
+  Play({
+    input_path: args.required_string("input"),
+    target_width: args.int("width"),
+    target_height: args.int("height"),
+    ansi: parse_ansi(args),
+  })
 }
 
 ///|
@@ -531,7 +471,7 @@ fn resolve_export_plan(
 
 ///|
 fn resolve_console_size(
-  request : RenderConsoleRequest,
+  request : PlayRequest,
   animation : @model.Animation,
 ) -> (Int, Int) raise {
   let source_width = animation.width.to_double().max(1.0)
@@ -557,10 +497,7 @@ fn resolve_console_size(
   }
 
   match (width, height) {
-    (0, 0) => (
-      animation.width.to_double().round().to_int().max(1),
-      animation.height.to_double().round().to_int().max(1),
-    )
+    (0, 0) => (160, 80)
     (0, resolved_height) => (
       ((resolved_height.to_double() * source_width) / source_height).round().to_int().max(1),
       resolved_height,
@@ -589,7 +526,7 @@ fn render_svg_frame(animation : @model.Animation, frame : Int) -> String {
 fn render_console_frame(
   animation : @model.Animation,
   frame : Int,
-  request : RenderConsoleRequest,
+  request : PlayRequest,
   target_width : Int,
   target_height : Int,
 ) -> String {
@@ -669,30 +606,78 @@ fn strip_trailing_line_endings(text : String) -> String {
 }
 
 ///|
+fn print_animation_info(
+  input_path : String,
+  animation : @model.Animation,
+) -> Unit raise {
+  let frame_window = resolve_frame_window(
+    { start_frame: None, end_frame: None, step: 1 },
+    animation,
+  )
+  let frame_count = frame_window.end_frame - frame_window.start_frame + 1
+  let animation_name = match animation.name {
+    Some(value) if value != "" => value
+    _ => "(unnamed)"
+  }
+  let asset_count = match animation.assets {
+    Some(assets) => assets.length()
+    None => 0
+  }
+  let duration_seconds = if animation.frame_rate > 0.0 {
+    (animation.out_point - animation.in_point) / animation.frame_rate
+  } else {
+    0.0
+  }
+
+  println("Input: \{input_path}")
+  println("Name: \{animation_name}")
+  println("Version: \{animation.version}")
+  println("Canvas: \{animation.width}x\{animation.height}")
+  println(
+    "Frames: \{frame_window.start_frame}..\{frame_window.end_frame} (\{frame_count} total) @ \{animation.frame_rate}fps",
+  )
+  println("Duration: \{duration_seconds}s")
+  println("Layers: \{animation.layers.length()} | Assets: \{asset_count}")
+}
+
+///|
+fn resolve_playback_delay(animation : @model.Animation) -> UInt64 {
+  let fps = if animation.frame_rate > 0.0 { animation.frame_rate } else { 12.0 }
+  let delay_ms = (1000.0 / fps).round().to_int()
+  let clamped_delay = if delay_ms <= 0 { 1 } else { delay_ms }
+  clamped_delay.to_uint64()
+}
+
+///|
 fn render_console(
   animation : @model.Animation,
-  request : RenderConsoleRequest,
+  request : PlayRequest,
 ) -> Unit raise {
-  let frame_window = resolve_frame_window(request.frame_window, animation)
+  let frame_window = resolve_frame_window(
+    { start_frame: None, end_frame: None, step: 1 },
+    animation,
+  )
   let (target_width, target_height) = resolve_console_size(request, animation)
+  let frame_delay = resolve_playback_delay(animation)
 
-  let mut iteration = 0
-  while iteration < request.repeat {
-    let mut frame = frame_window.start_frame
-    while frame <= frame_window.end_frame {
-      let output = strip_trailing_line_endings(
-        render_console_frame(animation, frame, request, target_width, target_height),
-      )
-      println("\u001b[2J\u001b[H\{output}")
-      let frame_delay = (1000 / request.fps).to_uint64()
-      let start = @env.now()
-      while @env.now() - start < frame_delay {
+  let mut frame = frame_window.start_frame
+  while frame <= frame_window.end_frame {
+    let output = strip_trailing_line_endings(
+      render_console_frame(animation, frame, request, target_width, target_height),
+    )
+    println("\u001b[2J\u001b[H\{output}")
+    let start = @env.now()
+    while @env.now() - start < frame_delay {
 
-      }
-      frame = frame + frame_window.step
     }
-    iteration = iteration + 1
+    frame = frame + frame_window.step
   }
+}
+
+///|
+fn run_show_info(request : AnimationInfoRequest) -> Unit raise {
+  let animation = load_animation(request.input_path)
+  print_animation_info(request.input_path, animation)
 }
 
 ///|
@@ -704,7 +689,7 @@ fn run_export(request : ExportSvgRequest) -> Unit raise {
 }
 
 ///|
-fn run_render_console(request : RenderConsoleRequest) -> Unit raise {
+fn run_play(request : PlayRequest) -> Unit raise {
   let animation = load_animation(request.input_path)
   render_console(animation, request)
 }
@@ -722,14 +707,16 @@ pub fn run() -> Unit {
 
   let result = try {
     match request {
+      ShowInfo(info_request) => run_show_info(info_request)
       ExportSvg(export_request) => run_export(export_request)
-      RenderConsole(render_request) => run_render_console(render_request)
+      Play(play_request) => run_play(play_request)
     }
   } catch {
     e => {
       match request {
+        ShowInfo(_) => println("Failed to inspect animation: \{e}")
         ExportSvg(_) => println("Failed to export SVG frames: \{e}")
-        RenderConsole(_) => println("Failed to render console animation: \{e}")
+        Play(_) => println("Failed to play console animation: \{e}")
       }
       return
     }

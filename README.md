@@ -89,15 +89,14 @@ function App() {
 ### Moon Lottie CLI
 Export animations to SVG frames or render them directly in the terminal:
 ```bash
+# Print basic animation info
+moon run cmd/cli -- ./samples/4_fireworks.json
+
+# Play the animation in the terminal
+moon run cmd/cli -- play ./samples/4_fireworks.json
+
 # Export frames as SVG files
-moon run cmd/cli -- export svg input.json -o ./output_frames
-
-# Render a console animation with Drawille/Braille cells.
-# The animation always fits inside the requested width/height while preserving aspect ratio.
-moon run cmd/cli -- render console input.json --width 80 --height 40 --fps 30
-
-# Disable ANSI colors when capturing output
-moon run cmd/cli -- render console input.json --ansi off
+moon run cmd/cli -- svg ./samples/4_fireworks.json -o ./output_frames
 ```
 
 ## Features & Roadmap
