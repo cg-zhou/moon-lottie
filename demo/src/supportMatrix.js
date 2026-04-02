@@ -61,7 +61,7 @@ export const supportSections = [
       { feature: "线帽", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
       { feature: "线段连接", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
       { feature: "斜接限制", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
-      { feature: "虚线", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: no, webSvg: yes, webCanvas: yes, webHtml: yes, moon: no },
+      { feature: "虚线", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: no, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
     ],
   },
   {
@@ -75,7 +75,7 @@ export const supportSections = [
       { feature: "不透明度", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
       { feature: "倾斜", android: yes, iosCoreAnimation: no, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
       { feature: "倾斜轴", android: yes, iosCoreAnimation: no, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
-      { feature: "自动朝向", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: no, webSvg: yes, webCanvas: yes, webHtml: yes, moon: no },
+      { feature: "自动朝向", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: no, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
     ],
   },
   {

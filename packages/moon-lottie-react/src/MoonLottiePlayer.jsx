@@ -135,12 +135,12 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
         jsRuntimePath,
       })
 
-      if (disposed || !containerRef.current) return
+      if (disposed || !containerRef.current) {
+        player.destroy?.()
+        return
+      }
 
       playerRef.current = player
-      await player.whenReady?.()
-      if (disposed) return
-      setIsReady(true)
 
       const cleanups = [
         player.addEventListener("load", (event) => {
@@ -173,6 +173,10 @@ const MoonLottiePlayer = forwardRef(function MoonLottiePlayer(
       ]
 
       listenersCleanupRef.current = cleanups
+
+      await player.whenReady?.()
+      if (disposed) return
+      setIsReady(true)
     }
 
     mountPlayer().catch((error) => {

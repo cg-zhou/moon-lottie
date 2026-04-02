@@ -1775,6 +1775,249 @@ tbody tr:last-child td {
   color: #b45309;
 }
 
+.support-note--subtle {
+  margin-top: -10px !important;
+  color: var(--muted);
+  font-size: 0.96rem;
+}
+
+.support-table-row--clickable {
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.support-table-row--clickable:hover td {
+  background-color: rgba(22, 119, 255, 0.04) !important;
+}
+
+.feature-detail-modal .ant-modal-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--bg);
+}
+
+.feature-detail-modal .ant-modal-header {
+  margin-bottom: 0;
+  padding: 16px 20px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.feature-detail-modal .ant-modal-close {
+  top: 14px;
+}
+
+.feature-modal-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-modal-navigation {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px 24px;
+  background: var(--bg);
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  gap: 12px;
+}
+
+.nav-btn.ant-btn {
+  flex: 1;
+  height: auto;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(241, 245, 249, 0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.nav-btn--next.ant-btn {
+  text-align: right;
+}
+
+.nav-btn-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-btn-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+  color: var(--text);
+}
+
+.nav-btn-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-btn:not(:disabled):hover {
+  background: rgba(22, 119, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.nav-btn:not(:disabled):hover .nav-btn-title {
+  color: #1677ff;
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  background: transparent;
+}
+
+.feature-example-card-wrap,
+.feature-example-card {
+  height: auto;
+  border: 0;
+  box-shadow: none !important;
+}
+
+.feature-example-card {
+  width: 100%;
+}
+
+.feature-example-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.feature-example-card__description {
+  margin-top: 8px !important;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.feature-example-card__content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.feature-example-card__header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.feature-example-card__preview-panel {
+  flex: 0 0 240px;
+}
+
+.feature-example-card__preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(229, 231, 235, 0.92);
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 44%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 246, 252, 0.98));
+}
+
+.feature-example-card__preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.feature-example-card__preview-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.86);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.feature-example-card__player,
+.feature-example-card__player > div,
+.feature-example-card__player .moon-lottie-player__viewport,
+.feature-example-card__player .moon-lottie-player__wrapper,
+.feature-example-card__player .moon-lottie-player__stage,
+.feature-example-card__player .moon-lottie-player__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.feature-example-card__player {
+  position: relative;
+  z-index: 1;
+}
+
+.feature-example-card__placeholder {
+  position: relative;
+  z-index: 1;
+  padding: 0 20px;
+  text-align: center;
+  color: #52607a;
+  font-size: 0.93rem;
+}
+
+.feature-example-card__placeholder--error {
+  color: #b91c1c;
+}
+
+.feature-example-card__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.feature-example-card__description {
+  margin: 0 !important;
+  color: var(--text);
+  line-height: 1.75;
+}
+
+@media (max-width: 1080px) {
+  .feature-example-card__content {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-example-card__preview {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 640px) {
+  .feature-examples-block {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+}
+
 .diagram-stack {
   display: flex;
   flex-direction: column;

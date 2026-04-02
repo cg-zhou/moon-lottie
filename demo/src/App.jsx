@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { Button, Card, ConfigProvider, Layout, Menu, Table, Tag, Typography } from "antd"
+import { Button, Card, ConfigProvider, Layout, Menu, Modal, Table, Tag, Typography } from "antd"
 import { supportSections, platformColumns } from "./supportMatrix"
 import Playground from "./components/Playground.jsx"
+import FeatureExampleCard from "./components/FeatureExampleCard.jsx"
+import { featureExampleMap } from "./featureExamples"
 
 const NAV_ITEMS = [
   { id: "overview", label: "概览" },
@@ -53,6 +55,18 @@ const STATUS_META = {
   unsupported: { label: "不支持", color: "error", icon: "solar:close-circle-bold" },
   unknown: { label: "未知", color: "default", icon: "solar:question-circle-bold" },
 }
+
+const ALL_FEATURES_WITH_EXAMPLES = supportSections.flatMap((section) => 
+  section.rows
+    .filter(row => !!(featureExampleMap[section.id]?.[row.feature]))
+    .map((row) => ({
+      ...row,
+      sectionId: section.id,
+      sectionTitle: section.title,
+    }))
+)
+
+function THEME_CONFIG_STUB() {} // Placeholder to avoid match issues
 
 const THEME_CONFIG = {
   token: {
@@ -140,6 +154,138 @@ function SupportCell({ value, highlight = false }) {
         <IconifyIcon name={meta.icon} size={16} />
       </span>
     </div>
+  )
+}
+
+function FeatureSupportSection({ section }) {
+  const { total, supportedCount, coverage } = getSectionCoverage(section)
+  const [globalFeatureIndex, setGlobalFeatureIndex] = useState(-1)
+  const isModalVisible = globalFeatureIndex !== -1
+
+  const columns = useMemo(() => [
+    {
+      title: "特性项",
+      dataIndex: "feature",
+      key: "feature",
+      fixed: "left",
+      width: 180,
+      render: (value) => <Typography.Text strong>{value}</Typography.Text>,
+    },
+    ...platformColumns.map((column) => ({
+      title: column.highlight
+        ? <span className="support-col-title support-col-title--moon">MoonLottie</span>
+        : column.label,
+      dataIndex: column.key,
+      key: column.key,
+      align: "center",
+      width: column.highlight ? 108 : 92,
+      className: column.highlight ? "support-col support-col--moon" : "support-col",
+      onCell: (record) => {
+        if (!column.highlight) return {}
+        const cell = normalizeStatusCell(record[column.key])
+        return {
+          className: `support-cell support-cell--moon support-cell--${cell.status}`,
+        }
+      },
+      render: (value) => <SupportCell value={value} highlight={column.highlight} />,
+    })),
+  ], [])
+
+  const handlePrev = (e) => {
+    e?.stopPropagation()
+    if (globalFeatureIndex > 0) {
+      setGlobalFeatureIndex(globalFeatureIndex - 1)
+    }
+  }
+
+  const handleNext = (e) => {
+    e?.stopPropagation()
+    if (globalFeatureIndex < ALL_FEATURES_WITH_EXAMPLES.length - 1) {
+      setGlobalFeatureIndex(globalFeatureIndex + 1)
+    }
+  }
+
+  const currentRecord = globalFeatureIndex !== -1 ? ALL_FEATURES_WITH_EXAMPLES[globalFeatureIndex] : null
+  const currentExample = currentRecord ? featureExampleMap[currentRecord.sectionId]?.[currentRecord.feature] : null
+  const prevRecord = globalFeatureIndex > 0 ? ALL_FEATURES_WITH_EXAMPLES[globalFeatureIndex - 1] : null
+  const nextRecord = globalFeatureIndex < ALL_FEATURES_WITH_EXAMPLES.length - 1 ? ALL_FEATURES_WITH_EXAMPLES[globalFeatureIndex + 1] : null
+
+  return (
+    <Card
+      className="support-table-card"
+      title={section.title}
+      extra={<Tag color="green">支持 {supportedCount}/{total} 项 · {coverage}%</Tag>}
+    >
+      <Table
+        rowKey="feature"
+        columns={columns}
+        dataSource={section.rows}
+        pagination={false}
+        size="small"
+        scroll={{ x: 980 }}
+        onRow={(record) => {
+          const globalIdx = ALL_FEATURES_WITH_EXAMPLES.findIndex(
+            f => f.sectionId === section.id && f.feature === record.feature
+          )
+          const hasExample = globalIdx !== -1
+          
+          return {
+            className: hasExample ? "support-table-row--clickable" : "",
+            onClick: () => {
+              if (hasExample) {
+                setGlobalFeatureIndex(globalIdx)
+              }
+            },
+          }
+        }}
+      />
+
+      <Modal
+        title={currentRecord?.sectionTitle}
+        open={isModalVisible}
+        onCancel={() => setGlobalFeatureIndex(-1)}
+        footer={null}
+        width={640}
+        centered
+        destroyOnHidden
+        className="feature-detail-modal"
+      >
+        <div className="feature-modal-content">
+          {currentExample && (
+            <FeatureExampleCard
+              key={`${currentRecord.sectionId}:${currentRecord.feature}`}
+              feature={currentRecord.feature}
+              example={currentExample}
+            />
+          )}
+          
+          <div className="feature-modal-navigation">
+            <Button 
+              type="text" 
+              disabled={!prevRecord} 
+              onClick={handlePrev}
+              className="nav-btn nav-btn--prev"
+            >
+              <div className="nav-btn-content">
+                <span className="nav-btn-label">{prevRecord ? "← 上一个特性" : "已是第一个"}</span>
+                <span className="nav-btn-title">{prevRecord?.feature || " "}</span>
+              </div>
+            </Button>
+            <Button 
+              type="text" 
+              disabled={!nextRecord} 
+              onClick={handleNext}
+              className="nav-btn nav-btn--next"
+            >
+              <div className="nav-btn-content">
+                <span className="nav-btn-label">{nextRecord ? "下一个特性 →" : "已是最后一个"}</span>
+                <span className="nav-btn-title">{nextRecord?.feature || " "}</span>
+              </div>
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </Card>
   )
 }
 
@@ -263,35 +409,6 @@ function PlaygroundPage({ active = true }) {
 }
 
 function FeaturesPage() {
-  const columns = useMemo(() => [
-    {
-      title: "特性项",
-      dataIndex: "feature",
-      key: "feature",
-      fixed: "left",
-      width: 180,
-      render: (value) => <Typography.Text strong>{value}</Typography.Text>,
-    },
-    ...platformColumns.map((column) => ({
-      title: column.highlight
-        ? <span className="support-col-title support-col-title--moon">MoonLottie</span>
-        : column.label,
-      dataIndex: column.key,
-      key: column.key,
-      align: "center",
-      width: column.highlight ? 108 : 92,
-      className: column.highlight ? "support-col support-col--moon" : "support-col",
-      onCell: (record) => {
-        if (!column.highlight) return {}
-        const cell = normalizeStatusCell(record[column.key])
-        return {
-          className: `support-cell support-cell--moon support-cell--${cell.status}`,
-        }
-      },
-      render: (value) => <SupportCell value={value} highlight={column.highlight} />,
-    })),
-  ], [])
-
   return (
     <div className="page-stack">
       <section className="section-block">
@@ -307,29 +424,12 @@ function FeaturesPage() {
             </a>
             。
         </Typography.Paragraph>
+        <Typography.Paragraph className="support-note support-note--subtle">
+          表格保持原来的查看方式；把鼠标移到特性名上，或点击特性名，即可查看对应的示例说明和动画。
+        </Typography.Paragraph>
 
         <div className="matrix-sections">
-          {supportSections.map((section) => {
-            const { total, supportedCount, coverage } = getSectionCoverage(section)
-
-            return (
-              <Card
-                key={section.id}
-                className="support-table-card"
-                title={section.title}
-                extra={<Tag color="green">支持 {supportedCount}/{total} 项 · {coverage}%</Tag>}
-              >
-                <Table
-                  rowKey="feature"
-                  columns={columns}
-                  dataSource={section.rows}
-                  pagination={false}
-                  size="small"
-                  scroll={{ x: 980 }}
-                />
-              </Card>
-            )
-          })}
+          {supportSections.map((section) => <FeatureSupportSection key={section.id} section={section} />)}
         </div>
       </section>
     </div>
