@@ -48,6 +48,95 @@ function ensureLottieScriptLoaded() {
   })
 }
 
+function syncSvgAttributes(target, source) {
+  const sourceAttributeNames = new Set(source.getAttributeNames())
+  for (const { name } of Array.from(target.attributes)) {
+    if (!sourceAttributeNames.has(name)) {
+      target.removeAttribute(name)
+    }
+  }
+
+  for (const name of sourceAttributeNames) {
+    const nextValue = source.getAttribute(name) ?? ""
+    if (target.getAttribute(name) !== nextValue) {
+      target.setAttribute(name, nextValue)
+    }
+  }
+}
+
+function syncSvgNode(targetNode, sourceNode) {
+  if (!targetNode || !sourceNode) {
+    return targetNode
+  }
+
+  if (targetNode.nodeType !== sourceNode.nodeType) {
+    return targetNode.ownerDocument.importNode(sourceNode, true)
+  }
+
+  if (sourceNode.nodeType === Node.TEXT_NODE || sourceNode.nodeType === Node.CDATA_SECTION_NODE) {
+    if (targetNode.textContent !== sourceNode.textContent) {
+      targetNode.textContent = sourceNode.textContent
+    }
+    return targetNode
+  }
+
+  if (sourceNode.nodeType !== Node.ELEMENT_NODE) {
+    return targetNode
+  }
+
+  const targetElement = targetNode
+  const sourceElement = sourceNode
+  if (targetElement.tagName !== sourceElement.tagName) {
+    return targetNode.ownerDocument.importNode(sourceElement, true)
+  }
+
+  syncSvgAttributes(targetElement, sourceElement)
+
+  const sourceChildren = sourceElement.childNodes
+  const targetChildren = targetElement.childNodes
+  const sharedLength = Math.min(targetChildren.length, sourceChildren.length)
+
+  for (let index = 0; index < sharedLength; index += 1) {
+    const currentChild = targetChildren[index]
+    const nextChild = sourceChildren[index]
+    const syncedChild = syncSvgNode(currentChild, nextChild)
+    if (syncedChild !== currentChild) {
+      targetElement.replaceChild(syncedChild, currentChild)
+    }
+  }
+
+  while (targetElement.childNodes.length > sourceChildren.length) {
+    targetElement.removeChild(targetElement.lastChild)
+  }
+
+  while (targetElement.childNodes.length < sourceChildren.length) {
+    const missingChild = sourceChildren[targetElement.childNodes.length]
+    targetElement.appendChild(targetNode.ownerDocument.importNode(missingChild, true))
+  }
+
+  return targetElement
+}
+
+function mountSvgMarkup(container, parser, markup) {
+  const parsed = parser.parseFromString(markup, "image/svg+xml")
+  const svgElement = parsed.documentElement
+  if (svgElement?.tagName?.toLowerCase() !== "svg") {
+    return false
+  }
+
+  const currentSvg = container.firstElementChild
+  if (!(currentSvg instanceof SVGElement) || currentSvg.tagName.toLowerCase() !== "svg") {
+    container.replaceChildren(document.importNode(svgElement, true))
+    return true
+  }
+
+  const syncedRoot = syncSvgNode(currentSvg, svgElement)
+  if (syncedRoot !== currentSvg) {
+    container.replaceChildren(syncedRoot)
+  }
+  return true
+}
+
 function isEditableTarget(target) {
   return target instanceof HTMLInputElement
     || target instanceof HTMLTextAreaElement
@@ -388,13 +477,9 @@ export default function Playground({ active = true }) {
           return
         }
         currentMoonSvgMarkup = svgMarkup
-        const parsed = parser.parseFromString(svgMarkup, "image/svg+xml")
-        const svgElement = parsed.documentElement
-        if (svgElement?.tagName.toLowerCase() !== "svg") {
+        if (!mountSvgMarkup(moonSvgContainer, parser, svgMarkup)) {
           clearMoonSvgFrame()
-          return
         }
-        moonSvgContainer.replaceChildren(document.importNode(svgElement, true))
       }
       const renderMoonCanvasFrame = (runtime, nativePlayer, frame) => {
         clearMoonSvgFrame()
