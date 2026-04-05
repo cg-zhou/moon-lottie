@@ -48,8 +48,11 @@ const App = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>Moon Lottie React Example</h1>
-      <div style={{ width: '300px', height: '300px', border: '1px solid #eee' }}>
+      <h2>React Example</h2>
+      <p style={{ marginBottom: '12px', color: '#666' }}>
+        This is a <a href="https://www.npmjs.com/package/@moon-lottie/react" style={{ textDecoration: 'underline', color: '#111' }}>@moon-lottie/react</a> example of <a href="https://lottie.cg-zhou.top/" style={{ textDecoration: 'underline', color: '#111' }}>Moon Lottie</a>.
+      </p>
+      <div style={{ width: '300px', height: '200px', border: '1px solid #eee' }}>
         <MoonLottiePlayer
           ref={playerRef}
           src={`${assetBase}samples/1_1_Super_Mario.json`}
