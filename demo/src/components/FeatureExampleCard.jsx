@@ -21,7 +21,7 @@ export default function FeatureExampleCard({ feature, example }) {
         <div className="feature-example-card__content">
           <div className="feature-example-card__preview-panel">
             <div className="feature-example-card__preview">
-              <span className="feature-example-card__preview-badge">MoonLottie</span>
+              <span className="feature-example-card__preview-badge">Moon Lottie</span>
               {loadError ? (
                 <div className="feature-example-card__placeholder feature-example-card__placeholder--error">
                   预览加载失败

@@ -1,5 +1,5 @@
 export const platformColumns = [
-  { key: "moon", label: "MoonLottie", highlight: true },
+  { key: "moon", label: "Moon Lottie", highlight: true },
   { key: "android", label: "Android" },
   { key: "iosCoreAnimation", label: "iOS（Core Animation）" },
   { key: "iosMainThread", label: "iOS（主线程）" },

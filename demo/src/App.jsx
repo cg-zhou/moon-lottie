@@ -1,59 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { Button, Card, ConfigProvider, Layout, Menu, Modal, Table, Tag, Typography } from "antd"
+import { Button, Card, ConfigProvider, Layout, Menu, Modal, Table, Tag, Typography, message } from "antd"
+import { Check, CircleCheck, CircleX, Copy, HelpCircle } from "lucide-react"
 import { supportSections, platformColumns } from "./supportMatrix"
 import Playground from "./components/Playground.jsx"
 import FeatureExampleCard from "./components/FeatureExampleCard.jsx"
 import { featureExampleMap } from "./featureExamples"
 
 const NAV_ITEMS = [
-  { id: "overview", label: "概览" },
-  { id: "playground", label: "演示" },
-  { id: "examples", label: "快速集成" },
+  { id: "overview", label: "快速开始" },
+  { id: "playground", label: "在线演示" },
   { id: "features", label: "特性支持" },
-  { id: "architecture", label: "架构设计" },
 ]
 
 const PAGE_IDS = new Set(NAV_ITEMS.map((item) => item.id))
 const DEFAULT_PAGE_ID = "overview"
 const BASE_PATH = (import.meta.env.BASE_URL || "/").replace(/\/$/, "")
 
-const QUICK_START_STEPS = [
-  {
-    icon: "solar:download-bold",
-    title: "1. 添加依赖",
-    code: "moon add moon-lottie",
-  },
-  {
-    icon: "solar:code-bold",
-    title: "2. 集成到运行时",
-    code: `import * as lottie from \"moon-lottie/lib/runtime\"\n\nfn init {\n  let ani = lottie.load_from_string(...)\n  ani.render(ctx, time)\n}`,
-  },
-  {
-    icon: "solar:widget-5-bold",
-    title: "3. 浏览器运行",
-    code: `<moon-lottie src=\"ani.json\" autoplay></moon-lottie>`,
-  },
-]
-
-const EXAMPLE_LINKS = [
-  {
-    id: "moon-lottie-core",
-    title: "moon-lottie-core-example",
-    description: "独立验证 @moon-lottie/core 的最小接入、运行时资源和基础控制 API。",
-    tags: ["@moon-lottie/core", "vanilla", "smoke test"],
-  },
-  {
-    id: "moon-lottie-react",
-    title: "moon-lottie-react-example",
-    description: "独立验证 @moon-lottie/react 的 ref 控制、类型声明和基础交互。",
-    tags: ["@moon-lottie/react", "react", "integration"],
-  },
-]
-
 const STATUS_META = {
-  supported: { label: "支持", color: "success", icon: "solar:check-circle-bold" },
-  unsupported: { label: "不支持", color: "error", icon: "solar:close-circle-bold" },
-  unknown: { label: "未知", color: "default", icon: "solar:question-circle-bold" },
+  supported: { label: "支持", color: "success", Icon: CircleCheck },
+  unsupported: { label: "不支持", color: "error", Icon: CircleX },
+  unknown: { label: "未知", color: "default", Icon: HelpCircle },
 }
 
 const ALL_FEATURES_WITH_EXAMPLES = supportSections.flatMap((section) => 
@@ -79,8 +45,8 @@ const THEME_CONFIG = {
     colorBgContainer: "#ffffff",
     colorText: "#000000",
     colorTextSecondary: "#666666",
-    borderRadius: 6,
-    borderRadiusLG: 8,
+    borderRadius: 4,
+    borderRadiusLG: 6,
     boxShadowSecondary: "0 4px 12px rgba(0, 0, 0, 0.08)",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif",
   },
@@ -104,7 +70,7 @@ const THEME_CONFIG = {
       headerBorderColor: "#eaeaea",
     },
     Button: {
-      borderRadius: 6,
+      borderRadius: 4,
       controlHeight: 38,
       paddingInline: 20,
       fontWeight: 500,
@@ -112,8 +78,95 @@ const THEME_CONFIG = {
   },
 }
 
-function IconifyIcon({ name, size = 18 }) {
-  return <iconify-icon icon={name} width={size} height={size} aria-hidden="true" />
+function CodeBlock({ code, language = 'javascript' }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      message.success('已复制到剪切板');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      message.error('复制失败');
+    }
+  };
+
+  return (
+    <div className="code-block-wrapper">
+      <pre className="code-block">
+        <code>{code}</code>
+      </pre>
+      <button 
+        className={`code-block-copy-btn ${copied ? 'copied' : ''}`} 
+        onClick={handleCopy}
+        title="复制代码"
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} />}
+      </button>
+    </div>
+  );
+}
+
+function GitHubMarkIcon({ size = 16 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+      className="github-mark-icon"
+    >
+      <path d="M12 .5C5.73.5.65 5.58.65 11.85c0 5.02 3.26 9.27 7.78 10.78.57.1.78-.25.78-.56 0-.28-.01-1.02-.01-2-3.17.69-3.84-1.53-3.84-1.53-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.76 2.68 1.25 3.33.96.1-.74.4-1.25.73-1.54-2.53-.29-5.2-1.27-5.2-5.64 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.17a10.9 10.9 0 0 1 5.74 0c2.19-1.48 3.15-1.17 3.15-1.17.62 1.58.23 2.75.11 3.04.74.8 1.18 1.82 1.18 3.07 0 4.38-2.68 5.34-5.23 5.62.41.35.77 1.04.77 2.1 0 1.52-.01 2.75-.01 3.13 0 .31.2.67.79.55 4.51-1.5 7.77-5.76 7.77-10.78C23.35 5.58 18.27.5 12 .5Z" />
+    </svg>
+  )
+}
+
+function GuideSection({ id, title, description, sections, actions = [] }) {
+  return (
+    <article id={id} className="guide-section">
+      <div className="guide-section__header">
+        <Typography.Title level={3} className="guide-section__title">{title}</Typography.Title>
+      </div>
+
+      <Typography.Paragraph className="guide-section__description">{description}</Typography.Paragraph>
+
+      <div className="guide-section__sections">
+        {sections.map((section) => (
+          <div className="guide-section__section" key={`${title}-${section.title}`}>
+            <Typography.Text strong className="guide-section__section-title">
+              {section.title}
+            </Typography.Text>
+            {section.text ? (
+              <Typography.Paragraph className="guide-section__section-text">
+                {section.text}
+              </Typography.Paragraph>
+            ) : null}
+            {section.code ? <CodeBlock code={section.code} /> : null}
+          </div>
+        ))}
+      </div>
+
+      {actions.length > 0 ? (
+        <div className="guide-section__actions">
+          {actions.map((action) => (
+            <Button
+              key={`${title}-${action.label}`}
+              className="guide-section__action"
+              type={action.primary ? "primary" : "default"}
+              href={action.href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  )
 }
 
 function MoonBitLink() {
@@ -135,14 +188,14 @@ function getSectionCoverage(section) {
     const cell = normalizeStatusCell(row.moon)
     return count + (cell.status === "supported" ? 1 : 0)
   }, 0)
-  const coverage = total === 0 ? 0 : Math.round((supportedCount / total) * 100)
 
-  return { total, supportedCount, coverage }
+  return { total, supportedCount }
 }
 
 function SupportCell({ value, highlight = false }) {
   const cell = normalizeStatusCell(value)
   const meta = STATUS_META[cell.status] || STATUS_META.unknown
+  const StatusIcon = meta.Icon
 
   return (
     <div
@@ -151,14 +204,14 @@ function SupportCell({ value, highlight = false }) {
       aria-label={cell.detail ? `${meta.label}：${cell.detail}` : meta.label}
     >
       <span className="support-status__icon">
-        <IconifyIcon name={meta.icon} size={16} />
+        <StatusIcon size={16} strokeWidth={2.2} />
       </span>
     </div>
   )
 }
 
 function FeatureSupportSection({ section }) {
-  const { total, supportedCount, coverage } = getSectionCoverage(section)
+  const { total, supportedCount } = getSectionCoverage(section)
   const [globalFeatureIndex, setGlobalFeatureIndex] = useState(-1)
   const isModalVisible = globalFeatureIndex !== -1
 
@@ -169,11 +222,14 @@ function FeatureSupportSection({ section }) {
       key: "feature",
       fixed: "left",
       width: 180,
-      render: (value) => <Typography.Text strong>{value}</Typography.Text>,
+      render: (value, record) => {
+        const hasExample = !!featureExampleMap[section.id]?.[record.feature]
+        return <Typography.Text strong className={hasExample ? "support-feature-link" : undefined}>{value}</Typography.Text>
+      },
     },
     ...platformColumns.map((column) => ({
       title: column.highlight
-        ? <span className="support-col-title support-col-title--moon">MoonLottie</span>
+        ? <span className="support-col-title support-col-title--moon">Moon Lottie</span>
         : column.label,
       dataIndex: column.key,
       key: column.key,
@@ -189,7 +245,7 @@ function FeatureSupportSection({ section }) {
       },
       render: (value) => <SupportCell value={value} highlight={column.highlight} />,
     })),
-  ], [])
+  ], [section.id])
 
   const handlePrev = (e) => {
     e?.stopPropagation()
@@ -214,7 +270,7 @@ function FeatureSupportSection({ section }) {
     <Card
       className="support-table-card"
       title={section.title}
-      extra={<Tag color="green">支持 {supportedCount}/{total} 项 · {coverage}%</Tag>}
+      extra={<Tag color="green">支持 {supportedCount}/{total} 项</Tag>}
     >
       <Table
         rowKey="feature"
@@ -289,15 +345,6 @@ function FeatureSupportSection({ section }) {
   )
 }
 
-function QuickStartCard({ step }) {
-  return (
-    <Card className="feature-card quickstart-card">
-      <Typography.Title level={4}>{step.title}</Typography.Title>
-      <pre className="code-block"><code>{step.code}</code></pre>
-    </Card>
-  )
-}
-
 function getPageFromPath(pathname, pageIds) {
   let relativePath = pathname || "/"
 
@@ -321,24 +368,16 @@ function getPathForPage(pageId) {
   return `${prefix}/${pageId}`
 }
 
-function getExampleHref(exampleId) {
-  const prefix = BASE_PATH || ""
-  return `${prefix}/examples/${exampleId}/`
-}
-
 function OverviewPage({ onNavigate }) {
   return (
     <div className="page-stack">
       <Typography.Title className="hero-card__title">极速、现代的 Lottie 动画渲染引擎</Typography.Title>
       <Typography.Paragraph className="hero-card__lead">
-          MoonLottie 是对性能和跨平台一致性的重新思考。基于 <MoonBitLink /> 强大的类型系统与编译优化，为 Web 提供极致的渲染体验。
+          Moon Lottie 是对性能和跨平台一致性的重新思考。基于 <MoonBitLink /> 强大的类型系统与编译优化，为 Web 提供极致的渲染体验。
       </Typography.Paragraph>
       <div className="hero-card__actions">
         <Button type="primary" size="large" onClick={() => onNavigate("playground")}>
           在线演示
-        </Button>
-        <Button size="large" onClick={() => onNavigate("examples")}>
-          查看示例
         </Button>
         <Button size="large" onClick={() => onNavigate("features")}>
           查看支持矩阵
@@ -348,45 +387,71 @@ function OverviewPage({ onNavigate }) {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <Typography.Title level={2}>快速开始</Typography.Title>
-          </div>
-        </div>
-        <div className="quickstart-grid">
-          {QUICK_START_STEPS.map((step) => <QuickStartCard key={step.title} step={step} />)}
-        </div>
-      </section>
-    </div>
-  )
-}
-
-function ExamplesPage() {
-  return (
-    <div className="page-stack">
-      <section className="section-block">
-        <div className="section-heading">
-          <div>
-            <Typography.Title level={2}>快速集成</Typography.Title>
-            <Typography.Paragraph>
-              这些示例展示了如何将 Moon Lottie 接入到原生 JS 或主流前端框架中。
+            <Typography.Title level={2}>接入指南</Typography.Title>
+            <Typography.Paragraph type="secondary">
+              Moon Lottie 提供多种接入方式：
+              <a className="inline-link inline-link--strong" href="#guide-react">React 接入</a>
+              、
+              <a className="inline-link inline-link--strong" href="#guide-web-components">Web Components 接入</a>
+              、
+              <a className="inline-link inline-link--strong" href="#guide-cli">命令行工具 CLI</a>
+              、
+              <a className="inline-link inline-link--strong" href="#guide-moonbit">MoonBit 原生库</a>
             </Typography.Paragraph>
           </div>
         </div>
+        <div className="guide-stack">
+          <GuideSection
+            id="guide-react"
+            title="React 接入"
+            description={<>通过 React 组件库 <a href="https://www.npmjs.com/package/@moon-lottie/react" target="_blank" rel="noreferrer">@moon-lottie/react</a> 快速集成 Moon Lottie。</>}
+            sections={[
+              { title: "1. 安装包", code: "npm install @moon-lottie/react" },
+              { title: "2. 使用组件", code: '<MoonLottie src="path/to/animation.json" autoplay loop />' },
+            ]}
+            actions={[
+              { label: "查看示例", href: "https://lottie.cg-zhou.top/examples/moon-lottie-react/", primary: true },
+              { label: "查看文档", href: "https://github.com/cg-zhou/moon-lottie/blob/main/packages/moon-lottie-react/README.md" },
+            ]}
+          />
 
-        <div className="examples-grid">
-          {EXAMPLE_LINKS.map((item) => (
-            <Card key={item.id} className="feature-card examples-card">
-              <Typography.Title level={4}>{item.title}</Typography.Title>
-              <Typography.Paragraph>{item.description}</Typography.Paragraph>
-              <div className="examples-card__tags">
-                {item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}
-              </div>
-              <div className="examples-card__actions">
-                <Button type="primary" href={getExampleHref(item.id)} target="_blank" rel="noreferrer">
-                  查看示例
-                </Button>
-              </div>
-            </Card>
-          ))}
+          <GuideSection
+            id="guide-web-components"
+            title="Web Component 接入"
+            description={<>基于原生 Web Component 的自定义元素包 <a href="https://www.npmjs.com/package/@moon-lottie/core" target="_blank" rel="noreferrer">@moon-lottie/core</a>，适合无框架或多框架场景。</>}
+            sections={[
+              { title: "1. 安装包", code: "npm install @moon-lottie/core" },
+              { title: "2. 使用组件", code: `import { register } from '@moon-lottie/core';\nregister(); // 然后在 HTML 中使用 <moon-lottie> 标签` },
+            ]}
+            actions={[
+              { label: "查看示例", href: "https://lottie.cg-zhou.top/examples/moon-lottie-core/", primary: true },
+              { label: "查看文档", href: "https://github.com/cg-zhou/moon-lottie/blob/main/packages/moon-lottie/README.md" },
+            ]}
+          />
+
+          <GuideSection
+            id="guide-cli"
+            title="命令行工具 CLI"
+            description={<>使用 <a href="https://www.npmjs.com/package/@moon-lottie/cli" target="_blank" rel="noreferrer">@moon-lottie/cli</a>，可以在终端预览动画或导出 SVG 资源。</>}
+            sections={[
+              { title: "1. 安装包", code: "npm install -g @moon-lottie/cli" },
+              { title: "2. 终端预览", code: "moon-lottie play ani.json" },
+              { title: "3. 导出 SVG", code: "moon-lottie render ani.json -o out.svg" },
+            ]}
+          />
+
+          <GuideSection
+            id="guide-moonbit"
+            title="MoonBit 原生库"
+            description={<>在 MoonBit 项目中引入 <a href="https://mooncakes.io/packages/cg-zhou/moon-lottie" target="_blank" rel="noreferrer">moon-lottie</a>，直接调用底层运行时和渲染接口。</>}
+            sections={[
+              { title: "1. 添加依赖", code: "moon add moon-lottie" },
+              { title: "2. 调用运行时", code: `import * as lottie from "moon-lottie/lib/runtime"\n\nfn init {\n  let ani = lottie.load_from_string(...)\n  ani.render(ctx, time)\n}` },
+            ]}
+            actions={[
+              { label: "查看文档", href: "https://github.com/cg-zhou/moon-lottie/blob/main/README.mbt.md", primary: true },
+            ]}
+          />
         </div>
       </section>
     </div>
@@ -399,7 +464,8 @@ function PlaygroundPage({ active = true }) {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <Typography.Paragraph>直接对比 MoonLottie 与官方 lottie-web 的渲染表现。</Typography.Paragraph>
+            <Typography.Title level={2}>在线演示</Typography.Title>
+            <Typography.Paragraph>直接对比 Moon Lottie 与官方 lottie-web 的渲染表现。</Typography.Paragraph>
           </div>
         </div>
         <Playground active={active} />
@@ -414,42 +480,20 @@ function FeaturesPage() {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <Typography.Paragraph>基于 Airbnb 官方特性支持表，整理 MoonLottie 当前的支持情况。</Typography.Paragraph>
+            <Typography.Title level={2}>特性支持</Typography.Title>
+            <Typography.Paragraph className="support-note">
+              基于 Airbnb 官方特性支持表（
+              <a className="inline-link inline-link--strong" href="https://lottie.airbnb.tech/#/supported-features" target="_blank" rel="noreferrer">
+                Airbnb 官方 Supported Features
+              </a>
+              ），整理了 Moon Lottie 当前的动画特性支持情况，点击特性可以查看特性动画说明。这里主要列出对动画还原影响较大的核心特性，未逐条展开的细碎兼容项建议直接对照官方表查看差异。
+            </Typography.Paragraph>
           </div>
         </div>
-        <Typography.Paragraph className="support-note">
-            参考{" "}
-            <a className="inline-link" href="https://lottie.airbnb.tech/#/supported-features" target="_blank" rel="noreferrer">
-              Airbnb 官方 Supported Features
-            </a>
-            。
-        </Typography.Paragraph>
-        <Typography.Paragraph className="support-note support-note--subtle">
-          表格保持原来的查看方式；把鼠标移到特性名上，或点击特性名，即可查看对应的示例说明和动画。
-        </Typography.Paragraph>
 
         <div className="matrix-sections">
           {supportSections.map((section) => <FeatureSupportSection key={section.id} section={section} />)}
         </div>
-      </section>
-    </div>
-  )
-}
-
-function ArchitecturePage() {
-  return (
-    <div className="page-stack">
-      <section className="section-block">
-        <div className="section-heading">
-          <div>
-            <Typography.Paragraph>核心模块拆分、运行时边界与渲染链路说明正在整理中。</Typography.Paragraph>
-          </div>
-        </div>
-        <Card className="intro-card">
-          <Typography.Paragraph>
-            TODO：补充架构设计说明。
-          </Typography.Paragraph>
-        </Card>
       </section>
     </div>
   )
@@ -497,7 +541,7 @@ export default function App() {
           <div className="site-header__inner">
             <Button type="text" className="brand-button" onClick={() => navigateTo("overview")}>
               <img src="/logo.svg" alt="Moon Lottie Logo" className="brand-logo" />
-              <span className="brand-button__label">MoonLottie</span>
+              <span className="brand-button__label">Moon Lottie</span>
             </Button>
 
             <Menu
@@ -509,7 +553,7 @@ export default function App() {
             />
 
             <div className="site-header__actions">
-              <Button className="site-header__github" href="https://github.com/cg-zhou/moon-lottie" target="_blank" rel="noreferrer" icon={<IconifyIcon name="mdi:github" size={18} />}>
+              <Button className="site-header__github" href="https://github.com/cg-zhou/moon-lottie" target="_blank" rel="noreferrer" icon={<GitHubMarkIcon size={16} />}>
                 GitHub
               </Button>
             </div>
@@ -524,9 +568,7 @@ export default function App() {
                 <PlaygroundPage active={currentPage === "playground"} />
               </div>
             ) : null}
-            {currentPage === "examples" ? <ExamplesPage /> : null}
             {currentPage === "features" ? <FeaturesPage /> : null}
-            {currentPage === "architecture" ? <ArchitecturePage /> : null}
           </div>
         </Layout.Content>
 

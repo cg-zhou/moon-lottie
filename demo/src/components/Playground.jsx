@@ -1,6 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button, Descriptions, Empty, Input, Radio, Switch, Tag } from "antd"
 import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Clapperboard,
+  FolderOpen,
+  Info,
+  Menu,
+  Pause,
+  Play,
+  Search,
+  Sparkles,
+} from "lucide-react"
+import {
   animationUsesExpressions,
   cloneAnimationData,
   createCanvasRuntimeBridge,
@@ -144,22 +158,18 @@ function isEditableTarget(target) {
     || target?.isContentEditable
 }
 
-function IconifyIcon({ name, size = 18 }) {
-  return <iconify-icon icon={name} width={size} height={size} aria-hidden="true" />
-}
-
 const PlaybackTransport = React.memo(function PlaybackTransport({ controllerRef, isPlaying, onStepAnimation }) {
   return (
     <div className="playground-control-cluster">
-      <Button className="playground-transport-btn" type="default" title="上一个动画" onClick={() => onStepAnimation(-1)} aria-label="上一个动画" icon={<IconifyIcon name="solar:rewind-back-bold" size={16} />}>
+      <Button className="playground-transport-btn" type="default" title="上一个动画" onClick={() => onStepAnimation(-1)} aria-label="上一个动画" icon={<ChevronsLeft size={16} strokeWidth={2.2} />}>
       </Button>
-      <Button className="playground-transport-btn" type="default" title="上一帧" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧" icon={<IconifyIcon name="solar:alt-arrow-left-bold" size={16} />}>
+      <Button className="playground-transport-btn" type="default" title="上一帧" onClick={() => controllerRef.current?.stepFrame(-1)} aria-label="上一帧" icon={<ChevronLeft size={16} strokeWidth={2.2} />}>
       </Button>
-      <Button className="playground-primary-play-btn" type="default" title={isPlaying ? "暂停" : "播放"} onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停" icon={<IconifyIcon name={isPlaying ? "solar:pause-bold" : "solar:play-bold"} size={18} />}>
+      <Button className="playground-primary-play-btn" type="default" title={isPlaying ? "暂停" : "播放"} onClick={() => controllerRef.current?.toggle()} aria-label="播放或暂停" icon={isPlaying ? <Pause size={18} strokeWidth={2.2} /> : <Play size={18} strokeWidth={2.2} />}>
       </Button>
-      <Button className="playground-transport-btn" type="default" title="下一帧" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧" icon={<IconifyIcon name="solar:alt-arrow-right-bold" size={16} />}>
+      <Button className="playground-transport-btn" type="default" title="下一帧" onClick={() => controllerRef.current?.stepFrame(1)} aria-label="下一帧" icon={<ChevronRight size={16} strokeWidth={2.2} />}>
       </Button>
-      <Button className="playground-transport-btn" type="default" title="下一个动画" onClick={() => onStepAnimation(1)} aria-label="下一个动画" icon={<IconifyIcon name="solar:rewind-forward-bold" size={16} />}>
+      <Button className="playground-transport-btn" type="default" title="下一个动画" onClick={() => onStepAnimation(1)} aria-label="下一个动画" icon={<ChevronsRight size={16} strokeWidth={2.2} />}>
       </Button>
     </div>
   )
@@ -264,7 +274,7 @@ export default function Playground({ active = true }) {
   const [moonRenderer, setMoonRenderer] = useState("canvas")
   const [officialRenderer, setOfficialRenderer] = useState("svg")
   const [runtimeBackend, setRuntimeBackend] = useState("uninitialized")
-  const [statusMessage, setStatusMessage] = useState("初始化 MoonLottie 运行时...")
+  const [statusMessage, setStatusMessage] = useState("初始化 Moon Lottie 运行时...")
   const [currentFileName, setCurrentFileName] = useState("")
   const [currentFileSize, setCurrentFileSize] = useState(0)
   const [currentAnimationData, setCurrentAnimationData] = useState(null)
@@ -583,7 +593,7 @@ export default function Playground({ active = true }) {
       })
 
       try {
-        updateStatus("初始化 MoonLottie 运行时...")
+        updateStatus("初始化 Moon Lottie 运行时...")
         const state = await controllerRef.current.initialize()
         if (disposed) return
         syncPlayerState(state)
@@ -608,7 +618,7 @@ export default function Playground({ active = true }) {
           } else {
             controllerRef.current.pause()
           }
-          updateStatus(`已切换 MoonLottie 渲染器: ${moonRenderer}`, "#34c759")
+          updateStatus(`已切换 Moon Lottie 渲染器: ${moonRenderer}`, "#34c759")
           renderCurrentFrame(restoreFrame)
         } else {
           await initAnimationList()
@@ -770,8 +780,8 @@ export default function Playground({ active = true }) {
     >
       <header className="playground-top-toolbar">
         <div className="playground-toolbar-group playground-toolbar-group--grow">
-          <Button className="playground-icon-btn" type="default" title="打开播放列表" onClick={() => setPlaylistOpen(true)} aria-label="打开播放列表" icon={<IconifyIcon name="solar:hamburger-menu-bold" size={16} />} />
-          <Button className="playground-action-btn" type="primary" onClick={() => fileInputRef.current?.click()} icon={<IconifyIcon name="solar:folder-with-files-bold" size={16} />}>
+          <Button className="playground-icon-btn" type="default" title="打开播放列表" onClick={() => setPlaylistOpen(true)} aria-label="打开播放列表" icon={<Menu size={16} strokeWidth={2.2} />} />
+          <Button className="playground-action-btn" type="primary" onClick={() => fileInputRef.current?.click()} icon={<FolderOpen size={16} strokeWidth={2.2} />}>
             打开
           </Button>
           <input ref={fileInputRef} type="file" accept=".json" hidden onChange={(event) => {
@@ -792,7 +802,7 @@ export default function Playground({ active = true }) {
             <span className="playground-toolbar-switch__label">对比</span>
             <Switch checked={compareEnabled} onChange={updateCompareMode} />
           </label>
-          <Button className={`playground-toggle-btn ${detailsOpen ? "is-active" : ""}`} type={detailsOpen ? "primary" : "default"} onClick={() => setDetailsOpen((value) => !value)} icon={<IconifyIcon name="solar:info-circle-bold" size={16} />}>
+          <Button className={`playground-toggle-btn ${detailsOpen ? "is-active" : ""}`} type={detailsOpen ? "primary" : "default"} onClick={() => setDetailsOpen((value) => !value)} icon={<Info size={16} strokeWidth={2.2} />}>
             详情
           </Button>
         </div>
@@ -802,10 +812,10 @@ export default function Playground({ active = true }) {
       <aside className={`playground-drawer ${playlistOpen ? "is-open" : ""}`} aria-hidden={playlistOpen ? "false" : "true"}>
         <div className="playground-drawer-header">
           <h2 className="playground-drawer-title">播放列表</h2>
-          <Button className="playground-icon-btn" type="default" title="收起播放列表" onClick={() => setPlaylistOpen(false)} aria-label="收起播放列表" icon={<IconifyIcon name="solar:alt-arrow-left-bold" size={16} />} />
+          <Button className="playground-icon-btn" type="default" title="收起播放列表" onClick={() => setPlaylistOpen(false)} aria-label="收起播放列表" icon={<ChevronLeft size={16} strokeWidth={2.2} />} />
         </div>
         <div className="playground-search-wrap">
-          <Input className="playground-search-input" type="search" placeholder="检索样例名称" value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} allowClear prefix={<IconifyIcon name="solar:magnifer-bold" size={16} />} />
+          <Input className="playground-search-input" type="search" placeholder="检索样例名称" value={playlistQuery} onChange={(event) => setPlaylistQuery(event.target.value)} allowClear prefix={<Search size={16} strokeWidth={2.2} />} />
         </div>
         <div className="playground-playlist-list">
           {filteredSamples.length === 0 ? (
@@ -832,7 +842,7 @@ export default function Playground({ active = true }) {
       <aside className={`playground-details ${detailsOpen ? "is-open" : ""}`} aria-hidden={detailsOpen ? "false" : "true"}>
         <div className="playground-panel-header">
           <h2 className="playground-drawer-title">动画详情</h2>
-          <Button className="playground-icon-btn" type="default" title="收起详情" onClick={() => setDetailsOpen(false)} aria-label="收起详情" icon={<IconifyIcon name="solar:alt-arrow-right-bold" size={16} />} />
+          <Button className="playground-icon-btn" type="default" title="收起详情" onClick={() => setDetailsOpen(false)} aria-label="收起详情" icon={<ChevronRight size={16} strokeWidth={2.2} />} />
         </div>
         <div className="playground-panel-body">
           <Descriptions column={1} size="small" className="playground-descriptions">
@@ -849,8 +859,8 @@ export default function Playground({ active = true }) {
         <div ref={viewportRef} className={`playground-viewport ${currentBackground === "white" ? "bg-white" : currentBackground === "black" ? "bg-black" : ""}`}>
           <section ref={wasmWrapperRef} className="playground-canvas-wrapper">
             <div className="playground-canvas-head">
-              <Tag className="playground-canvas-tag" color="blue" icon={<IconifyIcon name="solar:stars-bold" size={14} />}>
-                MoonLottie
+              <Tag className="playground-canvas-tag" color="blue" icon={<Sparkles size={14} strokeWidth={2.2} />}>
+                Moon Lottie
               </Tag>
               <RendererToggle value={moonRenderer} onChange={setMoonRenderer} />
             </div>
@@ -861,7 +871,7 @@ export default function Playground({ active = true }) {
           </section>
           <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none" }}>
             <div className="playground-canvas-head">
-              <Tag className="playground-canvas-tag" icon={<IconifyIcon name="mdi:animation-play-outline" size={14} />}>
+              <Tag className="playground-canvas-tag" icon={<Clapperboard size={14} strokeWidth={2.2} />}>
                 官方 lottie-web
               </Tag>
               <RendererToggle value={officialRenderer} onChange={setOfficialRenderer} />
