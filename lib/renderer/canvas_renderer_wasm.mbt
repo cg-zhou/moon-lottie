@@ -203,6 +203,14 @@ pub impl Renderer for CanvasRenderer with begin_path(self : CanvasRenderer) {
 
 ///|
 #cfg(any(target="wasm", target="wasm-gc"))
+pub impl Renderer for CanvasRenderer with begin_path_segment(
+  self : CanvasRenderer,
+) {
+  let _ = self
+}
+
+///|
+#cfg(any(target="wasm", target="wasm-gc"))
 pub impl Renderer for CanvasRenderer with close_path(self : CanvasRenderer) {
   let _ = self
   canvas_close_path()

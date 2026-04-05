@@ -62,6 +62,45 @@ test "snapshot_render_static_full_opacity_zero_expansion_add_mask_keeps_clip_fas
 }
 
 ///|
+test "snapshot_render_multiple_add_masks_stack_clip_fast_path" {
+  let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":1,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"sw\":200,\"sh\":200,\"sc\":\"#ff0000\",\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-80,-80],[80,-80],[80,80],[-80,80]],\"c\":true}},\"o\":{\"k\":100}},{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0],[0,0]],\"v\":[[-40,-100],[100,-40],[40,100],[-100,40]],\"c\":true}},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = @renderer.CommandRecorder::new()
+  let player = @renderer.Player::new(ani, recorder)
+
+  player.set_frame(0.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let has_begin_mask = commands
+    .iter()
+    .any(fn(c) {
+      match c {
+        BeginMaskComposite => true
+        _ => false
+      }
+    })
+  let clip_count = commands
+    .iter()
+    .filter(fn(c) {
+      match c {
+        Clip => true
+        _ => false
+      }
+    })
+    .count()
+  if has_begin_mask || clip_count != 1 {
+    fail(
+      "Multiple add masks should stay on one clip fast path. Commands: \{commands}",
+    )
+  }
+}
+
+///|
 test "snapshot_render_add_mask_with_partial_opacity_uses_mask_composite" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[250,250]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"mode\":\"a\",\"pt\":{\"k\":{\"i\":[[0,0],[0,0]],\"o\":[[0,0],[0,0]],\"v\":[[0,0],[100,100]],\"c\":true}},\"o\":{\"k\":50}}],\"shapes\":[{\"ty\":\"el\",\"nm\":\"circle\",\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]}},{\"ty\":\"fl\",\"c\":{\"k\":[1,0,0]}}]}]}"
   let json = @json.parse(json_str)

@@ -1187,6 +1187,13 @@ pub impl Renderer for DrawilleRenderer with begin_path(self : DrawilleRenderer) 
 }
 
 ///|
+pub impl Renderer for DrawilleRenderer with begin_path_segment(
+  self : DrawilleRenderer,
+) -> Unit {
+  let _ = self
+}
+
+///|
 pub impl Renderer for DrawilleRenderer with close_path(self : DrawilleRenderer) -> Unit {
   self.close_current_subpath()
 }

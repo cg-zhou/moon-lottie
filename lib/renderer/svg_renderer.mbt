@@ -46,6 +46,8 @@ struct SvgLayerCapture {
 struct SvgMatteCapture {
   parent_buffer : StringBuilder
   content_markup : String
+  base_matrix : @math.Matrix
+  restore_base_transform : Bool
 }
 
 ///|
@@ -105,6 +107,62 @@ fn fmt(v : Double) -> String {
   let factor = 100.0
   let rounded = (v * factor).to_int().to_double() / factor
   rounded.to_string()
+}
+
+///|
+fn is_path_segment_token_at(path_data : String, index : Int) -> Bool {
+  let token = "@@SEG@@"
+  if index + token.length() > path_data.length() {
+    return false
+  }
+  for offset = 0; offset < token.length(); offset = offset + 1 {
+    if path_data[index + offset] != token[offset] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn strip_path_segment_tokens(path_data : String) -> String {
+  let token = "@@SEG@@"
+  let buffer = StringBuilder::new()
+  let mut index = 0
+  while index < path_data.length() {
+    if is_path_segment_token_at(path_data, index) {
+      index = index + token.length()
+    } else {
+      buffer.write_char(path_data[index].to_int().unsafe_to_char())
+      index = index + 1
+    }
+  }
+  buffer.to_string()
+}
+
+///|
+fn split_path_segments(path_data : String) -> Array[String] {
+  let token = "@@SEG@@"
+  let segments = []
+  let mut current = StringBuilder::new()
+  let mut index = 0
+  while index < path_data.length() {
+    if is_path_segment_token_at(path_data, index) {
+      let segment = current.to_string()
+      if segment.length() > 0 {
+        segments.push(segment)
+      }
+      current = StringBuilder::new()
+      index = index + token.length()
+    } else {
+      current.write_char(path_data[index].to_int().unsafe_to_char())
+      index = index + 1
+    }
+  }
+  let tail = current.to_string()
+  if tail.length() > 0 {
+    segments.push(tail)
+  }
+  segments
 }
 
 ///|
@@ -174,6 +232,20 @@ pub impl Renderer for SvgRenderer with set_transform(
   self : SvgRenderer,
   matrix : @math.Matrix,
 ) -> Unit {
+  if matrix == @math.Matrix::identity() && self.matte_stack.length() > 0 {
+    let last_idx = self.matte_stack.length() - 1
+    let matte = self.matte_stack[last_idx]
+    if matte.restore_base_transform {
+      self.matte_stack[last_idx] = {
+        parent_buffer: matte.parent_buffer,
+        content_markup: matte.content_markup,
+        base_matrix: matte.base_matrix,
+        restore_base_transform: false,
+      }
+      self.current_matrix = matte.base_matrix
+      return
+    }
+  }
   self.current_matrix = matrix
 }
 
@@ -188,6 +260,15 @@ pub impl Renderer for SvgRenderer with concat_transform(
 ///|
 pub impl Renderer for SvgRenderer with begin_path(self : SvgRenderer) -> Unit {
   self.path_buffer = StringBuilder::new()
+}
+
+///|
+pub impl Renderer for SvgRenderer with begin_path_segment(
+  self : SvgRenderer,
+) -> Unit {
+  if self.path_buffer.to_string().length() > 0 {
+    self.path_buffer.write_string("@@SEG@@")
+  }
 }
 
 ///|
@@ -412,6 +493,29 @@ fn SvgRenderer::mask_path_markup(
 }
 
 ///|
+fn SvgRenderer::current_path_data(self : SvgRenderer) -> String {
+  strip_path_segment_tokens(self.path_buffer.to_string())
+}
+
+///|
+fn SvgRenderer::clip_path_items(self : SvgRenderer, path_data : String) -> String {
+  let items = StringBuilder::new()
+  if self.current_fill_rule == "nonzero" {
+    for segment in split_path_segments(path_data) {
+      items.write_string(
+        "<path d=\"\{segment}\" fill-rule=\"\{self.current_fill_rule}\" />",
+      )
+    }
+  }
+  let output = items.to_string()
+  if output.length() > 0 {
+    return output
+  }
+  let merged = strip_path_segment_tokens(path_data)
+  "<path d=\"\{merged}\" fill-rule=\"\{self.current_fill_rule}\" />"
+}
+
+///|
 pub impl Renderer for SvgRenderer with fill(
   self : SvgRenderer,
   r : Int,
@@ -419,7 +523,7 @@ pub impl Renderer for SvgRenderer with fill(
   b : Int,
   opacity : Double,
 ) -> Unit {
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     self.append_markup(
@@ -437,7 +541,7 @@ pub impl Renderer for SvgRenderer with stroke(
   opacity : Double,
   width : Double,
 ) -> Unit {
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() > 0 {
     let color = color_to_hex(r, g, b)
     let scale = matrix_stroke_scale(self.current_matrix)
@@ -547,6 +651,8 @@ pub impl Renderer for SvgRenderer with prepare_matte_layer(
   self.matte_stack.push({
     parent_buffer: self.buffer,
     content_markup: "",
+    base_matrix: self.current_matrix,
+    restore_base_transform: false,
   })
   self.buffer = StringBuilder::new()
 }
@@ -560,6 +666,8 @@ pub impl Renderer for SvgRenderer with begin_matte_exit(
       self.matte_stack.push({
         parent_buffer: matte.parent_buffer,
         content_markup: self.buffer.to_string(),
+        base_matrix: self.current_matrix,
+        restore_base_transform: true,
       })
       self.buffer = StringBuilder::new()
     }
@@ -581,25 +689,46 @@ pub impl Renderer for SvgRenderer with end_matte_exit(
         return
       }
       let mask_id = self.next_id("matte")
+      let filter_id = if matte_type == 2 {
+        self.next_id("matte_invert")
+      } else {
+        ""
+      }
+      let matte_content_id = self.next_id("matte_content")
       self.defs_buffer.write_string(
         "<mask id=\"\{mask_id}\" maskUnits=\"userSpaceOnUse\" mask-type=\"alpha\">",
       )
       if matte_type == 2 {
-        // Invert alpha matte: content is visible where the matte is ABSENT.
-        // Start with full-canvas alpha=1, then subtract the matte shape using
-        // destination-out compositing (result_alpha = dest * (1 - src)).
+        // Match lottie-web's tt=2 inverted-alpha matte path: invert the matte
+        // buffer alpha through feComponentTransfer instead of relying on
+        // destination-out inside <mask>, which is not equivalent across SVG
+        // engines and produced the Santa beard regression.
         self.defs_buffer.write_string(
-          "<rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" fill=\"#FFFFFF\" />",
+          "<filter id=\"\{filter_id}\" x=\"0%\" y=\"0%\" width=\"100%\" height=\"100%\">",
         )
         self.defs_buffer.write_string(
-          "<g style=\"mix-blend-mode:destination-out\">",
+          "<feComponentTransfer in=\"SourceGraphic\"><feFuncA type=\"table\" tableValues=\"1.0 0.0\" /></feComponentTransfer>",
         )
-        self.defs_buffer.write_string(matte_markup)
+        self.defs_buffer.write_string("</filter>")
+        self.defs_buffer.write_string(
+          "<g filter=\"url(#\{filter_id})\">",
+        )
+        self.defs_buffer.write_string(
+          "<rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" fill=\"#FFFFFF\" opacity=\"0\" />",
+        )
+        self.defs_buffer.write_string(
+          "<use href=\"#\{matte_content_id}\" xlink:href=\"#\{matte_content_id}\" />",
+        )
         self.defs_buffer.write_string("</g>")
       } else {
-        self.defs_buffer.write_string(matte_markup)
+        self.defs_buffer.write_string(
+          "<use href=\"#\{matte_content_id}\" xlink:href=\"#\{matte_content_id}\" />",
+        )
       }
       self.defs_buffer.write_string("</mask>")
+      self.defs_buffer.write_string("<g id=\"\{matte_content_id}\">")
+      self.defs_buffer.write_string(matte_markup)
+      self.defs_buffer.write_string("</g>")
       self.buffer.write_string("<g mask=\"url(#\{mask_id})\">")
       self.buffer.write_string(matte.content_markup)
       self.buffer.write_string("</g>")
@@ -644,7 +773,7 @@ pub impl Renderer for SvgRenderer with apply_mask_path(
   inverted : Bool,
   expansion : Double,
 ) -> Unit {
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() == 0 {
     return
   }
@@ -808,7 +937,7 @@ pub impl Renderer for SvgRenderer with fill_linear_gradient(
   }
   self.defs_buffer.write_string("</linearGradient>")
 
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() > 0 {
     self.append_markup(
       "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{fmt(opacity)}\" fill-rule=\"\{self.current_fill_rule}\" />",
@@ -854,7 +983,7 @@ pub impl Renderer for SvgRenderer with stroke_linear_gradient(
   }
   self.defs_buffer.write_string("</linearGradient>")
 
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() > 0 {
     self.append_markup(
       "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width * scale)}\"\{self.stroke_attrs(scale)} />",
@@ -900,7 +1029,7 @@ pub impl Renderer for SvgRenderer with fill_radial_gradient(
   }
   self.defs_buffer.write_string("</radialGradient>")
 
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() > 0 {
     self.append_markup(
       "<path d=\"\{path_data}\" fill=\"url(#\{id})\" fill-opacity=\"\{opacity}\" fill-rule=\"\{self.current_fill_rule}\" />",
@@ -948,7 +1077,7 @@ pub impl Renderer for SvgRenderer with stroke_radial_gradient(
   }
   self.defs_buffer.write_string("</radialGradient>")
 
-  let path_data = self.path_buffer.to_string()
+  let path_data = self.current_path_data()
   if path_data.length() > 0 {
     self.append_markup(
       "<path d=\"\{path_data}\" fill=\"none\" stroke=\"url(#\{id})\" stroke-opacity=\"\{fmt(opacity)}\" stroke-width=\"\{fmt(width * scale)}\"\{self.stroke_attrs(scale)} />",
@@ -961,7 +1090,7 @@ pub impl Renderer for SvgRenderer with clip(self : SvgRenderer) -> Unit {
   let id = self.next_id("clip")
   let path_data = self.path_buffer.to_string()
   self.defs_buffer.write_string(
-    "<clipPath id=\"\{id}\"><path d=\"\{path_data}\" fill-rule=\"\{self.current_fill_rule}\" /></clipPath>",
+    "<clipPath id=\"\{id}\">\{self.clip_path_items(path_data)}</clipPath>",
   )
   if self.state_stack.length() > 0 {
     let last_idx = self.state_stack.length() - 1

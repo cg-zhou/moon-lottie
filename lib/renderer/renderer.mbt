@@ -12,6 +12,7 @@ pub trait Renderer {
 
   // Path creation
   begin_path(self : Self) -> Unit
+  begin_path_segment(self : Self) -> Unit
   close_path(self : Self) -> Unit
   move_to(self : Self, x : Double, y : Double) -> Unit
   line_to(self : Self, x : Double, y : Double) -> Unit
@@ -267,6 +268,13 @@ pub impl Renderer for CommandRecorder with concat_transform(
 ///|
 pub impl Renderer for CommandRecorder with begin_path(self : CommandRecorder) {
   self.commands.push(BeginPath)
+}
+
+///|
+pub impl Renderer for CommandRecorder with begin_path_segment(
+  self : CommandRecorder,
+) {
+  let _ = self
 }
 
 ///|

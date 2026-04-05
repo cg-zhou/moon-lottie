@@ -384,22 +384,25 @@ fn[R : Renderer] Player::render_layer(
       while i < masks.length() {
         let mask = masks[i]
 
-        // Group contiguous Add masks
+        // Consecutive Add masks share one clip step. On SVG this becomes one
+        // clipPath with multiple sibling path nodes, which matches lottie-web.
         if mask.mode == @model.MaskMode::Add && !mask.inverted {
           self.renderer.begin_path()
           self.renderer.set_fill_rule("nonzero")
-          while i < masks.length() {
-            let m = masks[i]
-            if m.mode == @model.MaskMode::Add && !m.inverted {
-              let path_val = self.evaluate_path(
-                m.path,
-                self.current_comp_frame,
-              )
-              self.draw_lottie_path(path_val)
-              i = i + 1
-            } else {
-              break
+          let mut first_add_mask = true
+          while i < masks.length() &&
+            masks[i].mode == @model.MaskMode::Add &&
+            !masks[i].inverted {
+            if !first_add_mask {
+              self.renderer.begin_path_segment()
             }
+            let path_val = self.evaluate_path(
+              masks[i].path,
+              self.current_comp_frame,
+            )
+            self.draw_lottie_path(path_val)
+            first_add_mask = false
+            i = i + 1
           }
           self.renderer.clip()
           continue

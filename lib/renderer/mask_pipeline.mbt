@@ -70,7 +70,7 @@ fn mask_can_use_clip_fast_path(mask : @model.Mask) -> Bool {
 
 ///| Mixed stacks, inverted masks, additive masks with non-static/non-100
 ///| opacity, and any mask using expansion all need the SVG-style composite
-///| pipeline instead of clip-only approximation.
+///| pipeline instead of the clip-only approximation.
 pub fn layer_masks_require_composite(masks : Array[@model.Mask]) -> Bool {
   for mask in masks {
     if !mask_can_use_clip_fast_path(mask) {

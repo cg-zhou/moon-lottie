@@ -112,6 +112,30 @@ test "SvgRenderer subtract mask logic" {
 }
 
 ///|
+test "SvgRenderer emits sibling clip paths for segmented nonzero clips" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(10.0, 0.0)
+  renderer.line_to(10.0, 10.0)
+  renderer.close_path()
+  renderer.begin_path_segment()
+  renderer.move_to(20.0, 20.0)
+  renderer.line_to(30.0, 20.0)
+  renderer.line_to(30.0, 30.0)
+  renderer.close_path()
+  renderer.set_fill_rule("nonzero")
+  renderer.clip()
+
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("<clipPath id=\"clip_0\"><path d=\"M0,0 L10,0 L10,10 Z\" fill-rule=\"nonzero\" /><path d=\"M20,20 L30,20 L30,30 Z\" fill-rule=\"nonzero\" /></clipPath>"),
+    "Segmented nonzero clips should emit sibling path nodes",
+  )
+}
+
+///|
 test "render_animation_to_svgs utility" {
   let json_str = "{\"v\":\"5.5.0\",\"fr\":60,\"ip\":0,\"op\":100,\"w\":500,\"h\":500,\"layers\":[{\"ty\":1,\"sw\":100,\"sh\":100,\"sc\":\"#ff0000\",\"ks\":{\"p\":{\"k\":[250,250]}}}]}"
   let json = @json.parse(json_str)
@@ -433,10 +457,9 @@ test "SvgRenderer source-atop with matte preserves destination alpha" {
 }
 
 ///|
-test "SvgRenderer invert matte uses destination-out to cut out matte shape" {
-  // For invert-alpha matte (tt=2), content should be visible where the matte
-  // source is ABSENT.  The SVG mask must subtract the matte via destination-out
-  // rather than simply adding it (which would make it always-visible).
+test "SvgRenderer invert matte uses alpha inversion filter" {
+  // For invert-alpha matte (tt=2), lottie-web inverts the matte alpha with
+  // feComponentTransfer instead of relying on destination-out inside <mask>.
   let renderer = SvgRenderer::new(100.0, 100.0)
   renderer.prepare_matte_layer()
   // Content: blue rectangle
@@ -458,15 +481,51 @@ test "SvgRenderer invert matte uses destination-out to cut out matte shape" {
   renderer.fill(255, 255, 255, 1.0)
   renderer.end_matte_exit(2) // invert matte
   let output = renderer.get_output()
-  // The mask must contain a full-canvas white background (makes everything
-  // visible initially) ...
   assert_true(
-    output.contains("<rect"),
-    "invert matte mask should have a white background rect",
+    output.contains("<feFuncA type=\"table\" tableValues=\"1.0 0.0\" />"),
+    "invert matte should invert alpha through feComponentTransfer",
   )
-  // ... and wrap the matte shape with destination-out so it cuts the alpha.
   assert_true(
-    output.contains("destination-out"),
-    "invert matte mask must use destination-out to subtract matte from alpha",
+    output.contains("fill=\"#FFFFFF\" opacity=\"0\""),
+    "invert matte should include a transparent full-frame rect to expand filter bounds",
+  )
+  assert_true(
+    output.contains("filter=\"url(#matte_invert_1)\""),
+    "invert matte should wrap the matte content in the alpha-inversion filter",
+  )
+  assert_true(
+    output.contains("<use href=\"#matte_content_2\" xlink:href=\"#matte_content_2\" />"),
+    "invert matte should reference the matte content through a defs-backed use element",
+  )
+}
+
+///|
+test "SvgRenderer matte source restores captured base transform" {
+  let renderer = SvgRenderer::new(100.0, 100.0)
+  renderer.set_transform(@math.Matrix::identity().translate(10.0, 20.0))
+  renderer.prepare_matte_layer()
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(30.0, 0.0)
+  renderer.line_to(30.0, 30.0)
+  renderer.line_to(0.0, 30.0)
+  renderer.close_path()
+  renderer.fill(255, 0, 0, 1.0)
+  renderer.begin_matte_exit()
+  renderer.save()
+  renderer.set_transform(@math.Matrix::identity())
+  renderer.begin_path()
+  renderer.move_to(0.0, 0.0)
+  renderer.line_to(10.0, 0.0)
+  renderer.line_to(10.0, 10.0)
+  renderer.line_to(0.0, 10.0)
+  renderer.close_path()
+  renderer.fill(255, 255, 255, 1.0)
+  renderer.restore()
+  renderer.end_matte_exit(2)
+  let output = renderer.get_output()
+  assert_true(
+    output.contains("d=\"M10,20 L20,20 L20,30 L10,30 Z\" fill=\"#FFFFFF\""),
+    "matte source content should inherit the captured base transform during matte exit",
   )
 }
