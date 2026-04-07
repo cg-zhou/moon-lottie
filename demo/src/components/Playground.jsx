@@ -821,11 +821,9 @@ export default function Playground({ active = true }) {
           {filteredSamples.length === 0 ? (
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有匹配的样例。" className="playground-playlist-empty" />
           ) : filteredSamples.map((entry) => (
-            <Button
+            <div
               key={entry.file}
-              type={entry.file === currentFileName ? "primary" : "text"}
               className={`playground-playlist-item ${entry.file === currentFileName ? "is-active" : ""}`}
-              block
               onClick={() => {
                 setPlaylistOpen(false)
                 loadRemoteAnimation(entry.file)
@@ -833,7 +831,7 @@ export default function Playground({ active = true }) {
             >
               <span className="playground-playlist-item__title">{entry.label}</span>
               <span className="playground-playlist-item__meta">{entry.file}</span>
-            </Button>
+            </div>
           ))}
         </div>
       </aside>

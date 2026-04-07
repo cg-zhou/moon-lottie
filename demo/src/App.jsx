@@ -270,7 +270,6 @@ function FeatureSupportSection({ section }) {
     <Card
       className="support-table-card"
       title={section.title}
-      extra={<Tag color="green">支持 {supportedCount}/{total} 项</Tag>}
     >
       <Table
         rowKey="feature"
@@ -388,7 +387,7 @@ function OverviewPage({ onNavigate }) {
         <div className="section-heading">
           <div>
             <Typography.Title level={2}>接入指南</Typography.Title>
-            <Typography.Paragraph type="secondary">
+            <Typography.Paragraph>
               Moon Lottie 提供多种接入方式：
               <a className="inline-link inline-link--strong" href="#guide-react">React 接入</a>
               、
@@ -465,7 +464,7 @@ function PlaygroundPage({ active = true }) {
         <div className="section-heading">
           <div>
             <Typography.Title level={2}>在线演示</Typography.Title>
-            <Typography.Paragraph>直接对比 Moon Lottie 与官方 lottie-web 的渲染表现。</Typography.Paragraph>
+            <Typography.Paragraph>对比 Moon Lottie 与官方 lottie-web 的渲染表现。</Typography.Paragraph>
           </div>
         </div>
         <Playground active={active} />
