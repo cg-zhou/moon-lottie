@@ -296,7 +296,7 @@ function FeatureSupportSection({ section }) {
       />
 
       <Modal
-        title={currentRecord?.sectionTitle}
+        title={currentRecord ? `${currentRecord.sectionTitle} - ${currentRecord.feature}` : ""}
         open={isModalVisible}
         onCancel={() => setGlobalFeatureIndex(-1)}
         footer={null}
@@ -481,11 +481,11 @@ function FeaturesPage() {
           <div>
             <Typography.Title level={2}>特性支持</Typography.Title>
             <Typography.Paragraph className="support-note">
-              基于 Airbnb 官方特性支持表（
+              参考 Airbnb 官方特性支持表（
               <a className="inline-link inline-link--strong" href="https://lottie.airbnb.tech/#/supported-features" target="_blank" rel="noreferrer">
                 Airbnb 官方 Supported Features
               </a>
-              ），整理了 Moon Lottie 当前的动画特性支持情况，点击特性可以查看特性动画说明。这里主要列出对动画还原影响较大的核心特性，未逐条展开的细碎兼容项建议直接对照官方表查看差异。
+              ），整理了 Moon Lottie 对常用动画特性的支持情况。点击具体特性可查看对应的演示效果。这里主要涵盖对动画还原影响较大的核心要素，更细微的兼容性差异建议参考官方标准。
             </Typography.Paragraph>
           </div>
         </div>

@@ -50,10 +50,6 @@ export default function FeatureExampleCard({ feature, example }) {
           </div>
 
           <div className="feature-example-card__header">
-            <Typography.Text className="feature-example-card__eyebrow">特性示例</Typography.Text>
-            <Typography.Title level={4} className="feature-example-card__title">
-              {feature}
-            </Typography.Title>
             <Typography.Paragraph className="feature-example-card__description">
               {example.description}
             </Typography.Paragraph>
