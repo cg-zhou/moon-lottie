@@ -197,30 +197,26 @@ fn[R] Player::evaluate_auto_orient_rotation(
       frame + offset,
       layer_index,
     )
-    let deltas = [
-      (
-        transform_vec_component(next_position, 0, 0.0) -
-        transform_vec_component(previous_position, 0, 0.0),
-        transform_vec_component(next_position, 1, 0.0) -
-        transform_vec_component(previous_position, 1, 0.0),
-      ),
-      (
-        transform_vec_component(next_position, 0, 0.0) -
-        transform_vec_component(current_position, 0, 0.0),
-        transform_vec_component(next_position, 1, 0.0) -
-        transform_vec_component(current_position, 1, 0.0),
-      ),
-      (
-        transform_vec_component(current_position, 0, 0.0) -
-        transform_vec_component(previous_position, 0, 0.0),
-        transform_vec_component(current_position, 1, 0.0) -
-        transform_vec_component(previous_position, 1, 0.0),
-      ),
-    ]
-    for (dx, dy) in deltas {
-      if dx.abs() > epsilon || dy.abs() > epsilon {
-        return @std_math.atan2(dy, dx) * 180.0 / 3.141592653589793
-      }
+    let dx = transform_vec_component(next_position, 0, 0.0) -
+      transform_vec_component(previous_position, 0, 0.0)
+    let dy = transform_vec_component(next_position, 1, 0.0) -
+      transform_vec_component(previous_position, 1, 0.0)
+    if dx.abs() > epsilon || dy.abs() > epsilon {
+      return @std_math.atan2(dy, dx) * 180.0 / 3.141592653589793
+    }
+    let forward_dx = transform_vec_component(next_position, 0, 0.0) -
+      transform_vec_component(current_position, 0, 0.0)
+    let forward_dy = transform_vec_component(next_position, 1, 0.0) -
+      transform_vec_component(current_position, 1, 0.0)
+    if forward_dx.abs() > epsilon || forward_dy.abs() > epsilon {
+      return @std_math.atan2(forward_dy, forward_dx) * 180.0 / 3.141592653589793
+    }
+    let backward_dx = transform_vec_component(current_position, 0, 0.0) -
+      transform_vec_component(previous_position, 0, 0.0)
+    let backward_dy = transform_vec_component(current_position, 1, 0.0) -
+      transform_vec_component(previous_position, 1, 0.0)
+    if backward_dx.abs() > epsilon || backward_dy.abs() > epsilon {
+      return @std_math.atan2(backward_dy, backward_dx) * 180.0 / 3.141592653589793
     }
   }
   0.0
