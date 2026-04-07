@@ -381,6 +381,7 @@ struct LayerJson {
   index : Int?
   layer_type : Int
   transform : TransformJson?
+  auto_orient : Int?
   time_remap : Json?
   in_point : Double?
   out_point : Double?
@@ -406,6 +407,7 @@ struct LayerJson {
       index(rename="ind"),
       layer_type(rename="ty"),
       transform(rename="ks"),
+      auto_orient(rename="ao"),
       time_remap(rename="tm"),
       in_point(rename="ip"),
       out_point(rename="op"),
@@ -669,7 +671,7 @@ struct TextPropertyJson {
 /// Global tracker for unknown keys (for L1 Reporting)
 let known_keys : Array[String] = [
   "v", "fr", "ip", "op", "w", "h", "nm", "ddd", "assets", "layers", "fonts", "chars",
-  "ty", "ks", "p", "a", "k", "s", "e", "o", "r", "sk", "sa", "x", "y", "z",
+  "ty", "ks", "p", "a", "k", "s", "e", "o", "r", "sk", "sa", "x", "y", "z", "ao",
   "d", "st", "bm", "ind", "cl", "ln", "tg", "sr", "parent", "sh", "sw", "sc", "lc", "lj", "ml",
   "shapes", "it", "c", "g", "t", "hd", "v", "fc", "of", "fill-rule", "gr", "tr", "p", "s", "r", "o",
   "expressions", "markers", "metadata", "masks", "inv", "pt", "mode", "px", "py", "pz", "i", "h", "to",
@@ -1932,6 +1934,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
   let name = decoded.name
   let hidden = decoded.hidden
   let parent = decoded.parent
+  let auto_orient = decoded.auto_orient
   let time_remap = match decoded.time_remap {
     Some(tm_json) => Some(parse_property_double(Some(tm_json)))
     None => None
@@ -1987,6 +1990,7 @@ fn parse_layer(json : Json) -> @model.Layer raise LottieError {
     data~,
     hidden~,
     parent~,
+    auto_orient~,
     masks~,
     matte_type~,
     matte_inherit~,

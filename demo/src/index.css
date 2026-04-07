@@ -2072,12 +2072,6 @@ tbody tr:last-child td {
     font-size: 12px;
   }
 }
-  font-weight: 500;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .nav-btn:not(:disabled):hover {
   background: rgba(22, 119, 255, 0.08);

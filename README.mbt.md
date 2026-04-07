@@ -70,7 +70,6 @@ fn render_svg(json_text : String) -> String raise {
 
 ## Known Gaps
 
-- **Auto-orient**: Not yet implemented.
 - **Marker Support**: Under active development.
 - **Expressions**: Current implementation relies on JS host hooks for evaluation.
 
