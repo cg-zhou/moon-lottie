@@ -99,6 +99,165 @@ fn[R] Player::evaluate_transform(
 }
 
 ///|
+fn transform_vec_component(values : Array[Double], index : Int, fallback : Double) -> Double {
+  if index < values.length() {
+    values[index]
+  } else {
+    fallback
+  }
+}
+
+///|
+fn build_transform_matrix(
+  anchor : Array[Double],
+  position : Array[Double],
+  scale : Array[Double],
+  rotation : Double,
+) -> @math.Matrix {
+  let ax = transform_vec_component(anchor, 0, 0.0)
+  let ay = transform_vec_component(anchor, 1, 0.0)
+  let px = transform_vec_component(position, 0, 0.0)
+  let py = transform_vec_component(position, 1, 0.0)
+  let sx = transform_vec_component(scale, 0, 100.0)
+  let sy = transform_vec_component(scale, 1, 100.0)
+  let m1 = @math.Matrix::identity().translate(px, py)
+  let m2 = m1.rotate(rotation * 3.141592653589793 / 180.0)
+  let m3 = m2.scale(sx / 100.0, sy / 100.0)
+  m3.translate(-ax, -ay)
+}
+
+///|
+fn[R] Player::evaluate_transform_position_with_context(
+  self : Player[R],
+  transform : @model.Transform,
+  frame : Double,
+  layer_index : Int,
+) -> Array[Double] {
+  if transform.split == Some(true) {
+    let x = match transform.px {
+      Some(prop) =>
+        @runtime.evaluate_double_property_with_context(
+          prop,
+          frame,
+          layer_index,
+          self.current_comp_id,
+        )
+      None => 0.0
+    }
+    let y = match transform.py {
+      Some(prop) =>
+        @runtime.evaluate_double_property_with_context(
+          prop,
+          frame,
+          layer_index,
+          self.current_comp_id,
+        )
+      None => 0.0
+    }
+    [x, y]
+  } else {
+    @runtime.evaluate_vec_property_with_context(
+      transform.position,
+      frame,
+      layer_index,
+      self.current_comp_id,
+    )
+  }
+}
+
+///|
+fn[R] Player::evaluate_auto_orient_rotation(
+  self : Player[R],
+  layer : @model.Layer,
+  frame : Double,
+  layer_index : Int,
+) -> Double {
+  let auto_orient_enabled = match layer.auto_orient {
+    Some(0) | None => false
+    Some(_) => true
+  }
+  if !auto_orient_enabled {
+    return 0.0
+  }
+  let current_position = self.evaluate_transform_position_with_context(
+    layer.transform,
+    frame,
+    layer_index,
+  )
+  let sample_offsets = [0.01, 0.1, 0.5, 1.0]
+  let epsilon = 0.000001
+  for offset in sample_offsets {
+    let previous_position = self.evaluate_transform_position_with_context(
+      layer.transform,
+      frame - offset,
+      layer_index,
+    )
+    let next_position = self.evaluate_transform_position_with_context(
+      layer.transform,
+      frame + offset,
+      layer_index,
+    )
+    let dx = transform_vec_component(next_position, 0, 0.0) -
+      transform_vec_component(previous_position, 0, 0.0)
+    let dy = transform_vec_component(next_position, 1, 0.0) -
+      transform_vec_component(previous_position, 1, 0.0)
+    if dx.abs() > epsilon || dy.abs() > epsilon {
+      return @std_math.atan2(dy, dx) * 180.0 / 3.141592653589793
+    }
+    let forward_dx = transform_vec_component(next_position, 0, 0.0) -
+      transform_vec_component(current_position, 0, 0.0)
+    let forward_dy = transform_vec_component(next_position, 1, 0.0) -
+      transform_vec_component(current_position, 1, 0.0)
+    if forward_dx.abs() > epsilon || forward_dy.abs() > epsilon {
+      return @std_math.atan2(forward_dy, forward_dx) * 180.0 / 3.141592653589793
+    }
+    let backward_dx = transform_vec_component(current_position, 0, 0.0) -
+      transform_vec_component(previous_position, 0, 0.0)
+    let backward_dy = transform_vec_component(current_position, 1, 0.0) -
+      transform_vec_component(previous_position, 1, 0.0)
+    if backward_dx.abs() > epsilon || backward_dy.abs() > epsilon {
+      return @std_math.atan2(backward_dy, backward_dx) * 180.0 / 3.141592653589793
+    }
+  }
+  0.0
+}
+
+///|
+fn[R] Player::evaluate_layer_transform_with_context(
+  self : Player[R],
+  layer : @model.Layer,
+  frame : Double,
+  layer_index : Int,
+) -> @math.Matrix {
+  let transform = layer.transform
+  let anchor = @runtime.evaluate_vec_property_with_context(
+    transform.anchor,
+    frame,
+    layer_index,
+    self.current_comp_id,
+  )
+  let position = self.evaluate_transform_position_with_context(
+    transform,
+    frame,
+    layer_index,
+  )
+  let scale = @runtime.evaluate_vec_property_with_context(
+    transform.scale,
+    frame,
+    layer_index,
+    self.current_comp_id,
+  )
+  let rotation = @runtime.evaluate_double_property_with_context(
+    transform.rotation,
+    frame,
+    layer_index,
+    self.current_comp_id,
+  ) +
+    self.evaluate_auto_orient_rotation(layer, frame, layer_index)
+  build_transform_matrix(anchor, position, scale, rotation)
+}
+
+///|
 pub fn[R] Player::set_frame(self : Player[R], frame : Double) -> Unit {
   self.current_frame = frame
 }
@@ -170,7 +329,11 @@ fn[R : Renderer] Player::apply_layer_mask_composite(
     Some(parent_ind) => self.apply_parent_transform(parent_ind, scope, comp_frame)
     None => ()
   }
-  let layer_matrix = self.evaluate_transform(layer.transform, comp_frame)
+  let layer_matrix = self.evaluate_layer_transform_with_context(
+    layer,
+    comp_frame,
+    self.current_layer_index,
+  )
   self.renderer_concat_transform(layer_matrix)
 
   let mut has_effective_mask = false
@@ -251,11 +414,10 @@ fn[R : Renderer] Player::apply_parent_transform(
         Some(p_ind) => self.apply_parent_transform(p_ind, scope, comp_frame)
         None => ()
       }
-      let matrix = @runtime.evaluate_transform_with_context(
-        layer.transform,
+      let matrix = self.evaluate_layer_transform_with_context(
+        layer,
         comp_frame,
         layer.index,
-        self.current_comp_id,
       )
       self.renderer_concat_transform(matrix)
       return
@@ -365,7 +527,11 @@ fn[R : Renderer] Player::render_layer(
   // lottie-web evaluates all layer properties (transforms and shapes) using
   // comp_frame directly, since (comp_frame - st) vs (t - st) simplifies to
   // comp_frame vs t.
-  let matrix = self.evaluate_transform(layer.transform, comp_frame)
+  let matrix = self.evaluate_layer_transform_with_context(
+    layer,
+    comp_frame,
+    self.current_layer_index,
+  )
   self.renderer_concat_transform(matrix)
 
   // 2.2 Apply Layer Opacity

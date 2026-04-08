@@ -322,6 +322,37 @@ test "precomp layer with global keyframes animates after start" {
   }
 }
 
+test "layer auto orient rotates along motion direction" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":10,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"ao":1,"ip":0,"op":10,"st":0,"ks":{"a":{"k":[0,0]},"p":{"a":1,"k":[{"t":0,"s":[0,0],"e":[100,100]},{"t":10,"s":[100,100]}]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(5.0)
+  player.render()
+
+  let mut saw_auto_oriented_transform = false
+  for cmd in recorder.get_commands() {
+    match cmd {
+      ConcatTransform(m) =>
+        if (m.a - 0.7071067811865476).abs() < 0.001 &&
+            (m.b - 0.7071067811865475).abs() < 0.001 &&
+            (m.c + 0.7071067811865475).abs() < 0.001 &&
+            (m.d - 0.7071067811865476).abs() < 0.001 &&
+            (m.e - 50.0).abs() < 0.001 &&
+            (m.f - 50.0).abs() < 0.001 {
+          saw_auto_oriented_transform = true
+        }
+      _ => ()
+    }
+  }
+  assert_eq(saw_auto_oriented_transform, true)
+}
+
 test "track matte uses composition frame timing" {
   let json_str =
     #|{"v":"5.5.0","fr":30,"ip":0,"op":60,"w":200,"h":200,"layers":[{"ty":4,"ind":1,"nm":"matte-src","ip":0,"op":60,"st":0,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":20,"s":[100,0]}]}},"shapes":[{"ty":"rc","s":{"k":[40,40]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,1,1]},"o":{"k":100}}]},{"ty":4,"ind":2,"nm":"content","ip":0,"op":60,"st":30,"tt":1,"ks":{"a":{"k":[0,0]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100},"p":{"k":[0,0]}},"shapes":[{"ty":"rc","s":{"k":[80,80]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
