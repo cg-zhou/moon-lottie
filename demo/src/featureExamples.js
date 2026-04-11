@@ -1471,17 +1471,6 @@ export const featureExampleMap = {
       },
       IMAGE_EXAMPLE,
     ),
-    "标记": createExample(
-      "支持解析图层及根视图上的命名标记（Markers）。",
-      {
-        markers: [
-          { tm: 0, cm: "intro", dr: 0 },
-          { tm: 32, cm: "pulse", dr: 0 },
-          { tm: 64, cm: "settle", dr: 0 },
-        ],
-      },
-      MARKER_EXAMPLE,
-    ),
     "表达式": createExample(
       "支持轻量级 JavaScript 表达式逻辑及其计算求值。",
       {

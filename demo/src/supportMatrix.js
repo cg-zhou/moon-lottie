@@ -85,7 +85,7 @@ export const supportSections = [
       { feature: "蒙版", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
       { feature: "轨道遮罩", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
       { feature: "图片", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: yes },
-      { feature: "标记", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: maybe("❔", "解析器持续完善中") },
+      { feature: "标记", android: yes, iosCoreAnimation: yes, iosMainThread: yes, windows: yes, webSvg: yes, webCanvas: yes, webHtml: yes, moon: maybe("❔", "Animation 模型已预留 markers 字段，但当前解析器尚未读取 markers") },
       { feature: "表达式", android: yes, iosCoreAnimation: no, iosMainThread: no, windows: no, webSvg: yes, webCanvas: yes, webHtml: no, moon: yesWith("JS 宿主 MVP") },
     ],
   },
