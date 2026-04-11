@@ -527,7 +527,7 @@ export default function Playground({ active = true }) {
         getExpressionAnimationData: () => stateRef.current.currentExpressionAnimationData,
         getExpressionMeta: () => stateRef.current.currentExpressionMeta,
         getCanvasContext: () => ctx,
-        jsRuntimePath: `${import.meta.env.BASE_URL}runtime/js/moon-lottie-runtime.js`,
+        jsRuntimePath: `${import.meta.env.BASE_URL}runtime/js/moon-lottie-runtime.js?v=${__MOON_LOTTIE_RUNTIME_VERSION__}`,
       })
 
       runtimeBridgeRef.current = {
