@@ -3,8 +3,8 @@ import { Card, Typography } from "antd"
 import { MoonLottiePlayer } from "@moon-lottie/react"
 
 const ASSET_BASE = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/")
-const WASM_RUNTIME_PATH = `${ASSET_BASE}runtime/wasm/moon-lottie-runtime.wasm?v=${__MOON_LOTTIE_RUNTIME_VERSION__}`
-const JS_RUNTIME_PATH = `${ASSET_BASE}runtime/js/moon-lottie-runtime.js?v=${__MOON_LOTTIE_RUNTIME_VERSION__}`
+const WASM_RUNTIME_PATH = `${ASSET_BASE}runtime/wasm/moon-lottie-runtime.wasm?v=${__MOON_LOTTIE_BUILD_TIME__}`
+const JS_RUNTIME_PATH = `${ASSET_BASE}runtime/js/moon-lottie-runtime.js?v=${__MOON_LOTTIE_BUILD_TIME__}`
 
 export default function FeatureExampleCard({ feature, example }) {
   const containerRef = useRef(null)
