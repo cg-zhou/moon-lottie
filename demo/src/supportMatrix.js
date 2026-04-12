@@ -302,7 +302,7 @@ export const supportSections = [
       row("蒙版不透明度", officialAllSupported, yes),
       row("相加", officialAllSupported, yes),
       row("相减", officialAllSupported, yes),
-      row("相交", officialMaskIntersect, yesWith("已由 parser_test / svg_test 覆盖相交蒙版解析与渲染")),
+      row("相交", officialMaskIntersect, yesWith("已由现有 parser_test / svg_test 覆盖相交蒙版解析与渲染")),
       row("变亮", officialAllUnsupported, no),
       row("变暗", officialAllUnsupported, no),
       row("差值", officialAllUnsupported, no),
