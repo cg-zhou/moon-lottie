@@ -485,7 +485,7 @@ function FeaturesPage() {
               <a className="inline-link inline-link--strong" href="https://lottie.airbnb.tech/#/supported-features" target="_blank" rel="noreferrer">
                 Airbnb 官方 Supported Features
               </a>
-              ），整理了 Moon Lottie 对常用动画特性的支持情况。点击具体特性可查看对应的演示效果。这里主要涵盖对动画还原影响较大的核心要素，更细微的兼容性差异建议参考官方标准。
+              ），现已按官方表格逐项同步平台特性。Moon Lottie 列会优先标注已经由实现或测试验证过的能力，暂未充分核实的条目会保守显示为“未知”。点击具体特性可查看对应的演示效果。
             </Typography.Paragraph>
           </div>
         </div>

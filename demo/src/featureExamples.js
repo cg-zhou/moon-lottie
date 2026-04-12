@@ -1428,6 +1428,33 @@ export const featureExampleMap = {
       AUTO_ORIENT_EXAMPLE,
     ),
   },
+  masks: {
+    "蒙版路径": createExample(
+      "支持传统的形状蒙版（Masks）路径裁切。",
+      {
+        hasMask: true,
+        masksProperties: [
+          {
+            mode: "a",
+            pt: { k: rectPath(0, 0, 112, 80) },
+          },
+        ],
+      },
+      MASK_EXAMPLE,
+    ),
+  },
+  mattes: {
+    "Alpha 遮罩": createExample(
+      "支持图层间的 Alpha Track Matte（轨道遮罩）。",
+      {
+        layers: [
+          { ty: 4, td: 1 },
+          { ty: 4, tt: 1 },
+        ],
+      },
+      TRACK_MATTE_EXAMPLE,
+    ),
+  },
   general: {
     "蒙版": createExample(
       "支持传统的形状蒙版（Masks）及其与/或等叠加运算。",
@@ -1452,6 +1479,40 @@ export const featureExampleMap = {
       },
       TRACK_MATTE_EXAMPLE,
     ),
+    "图片": createExample(
+      "支持内联 Base64 或本地引用图片资源及其变换控制。",
+      {
+        assets: [
+          {
+            id: "img_0",
+            w: 64,
+            h: 64,
+            p: "data:image/svg+xml;...",
+            e: 1,
+          },
+        ],
+        layer: {
+          ty: 2,
+          refId: "img_0",
+        },
+      },
+      IMAGE_EXAMPLE,
+    ),
+    "表达式": createExample(
+      "支持轻量级 JavaScript 表达式逻辑及其计算求值。",
+      {
+        ks: {
+          p: {
+            a: 0,
+            k: [120, 90, 0],
+            x: "var $bm_rt;\n$bm_rt = [120 + Math.sin(time * 4) * 42, 90 + Math.cos(time * 2) * 10, 0];",
+          },
+        },
+      },
+      EXPRESSION_EXAMPLE,
+    ),
+  },
+  other: {
     "图片": createExample(
       "支持内联 Base64 或本地引用图片资源及其变换控制。",
       {
