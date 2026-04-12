@@ -160,6 +160,23 @@ test "parse_mask_with_legacy_f_mode_treated_as_add" {
 }
 
 ///|
+test "parse_mask_with_intersect_mode" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]],\"c\":true}},\"o\":{\"k\":100},\"mode\":\"i\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with intersect mask mode: \{e}")
+  }
+  match ani.layers[0].masks {
+    Some(masks) =>
+      if masks[0].mode != @model.MaskMode::Intersect {
+        fail("mask mode should be Intersect")
+      }
+    None => fail("masks should be parsed")
+  }
+}
+
+///|
 test "parse_mask_path_closed_from_mask_cl_flag" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":100.0,\"w\":500,\"h\":500,\"layers\":[{\"ty\":4,\"ind\":1,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"masksProperties\":[{\"inv\":false,\"cl\":true,\"pt\":{\"k\":{\"v\":[[0,0],[10,0],[10,10]],\"i\":[[0,0],[0,0],[0,0]],\"o\":[[0,0],[0,0],[0,0]]}},\"o\":{\"k\":100},\"mode\":\"a\",\"nm\":\"m1\"}],\"shapes\":[]}]}"
@@ -763,6 +780,20 @@ test "parse_layer_fill_effect" {
 }
 
 ///|
+test "parse_non_fill_layer_effects_are_ignored" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":30,\"ip\":0,\"op\":20,\"w\":100,\"h\":100,\"layers\":[{\"ty\":4,\"ind\":1,\"ip\":0,\"op\":20,\"st\":0,\"ks\":{\"a\":{\"k\":[0,0]},\"p\":{\"k\":[0,0]},\"s\":{\"k\":[100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}},\"ef\":[{\"ty\":22,\"mn\":\"ADBE Stroke\",\"en\":1,\"ef\":[]},{\"ty\":20,\"mn\":\"ADBE Tint\",\"en\":1,\"ef\":[]},{\"ty\":23,\"mn\":\"ADBE Tritone\",\"en\":1,\"ef\":[]},{\"ty\":24,\"mn\":\"ADBE Pro Levels2\",\"en\":1,\"ef\":[]},{\"ty\":29,\"mn\":\"ADBE Gaussian Blur 2\",\"en\":1,\"ef\":[]},{\"ty\":25,\"mn\":\"ADBE Drop Shadow\",\"en\":1,\"ef\":[]}],\"shapes\":[{\"ty\":\"rc\",\"s\":{\"k\":[20,20]},\"p\":{\"k\":[0,0]},\"r\":{\"k\":0}},{\"ty\":\"fl\",\"c\":{\"k\":[1,1,1]},\"o\":{\"k\":100}}]}]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse non-fill layer effects: \{e}")
+  }
+  match ani.layers[0].fill_effect {
+    Some(_) => fail("Only ADBE Fill is currently modeled as a layer effect")
+    None => ()
+  }
+}
+
+///|
 test "parse_layer_time_remap_expression" {
   let json_str =
     "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":20.0,\"w\":100,\"h\":100,\"layers\":[{\"ty\":0,\"ind\":1,\"refId\":\"comp_1\",\"w\":100,\"h\":100,\"tm\":{\"a\":1,\"k\":[{\"t\":0,\"s\":[0],\"e\":[5]},{\"t\":10,\"s\":[5]}],\"x\":\"var $bm_rt; $bm_rt = loopOut('cycle');\"},\"ks\":{\"a\":{\"k\":[0,0,0]},\"p\":{\"k\":[0,0,0]},\"s\":{\"k\":[100,100,100]},\"r\":{\"k\":0},\"o\":{\"k\":100}}}],\"assets\":[{\"id\":\"comp_1\",\"layers\":[]}]}"
@@ -786,6 +817,20 @@ test "parse_layer_time_remap_expression" {
       }
     }
     None => fail("Expected layer time remap to be parsed")
+  }
+}
+
+///|
+test "parse_animation_markers_are_not_loaded_yet" {
+  let json_str =
+    "{\"v\":\"5.5.0\",\"fr\":60.0,\"ip\":0.0,\"op\":20.0,\"w\":100,\"h\":100,\"markers\":[{\"tm\":5,\"dr\":3,\"cm\":\"intro\"}],\"layers\":[]}"
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse animation with markers: \{e}")
+  }
+  match ani.markers {
+    Some(_) => fail("Markers should remain unsupported until the parser reads the markers field")
+    None => ()
   }
 }
 

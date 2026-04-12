@@ -483,6 +483,41 @@ test "precomp layer time remap values are interpreted as seconds" {
   }
 }
 
+test "layer time stretch is currently ignored" {
+  let json_str =
+    #|{"v":"5.5.0","fr":30,"ip":0,"op":20,"w":200,"h":100,"layers":[{"ty":4,"ind":1,"ip":0,"op":20,"st":0,"sr":2,"ks":{"a":{"k":[0,0]},"p":{"a":1,"k":[{"t":0,"s":[0,0]},{"t":10,"s":[100,0]}]},"s":{"k":[100,100]},"r":{"k":0},"o":{"k":100}},"shapes":[{"ty":"rc","s":{"k":[20,20]},"p":{"k":[0,0]},"r":{"k":0}},{"ty":"fl","c":{"k":[1,0,0]},"o":{"k":100}}]}]}
+  let json = @json.parse(json_str)
+  let ani = @parser.parse_animation(json) catch {
+    e => fail("Failed to parse: \{e}")
+  }
+
+  let recorder = CommandRecorder::new()
+  let player = Player::new(ani, recorder)
+  player.set_frame(5.0)
+  player.render()
+
+  let commands = recorder.get_commands()
+  let mut translate_x : Double? = None
+  for cmd in commands {
+    match cmd {
+      ConcatTransform(m) =>
+        if m.e != 0.0 || m.f != 0.0 {
+          translate_x = Some(m.e)
+        }
+      _ => ()
+    }
+  }
+  match translate_x {
+    Some(x) =>
+      if x < 49.999 || x > 50.001 {
+        fail(
+          "Time stretch is currently ignored, so frame 5 should sample the unstretched x≈50 transform. Got x=\{x}",
+        )
+      }
+    None => fail("No translated layer transform found")
+  }
+}
+
 test "path expressions from parsed shape properties are evaluated during render" {
   @runtime.install_expression_handlers(
     (_expression, _frame, _layer_index, _comp_id, value) => value,
