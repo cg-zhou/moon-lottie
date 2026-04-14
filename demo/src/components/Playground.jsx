@@ -62,19 +62,6 @@ function ensureLottieScriptLoaded() {
   })
 }
 
-function pickInitialSampleEntry(entries, lastSelected) {
-  if (!Array.isArray(entries) || entries.length === 0) {
-    return null
-  }
-
-  const savedEntry = entries.find((entry) => entry.file === lastSelected)
-  if (savedEntry) {
-    return savedEntry
-  }
-
-  return entries[0]
-}
-
 function syncSvgAttributes(target, source) {
   const sourceAttributeNames = new Set(source.getAttributeNames())
   for (const { name } of Array.from(target.attributes)) {
@@ -275,8 +262,6 @@ export default function Playground({ active = true }) {
   const compareEnabledRef = useRef(true)
   const currentSpeedRef = useRef(1)
   const resumePlaybackOnActivateRef = useRef(false)
-  const officialScriptPromiseRef = useRef(null)
-  const stageLoadingCountRef = useRef(0)
 
   const [sampleEntries, setSampleEntries] = useState([])
   const [playlistQuery, setPlaylistQuery] = useState("")
@@ -300,10 +285,6 @@ export default function Playground({ active = true }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [statusColor, setStatusColor] = useState("#c7cdd8")
   const [pageAspectRatio, setPageAspectRatio] = useState(() => readPageAspectRatio())
-  const [stageLoading, setStageLoading] = useState({
-    active: true,
-    message: "初始化 Moon Lottie 运行时...",
-  })
 
   compareEnabledRef.current = compareEnabled
   currentSpeedRef.current = currentSpeed
@@ -364,54 +345,16 @@ export default function Playground({ active = true }) {
 
   function updateStatus(message, color = null) {
     setStatusMessage(message)
-    setStageLoading((previous) => (previous.active ? {
-      active: true,
-      message,
-    } : previous))
     if (color) {
       setStatusColor(color)
     }
-  }
-
-  async function runStageTask(message, task) {
-    stageLoadingCountRef.current += 1
-    setStageLoading({
-      active: true,
-      message,
-    })
-    try {
-      return await task()
-    } finally {
-      stageLoadingCountRef.current = Math.max(0, stageLoadingCountRef.current - 1)
-      if (stageLoadingCountRef.current === 0) {
-        setStageLoading((previous) => ({
-          ...previous,
-          active: false,
-        }))
-      }
-    }
-  }
-
-  function ensureOfficialRendererReady() {
-    if (window.lottie?.loadAnimation) {
-      return Promise.resolve(window.lottie)
-    }
-
-    if (!officialScriptPromiseRef.current) {
-      officialScriptPromiseRef.current = ensureLottieScriptLoaded().catch((error) => {
-        officialScriptPromiseRef.current = null
-        throw error
-      })
-    }
-
-    return officialScriptPromiseRef.current
   }
 
   async function initAnimationList() {
     const entries = await loadSampleIndex()
     setSampleEntries(entries)
     const lastSelected = localStorage.getItem("moon-lottie-last-anim")
-    const preferred = pickInitialSampleEntry(entries, lastSelected)
+    const preferred = entries.find((entry) => entry.file === lastSelected) || entries[0]
     if (preferred) {
       await loadRemoteAnimation(preferred.file)
     }
@@ -421,11 +364,9 @@ export default function Playground({ active = true }) {
     if (!controllerRef.current) return
     lastRequestedSampleRef.current = filename
     try {
-      await runStageTask(`正在加载动画: ${filename}`, async () => {
-        localStorage.setItem("moon-lottie-last-anim", filename)
-        const state = await controllerRef.current.loadRemoteAnimation(filename)
-        syncPlayerState(state)
-      })
+      localStorage.setItem("moon-lottie-last-anim", filename)
+      const state = await controllerRef.current.loadRemoteAnimation(filename)
+      syncPlayerState(state)
       updateStatus(`已加载: ${filename}`, "#34c759")
       return true
     } catch (error) {
@@ -437,10 +378,8 @@ export default function Playground({ active = true }) {
   async function handleFile(file) {
     if (!controllerRef.current) return
     try {
-      await runStageTask(`正在加载本地文件: ${file.name}`, async () => {
-        const state = await controllerRef.current.loadFile(file)
-        syncPlayerState(state)
-      })
+      const state = await controllerRef.current.loadFile(file)
+      syncPlayerState(state)
       setPlaylistOpen(false)
       updateStatus(`已加载本地文件: ${file.name}`, "#34c759")
     } catch {
@@ -452,31 +391,10 @@ export default function Playground({ active = true }) {
     controllerRef.current?.scheduleViewportRefresh()
   }
 
-  async function updateCompareMode(nextCompareEnabled) {
+  function updateCompareMode(nextCompareEnabled) {
     setCompareEnabled(nextCompareEnabled)
     compareEnabledRef.current = nextCompareEnabled
     if (stateRef.current.currentAnimationData) {
-      try {
-        if (nextCompareEnabled) {
-          await runStageTask("正在加载官方对比渲染器...", async () => {
-            await ensureOfficialRendererReady()
-            const state = controllerRef.current?.refreshCompare()
-            if (state) {
-              syncPlayerState(state)
-            }
-          })
-        } else {
-          const state = controllerRef.current?.refreshCompare()
-          if (state) {
-            syncPlayerState(state)
-          }
-        }
-      } catch (error) {
-        setCompareEnabled(false)
-        compareEnabledRef.current = false
-        updateStatus(`官方渲染器加载失败: ${error.message}`, "#ff3b30")
-      }
-    } else if (!nextCompareEnabled) {
       const state = controllerRef.current?.refreshCompare()
       if (state) {
         syncPlayerState(state)
@@ -541,9 +459,7 @@ export default function Playground({ active = true }) {
     }
 
     async function init() {
-      if (compareEnabledRef.current) {
-        await ensureOfficialRendererReady().catch(() => null)
-      }
+      await ensureLottieScriptLoaded().catch(() => null)
       if (disposed) return
 
       const canvas = canvasRef.current
@@ -678,19 +594,22 @@ export default function Playground({ active = true }) {
 
       try {
         updateStatus("初始化 Moon Lottie 运行时...")
-        const state = await runStageTask("初始化 Moon Lottie 运行时...", () => controllerRef.current.initialize())
+        const state = await controllerRef.current.initialize()
         if (disposed) return
         syncPlayerState(state)
         setRuntimeBackend(controllerRef.current.getBackend())
+        updateStatus(controllerRef.current.getBackend() === "wasm"
+          ? "已就绪，当前使用 Wasm 后端"
+          : "已就绪，当前使用 JS 兼容后端", "#34c759")
         const snapshot = animationSnapshotRef.current
         if (snapshot?.animationData) {
-          const restoredState = await runStageTask(`正在切换 Moon Lottie 渲染器: ${moonRenderer}`, () => controllerRef.current.loadFromText(
+          const restoredState = await controllerRef.current.loadFromText(
             JSON.stringify(snapshot.animationData),
             {
               filename: snapshot.filename,
               size: snapshot.size,
             },
-          ))
+          )
           if (disposed) return
           const restoreFrame = Number.isFinite(snapshot.currentFrame) ? snapshot.currentFrame : (restoredState.currentAnimationMeta?.inPoint ?? 0)
           controllerRef.current.seek(restoreFrame)
@@ -959,13 +878,6 @@ export default function Playground({ active = true }) {
               <div ref={officialContainerRef} className="playground-official-container" />
             </div>
           </section>
-          {stageLoading.active ? (
-            <div className="playground-stage-loading" aria-live="polite" aria-busy="true">
-              <div className="playground-stage-loading__spinner" aria-hidden="true" />
-              <p className="playground-stage-loading__title">{stageLoading.message || statusMessage}</p>
-              <p className="playground-stage-loading__hint">正在准备运行时和对比视图，完成后会自动显示当前动画。</p>
-            </div>
-          ) : null}
         </div>
 
         <footer className="playground-control-bar">

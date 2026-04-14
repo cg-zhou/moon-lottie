@@ -36,23 +36,6 @@ export function createPlayer(options = {}) {
         currentExpressionMeta: null,
         nativePlayer: null,
     };
-    let pendingOfficialSyncHandle = null;
-    let pendingOfficialSyncUsesAnimationFrame = false;
-    let pendingOfficialSyncToken = 0;
-
-    function clearPendingOfficialSync() {
-        if (pendingOfficialSyncHandle === null) {
-            return;
-        }
-
-        if (pendingOfficialSyncUsesAnimationFrame && typeof cancelAnimationFrame === 'function') {
-            cancelAnimationFrame(pendingOfficialSyncHandle);
-        } else {
-            clearTimeout(pendingOfficialSyncHandle);
-        }
-        pendingOfficialSyncUsesAnimationFrame = false;
-        pendingOfficialSyncHandle = null;
-    }
 
     function getState() {
         return {
@@ -88,40 +71,11 @@ export function createPlayer(options = {}) {
 
     function syncOfficialPlayer() {
         if (!getCompareEnabled() || !state.currentAnimationData) {
-            clearPendingOfficialSync();
             officialPlayerController.destroy();
             return null;
         }
 
         return officialPlayerController.load(cloneAnimationData(state.currentAnimationData));
-    }
-
-    function scheduleOfficialPlayerSync() {
-        if (!getCompareEnabled() || !state.currentAnimationData) {
-            return syncOfficialPlayer();
-        }
-
-        clearPendingOfficialSync();
-        const syncToken = ++pendingOfficialSyncToken;
-        const sync = () => {
-            pendingOfficialSyncHandle = null;
-            if (syncToken !== pendingOfficialSyncToken || !getCompareEnabled() || !state.currentAnimationData) {
-                return;
-            }
-
-            syncOfficialPlayer();
-            officialPlayerController.seek(playbackController.getCurrentFrame());
-        };
-
-        if (typeof requestAnimationFrame === 'function') {
-            pendingOfficialSyncUsesAnimationFrame = true;
-            pendingOfficialSyncHandle = requestAnimationFrame(sync);
-        } else {
-            pendingOfficialSyncUsesAnimationFrame = false;
-            pendingOfficialSyncHandle = setTimeout(sync, 0);
-        }
-
-        return null;
     }
 
     const runtimeManager = createRuntimeManager({
@@ -187,8 +141,6 @@ export function createPlayer(options = {}) {
 
         setStatusMessage('初始化渲染引擎...');
         playbackController.stop();
-        clearPendingOfficialSync();
-        pendingOfficialSyncToken += 1;
         officialPlayerController.destroy();
         state.nativePlayer = null;
 
@@ -208,13 +160,13 @@ export function createPlayer(options = {}) {
             throw new Error('动画解析失败');
         }
 
+        syncOfficialPlayer();
         setExpressionHost(null);
         applyAnimationMetadata();
         playbackController.start({
             initialFrame: state.currentAnimationMeta.inPoint,
             autoplay: true,
         });
-        scheduleOfficialPlayerSync();
 
         if (animationUsesExpressions(animationData)) {
             setStatusMessage('检测到 expressions，moon-lottie 将通过内置 JS 表达式宿主执行表达式');
@@ -263,7 +215,7 @@ export function createPlayer(options = {}) {
     }
 
     function refreshCompare() {
-        scheduleOfficialPlayerSync();
+        syncOfficialPlayer();
         playbackController.render();
         notifyStateChange();
         return getState();
@@ -277,8 +229,6 @@ export function createPlayer(options = {}) {
     }
 
     function destroy() {
-        clearPendingOfficialSync();
-        pendingOfficialSyncToken += 1;
         playbackController.destroy();
         officialPlayerController.destroy();
         state.nativePlayer = null;
