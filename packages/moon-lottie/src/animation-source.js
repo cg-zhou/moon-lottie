@@ -21,7 +21,14 @@ export async function loadSampleIndex() {
     return entries.map((entry) => {
         const file = typeof entry === 'object' ? entry.file : entry;
         const label = (typeof entry === 'object' ? (entry.label || entry.file) : entry).replace(/\.json$/i, '');
-        return { file, label };
+        const tags = Array.isArray(entry?.tags) ? entry.tags : [];
+        return {
+            file,
+            label,
+            tags,
+            size: Number.isFinite(entry?.size) ? entry.size : null,
+            source: typeof entry?.source === 'string' ? entry.source : '',
+        };
     });
 }
 

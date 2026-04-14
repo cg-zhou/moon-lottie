@@ -172,6 +172,9 @@ export interface MoonLottieViewportTransform {
 export interface MoonLottieSampleEntry {
   file: string
   label: string
+  tags: string[]
+  size: number | null
+  source: string
 }
 
 export interface MoonLottieAnimationSource {
