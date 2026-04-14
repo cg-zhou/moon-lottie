@@ -316,8 +316,8 @@ export const supportSections = [
     rows: [
       row("Alpha 遮罩", officialAllSupported, yes),
       row("Alpha 反相遮罩", officialMattesAlphaInverted, yes),
-      row("亮度遮罩", officialMattesLuma, maybe("当前 matte 管线会沿用 alpha matte 分支，尚未完成亮度语义核对")),
-      row("亮度反相遮罩", officialMattesLuma, maybe("当前 matte 管线会沿用反相 alpha matte 分支，尚未完成亮度语义核对")),
+      row("亮度遮罩", officialMattesLuma, no),
+      row("亮度反相遮罩", officialMattesLuma, no),
     ],
   },
   {

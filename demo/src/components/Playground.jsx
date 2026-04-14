@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Button, Descriptions, Empty, Input, Radio, Switch, Tag } from "antd"
+import { Button, Descriptions, Empty, Input, Radio, Spin, Switch, Tag } from "antd"
 import {
   ChevronLeft,
   ChevronRight,
@@ -283,6 +283,7 @@ export default function Playground({ active = true }) {
   const [currentExpressionMeta, setCurrentExpressionMeta] = useState(null)
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [statusColor, setStatusColor] = useState("#c7cdd8")
   const [pageAspectRatio, setPageAspectRatio] = useState(() => readPageAspectRatio())
 
@@ -594,6 +595,7 @@ export default function Playground({ active = true }) {
 
       try {
         updateStatus("初始化 Moon Lottie 运行时...")
+        setIsInitializing(true)
         const state = await controllerRef.current.initialize()
         if (disposed) return
         syncPlayerState(state)
@@ -626,6 +628,10 @@ export default function Playground({ active = true }) {
       } catch (error) {
         if (!disposed) {
           updateStatus(`错误: ${error.message}`, "#ff3b30")
+        }
+      } finally {
+        if (!disposed) {
+          setIsInitializing(false)
         }
       }
 
@@ -855,7 +861,12 @@ export default function Playground({ active = true }) {
 
       <div className="playground-player-shell">
         <div ref={viewportRef} className={`playground-viewport ${currentBackground === "white" ? "bg-white" : currentBackground === "black" ? "bg-black" : ""}`}>
-          <section ref={wasmWrapperRef} className="playground-canvas-wrapper">
+          {isInitializing && (
+            <div className="playground-loading-overlay">
+              <Spin size="large" tip="loading..." />
+            </div>
+          )}
+          <section ref={wasmWrapperRef} className="playground-canvas-wrapper" style={{ visibility: isInitializing ? "hidden" : "visible" }}>
             <div className="playground-canvas-head">
               <Tag className="playground-canvas-tag" color="blue" icon={<Sparkles size={14} strokeWidth={2.2} />}>
                 Moon Lottie
@@ -867,7 +878,7 @@ export default function Playground({ active = true }) {
               <div ref={moonSvgContainerRef} className="playground-official-container playground-svg-container" style={{ display: moonRenderer === "svg" ? "block" : "none" }} />
             </div>
           </section>
-          <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none" }}>
+          <section ref={officialWrapperRef} className="playground-canvas-wrapper" style={{ display: compareEnabled ? "flex" : "none", visibility: isInitializing ? "hidden" : "visible" }}>
             <div className="playground-canvas-head">
               <Tag className="playground-canvas-tag" icon={<Clapperboard size={14} strokeWidth={2.2} />}>
                 官方 lottie-web
