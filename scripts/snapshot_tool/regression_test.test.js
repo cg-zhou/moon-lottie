@@ -649,7 +649,7 @@ test('default expression host matches lottie-web path sampling for expression-mu
   const repoRoot = path.resolve(__dirname, '..', '..');
   const hostModule = await importRepoModule(repoRoot, 'packages', 'browser-player', 'src', 'expression_host.js');
   const animationData = JSON.parse(
-    fs.readFileSync(path.join(repoRoot, 'samples', '3_1_lights(expr).json'), 'utf8'),
+    fs.readFileSync(path.join(repoRoot, 'samples', '4_1_lights(expr).json'), 'utf8'),
   );
 
   const host = hostModule.createDefaultExpressionHost({
@@ -1344,7 +1344,7 @@ test('toComp uses expression-evaluated position when accessing another layer', a
 });
 
 test('default expression host evaluates loopOut expression on effect parameter (ripple animation fix)', async () => {
-  // Regression test for 3_4_ripple(expr).json: after frame 90 of the root comp the
+  // Regression test for 4_4_ripple(expr).json: after frame 90 of the root comp the
   // animation appeared frozen because createEffectAccessor called sampleKeyframedProperty
   // directly without evaluating the `x` expression on the effect parameter value.
   // The Progress slider has a loopOut('cycle') expression that must cycle the value

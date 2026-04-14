@@ -90,7 +90,7 @@ export function rasterizeMaskPath(pathCtx, workCtx, fillRule, opacity, inverted,
     if (normalizedExpansion < 0) {
         // Known follow-up: this is closer to lottie-web for negative expansion,
         // but animated expansion still has a small residual mismatch on
-        // 3_2_monster(expr).json frame 0.
+        // 4_2_monster(expr).json frame 0.
         applyNegativeExpansion(pathCtx, normalizedExpansion);
     }
 

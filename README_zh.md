@@ -90,13 +90,13 @@ function App() {
 在终端中可以直接将 Lottie 动画导出为逐帧 SVG，或以 Braille 形式播放：
 ```bash
 # 输出动画基本信息
-moon run cmd/cli -- ./samples/4_fireworks.json
+moon run cmd/cli -- ./samples/5_fireworks.json
 
 # 在终端中播放 Drawille/Braille 动画。
-moon run cmd/cli -- play ./samples/4_fireworks.json
+moon run cmd/cli -- play ./samples/5_fireworks.json
 
 # 导出 SVG 帧
-moon run cmd/cli -- svg ./samples/4_fireworks.json -o ./output_frames
+moon run cmd/cli -- svg ./samples/5_fireworks.json -o ./output_frames
 ```
 
 ## 功能与路线图

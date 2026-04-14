@@ -7,8 +7,9 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url));
 function getSource(filename) {
     if (filename.startsWith("1_")) return "LottieFiles";
     if (filename.startsWith("2_")) return "Lottie-Web Standard";
-    if (filename.startsWith("3_")) return "Lottie-Web Expressions";
-    if (filename.startsWith("4_")) return "Lottie-iOS Samples";
+    if (filename.startsWith("3_")) return "Lottie-iOS Samples";
+    if (filename.startsWith("4_")) return "Lottie-Web Expressions";
+    if (filename.startsWith("5_")) return "Lottie-iOS Samples";
     return "Unknown";
 }
 

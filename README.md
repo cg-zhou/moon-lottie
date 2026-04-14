@@ -90,13 +90,13 @@ function App() {
 Export animations to SVG frames or render them directly in the terminal:
 ```bash
 # Print basic animation info
-moon run cmd/cli -- ./samples/4_fireworks.json
+moon run cmd/cli -- ./samples/5_fireworks.json
 
 # Play the animation in the terminal
-moon run cmd/cli -- play ./samples/4_fireworks.json
+moon run cmd/cli -- play ./samples/5_fireworks.json
 
 # Export frames as SVG files
-moon run cmd/cli -- svg ./samples/4_fireworks.json -o ./output_frames
+moon run cmd/cli -- svg ./samples/5_fireworks.json -o ./output_frames
 ```
 
 ## Features & Roadmap
