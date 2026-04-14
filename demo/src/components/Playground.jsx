@@ -62,30 +62,6 @@ function ensureLottieScriptLoaded() {
   })
 }
 
-const DEFAULT_SAMPLE_FILES = [
-  "4_loading_dots_3.json",
-  "4_loading_dots_2.json",
-  "4_BlinkingCursor.json",
-]
-
-const HEAVY_SAMPLE_TAGS = new Set(["expression", "images", "matte", "mask"])
-
-function scoreSampleEntry(entry) {
-  if (!entry?.file) {
-    return Number.POSITIVE_INFINITY
-  }
-
-  let score = 0
-  if (DEFAULT_SAMPLE_FILES.includes(entry.file)) score -= 100
-  for (const tag of entry.tags || []) {
-    if (HEAVY_SAMPLE_TAGS.has(tag)) {
-      score += 10
-    }
-  }
-  score += entry.file.length / 100
-  return score
-}
-
 function pickInitialSampleEntry(entries, lastSelected) {
   if (!Array.isArray(entries) || entries.length === 0) {
     return null
@@ -96,7 +72,7 @@ function pickInitialSampleEntry(entries, lastSelected) {
     return savedEntry
   }
 
-  return [...entries].sort((left, right) => scoreSampleEntry(left) - scoreSampleEntry(right))[0] || entries[0]
+  return entries[0]
 }
 
 function syncSvgAttributes(target, source) {
@@ -296,7 +272,7 @@ export default function Playground({ active = true }) {
     runtime: null,
   })
   const animationSnapshotRef = useRef(null)
-  const compareEnabledRef = useRef(false)
+  const compareEnabledRef = useRef(true)
   const currentSpeedRef = useRef(1)
   const resumePlaybackOnActivateRef = useRef(false)
   const officialScriptPromiseRef = useRef(null)
@@ -307,7 +283,7 @@ export default function Playground({ active = true }) {
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [dropActive, setDropActive] = useState(false)
-  const [compareEnabled, setCompareEnabled] = useState(false)
+  const [compareEnabled, setCompareEnabled] = useState(true)
   const [currentSpeed, setCurrentSpeed] = useState(1)
   const [currentBackground, setCurrentBackground] = useState("white")
   const [moonRenderer, setMoonRenderer] = useState("canvas")
@@ -987,7 +963,7 @@ export default function Playground({ active = true }) {
             <div className="playground-stage-loading" aria-live="polite" aria-busy="true">
               <div className="playground-stage-loading__spinner" aria-hidden="true" />
               <p className="playground-stage-loading__title">{stageLoading.message || statusMessage}</p>
-              <p className="playground-stage-loading__hint">首次进入会优先加载轻量样例，开启对比时再按需加载官方渲染器。</p>
+              <p className="playground-stage-loading__hint">正在准备运行时和对比视图，完成后会自动显示当前动画。</p>
             </div>
           ) : null}
         </div>
