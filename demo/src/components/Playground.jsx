@@ -963,7 +963,7 @@ export default function Playground({ active = true }) {
             <div className="playground-stage-loading" aria-live="polite" aria-busy="true">
               <div className="playground-stage-loading__spinner" aria-hidden="true" />
               <p className="playground-stage-loading__title">{stageLoading.message || statusMessage}</p>
-              <p className="playground-stage-loading__hint">正在准备运行时和对比视图，加载完成后会自动显示动画。</p>
+              <p className="playground-stage-loading__hint">正在准备运行时和对比视图，完成后会自动显示当前动画。</p>
             </div>
           ) : null}
         </div>
