@@ -11,7 +11,7 @@ function getWrapperChromeHeight(wrapper) {
     if (!wrapper) {
         return 0;
     }
-    const head = wrapper.querySelector('.canvas-head');
+    const head = wrapper.querySelector('.playground-canvas-head, .canvas-head');
     const wrapperStyle = window.getComputedStyle(wrapper);
     const gap = parsePixelValue(wrapperStyle.rowGap || wrapperStyle.gap);
     return Math.ceil((head?.offsetHeight || 0) + gap);
