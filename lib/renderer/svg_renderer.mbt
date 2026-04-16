@@ -179,7 +179,7 @@ pub fn SvgRenderer::get_output(self : SvgRenderer) -> String {
   output.write_string("<defs>")
   output.write_string(self.defs_buffer.to_string())
   output.write_string(
-    "<clipPath id=\"frame_clip\"><rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" /></clipPath>",
+    "<clipPath id=\"frame_clip\" clipPathUnits=\"userSpaceOnUse\"><rect x=\"0\" y=\"0\" width=\"\{fmt(self.width)}\" height=\"\{fmt(self.height)}\" /></clipPath>",
   )
   output.write_string("</defs>")
   output.write_string("<g clip-path=\"url(#frame_clip)\">")
@@ -1090,7 +1090,7 @@ pub impl Renderer for SvgRenderer with clip(self : SvgRenderer) -> Unit {
   let id = self.next_id("clip")
   let path_data = self.path_buffer.to_string()
   self.defs_buffer.write_string(
-    "<clipPath id=\"\{id}\">\{self.clip_path_items(path_data)}</clipPath>",
+    "<clipPath id=\"\{id}\" clipPathUnits=\"userSpaceOnUse\">\{self.clip_path_items(path_data)}</clipPath>",
   )
   if self.state_stack.length() > 0 {
     let last_idx = self.state_stack.length() - 1

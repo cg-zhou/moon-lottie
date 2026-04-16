@@ -22,6 +22,10 @@ test "SvgRenderer basic" {
     "Root svg should hide content outside the canvas",
   )
   assert_true(
+    output.contains("<clipPath id=\"frame_clip\" clipPathUnits=\"userSpaceOnUse\">"),
+    "Frame clip should use explicit user-space units for mobile browser compatibility",
+  )
+  assert_true(
     output.contains("fill=\"#FF0000\""),
     "Output should contain red fill",
   )
@@ -130,7 +134,7 @@ test "SvgRenderer emits sibling clip paths for segmented nonzero clips" {
 
   let output = renderer.get_output()
   assert_true(
-    output.contains("<clipPath id=\"clip_0\"><path d=\"M0,0 L10,0 L10,10 Z\" fill-rule=\"nonzero\" /><path d=\"M20,20 L30,20 L30,30 Z\" fill-rule=\"nonzero\" /></clipPath>"),
+    output.contains("<clipPath id=\"clip_0\" clipPathUnits=\"userSpaceOnUse\"><path d=\"M0,0 L10,0 L10,10 Z\" fill-rule=\"nonzero\" /><path d=\"M20,20 L30,20 L30,30 Z\" fill-rule=\"nonzero\" /></clipPath>"),
     "Segmented nonzero clips should emit sibling path nodes",
   )
 }
