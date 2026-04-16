@@ -149,11 +149,13 @@ function normalizeMountedSvgRoot(svgElement) {
   if (!svgElement.hasAttribute("preserveAspectRatio")) {
     svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
   }
-  svgElement.style.display = "block"
-  svgElement.style.width = "100%"
-  svgElement.style.height = "100%"
-  svgElement.style.maxWidth = "100%"
-  svgElement.style.maxHeight = "100%"
+  Object.assign(svgElement.style, {
+    display: "block",
+    width: "100%",
+    height: "100%",
+    maxWidth: "100%",
+    maxHeight: "100%",
+  })
 }
 
 function mountSvgMarkup(container, parser, markup) {
