@@ -131,12 +131,34 @@ function syncSvgNode(targetNode, sourceNode) {
   return targetElement
 }
 
+function normalizeMountedSvgRoot(svgElement) {
+  if (!(svgElement instanceof SVGElement)) {
+    return
+  }
+
+  if (!svgElement.hasAttribute("viewBox")) {
+    const width = svgElement.getAttribute("width")
+    const height = svgElement.getAttribute("height")
+    if (width && height) {
+      svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`)
+    }
+  }
+
+  svgElement.removeAttribute("width")
+  svgElement.removeAttribute("height")
+  if (!svgElement.hasAttribute("preserveAspectRatio")) {
+    svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
+  }
+  svgElement.setAttribute("style", "display:block;width:100%;height:100%;max-width:100%;max-height:100%;")
+}
+
 function mountSvgMarkup(container, parser, markup) {
   const parsed = parser.parseFromString(markup, "image/svg+xml")
   const svgElement = parsed.documentElement
   if (svgElement?.tagName?.toLowerCase() !== "svg") {
     return false
   }
+  normalizeMountedSvgRoot(svgElement)
 
   const currentSvg = container.firstElementChild
   if (!(currentSvg instanceof SVGElement) || currentSvg.tagName.toLowerCase() !== "svg") {
