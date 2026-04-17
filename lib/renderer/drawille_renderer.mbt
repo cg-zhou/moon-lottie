@@ -17,7 +17,7 @@ priv struct StrokePolyline {
 struct DrawillePoint {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 fn pointf_from_point(point : DrawillePoint) -> DrawillePointF {

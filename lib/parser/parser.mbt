@@ -4,7 +4,7 @@ pub suberror LottieError {
   InvalidJson(String)
   MissingKey(String)
   UnexpectedType(String, String) // key, expected type
-} derive(Show)
+} derive(Debug)
 
 ///|
 /// Pilot derive-based decoding for animation root required fields.
@@ -720,7 +720,7 @@ pub struct UnknownKeyReport {
   total_keys : Int
   known_keys : Int
   unknown_paths : Array[String]
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 /// Traverse Json to collect unknown keys and known/unknown coverage counters.
