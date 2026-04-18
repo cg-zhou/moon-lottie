@@ -18,6 +18,12 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 - **Frontend SDKs**: Modern wrappers for Vanilla JS, React, and Web Components.
 - **Toolchain**: A unified CLI for server-side SVG exporting and terminal animation playback.
 
+## Architecture & Status
+
+- 🏗️ **[Architecture](./docs/architecture.md)**: Layered design for target-agnostic rendering and high-performance Wasm path.
+- ✅ **[Completion](./docs/completion.md)**: Feature roadmap and current development status snapshot.
+- 🗺️ **[Roadmap](./docs/roadmap.md)**: Near-term priorities and long-term research directions.
+
 ## Project Structure
 
 | Path | Description |

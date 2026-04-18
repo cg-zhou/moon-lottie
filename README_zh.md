@@ -18,6 +18,12 @@ Moon Lottie 是一个基于 [MoonBit](https://www.moonbitlang.com/) 开发的 Lo
 - **前端 SDK**：提供面向 Vanilla JS、React 以及 Web Component 的现代封装。
 - **工具链**：提供统一的 CLI，可用于批量导出 SVG 帧以及在终端中直接播放动画。
 
+## 架构与进展
+
+- 🏗️ **[项目架构](./docs/architecture.md)**：分层设计，确保跨平台渲染一致性与 Wasm 高性能路径。
+- ✅ **[完成度表](./docs/completion.md)**：对照申报目标的特性落实情况与当前研发状态。
+- 🗺️ **[计划路线](./docs/roadmap.md)**：近期优先级、收口策略与长期探索方向。
+
 ## 项目结构
 
 | 路径 | 说明 |
