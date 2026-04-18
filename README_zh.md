@@ -86,6 +86,16 @@ function App() {
 }
 ```
 
+### MoonBit 包
+
+Moon Lottie 已经发布到 Mooncakes，可以在 MoonBit 项目中直接安装：
+
+```bash
+moon add cg-zhou/moon_lottie
+```
+
+官方包文档见：https://mooncakes.io/docs/cg-zhou/moon_lottie
+
 ### Moon Lottie CLI
 在终端中可以直接将 Lottie 动画导出为逐帧 SVG，或以 Braille 形式播放：
 ```bash

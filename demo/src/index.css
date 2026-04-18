@@ -1756,27 +1756,27 @@ tbody tr:last-child td {
 
 .guide-section {
   scroll-margin-top: 96px;
-  padding: 32px;
-  background: #f8fafc;
-  border-radius: var(--radius-xl);
-  border: 1px solid #e2e8f0;
+  background: var(--panel) !important;
+  border: 1px solid rgba(229, 229, 231, 0.92) !important;
+}
+
+.guide-section .ant-card-head {
+  padding: 0 24px !important;
+  min-height: 56px !important;
+}
+
+.guide-section .ant-card-body {
+  padding: 24px !important;
 }
 
 .guide-section + .guide-section {
-  border-top: 1px solid #e2e8f0;
-}
-
-.guide-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
+  margin-top: 0;
 }
 
 .guide-section__title.ant-typography {
   margin: 0 !important;
-  font-size: 1.2rem;
+  font-size: 1.15rem !important;
+  font-weight: 700;
 }
 
 .guide-section__bookmark {

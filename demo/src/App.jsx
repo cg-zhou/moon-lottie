@@ -126,11 +126,7 @@ function GitHubMarkIcon({ size = 16 }) {
 
 function GuideSection({ id, title, description, sections, actions = [] }) {
   return (
-    <article id={id} className="guide-section">
-      <div className="guide-section__header">
-        <Typography.Title level={3} className="guide-section__title">{title}</Typography.Title>
-      </div>
-
+    <Card id={id} className="guide-section support-table-card" title={<Typography.Title level={3} className="guide-section__title">{title}</Typography.Title>}>
       <Typography.Paragraph className="guide-section__description">{description}</Typography.Paragraph>
 
       <div className="guide-section__sections">
@@ -165,7 +161,7 @@ function GuideSection({ id, title, description, sections, actions = [] }) {
           ))}
         </div>
       ) : null}
-    </article>
+    </Card>
   )
 }
 
@@ -442,13 +438,14 @@ function OverviewPage({ onNavigate }) {
           <GuideSection
             id="guide-moonbit"
             title="MoonBit 原生库"
-            description={<>在 MoonBit 项目中引入 <a href="https://mooncakes.io/packages/cg-zhou/moon-lottie" target="_blank" rel="noreferrer">moon-lottie</a>，直接调用底层运行时和渲染接口。</>}
+            description={<>Moon Lottie 已发布到 <a href="https://mooncakes.io/docs/cg-zhou/moon_lottie" target="_blank" rel="noreferrer">mooncakes.io</a>，可以在 MoonBit 项目中直接调用底层运行时和渲染接口。</>}
             sections={[
-              { title: "1. 添加依赖", code: "moon add moon-lottie" },
-              { title: "2. 调用运行时", code: `import * as lottie from "moon-lottie/lib/runtime"\n\nfn init {\n  let ani = lottie.load_from_string(...)\n  ani.render(ctx, time)\n}` },
+              { title: "1. 添加依赖", code: "moon add cg-zhou/moon_lottie" },
+              { title: "2. 引入核心模块", code: `import "cg-zhou/moon_lottie/lib/parser" @parser\nimport "cg-zhou/moon_lottie/lib/renderer" @renderer` },
             ]}
             actions={[
-              { label: "查看文档", href: "https://github.com/cg-zhou/moon-lottie/blob/main/README.mbt.md", primary: true },
+              { label: "查看文档", href: "https://mooncakes.io/docs/cg-zhou/moon_lottie", primary: true },
+              { label: "仓库说明", href: "https://github.com/cg-zhou/moon-lottie/blob/main/README.mbt.md" },
             ]}
           />
         </div>

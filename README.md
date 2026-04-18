@@ -68,6 +68,16 @@ Build artifacts will be generated in `deploy-dist/` with the following structure
 
 ## Usage Guide
 
+### MoonBit Package
+
+Moon Lottie is now published on Mooncakes. Install it in a MoonBit project with:
+
+```bash
+moon add cg-zhou/moon_lottie
+```
+
+See the official package docs on Mooncakes: https://mooncakes.io/docs/cg-zhou/moon_lottie
+
 ### Web SDK (Alpha)
 SDKs are located in `packages/*`.
 
