@@ -9,7 +9,24 @@
   "readme": "README.mbt.md",
   "repository": "https://github.com/cg-zhou/moon-lottie",
   "license": "MIT",
-  "keywords": [],
+  "keywords": [
+    "lottie",
+    "animation",
+    "svg",
+    "canvas",
+    "cli",
+    "wasm"
+  ],
   "description": "MoonBit 原生高性能 Lottie 动画引擎 | High-performance Lottie animation engine in native MoonBit",
-  "preferred-target": "wasm-gc"
+  "preferred-target": "wasm-gc",
+  "exclude": [
+    ".github",
+    "_build",
+    "demo",
+    "deploy-dist",
+    "docs",
+    "packages",
+    "samples",
+    "scripts"
+  ]
 }

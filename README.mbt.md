@@ -1,43 +1,45 @@
-# MoonBit Lottie (Core Library)
-
-[English](./README.md) | [简体中文](./README_zh.md) | [MoonBit Package](./README.mbt.md)
+# MoonBit Lottie
 
 Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https://www.moonbitlang.com/). It provides a complete, cross-platform animation solution—from low-level JSON parsing to high-performance Wasm and JS rendering.
 
 ## Project Layers
 
 - **Core Engine**: Typed Lottie model, parser, and rendering logic written in native MoonBit.
-- **Runtime**: High-performance execution via Wasm-GC and fallback JS.
-- **Frontend SDKs**: Modern wrappers for Vanilla JS, React, and Web Components.
-- **Toolchain**: A unified CLI for frame-by-frame SVG exporting and Drawille console rendering.
+- **Runtime Bridge**: JS and Wasm-GC entry packages for browser-side playback and SVG frame generation.
+- **Toolchain**: A unified CLI for animation inspection, frame-by-frame SVG exporting, and Drawille console rendering.
 
 ## Features
 
 - **Typed Lottie Model**: A comprehensive and type-safe representation of the Lottie specification.
 - **High-Performance Parser**: Fast JSON parsing with unknown-key reporting for spec compliance tracking.
+- **Integrated Runtime Entry**: Browser-facing runtime exports for JS and Wasm-GC hosts.
 - **Flexible Rendering**:
   - `SvgRenderer`: Frame-by-frame SVG string generation.
   - `CanvasRenderer`: High-performance rendering for browser Canvas.
   - `DrawilleRenderer`: Terminal Braille/Drawille rendering for console playback.
+- **Tooling Included**: Built-in CLI for local inspection, SVG export, and terminal playback.
 - **Expression Support**: Pluggable expression evaluation via host-provided handlers.
 
 ## Package Layout
 
 | Module | Description |
 | --- | --- |
+| `lib/math` | Foundational math helpers used by interpolation, transforms, and path processing. |
 | `lib/model` | Data structures for animations, layers, shapes, paths, and properties. |
 | `lib/parser` | JSON to Model parsing and compatibility reporting. |
 | `lib/runtime` | Property interpolation and expression engine integration. |
 | `lib/renderer` | Rendering backends (Canvas, SVG) and the `Player` controller. |
+| `cmd/player_runtime` | JS / Wasm-GC runtime entry package for browser-side playback and SVG frame rendering. |
+| `cmd/cli` | CLI entry package for animation inspection, SVG export, and terminal playback. |
 
 ## Quick Start (MoonBit)
 
 ### Installation
 
-Add this package to your `moon.mod.json`:
+Add this module to your project:
 
 ```bash
-moon update
+moon add cg-zhou/moon_lottie
 ```
 
 ### Basic Usage
@@ -45,8 +47,8 @@ moon update
 Render the first frame of a Lottie animation to an SVG string:
 
 ```moonbit
-import "cg-zhou/moon-lottie/lib/parser" @parser
-import "cg-zhou/moon-lottie/lib/renderer" @renderer
+import "cg-zhou/moon_lottie/lib/parser" @parser
+import "cg-zhou/moon_lottie/lib/renderer" @renderer
 import "moonbitlang/core/json"
 
 fn render_svg(json_text : String) -> String raise {
@@ -67,6 +69,20 @@ fn render_svg(json_text : String) -> String raise {
   svg.get_output()
 }
 ```
+
+## CLI
+
+Use the bundled CLI package to inspect or render a local Lottie JSON file:
+
+```bash
+moon run cmd/cli -- ./animation.json
+moon run cmd/cli -- play ./animation.json
+moon run cmd/cli -- svg ./animation.json -o ./output_frames
+```
+
+## Runtime Entry Package
+
+`cmd/player_runtime` is the browser-facing entry package for JS and Wasm-GC hosts. It exposes player creation and update helpers for Canvas playback and SVG frame rendering, and expects host-provided bindings for loading animation JSON and evaluating expressions.
 
 ## Known Gaps
 

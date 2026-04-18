@@ -6,7 +6,7 @@ pub struct Matrix {
   d : Double
   e : Double
   f : Double
-} derive(Debug, Eq)
+} derive(Show, Eq)
 
 ///|
 pub fn Matrix::new(

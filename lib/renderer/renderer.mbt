@@ -219,7 +219,7 @@ pub enum DrawCommand {
   BeginMaskPath
   ApplyMaskPath(Int, Double, Bool, Double)
   EndMaskComposite
-} derive(Debug, Eq)
+} derive(Show, Eq)
 
 ///|
 /// Renderer that records all commands into a list.
