@@ -39,6 +39,36 @@ function formatFileSize(size) {
   return `${(size / 1024).toFixed(2)} KB`
 }
 
+function isIOSWebKit() {
+  if (typeof navigator === "undefined") {
+    return false
+  }
+
+  const userAgent = navigator.userAgent || ""
+  const platform = navigator.platform || ""
+  const isTouchMac = platform === "MacIntel" && navigator.maxTouchPoints > 1
+  const isIOSDevice = /iPad|iPhone|iPod/i.test(userAgent) || isTouchMac
+  return isIOSDevice && /AppleWebKit/i.test(userAgent)
+}
+
+function extractSvgDefsMarkup(markup) {
+  const start = markup.indexOf("<defs>")
+  if (start === -1) {
+    return ""
+  }
+
+  const end = markup.indexOf("</defs>", start)
+  if (end === -1) {
+    return ""
+  }
+
+  return markup.slice(start, end + "</defs>".length)
+}
+
+function hasReferencedSvgDefs(markup) {
+  return markup.includes('<clipPath id="clip_') || markup.includes("<mask id=")
+}
+
 function ensureLottieScriptLoaded() {
   if (window.lottie?.loadAnimation) {
     return Promise.resolve(window.lottie)
@@ -158,7 +188,8 @@ function normalizeMountedSvgRoot(svgElement) {
   })
 }
 
-function mountSvgMarkup(container, parser, markup) {
+function mountSvgMarkup(container, parser, markup, options = {}) {
+  const { forceReplace = false } = options
   const parsed = parser.parseFromString(markup, "image/svg+xml")
   const svgElement = parsed.documentElement
   if (svgElement?.tagName?.toLowerCase() !== "svg") {
@@ -167,7 +198,7 @@ function mountSvgMarkup(container, parser, markup) {
   normalizeMountedSvgRoot(svgElement)
 
   const currentSvg = container.firstElementChild
-  if (!(currentSvg instanceof SVGElement) || currentSvg.tagName.toLowerCase() !== "svg") {
+  if (forceReplace || !(currentSvg instanceof SVGElement) || currentSvg.tagName.toLowerCase() !== "svg") {
     container.replaceChildren(document.importNode(svgElement, true))
     return true
   }
@@ -482,8 +513,11 @@ export default function Playground({ active = true }) {
   useEffect(() => {
     let disposed = false
     let currentMoonSvgMarkup = ""
+    let currentMoonDefsMarkup = ""
+    const replaceRiskySvgDefs = isIOSWebKit()
     const clearMoonSvgFrame = () => {
       currentMoonSvgMarkup = ""
+      currentMoonDefsMarkup = ""
       moonSvgContainerRef.current?.replaceChildren()
     }
 
@@ -515,8 +549,16 @@ export default function Playground({ active = true }) {
         if (svgMarkup === currentMoonSvgMarkup) {
           return
         }
+        const nextDefsMarkup = extractSvgDefsMarkup(svgMarkup)
+        const shouldForceReplace = replaceRiskySvgDefs
+          && currentMoonDefsMarkup !== ""
+          && nextDefsMarkup !== ""
+          && nextDefsMarkup !== currentMoonDefsMarkup
+          && hasReferencedSvgDefs(svgMarkup)
+
         currentMoonSvgMarkup = svgMarkup
-        if (!mountSvgMarkup(moonSvgContainer, parser, svgMarkup)) {
+        currentMoonDefsMarkup = nextDefsMarkup
+        if (!mountSvgMarkup(moonSvgContainer, parser, svgMarkup, { forceReplace: shouldForceReplace })) {
           clearMoonSvgFrame()
         }
       }
