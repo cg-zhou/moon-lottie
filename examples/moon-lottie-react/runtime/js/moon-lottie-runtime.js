@@ -18181,7 +18181,7 @@ function _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer11get__output(s
   _M0IPB13StringBuilderPB6Logger13write__string(output, "<defs>");
   const _p = self.defs_buffer;
   _M0IPB13StringBuilderPB6Logger13write__string(output, _p.val);
-  _M0IPB13StringBuilderPB6Logger13write__string(output, `<clipPath id=\"frame_clip\"><rect x=\"0\" y=\"0\" width=\"${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(self.height)}\" /></clipPath>`);
+  _M0IPB13StringBuilderPB6Logger13write__string(output, `<clipPath id=\"frame_clip\" clipPathUnits=\"userSpaceOnUse\"><rect x=\"0\" y=\"0\" width=\"${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(self.width)}\" height=\"${_M0FP49cg_2dzhou12moon__lottie3lib8renderer3fmt(self.height)}\" /></clipPath>`);
   _M0IPB13StringBuilderPB6Logger13write__string(output, "</defs>");
   _M0IPB13StringBuilderPB6Logger13write__string(output, "<g clip-path=\"url(#frame_clip)\">");
   const _p$2 = self.buffer;
@@ -18861,7 +18861,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
   const id = _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer8next__id(self, "clip");
   const _p = self.path_buffer;
   const path_data = _p.val;
-  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<clipPath id=\"${id}\">${_M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer17clip__path__items(self, path_data)}</clipPath>`);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<clipPath id=\"${id}\" clipPathUnits=\"userSpaceOnUse\">${_M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer17clip__path__items(self, path_data)}</clipPath>`);
   if (self.state_stack.length > 0) {
     const last_idx = self.state_stack.length - 1 | 0;
     const state = _M0MPC15array5Array2atGRP49cg_2dzhou12moon__lottie3lib5model5LayerE(self.state_stack, last_idx);
