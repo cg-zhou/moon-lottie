@@ -11,22 +11,16 @@ Moon Lottie 是一个基于 [MoonBit](https://www.moonbitlang.com/) 开发的 Lo
 [![Total Lines](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/cg-zhou/moon-lottie/badges/badges/lines-total.json)](https://github.com/cg-zhou/moon-lottie/actions)
 [![Source Lines](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/cg-zhou/moon-lottie/badges/badges/lines-source.json)](https://github.com/cg-zhou/moon-lottie/actions)
 
-## 项目分层
-
-- **核心引擎**：基于原生 MoonBit 实现的类型化 Lottie 模型、解析器以及渲染逻辑。
-- **运行时 (Runtime)**：支持 Wasm-GC 高性能构建以及 JS 兼容运行环境。
-- **前端 SDK**：提供面向 Vanilla JS、React 以及 Web Component 的现代封装。
-- **工具链**：提供统一的 CLI，可用于批量导出 SVG 帧以及在终端中直接播放动画。
 
 ## 项目文档
 
 | 文档名称 | 说明 |
 | --- | --- |
-| [项目架构](./docs/architecture.md) | 解释 Moon Lottie 的分层设计与跨平台渲染策略。 |
-| [项目完成度](./docs/completion.md) | 对照申报目标的特性落实情况与当前研发状态。 |
-| [计划路线](./docs/roadmap.md) | 记录近期优先级、收口策略与长期探索方向。 |
+| [项目架构](./docs/architecture.md) | 说明了 Moon Lottie 的分层设计与渲染策略。 |
+| [项目完成度](./docs/completion.md) | 基于项目申报书的完成情况说明。 |
+| [计划路线](./docs/roadmap.md) | 记录近期优先级、开发策略与长期探索方向。 |
 
-## 项目分层
+## 项目结构
 
 | 路径 | 说明 |
 | --- | --- |
@@ -119,7 +113,7 @@ moon run cmd/cli -- svg ./samples/5_fireworks.json -o ./output_frames
 
 ## 功能与路线图
 
-Moon-lottie 旨在实现 Lottie 规范支持。目前已完成的功能包括：
+Moon-lottie 目前已完成的功能包括：
 
 - ✅ **形状 (Shapes)**：椭圆、矩形、多角星、路径（支持 Trim Path 与圆角）。
 - ✅ **合成 (Compositing)**：图层蒙版 (Mask)、轨道遮罩 (Matte) 以及预合成嵌套。

@@ -11,18 +11,13 @@ Moon Lottie is a Lottie animation rendering engine developed in [MoonBit](https:
 [![Total Lines](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/cg-zhou/moon-lottie/badges/badges/lines-total.json)](https://github.com/cg-zhou/moon-lottie/actions)
 [![Source Lines](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/cg-zhou/moon-lottie/badges/badges/lines-source.json)](https://github.com/cg-zhou/moon-lottie/actions)
 
-## Project Layers
+## Project Documentation
 
-- **Core Engine**: Typed Lottie model, parser, and rendering logic written in native MoonBit.
-- **Runtime**: High-performance execution via Wasm-GC and fallback JS.
-- **Frontend SDKs**: Modern wrappers for Vanilla JS, React, and Web Components.
-- **Toolchain**: A unified CLI for server-side SVG exporting and terminal animation playback.
-
-## Architecture & Status
-
-- 🏗️ **[Architecture](./docs/architecture.md)**: Layered design for target-agnostic rendering and high-performance Wasm path.
-- ✅ **[Completion](./docs/completion.md)**: Feature roadmap and current development status snapshot.
-- 🗺️ **[Roadmap](./docs/roadmap.md)**: Near-term priorities and long-term research directions.
+| Document | Description |
+| --- | --- |
+| [Architecture](./docs/architecture.md) | Layered design and rendering strategy for Moon Lottie. |
+| [Completion Status](./docs/completion.md) | Fulfillment of the original project proposal. |
+| [Roadmap](./docs/roadmap.md) | Near-term priorities, develop strategy, and long-term directions. |
 
 ## Project Structure
 
@@ -117,7 +112,7 @@ moon run cmd/cli -- svg ./samples/5_fireworks.json -o ./output_frames
 
 ## Features & Roadmap
 
-Moon-lottie aims for full Lottie spec coverage. Current capabilities include:
+Moon-lottie currently supports the following features:
 
 - ✅ **Shapes**: Ellipse, Rect, Polystar, Path (with Trim Path & Rounding support).
 - ✅ **Compositing**: Layer masks, track mattes, and nested pre-compositions.
