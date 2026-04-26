@@ -1349,6 +1349,17 @@ export const featureExampleMap = {
       },
       DASH_EXAMPLE,
     ),
+    "渐变": createExample(
+      "支持 Gradient Stroke，在描边上实现多色渐变过渡。",
+      {
+        ty: "gs",
+        t: 1,
+        g: {
+          p: 3,
+        },
+      },
+      LINEAR_GRADIENT_EXAMPLE,
+    ),
   },
   transforms: {
     "锚点": createExample(
@@ -1366,6 +1377,19 @@ export const featureExampleMap = {
       {
         ks: {
           p: { a: 1 },
+        },
+      },
+      POSITION_EXAMPLE,
+    ),
+    "位置（分离 X/Y）": createExample(
+      "支持分离 X/Y 位置通道，分别控制水平与垂直位移。",
+      {
+        ks: {
+          p: {
+            s: true,
+            x: { a: 1 },
+            y: { a: 1 },
+          },
         },
       },
       POSITION_EXAMPLE,
@@ -1396,6 +1420,17 @@ export const featureExampleMap = {
         },
       },
       TRANSFORM_OPACITY_EXAMPLE,
+    ),
+    "父子层级": createExample(
+      "支持父层级继承，子图层会跟随父图层的位移、旋转与缩放。",
+      {
+        parent: 1,
+        ks: {
+          p: { a: 1 },
+          r: { a: 1 },
+        },
+      },
+      GROUP_EXAMPLE,
     ),
     "倾斜": createExample(
       "支持对图层内容进行剪切变形（Skew）。",
@@ -1428,6 +1463,48 @@ export const featureExampleMap = {
       AUTO_ORIENT_EXAMPLE,
     ),
   },
+  interpolation: {
+    "线性插值": createExample(
+      "支持线性插值，属性会以恒定速度在关键帧之间过渡。",
+      {
+        a: 1,
+        k: [{ t: 0 }, { t: 48 }],
+      },
+      POSITION_EXAMPLE,
+    ),
+    "贝塞尔插值": createExample(
+      "支持贝塞尔缓动曲线，获得更自然的加减速节奏。",
+      {
+        a: 1,
+        k: [{ t: 0, i: { x: 0.667, y: 1 }, o: { x: 0.333, y: 0 } }],
+      },
+      SCALE_EXAMPLE,
+    ),
+    "保持插值": createExample(
+      "支持保持插值（Hold），属性会在关键帧之间直接跳变。",
+      {
+        a: 1,
+        k: [{ t: 0, h: 1 }, { t: 48 }],
+      },
+      ROTATION_EXAMPLE,
+    ),
+    "空间贝塞尔插值": createExample(
+      "支持带空间切线的运动路径插值，轨迹更平滑。",
+      {
+        a: 1,
+        k: [{ t: 0, to: [20, 0, 0], ti: [-20, 0, 0] }],
+      },
+      AUTO_ORIENT_EXAMPLE,
+    ),
+    "时间漫游": createExample(
+      "支持关键帧时间分布调整，可实现更灵活的时间节奏控制。",
+      {
+        a: 1,
+        k: [{ t: 0 }, { t: 24 }, { t: 72 }],
+      },
+      POSITION_EXAMPLE,
+    ),
+  },
   masks: {
     "蒙版路径": createExample(
       "支持传统的形状蒙版（Masks）路径裁切。",
@@ -1437,6 +1514,56 @@ export const featureExampleMap = {
           {
             mode: "a",
             pt: { k: rectPath(0, 0, 112, 80) },
+          },
+        ],
+      },
+      MASK_EXAMPLE,
+    ),
+    "蒙版不透明度": createExample(
+      "支持独立控制蒙版不透明度，动态调节裁切强度。",
+      {
+        hasMask: true,
+        masksProperties: [
+          {
+            mode: "a",
+            o: { a: 1 },
+          },
+        ],
+      },
+      MASK_EXAMPLE,
+    ),
+    "相加": createExample(
+      "支持 Add 蒙版模式，保留蒙版轮廓内部区域。",
+      {
+        hasMask: true,
+        masksProperties: [{ mode: "a" }],
+      },
+      MASK_EXAMPLE,
+    ),
+    "相减": createExample(
+      "支持 Subtract 蒙版模式，从图层内容中扣除蒙版区域。",
+      {
+        hasMask: true,
+        masksProperties: [{ mode: "s" }],
+      },
+      MASK_EXAMPLE,
+    ),
+    "相交": createExample(
+      "支持 Intersect 蒙版模式，仅显示多个蒙版的重叠区域。",
+      {
+        hasMask: true,
+        masksProperties: [{ mode: "i" }],
+      },
+      MASK_EXAMPLE,
+    ),
+    "扩展": createExample(
+      "支持蒙版扩展（Expansion），可向内或向外膨胀裁切边界。",
+      {
+        hasMask: true,
+        masksProperties: [
+          {
+            mode: "a",
+            x: { a: 1 },
           },
         ],
       },
@@ -1453,6 +1580,173 @@ export const featureExampleMap = {
         ],
       },
       TRACK_MATTE_EXAMPLE,
+    ),
+    "Alpha 反相遮罩": createExample(
+      "支持 Alpha Inverted Track Matte，使用遮罩外部区域进行显示。",
+      {
+        layers: [
+          { ty: 4, td: 1 },
+          { ty: 4, tt: 2 },
+        ],
+      },
+      TRACK_MATTE_EXAMPLE,
+    ),
+  },
+  layerEffects: {
+    "填充": createExample(
+      "支持解析并渲染图层效果中的 Fill，用统一颜色覆盖整层内容。",
+      {
+        ef: [
+          {
+            ty: 21,
+            nm: "Fill",
+          },
+        ],
+      },
+      FILL_COLOR_EXAMPLE,
+    ),
+  },
+  text: {
+    "字形": createExample(
+      "支持字形（Glyph）文本资源，按轮廓路径渲染字符形状。",
+      {
+        ty: 5,
+        t: {
+          d: { k: [{ s: { t: "Moon" }, t: 0 }] },
+        },
+      },
+      SHAPE_EXAMPLE,
+    ),
+    "字体": createExample(
+      "支持字体文本图层，可按字体信息直接排版和渲染。",
+      {
+        ty: 5,
+        t: {
+          d: { k: [{ s: { f: "Arial", t: "Moon" }, t: 0 }] },
+        },
+      },
+      FILL_COLOR_EXAMPLE,
+    ),
+    "变换": createExample(
+      "支持文本图层的位移、旋转、缩放等基础变换属性。",
+      {
+        ty: 5,
+        ks: {
+          p: { a: 1 },
+          r: { a: 1 },
+        },
+      },
+      POSITION_EXAMPLE,
+    ),
+    "填充": createExample(
+      "支持文本填充颜色与透明度控制。",
+      {
+        ty: 5,
+        t: {
+          d: { k: [{ s: { fc: COLORS.blue }, t: 0 }] },
+        },
+      },
+      FILL_COLOR_EXAMPLE,
+    ),
+    "描边": createExample(
+      "支持文本描边颜色、宽度与透明度配置。",
+      {
+        ty: 5,
+        t: {
+          d: { k: [{ s: { sc: COLORS.ink, sw: 2 }, t: 0 }] },
+        },
+      },
+      STROKE_COLOR_EXAMPLE,
+    ),
+    "字距": createExample(
+      "支持调整字距（Tracking），控制字符之间的排版疏密。",
+      {
+        ty: 5,
+        t: {
+          d: { k: [{ s: { tr: 30 }, t: 0 }] },
+        },
+      },
+      DASH_EXAMPLE,
+    ),
+    "锚点分组": createExample(
+      "支持按字符锚点分组执行动画，保持逐字变换的参考点一致。",
+      {
+        ty: 5,
+        t: {
+          m: { g: 1 },
+        },
+      },
+      GROUP_EXAMPLE,
+    ),
+    "范围选择器（单位）": createExample(
+      "支持按百分比单位配置范围选择器，逐步影响字符集合。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { b: 1 } }],
+        },
+      },
+      REPEATER_EXAMPLE,
+    ),
+    "范围选择器（基于）": createExample(
+      "支持按字符、单词或行作为范围选择器的计算基础。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { b: 2 } }],
+        },
+      },
+      GROUP_EXAMPLE,
+    ),
+    "范围选择器（数量）": createExample(
+      "支持以字符数量驱动的范围选择器，精确控制受影响范围。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { e: { a: 1 } } }],
+        },
+      },
+      REPEATER_EXAMPLE,
+    ),
+    "范围选择器（形状）": createExample(
+      "支持不同 Range Selector Shape，生成更丰富的逐字分布曲线。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { sh: 3 } }],
+        },
+      },
+      SCALE_EXAMPLE,
+    ),
+    "范围选择器（缓动高）": createExample(
+      "支持高端缓动（Ease High），强化范围末端的过渡效果。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { xe: { a: 1 } } }],
+        },
+      },
+      SCALE_EXAMPLE,
+    ),
+    "范围选择器（缓动低）": createExample(
+      "支持低端缓动（Ease Low），平滑范围起始位置的变化。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { ne: { a: 1 } } }],
+        },
+      },
+      POSITION_EXAMPLE,
+    ),
+    "范围选择器（随机顺序）": createExample(
+      "支持随机顺序范围选择器，让字符按打散顺序参与动画。",
+      {
+        ty: 5,
+        t: {
+          a: [{ s: { rn: 1 } }],
+        },
+      },
+      REPEATER_EXAMPLE,
     ),
   },
   general: {
@@ -1513,6 +1807,22 @@ export const featureExampleMap = {
     ),
   },
   other: {
+    "预合成": createExample(
+      "支持预合成（Precomp）资源，可复用独立子时间线与图层集合。",
+      {
+        ty: 0,
+        refId: "comp_0",
+      },
+      GROUP_EXAMPLE,
+    ),
+    "时间重映射": createExample(
+      "支持时间重映射（Time Remap），可单独控制子动画的播放进度。",
+      {
+        ty: 0,
+        tm: { a: 1 },
+      },
+      POSITION_EXAMPLE,
+    ),
     "图片": createExample(
       "支持内联 Base64 或本地引用图片资源及其变换控制。",
       {
