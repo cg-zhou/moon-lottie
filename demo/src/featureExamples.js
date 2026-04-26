@@ -26,6 +26,22 @@ function rawProperty(value) {
   return { a: 0, k: value }
 }
 
+function transformProperty(value) {
+  if (
+    value &&
+    typeof value === "object" &&
+    (
+      Object.prototype.hasOwnProperty.call(value, "k") ||
+      Object.prototype.hasOwnProperty.call(value, "x") ||
+      Object.prototype.hasOwnProperty.call(value, "y") ||
+      Object.prototype.hasOwnProperty.call(value, "s")
+    )
+  ) {
+    return value
+  }
+  return rawProperty(value)
+}
+
 function keyframe(t, s, e, extra = {}) {
   const start = Array.isArray(s) ? s : [s]
   const end = Array.isArray(e) ? e : [e]
@@ -38,6 +54,27 @@ function keyframe(t, s, e, extra = {}) {
     },
     o: {
       x: Array(dimensions).fill(0.333),
+      y: Array(dimensions).fill(0),
+    },
+    t,
+    s: start,
+    e: end,
+    ...extra,
+  }
+}
+
+function linearKeyframe(t, s, e, extra = {}) {
+  const start = Array.isArray(s) ? s : [s]
+  const end = Array.isArray(e) ? e : [e]
+  const dimensions = Math.max(start.length, end.length)
+
+  return {
+    i: {
+      x: Array(dimensions).fill(1),
+      y: Array(dimensions).fill(1),
+    },
+    o: {
+      x: Array(dimensions).fill(0),
       y: Array(dimensions).fill(0),
     },
     t,
@@ -102,7 +139,7 @@ function layerKs({
   return {
     o: rawProperty(o),
     r: rawProperty(r),
-    p: rawProperty(p),
+    p: transformProperty(p),
     a: rawProperty(a),
     s: rawProperty(s),
     sk: rawProperty(sk),
@@ -121,7 +158,7 @@ function transformItem({
 } = {}) {
   return {
     ty: "tr",
-    p: rawProperty(p),
+    p: transformProperty(p),
     a: rawProperty(a),
     s: rawProperty(s),
     r: rawProperty(r),
@@ -277,6 +314,37 @@ function stroke({
   return item
 }
 
+function gradientStroke({
+  type = 1,
+  stops,
+  start = [-40, 0],
+  end = [40, 0],
+  opacity = 100,
+  width = 8,
+  lineCap = 2,
+  lineJoin = 1,
+  miter = 4,
+} = {}) {
+  return {
+    ty: "gs",
+    o: rawProperty(opacity),
+    w: rawProperty(width),
+    g: {
+      p: stops.length,
+      k: rawProperty(stops.flatMap(([offset, color]) => [offset, color[0], color[1], color[2]])),
+    },
+    s: rawProperty(start),
+    e: rawProperty(end),
+    t: type,
+    lc: lineCap,
+    lj: lineJoin,
+    ml: miter,
+    nm: "Gradient Stroke 1",
+    mn: "ADBE Vector Graphic - G-Stroke",
+    hd: false,
+  }
+}
+
 function trim(start = 0, end = 100, offset = 0, mode = 1) {
   return {
     ty: "tm",
@@ -349,6 +417,8 @@ function shapeLayer({
   bm = 0,
   tt,
   td,
+  parent,
+  ef,
   masksProperties,
   autoOrient = 0,
 } = {}) {
@@ -374,9 +444,17 @@ function shapeLayer({
     layer.td = td
   }
 
+  if (parent !== undefined) {
+    layer.parent = parent
+  }
+
   if (masksProperties?.length) {
     layer.hasMask = true
     layer.masksProperties = masksProperties
+  }
+
+  if (ef?.length) {
+    layer.ef = ef
   }
 
   return layer
@@ -407,8 +485,202 @@ function imageLayer({
   }
 }
 
-function animation(name, layers, { assets = [], markers = [] } = {}) {
+function solidLayer({
+  name,
+  color,
+  width,
+  height,
+  ks,
+  ip = 0,
+  op = FRAMES,
+} = {}) {
   return {
+    ddd: 0,
+    ind: 0,
+    ty: 1,
+    nm: name,
+    ks: layerKs(ks),
+    ip,
+    op,
+    st: 0,
+    bm: 0,
+    sw: width,
+    sh: height,
+    sc: color,
+  }
+}
+
+function precompLayer({
+  name,
+  refId,
+  width = WIDTH,
+  height = HEIGHT,
+  ks,
+  tm,
+  ip = 0,
+  op = FRAMES,
+} = {}) {
+  const layer = {
+    ddd: 0,
+    ind: 0,
+    ty: 0,
+    nm: name,
+    refId,
+    w: width,
+    h: height,
+    ks: layerKs(ks),
+    ip,
+    op,
+    st: 0,
+    bm: 0,
+  }
+
+  if (tm) {
+    layer.tm = tm
+  }
+
+  return layer
+}
+
+function textDocument({
+  text = "WAVE",
+  font = "Moon Demo Bold",
+  size = 58,
+  justify = 0,
+  tracking = 0,
+  lineHeight = 72,
+  baselineShift = 0,
+  fillColor = COLORS.ink,
+  strokeColor = COLORS.ink,
+  strokeWidth = 0,
+  strokeOverFill = true,
+} = {}) {
+  return {
+    s: size,
+    f: font,
+    t: text,
+    j: justify,
+    tr: tracking,
+    lh: lineHeight,
+    ls: baselineShift,
+    fc: fillColor,
+    sc: strokeColor,
+    sw: strokeWidth,
+    of: strokeOverFill,
+  }
+}
+
+function textAnimatorProperties({
+  scale,
+  position,
+  rotation,
+  opacity,
+  tracking,
+  fillColor,
+  strokeColor,
+  strokeWidth,
+} = {}) {
+  const properties = {}
+
+  if (scale !== undefined) properties.s = rawProperty(scale)
+  if (position !== undefined) properties.p = rawProperty(position)
+  if (rotation !== undefined) properties.r = rawProperty(rotation)
+  if (opacity !== undefined) properties.o = rawProperty(opacity)
+  if (tracking !== undefined) properties.t = rawProperty(tracking)
+  if (fillColor !== undefined) properties.fc = rawProperty(fillColor)
+  if (strokeColor !== undefined) properties.sc = rawProperty(strokeColor)
+  if (strokeWidth !== undefined) properties.sw = rawProperty(strokeWidth)
+
+  return properties
+}
+
+function textSelector({
+  basedOn = 1,
+  shape = 2,
+  rangeUnits = 1,
+  randomize = 0,
+  start = 0,
+  end = 100,
+  easeHigh = 0,
+  easeLow = 0,
+  amount = 100,
+  offset = 0,
+} = {}) {
+  const selector = {
+    b: basedOn,
+    sh: shape,
+    rn: randomize,
+    s: rawProperty(start),
+    e: rawProperty(end),
+    ne: rawProperty(easeHigh),
+    xe: rawProperty(easeLow),
+    a: rawProperty(amount),
+    o: rawProperty(offset),
+  }
+
+  if (rangeUnits !== 1) {
+    selector.r = rangeUnits
+  }
+
+  return selector
+}
+
+function textAnimator(properties = {}, selector = {}) {
+  return {
+    a: textAnimatorProperties(properties),
+    s: textSelector(selector),
+  }
+}
+
+function textLayer({
+  name,
+  document,
+  ks,
+  animators = [],
+  moreOptions,
+  ip = 0,
+  op = FRAMES,
+} = {}) {
+  const textData = {
+    d: {
+      k: [{ s: document, t: 0 }],
+    },
+    a: animators,
+  }
+
+  if (moreOptions) {
+    textData.m = moreOptions
+  }
+
+  return {
+    ddd: 0,
+    ind: 0,
+    ty: 5,
+    nm: name,
+    ks: layerKs(ks),
+    t: textData,
+    ip,
+    op,
+    st: 0,
+    bm: 0,
+  }
+}
+
+function glyphChar(ch, width, shapes, family = "Moon Demo", style = "Bold") {
+  return {
+    ch,
+    size: 100,
+    style,
+    fFamily: family,
+    w: width,
+    data: {
+      shapes,
+    },
+  }
+}
+
+function animation(name, layers, { assets = [], markers = [], fonts, chars } = {}) {
+  const data = {
     v: "5.7.4",
     fr: 30,
     ip: 0,
@@ -421,6 +693,16 @@ function animation(name, layers, { assets = [], markers = [] } = {}) {
     layers: layers.map((layer, index) => ({ ...layer, ind: index + 1 })),
     markers,
   }
+
+  if (fonts) {
+    data.fonts = fonts
+  }
+
+  if (chars) {
+    data.chars = chars
+  }
+
+  return data
 }
 
 function formatJson(value) {
@@ -445,6 +727,51 @@ function createStripeGroups(colors) {
     )
   })
 }
+
+function glyphBox(x1, y1, x2, y2, name) {
+  return pathShape(
+    [
+      [x1, y1],
+      [x2, y1],
+      [x2, y2],
+      [x1, y2],
+    ],
+    true,
+    name,
+  )
+}
+
+const DEMO_GLYPH_FONT = {
+  list: [
+    {
+      fName: "Moon Demo Bold",
+      fFamily: "Moon Demo",
+      fStyle: "Bold",
+      ascent: 75,
+    },
+  ],
+}
+
+const DEMO_GLYPHS = [
+  glyphChar("W", 82, [
+    pathShape([[0, 0], [12, 100], [28, 44], [44, 100], [56, 0], [46, 0], [38, 58], [28, 24], [18, 58], [10, 0]], true, "Glyph W"),
+  ]),
+  glyphChar("A", 72, [
+    glyphBox(0, 0, 12, 100, "A Left"),
+    glyphBox(48, 0, 60, 100, "A Right"),
+    glyphBox(12, 0, 48, 14, "A Top"),
+    glyphBox(12, 44, 48, 58, "A Cross"),
+  ]),
+  glyphChar("V", 72, [
+    pathShape([[0, 0], [16, 0], [36, 78], [56, 0], [72, 0], [44, 100], [28, 100]], true, "Glyph V"),
+  ]),
+  glyphChar("E", 68, [
+    glyphBox(0, 0, 12, 100, "E Stem"),
+    glyphBox(12, 0, 60, 14, "E Top"),
+    glyphBox(12, 43, 50, 57, "E Mid"),
+    glyphBox(12, 86, 60, 100, "E Bottom"),
+  ]),
+]
 
 function buildShapeExample() {
   return animation("shape-path", [
@@ -967,7 +1294,7 @@ function buildAutoOrientExample() {
 }
 
 function buildMaskExample() {
-  return animation("mask", [
+  return animation("mask-path", [
     shapeLayer({
       name: "Mask Outline",
       ks: { p: CENTER },
@@ -989,7 +1316,7 @@ function buildMaskExample() {
 }
 
 function buildTrackMatteExample() {
-  return animation("track-matte", [
+  return animation("matte-alpha", [
     shapeLayer({
       name: "Matte Circle",
       td: 1,
@@ -1088,6 +1415,839 @@ function buildExpressionExample() {
   ])
 }
 
+function buildGradientStrokeExample() {
+  return animation("stroke-gradient", [
+    shapeLayer({
+      name: "Gradient Stroke",
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup([
+          ellipse([112, 112]),
+          trim(0, pingPong(18, 100), pingPong(0, 360)),
+          gradientStroke({
+            stops: [
+              [0, COLORS.blue],
+              [0.45, COLORS.teal],
+              [1, COLORS.coral],
+            ],
+            start: [-64, -48],
+            end: [64, 48],
+            width: 14,
+          }),
+        ]),
+      ],
+    }),
+  ])
+}
+
+function buildSeparatedPositionExample() {
+  return animation("transform-separated-position", [
+    shapeLayer({
+      name: "Separated Position",
+      ks: {
+        p: {
+          s: true,
+          x: pingPong(58, 182),
+          y: {
+            a: 1,
+            k: [
+              keyframe(0, 126, 54),
+              keyframe(48, 54, 126),
+              { t: FRAMES },
+            ],
+          },
+        },
+      },
+      groups: [
+        shapeGroup([ellipse([34, 34]), fill(COLORS.coral)]),
+      ],
+    }),
+  ])
+}
+
+function buildParentHierarchyExample() {
+  return animation("transform-parent-hierarchy", [
+    shapeLayer({
+      name: "Orbit Parent",
+      ks: {
+        p: CENTER,
+        r: pingPong(0, 180),
+      },
+      groups: [
+        shapeGroup([
+          ellipse([96, 96]),
+          stroke({
+            color: COLORS.slate,
+            width: 4,
+            opacity: 60,
+            dashes: dashPattern({ dash: 7, gap: 9 }),
+          }),
+        ]),
+      ],
+    }),
+    shapeLayer({
+      name: "Child Follower",
+      ks: {
+        p: [168, 90, 0],
+      },
+      parent: 1,
+      groups: [
+        shapeGroup([ellipse([26, 26]), fill(COLORS.amber), stroke({ color: COLORS.ink, width: 3 })]),
+      ],
+    }),
+  ])
+}
+
+function buildInterpolationLinearExample() {
+  return animation("interp-linear", [
+    shapeLayer({
+      name: "Linear Guide",
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup([
+          pathShape([[-76, 0], [76, 0]], false),
+          stroke({ color: COLORS.cloud, width: 6, lineCap: 2 }),
+        ]),
+      ],
+    }),
+    shapeLayer({
+      name: "Linear Dot",
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            linearKeyframe(0, [44, 90, 0], [196, 90, 0]),
+            { t: FRAMES },
+          ],
+        },
+      },
+      groups: [shapeGroup([ellipse([26, 26]), fill(COLORS.blue)])],
+    }),
+  ])
+}
+
+function buildInterpolationBezierExample() {
+  return animation("interp-bezier", [
+    shapeLayer({
+      name: "Bezier Dot",
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            keyframe(0, [44, 90, 0], [196, 90, 0], {
+              i: { x: [0.667], y: [1] },
+              o: { x: [0.2], y: [0] },
+            }),
+            { t: FRAMES },
+          ],
+        },
+      },
+      groups: [shapeGroup([ellipse([26, 26]), fill(COLORS.violet)])],
+    }),
+  ])
+}
+
+function buildInterpolationHoldExample() {
+  return animation("interp-hold", [
+    shapeLayer({
+      name: "Hold Markers",
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup([
+          pathShape([[-64, 0], [0, 0], [64, 0]], false),
+          stroke({ color: COLORS.cloud, width: 8, lineCap: 2, dashes: dashPattern({ dash: 4, gap: 10 }) }),
+        ]),
+      ],
+    }),
+    shapeLayer({
+      name: "Hold Dot",
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [58, 90, 0], h: 1 },
+            { t: 32, s: [120, 54, 0], h: 1 },
+            { t: 64, s: [182, 126, 0], h: 1 },
+            { t: FRAMES, s: [182, 126, 0] },
+          ],
+        },
+      },
+      groups: [shapeGroup([rect([28, 28], [0, 0], 8), fill(COLORS.coral)])],
+    }),
+  ])
+}
+
+function buildInterpolationSpatialBezierExample() {
+  return animation("interp-spatial-bezier", [
+    shapeLayer({
+      name: "Spatial Guide",
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup([
+          pathShape([[-72, 30], [-12, -42], [20, -10], [72, 34]], false),
+          stroke({ color: COLORS.cloud, width: 6, lineCap: 2, dashes: dashPattern({ dash: 6, gap: 8 }) }),
+        ]),
+      ],
+    }),
+    shapeLayer({
+      name: "Spatial Dot",
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            keyframe(0, [48, 124, 0], [188, 56, 0], { to: [54, -68, 0], ti: [-58, 26, 0] }),
+            keyframe(48, [188, 56, 0], [48, 124, 0], { to: [-58, 26, 0], ti: [54, -68, 0] }),
+            { t: FRAMES },
+          ],
+        },
+      },
+      groups: [shapeGroup([ellipse([28, 28]), fill(COLORS.teal)])],
+    }),
+  ])
+}
+
+function buildInterpolationTimeRoamExample() {
+  return animation("interp-time-roam", [
+    shapeLayer({
+      name: "Timing Track",
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup([
+          pathShape([[-76, 0], [76, 0]], false),
+          stroke({ color: COLORS.cloud, width: 6, lineCap: 2 }),
+        ]),
+      ],
+    }),
+    shapeLayer({
+      name: "Timing Dot",
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            linearKeyframe(0, [44, 90, 0], [96, 90, 0]),
+            linearKeyframe(12, [96, 90, 0], [176, 90, 0]),
+            linearKeyframe(72, [176, 90, 0], [196, 90, 0]),
+            { t: FRAMES },
+          ],
+        },
+      },
+      groups: [shapeGroup([ellipse([26, 26]), fill(COLORS.amber)])],
+    }),
+  ])
+}
+
+function buildMaskOpacityExample() {
+  return animation("mask-opacity", [
+    shapeLayer({
+      name: "Opacity Frame",
+      ks: { p: CENTER },
+      groups: [shapeGroup([rect([122, 86], [0, 0], 18), stroke({ color: COLORS.ink, width: 3 })])],
+    }),
+    shapeLayer({
+      name: "Opacity Masked Stripes",
+      ks: { p: CENTER },
+      masksProperties: [
+        {
+          ...mask(rectPath(0, 0, 112, 78), "a"),
+          o: pingPong(20, 100),
+        },
+      ],
+      groups: [
+        shapeGroup(
+          createStripeGroups([COLORS.blue, COLORS.teal, COLORS.amber, COLORS.coral]),
+          { p: pingPong([-24, 0], [24, 0]) },
+          "Opacity Rail",
+        ),
+      ],
+    }),
+  ])
+}
+
+function buildMaskAddExample() {
+  return animation("mask-add", [
+    shapeLayer({
+      name: "Add Frame",
+      ks: { p: CENTER },
+      groups: [shapeGroup([rect([122, 86], [0, 0], 18), stroke({ color: COLORS.ink, width: 3 })])],
+    }),
+    shapeLayer({
+      name: "Add Stripes",
+      ks: { p: CENTER },
+      masksProperties: [mask(rectPath(0, 0, 112, 78), "a")],
+      groups: [
+        shapeGroup(
+          createStripeGroups([COLORS.teal, COLORS.blue, COLORS.violet, COLORS.amber]),
+          { p: pingPong([-18, 0], [18, 0]) },
+          "Add Rail",
+        ),
+      ],
+    }),
+  ])
+}
+
+function buildMaskSubtractExample() {
+  return animation("mask-subtract", [
+    shapeLayer({
+      name: "Subtract Layer",
+      ks: { p: CENTER },
+      masksProperties: [mask(rectPath(0, 0, 82, 58), "s")],
+      groups: [
+        shapeGroup(
+          createStripeGroups([COLORS.blue, COLORS.coral, COLORS.amber, COLORS.teal, COLORS.violet]),
+          { p: pingPong([-10, 0], [10, 0]) },
+          "Subtract Rail",
+        ),
+      ],
+    }),
+    shapeLayer({
+      name: "Subtract Window",
+      ks: { p: CENTER },
+      groups: [shapeGroup([rect([90, 66], [0, 0], 14), stroke({ color: COLORS.ink, width: 3 })])],
+    }),
+  ])
+}
+
+function buildMaskIntersectExample() {
+  return animation("mask-intersect", [
+    shapeLayer({
+      name: "Intersect Layer",
+      ks: { p: CENTER },
+      masksProperties: [
+        mask(rectPath(-18, 0, 84, 72), "a", "Mask Left"),
+        mask(rectPath(18, 0, 84, 72), "i", "Mask Right"),
+      ],
+      groups: [
+        shapeGroup(
+          createStripeGroups([COLORS.blue, COLORS.teal, COLORS.coral, COLORS.amber, COLORS.violet]),
+          { p: pingPong([-16, 0], [16, 0]) },
+          "Intersect Rail",
+        ),
+      ],
+    }),
+    shapeLayer({
+      name: "Intersect Guides",
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup([rect([84, 72], [-18, 0], 14), stroke({ color: COLORS.slate, width: 3 })]),
+        shapeGroup([rect([84, 72], [18, 0], 14), stroke({ color: COLORS.ink, width: 3 })]),
+      ],
+    }),
+  ])
+}
+
+function buildMaskExpansionExample() {
+  return animation("mask-expansion", [
+    shapeLayer({
+      name: "Expansion Layer",
+      ks: { p: CENTER },
+      masksProperties: [
+        {
+          ...mask(rectPath(0, 0, 90, 62), "a"),
+          x: pingPong(-22, 22),
+        },
+      ],
+      groups: [
+        shapeGroup(
+          createStripeGroups([COLORS.blue, COLORS.teal, COLORS.amber, COLORS.coral]),
+          { p: pingPong([-18, 0], [18, 0]) },
+          "Expansion Rail",
+        ),
+      ],
+    }),
+    shapeLayer({
+      name: "Expansion Frame",
+      ks: { p: CENTER },
+      groups: [shapeGroup([rect([130, 94], [0, 0], 18), stroke({ color: COLORS.ink, width: 3 })])],
+    }),
+  ])
+}
+
+function buildAlphaInvertedMatteExample() {
+  return animation("matte-alpha-inverted", [
+    shapeLayer({
+      name: "Inverted Matte",
+      td: 1,
+      ks: { p: pingPong([84, 90, 0], [156, 90, 0]) },
+      groups: [shapeGroup([ellipse([74, 74]), fill(COLORS.white)])],
+    }),
+    shapeLayer({
+      name: "Inverted Content",
+      tt: 2,
+      ks: { p: CENTER },
+      groups: [
+        shapeGroup(createStripeGroups([COLORS.blue, COLORS.teal, COLORS.amber, COLORS.coral, COLORS.violet]), {}, "Inverted Stripes"),
+      ],
+    }),
+    shapeLayer({
+      name: "Inverted Frame",
+      ks: { p: CENTER },
+      groups: [shapeGroup([rect([140, 104], [0, 0], 18), stroke({ color: COLORS.ink, width: 3 })])],
+    }),
+  ])
+}
+
+function buildLayerFillEffectExample() {
+  return animation("layer-fill-effect", [
+    shapeLayer({
+      name: "Layer Fill",
+      ks: {
+        p: CENTER,
+        r: pingPong(-8, 8),
+      },
+      ef: [
+        {
+          ty: 21,
+          mn: "ADBE Fill",
+          en: 1,
+          ef: [
+            { mn: "ADBE Fill-0002", v: pingPong([0.16, 0.54, 0.95, 1], [0.95, 0.42, 0.36, 1]) },
+            { mn: "ADBE Fill-0005", v: rawProperty(70) },
+          ],
+        },
+      ],
+      groups: [
+        shapeGroup([ellipse([96, 96]), fill(COLORS.amber)]),
+        shapeGroup([
+          pathShape([[-26, -12], [0, -44], [26, -12], [0, 20]]),
+          fill(COLORS.violet),
+        ]),
+      ],
+    }),
+  ])
+}
+
+function buildTextGlyphExample() {
+  return animation("text-glyph", [
+    textLayer({
+      name: "Glyph Text",
+      ks: {
+        p: [36, 128, 0],
+      },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.blue,
+      }),
+      animators: [
+        textAnimator(
+          { position: [0, pingPong(-8, 8), 0] },
+          { start: 0, end: 100, shape: 2 },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextFontExample() {
+  return animation("text-font", [
+    textLayer({
+      name: "Font Text",
+      ks: {
+        p: [44, 110, 0],
+        r: pingPong(-4, 4),
+      },
+      document: textDocument({
+        font: "Arial",
+        text: "Moon Font",
+        size: 44,
+        fillColor: COLORS.teal,
+      }),
+    }),
+  ])
+}
+
+function buildTextTransformExample() {
+  return animation("text-transform", [
+    textLayer({
+      name: "Text Transform",
+      ks: {
+        p: pingPong([48, 130, 0], [184, 58, 0]),
+        r: pingPong(-10, 10),
+        s: pingPong([92, 92, 100], [114, 114, 100]),
+      },
+      document: textDocument({
+        text: "MOVE",
+        size: 60,
+        fillColor: COLORS.coral,
+      }),
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextFillExample() {
+  return animation("text-fill", [
+    textLayer({
+      name: "Text Fill",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.blue,
+      }),
+      animators: [
+        textAnimator(
+          { fillColor: pingPong(COLORS.blue, COLORS.amber) },
+          { start: 0, end: 100, shape: 2 },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextStrokeExample() {
+  return animation("text-stroke", [
+    textLayer({
+      name: "Text Stroke",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.white,
+        strokeColor: COLORS.ink,
+        strokeWidth: 4,
+      }),
+      animators: [
+        textAnimator(
+          {
+            strokeColor: pingPong(COLORS.violet, COLORS.coral),
+            strokeWidth: pingPong(2, 8),
+          },
+          { start: 0, end: 100, shape: 2 },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextTrackingExample() {
+  return animation("text-tracking", [
+    textLayer({
+      name: "Text Tracking",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.teal,
+      }),
+      animators: [
+        textAnimator(
+          { tracking: pingPong(0, 28) },
+          { start: 0, end: 100, shape: 2 },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextAnchorGroupingExample() {
+  return animation("text-anchor-grouping", [
+    textLayer({
+      name: "Text Anchor Grouping",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.violet,
+      }),
+      animators: [
+        textAnimator(
+          { rotation: pingPong(-28, 28), position: [0, pingPong(-10, 10), 0] },
+          { start: 0, end: 100, shape: 2 },
+        ),
+      ],
+      moreOptions: {
+        g: 1,
+        a: rawProperty([0, 0]),
+      },
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextRangeUnitsExample() {
+  return animation("text-range-units", [
+    textLayer({
+      name: "Text Range Units",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.blue,
+      }),
+      animators: [
+        textAnimator(
+          { position: [0, -22, 0], opacity: 10 },
+          {
+            start: 0,
+            end: pingPong(10, 100),
+            shape: 2,
+            basedOn: 1,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextRangeBasedOnExample() {
+  return animation("text-range-based-on", [
+    textLayer({
+      name: "Text Range Based On",
+      ks: { p: [36, 128, 0] },
+      document: textDocument({
+        text: "WA VE",
+        size: 60,
+        fillColor: COLORS.teal,
+      }),
+      animators: [
+        textAnimator(
+          { position: [0, -18, 0], fillColor: COLORS.amber },
+          {
+            start: 0,
+            end: pingPong(0, 100),
+            shape: 2,
+            basedOn: 3,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextRangeQuantityExample() {
+  return animation("text-range-quantity", [
+    textLayer({
+      name: "Text Range Quantity",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.coral,
+      }),
+      animators: [
+        textAnimator(
+          { opacity: 0, position: [0, 20, 0] },
+          {
+            start: 1,
+            end: pingPong(1, 4),
+            shape: 2,
+            rangeUnits: 2,
+            basedOn: 1,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextRangeShapeExample() {
+  return animation("text-range-shape", [
+    textLayer({
+      name: "Text Range Shape",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.amber,
+      }),
+      animators: [
+        textAnimator(
+          { scale: [130, 130, 100] },
+          {
+            start: 0,
+            end: 100,
+            offset: pingPong(-100, 100),
+            shape: 3,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextEaseHighExample() {
+  return animation("text-range-ease-high", [
+    textLayer({
+      name: "Text Ease High",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.blue,
+      }),
+      animators: [
+        textAnimator(
+          { position: [0, -24, 0] },
+          {
+            start: 0,
+            end: 100,
+            offset: pingPong(-100, 100),
+            easeHigh: 80,
+            shape: 2,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextEaseLowExample() {
+  return animation("text-range-ease-low", [
+    textLayer({
+      name: "Text Ease Low",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.teal,
+      }),
+      animators: [
+        textAnimator(
+          { position: [0, 24, 0] },
+          {
+            start: 0,
+            end: 100,
+            offset: pingPong(-100, 100),
+            easeLow: 80,
+            shape: 2,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildTextRandomOrderExample() {
+  return animation("text-range-random-order", [
+    textLayer({
+      name: "Text Random Order",
+      ks: { p: [40, 128, 0] },
+      document: textDocument({
+        text: "WAVE",
+        size: 64,
+        fillColor: COLORS.violet,
+      }),
+      animators: [
+        textAnimator(
+          { opacity: 0, position: [0, -20, 0] },
+          {
+            start: 0,
+            end: 100,
+            offset: pingPong(-100, 100),
+            randomize: 1,
+            shape: 2,
+          },
+        ),
+      ],
+    }),
+  ], {
+    fonts: DEMO_GLYPH_FONT,
+    chars: DEMO_GLYPHS,
+  })
+}
+
+function buildPrecompExample() {
+  return animation("other-precomp", [
+    precompLayer({
+      name: "Wave Precomp",
+      refId: "comp_wave",
+      ks: {
+        p: CENTER,
+        s: pingPong([90, 90, 100], [110, 110, 100]),
+        r: pingPong(-8, 8),
+      },
+    }),
+  ], {
+    assets: [
+      {
+        id: "comp_wave",
+        layers: [
+          shapeLayer({
+            name: "Precomp Dot",
+            ks: {
+              p: pingPong([64, 90, 0], [176, 90, 0]),
+            },
+            groups: [shapeGroup([ellipse([28, 28]), fill(COLORS.blue)])],
+          }),
+        ].map((layer, index) => ({ ...layer, ind: index + 1 })),
+      },
+    ],
+  })
+}
+
+function buildTimeRemapExample() {
+  return animation("other-time-remap", [
+    precompLayer({
+      name: "Time Remap",
+      refId: "comp_time",
+      tm: pingPong(0.3, 2.3),
+      ks: { p: CENTER },
+    }),
+  ], {
+    assets: [
+      {
+        id: "comp_time",
+        layers: [
+          shapeLayer({
+            name: "Time Guide",
+            ks: { p: CENTER },
+            groups: [shapeGroup([pathShape([[-78, 0], [78, 0]], false), stroke({ color: COLORS.cloud, width: 6, lineCap: 2 })])],
+          }),
+          shapeLayer({
+            name: "Time Dot",
+            ks: {
+              p: {
+                a: 1,
+                k: [
+                  linearKeyframe(0, [44, 90, 0], [196, 90, 0]),
+                  { t: 72 },
+                ],
+              },
+            },
+            groups: [shapeGroup([ellipse([26, 26]), fill(COLORS.coral)])],
+            op: 72,
+          }),
+        ].map((layer, index) => ({ ...layer, ind: index + 1 })),
+      },
+    ],
+  })
+}
+
 const SHAPE_EXAMPLE = buildShapeExample()
 const ELLIPSE_EXAMPLE = buildEllipseExample()
 const RECTANGLE_EXAMPLE = buildRectangleExample()
@@ -1109,19 +2269,50 @@ const LINE_CAP_EXAMPLE = buildLineCapExample()
 const LINE_JOIN_EXAMPLE = buildLineJoinExample()
 const MITER_LIMIT_EXAMPLE = buildMiterLimitExample()
 const DASH_EXAMPLE = buildDashExample()
+const GRADIENT_STROKE_EXAMPLE = buildGradientStrokeExample()
 const ANCHOR_EXAMPLE = buildAnchorPointExample()
 const POSITION_EXAMPLE = buildPositionExample()
+const SEPARATED_POSITION_EXAMPLE = buildSeparatedPositionExample()
 const SCALE_EXAMPLE = buildScaleExample()
 const ROTATION_EXAMPLE = buildRotationExample()
 const TRANSFORM_OPACITY_EXAMPLE = buildTransformOpacityExample()
+const PARENT_HIERARCHY_EXAMPLE = buildParentHierarchyExample()
 const SKEW_EXAMPLE = buildSkewExample()
 const SKEW_AXIS_EXAMPLE = buildSkewAxisExample()
 const AUTO_ORIENT_EXAMPLE = buildAutoOrientExample()
 const MASK_EXAMPLE = buildMaskExample()
+const MASK_OPACITY_EXAMPLE = buildMaskOpacityExample()
+const MASK_ADD_EXAMPLE = buildMaskAddExample()
+const MASK_SUBTRACT_EXAMPLE = buildMaskSubtractExample()
+const MASK_INTERSECT_EXAMPLE = buildMaskIntersectExample()
+const MASK_EXPANSION_EXAMPLE = buildMaskExpansionExample()
 const TRACK_MATTE_EXAMPLE = buildTrackMatteExample()
+const TRACK_MATTE_INVERTED_EXAMPLE = buildAlphaInvertedMatteExample()
 const IMAGE_EXAMPLE = buildImageExample()
 const MARKER_EXAMPLE = buildMarkerExample()
 const EXPRESSION_EXAMPLE = buildExpressionExample()
+const LAYER_FILL_EFFECT_EXAMPLE = buildLayerFillEffectExample()
+const INTERP_LINEAR_EXAMPLE = buildInterpolationLinearExample()
+const INTERP_BEZIER_EXAMPLE = buildInterpolationBezierExample()
+const INTERP_HOLD_EXAMPLE = buildInterpolationHoldExample()
+const INTERP_SPATIAL_BEZIER_EXAMPLE = buildInterpolationSpatialBezierExample()
+const INTERP_TIME_ROAM_EXAMPLE = buildInterpolationTimeRoamExample()
+const TEXT_GLYPH_EXAMPLE = buildTextGlyphExample()
+const TEXT_FONT_EXAMPLE = buildTextFontExample()
+const TEXT_TRANSFORM_EXAMPLE = buildTextTransformExample()
+const TEXT_FILL_EXAMPLE = buildTextFillExample()
+const TEXT_STROKE_EXAMPLE = buildTextStrokeExample()
+const TEXT_TRACKING_EXAMPLE = buildTextTrackingExample()
+const TEXT_ANCHOR_GROUPING_EXAMPLE = buildTextAnchorGroupingExample()
+const TEXT_RANGE_UNITS_EXAMPLE = buildTextRangeUnitsExample()
+const TEXT_RANGE_BASED_ON_EXAMPLE = buildTextRangeBasedOnExample()
+const TEXT_RANGE_QUANTITY_EXAMPLE = buildTextRangeQuantityExample()
+const TEXT_RANGE_SHAPE_EXAMPLE = buildTextRangeShapeExample()
+const TEXT_EASE_HIGH_EXAMPLE = buildTextEaseHighExample()
+const TEXT_EASE_LOW_EXAMPLE = buildTextEaseLowExample()
+const TEXT_RANDOM_ORDER_EXAMPLE = buildTextRandomOrderExample()
+const PRECOMP_EXAMPLE = buildPrecompExample()
+const TIME_REMAP_EXAMPLE = buildTimeRemapExample()
 
 export const featureExampleMap = {
   shapes: {
@@ -1358,7 +2549,7 @@ export const featureExampleMap = {
           p: 3,
         },
       },
-      LINEAR_GRADIENT_EXAMPLE,
+      GRADIENT_STROKE_EXAMPLE,
     ),
   },
   transforms: {
@@ -1392,7 +2583,7 @@ export const featureExampleMap = {
           },
         },
       },
-      POSITION_EXAMPLE,
+      SEPARATED_POSITION_EXAMPLE,
     ),
     "缩放": createExample(
       "支持二维/三维图层缩放关键帧。",
@@ -1430,7 +2621,7 @@ export const featureExampleMap = {
           r: { a: 1 },
         },
       },
-      GROUP_EXAMPLE,
+      PARENT_HIERARCHY_EXAMPLE,
     ),
     "倾斜": createExample(
       "支持对图层内容进行剪切变形（Skew）。",
@@ -1470,7 +2661,7 @@ export const featureExampleMap = {
         a: 1,
         k: [{ t: 0 }, { t: 48 }],
       },
-      POSITION_EXAMPLE,
+      INTERP_LINEAR_EXAMPLE,
     ),
     "贝塞尔插值": createExample(
       "支持贝塞尔缓动曲线，获得更自然的加减速节奏。",
@@ -1478,7 +2669,7 @@ export const featureExampleMap = {
         a: 1,
         k: [{ t: 0, i: { x: 0.667, y: 1 }, o: { x: 0.333, y: 0 } }],
       },
-      SCALE_EXAMPLE,
+      INTERP_BEZIER_EXAMPLE,
     ),
     "保持插值": createExample(
       "支持保持插值（Hold），属性会在关键帧之间直接跳变。",
@@ -1486,7 +2677,7 @@ export const featureExampleMap = {
         a: 1,
         k: [{ t: 0, h: 1 }, { t: 48 }],
       },
-      ROTATION_EXAMPLE,
+      INTERP_HOLD_EXAMPLE,
     ),
     "空间贝塞尔插值": createExample(
       "支持带空间切线的运动路径插值，轨迹更平滑。",
@@ -1494,7 +2685,7 @@ export const featureExampleMap = {
         a: 1,
         k: [{ t: 0, to: [20, 0, 0], ti: [-20, 0, 0] }],
       },
-      AUTO_ORIENT_EXAMPLE,
+      INTERP_SPATIAL_BEZIER_EXAMPLE,
     ),
     "时间漫游": createExample(
       "支持关键帧时间分布调整，可实现更灵活的时间节奏控制。",
@@ -1502,7 +2693,7 @@ export const featureExampleMap = {
         a: 1,
         k: [{ t: 0 }, { t: 24 }, { t: 72 }],
       },
-      POSITION_EXAMPLE,
+      INTERP_TIME_ROAM_EXAMPLE,
     ),
   },
   masks: {
@@ -1530,7 +2721,7 @@ export const featureExampleMap = {
           },
         ],
       },
-      MASK_EXAMPLE,
+      MASK_OPACITY_EXAMPLE,
     ),
     "相加": createExample(
       "支持 Add 蒙版模式，保留蒙版轮廓内部区域。",
@@ -1538,7 +2729,7 @@ export const featureExampleMap = {
         hasMask: true,
         masksProperties: [{ mode: "a" }],
       },
-      MASK_EXAMPLE,
+      MASK_ADD_EXAMPLE,
     ),
     "相减": createExample(
       "支持 Subtract 蒙版模式，从图层内容中扣除蒙版区域。",
@@ -1546,7 +2737,7 @@ export const featureExampleMap = {
         hasMask: true,
         masksProperties: [{ mode: "s" }],
       },
-      MASK_EXAMPLE,
+      MASK_SUBTRACT_EXAMPLE,
     ),
     "相交": createExample(
       "支持 Intersect 蒙版模式，仅显示多个蒙版的重叠区域。",
@@ -1554,7 +2745,7 @@ export const featureExampleMap = {
         hasMask: true,
         masksProperties: [{ mode: "i" }],
       },
-      MASK_EXAMPLE,
+      MASK_INTERSECT_EXAMPLE,
     ),
     "扩展": createExample(
       "支持蒙版扩展（Expansion），可向内或向外膨胀裁切边界。",
@@ -1567,7 +2758,7 @@ export const featureExampleMap = {
           },
         ],
       },
-      MASK_EXAMPLE,
+      MASK_EXPANSION_EXAMPLE,
     ),
   },
   mattes: {
@@ -1589,7 +2780,7 @@ export const featureExampleMap = {
           { ty: 4, tt: 2 },
         ],
       },
-      TRACK_MATTE_EXAMPLE,
+      TRACK_MATTE_INVERTED_EXAMPLE,
     ),
   },
   layerEffects: {
@@ -1603,7 +2794,7 @@ export const featureExampleMap = {
           },
         ],
       },
-      FILL_COLOR_EXAMPLE,
+      LAYER_FILL_EFFECT_EXAMPLE,
     ),
   },
   text: {
@@ -1615,7 +2806,7 @@ export const featureExampleMap = {
           d: { k: [{ s: { t: "Moon" }, t: 0 }] },
         },
       },
-      SHAPE_EXAMPLE,
+      TEXT_GLYPH_EXAMPLE,
     ),
     "字体": createExample(
       "支持字体文本图层，可按字体信息直接排版和渲染。",
@@ -1625,7 +2816,7 @@ export const featureExampleMap = {
           d: { k: [{ s: { f: "Arial", t: "Moon" }, t: 0 }] },
         },
       },
-      FILL_COLOR_EXAMPLE,
+      TEXT_FONT_EXAMPLE,
     ),
     "变换": createExample(
       "支持文本图层的位移、旋转、缩放等基础变换属性。",
@@ -1636,7 +2827,7 @@ export const featureExampleMap = {
           r: { a: 1 },
         },
       },
-      POSITION_EXAMPLE,
+      TEXT_TRANSFORM_EXAMPLE,
     ),
     "填充": createExample(
       "支持文本填充颜色与透明度控制。",
@@ -1646,7 +2837,7 @@ export const featureExampleMap = {
           d: { k: [{ s: { fc: COLORS.blue }, t: 0 }] },
         },
       },
-      FILL_COLOR_EXAMPLE,
+      TEXT_FILL_EXAMPLE,
     ),
     "描边": createExample(
       "支持文本描边颜色、宽度与透明度配置。",
@@ -1656,7 +2847,7 @@ export const featureExampleMap = {
           d: { k: [{ s: { sc: COLORS.ink, sw: 2 }, t: 0 }] },
         },
       },
-      STROKE_COLOR_EXAMPLE,
+      TEXT_STROKE_EXAMPLE,
     ),
     "字距": createExample(
       "支持调整字距（Tracking），控制字符之间的排版疏密。",
@@ -1666,7 +2857,7 @@ export const featureExampleMap = {
           d: { k: [{ s: { tr: 30 }, t: 0 }] },
         },
       },
-      DASH_EXAMPLE,
+      TEXT_TRACKING_EXAMPLE,
     ),
     "锚点分组": createExample(
       "支持按字符锚点分组执行动画，保持逐字变换的参考点一致。",
@@ -1676,7 +2867,7 @@ export const featureExampleMap = {
           m: { g: 1 },
         },
       },
-      GROUP_EXAMPLE,
+      TEXT_ANCHOR_GROUPING_EXAMPLE,
     ),
     "范围选择器（单位）": createExample(
       "支持按百分比单位配置范围选择器，逐步影响字符集合。",
@@ -1686,17 +2877,17 @@ export const featureExampleMap = {
           a: [{ s: { b: 1 } }],
         },
       },
-      REPEATER_EXAMPLE,
+      TEXT_RANGE_UNITS_EXAMPLE,
     ),
     "范围选择器（基于）": createExample(
       "支持按字符、单词或行作为范围选择器的计算基础。",
       {
         ty: 5,
         t: {
-          a: [{ s: { b: 2 } }],
+          a: [{ s: { b: 3 } }],
         },
       },
-      GROUP_EXAMPLE,
+      TEXT_RANGE_BASED_ON_EXAMPLE,
     ),
     "范围选择器（数量）": createExample(
       "支持以字符数量驱动的范围选择器，精确控制受影响范围。",
@@ -1706,7 +2897,7 @@ export const featureExampleMap = {
           a: [{ s: { e: { a: 1 } } }],
         },
       },
-      REPEATER_EXAMPLE,
+      TEXT_RANGE_QUANTITY_EXAMPLE,
     ),
     "范围选择器（形状）": createExample(
       "支持不同 Range Selector Shape，生成更丰富的逐字分布曲线。",
@@ -1716,27 +2907,27 @@ export const featureExampleMap = {
           a: [{ s: { sh: 3 } }],
         },
       },
-      SCALE_EXAMPLE,
+      TEXT_RANGE_SHAPE_EXAMPLE,
     ),
     "范围选择器（缓动高）": createExample(
       "支持高端缓动（Ease High），强化范围末端的过渡效果。",
       {
         ty: 5,
         t: {
-          a: [{ s: { xe: { a: 1 } } }],
+          a: [{ s: { ne: { a: 1 } } }],
         },
       },
-      SCALE_EXAMPLE,
+      TEXT_EASE_HIGH_EXAMPLE,
     ),
     "范围选择器（缓动低）": createExample(
       "支持低端缓动（Ease Low），平滑范围起始位置的变化。",
       {
         ty: 5,
         t: {
-          a: [{ s: { ne: { a: 1 } } }],
+          a: [{ s: { xe: { a: 1 } } }],
         },
       },
-      POSITION_EXAMPLE,
+      TEXT_EASE_LOW_EXAMPLE,
     ),
     "范围选择器（随机顺序）": createExample(
       "支持随机顺序范围选择器，让字符按打散顺序参与动画。",
@@ -1746,7 +2937,7 @@ export const featureExampleMap = {
           a: [{ s: { rn: 1 } }],
         },
       },
-      REPEATER_EXAMPLE,
+      TEXT_RANDOM_ORDER_EXAMPLE,
     ),
   },
   general: {
@@ -1813,7 +3004,7 @@ export const featureExampleMap = {
         ty: 0,
         refId: "comp_0",
       },
-      GROUP_EXAMPLE,
+      PRECOMP_EXAMPLE,
     ),
     "时间重映射": createExample(
       "支持时间重映射（Time Remap），可单独控制子动画的播放进度。",
@@ -1821,7 +3012,7 @@ export const featureExampleMap = {
         ty: 0,
         tm: { a: 1 },
       },
-      POSITION_EXAMPLE,
+      TIME_REMAP_EXAMPLE,
     ),
     "图片": createExample(
       "支持内联 Base64 或本地引用图片资源及其变换控制。",

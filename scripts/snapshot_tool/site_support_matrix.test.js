@@ -12,14 +12,55 @@ test('site does not present markers as a supported Moon feature example', async 
   const { supportSections } = await importRepoModule(repoRoot, 'demo', 'src', 'supportMatrix.js');
   const { featureExampleMap } = await importRepoModule(repoRoot, 'demo', 'src', 'featureExamples.js');
 
-  const generalSection = supportSections.find(section => section.id === 'general');
-  assert.ok(generalSection);
+  const otherSection = supportSections.find(section => section.id === 'other');
+  assert.ok(otherSection);
 
-  const markerRow = generalSection.rows.find(row => row.feature === '标记');
-  assert.deepEqual(markerRow?.moon, {
-    status: 'unknown',
-    symbol: '❔',
-    detail: 'Animation 模型已预留 markers 字段，但当前解析器尚未读取 markers',
-  });
-  assert.equal(featureExampleMap.general?.['标记'], undefined);
+  const markerRow = otherSection.rows.find(row => row.feature === '标记');
+  assert.equal(markerRow?.moon?.status, 'unsupported');
+  assert.match(markerRow?.moon?.detail ?? '', /markers/);
+  assert.equal(featureExampleMap.other?.['标记'], undefined);
+});
+
+test('audited feature demos use section-specific animations instead of unrelated shared placeholders', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const { featureExampleMap } = await importRepoModule(repoRoot, 'demo', 'src', 'featureExamples.js');
+
+  const exactMatches = {
+    strokes: {
+      '渐变': 'stroke-gradient',
+    },
+    transforms: {
+      '位置（分离 X/Y）': 'transform-separated-position',
+      '父子层级': 'transform-parent-hierarchy',
+    },
+    layerEffects: {
+      '填充': 'layer-fill-effect',
+    },
+    other: {
+      '预合成': 'other-precomp',
+      '时间重映射': 'other-time-remap',
+    },
+  };
+
+  for (const [sectionId, features] of Object.entries(exactMatches)) {
+    for (const [feature, expectedName] of Object.entries(features)) {
+      assert.equal(featureExampleMap[sectionId]?.[feature]?.animationData?.nm, expectedName);
+    }
+  }
+
+  const prefixMatches = {
+    interpolation: 'interp-',
+    masks: 'mask-',
+    mattes: 'matte-',
+    text: 'text-',
+  };
+
+  for (const [sectionId, prefix] of Object.entries(prefixMatches)) {
+    for (const [feature, example] of Object.entries(featureExampleMap[sectionId] ?? {})) {
+      assert.ok(
+        example.animationData?.nm?.startsWith(prefix),
+        `${sectionId}.${feature} should use an animation starting with ${prefix}, got ${example.animationData?.nm}`,
+      );
+    }
+  }
 });
