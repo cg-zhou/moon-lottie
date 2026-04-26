@@ -1933,8 +1933,8 @@ const _M0FP49cg_2dzhou12moon__lottie3lib8renderer28is__path__segment__token__atN
 const _M0FP49cg_2dzhou12moon__lottie3lib8renderer28strip__path__segment__tokensN5tokenS2108 = "@@SEG@@";
 const _M0FP49cg_2dzhou12moon__lottie3lib8renderer21split__path__segmentsN5tokenS2101 = "@@SEG@@";
 const _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS2062 = "0123456789ABCDEF";
-const _M0FPB18brute__force__findN6constrS8126 = 0;
-const _M0FPB28boyer__moore__horspool__findN6constrS8125 = 0;
+const _M0FPB18brute__force__findN6constrS8267 = 0;
+const _M0FPB28boyer__moore__horspool__findN6constrS8266 = 0;
 const _M0FPB4seed = _M0FPB12random__seed();
 const _M0FP49cg_2dzhou12moon__lottie3lib6parser31parse__transform__from__decodedN6constrS4845 = true;
 const _M0FP49cg_2dzhou12moon__lottie3lib6parser26parse__layer__fill__effectN6constrS4846 = 0;
@@ -2012,7 +2012,7 @@ function _M0MPC16string6String16unsafe__char__at(self, index) {
     return c1;
   }
 }
-function _M0MPC14byte4Byte7to__hexN14to__hex__digitS3320(i) {
+function _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348(i) {
   if (i < 10) {
     const _p = 48;
     const _p$2 = (i + _p | 0) & 255;
@@ -2028,9 +2028,9 @@ function _M0MPC14byte4Byte7to__hexN14to__hex__digitS3320(i) {
 function _M0MPC14byte4Byte7to__hex(b) {
   const _self = _M0MPB13StringBuilder11new_2einner(0);
   const _p = 16;
-  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3320((b / _p | 0) & 255));
+  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348((b / _p | 0) & 255));
   const _p$2 = 16;
-  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3320((b % _p$2 | 0) & 255));
+  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348((b % _p$2 | 0) & 255));
   const _p$3 = _self;
   return _p$3.val;
 }
@@ -2063,7 +2063,7 @@ function _M0MPC16string10StringView11sub_2einner(self, start, end) {
     return $panic();
   }
 }
-function _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i) {
+function _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i) {
   const self = _env._1;
   const logger = _env._0;
   if (i > seg) {
@@ -2085,7 +2085,7 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
     const i = _tmp;
     const seg = _tmp$2;
     if (i >= len) {
-      _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+      _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
       break;
     }
     const code = self.str.charCodeAt(self.start + i | 0);
@@ -2101,28 +2101,28 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
           break _L$2;
         }
         case 10: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\n");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
           continue _L;
         }
         case 13: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\r");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
           continue _L;
         }
         case 8: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\b");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
           continue _L;
         }
         case 9: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\t");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
@@ -2130,7 +2130,7 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
         }
         default: {
           if (_M0IP016_24default__implPB7Compare6op__ltGkE(code, 32)) {
-            _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+            _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
             logger.method_table.method_0(logger.self, "\\u{");
             logger.method_table.method_0(logger.self, _M0MPC14byte4Byte7to__hex(code & 255));
             logger.method_table.method_3(logger.self, 125);
@@ -2144,7 +2144,7 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
         }
       }
     }
-    _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3305(_env, seg, i);
+    _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
     logger.method_table.method_3(logger.self, 92);
     logger.method_table.method_3(logger.self, c);
     _tmp = i + 1 | 0;
@@ -2244,16 +2244,6 @@ function _M0IP016_24default__implPB6Logger16write__substringGRPB13StringBuilderE
 function _M0IP016_24default__implPB4Show10to__stringGRPC14json15JsonDecodeErrorE(self) {
   const logger = _M0MPB13StringBuilder11new_2einner(0);
   _M0IPC14json15JsonDecodeErrorPB4Show6output(self, { self: logger, method_table: _M0FP092moonbitlang_2fcore_2fbuiltin_2fStringBuilder_24as_24_40moonbitlang_2fcore_2fbuiltin_2eLogger });
-  return logger.val;
-}
-function _M0IP016_24default__implPB4Show10to__stringGiE(self) {
-  const logger = _M0MPB13StringBuilder11new_2einner(0);
-  _M0IPC13int3IntPB4Show6output(self, { self: logger, method_table: _M0FP092moonbitlang_2fcore_2fbuiltin_2fStringBuilder_24as_24_40moonbitlang_2fcore_2fbuiltin_2eLogger });
-  return logger.val;
-}
-function _M0IP016_24default__implPB4Show10to__stringGdE(self) {
-  const logger = _M0MPB13StringBuilder11new_2einner(0);
-  _M0IPC16double6DoublePB4Show6output(self, { self: logger, method_table: _M0FP092moonbitlang_2fcore_2fbuiltin_2fStringBuilder_24as_24_40moonbitlang_2fcore_2fbuiltin_2eLogger });
   return logger.val;
 }
 function _M0MPB4Iter4nextGcE(self) {
@@ -2527,7 +2517,7 @@ function _M0FPB28boyer__moore__horspool__find(haystack, needle) {
       return undefined;
     }
   } else {
-    return _M0FPB28boyer__moore__horspool__findN6constrS8125;
+    return _M0FPB28boyer__moore__horspool__findN6constrS8266;
   }
 }
 function _M0FPB18brute__force__find(haystack, needle) {
@@ -2574,7 +2564,7 @@ function _M0FPB18brute__force__find(haystack, needle) {
       return undefined;
     }
   } else {
-    return _M0FPB18brute__force__findN6constrS8126;
+    return _M0FPB18brute__force__findN6constrS8267;
   }
 }
 function _M0MPC16string10StringView4find(self, str) {
@@ -2750,6 +2740,9 @@ function _M0MPC16string6String9to__array(self) {
 }
 function _M0IPC13int3IntPB4Show6output(self, logger) {
   logger.method_table.method_0(logger.self, _M0MPC13int3Int18to__string_2einner(self, 10));
+}
+function _M0IPC13int3IntPB4Show10to__string(self) {
+  return _M0MPC13int3Int18to__string_2einner(self, 10);
 }
 function _M0IPC16string6StringPB4Show6output(self, logger) {
   _M0MPC16string10StringView18escape__to_2einner(new _M0TPC16string10StringView(self, 0, self.length), logger, true);
@@ -3088,8 +3081,8 @@ function _M0MPC16double6Double3max(self, other) {
 function _M0MPC16double6Double10to__string(self) {
   return _M0FPB15ryu__to__string(self);
 }
-function _M0IPC16double6DoublePB4Show6output(self, logger) {
-  logger.method_table.method_0(logger.self, _M0MPC16double6Double10to__string(self));
+function _M0IPC16double6DoublePB4Show10to__string(self) {
+  return _M0MPC16double6Double10to__string(self);
 }
 function _M0MPC15array5Array11unsafe__popGRP49cg_2dzhou12moon__lottie3lib4math6MatrixE(self) {
   return _M0MPB7JSArray3pop(self);
@@ -17566,7 +17559,7 @@ function _M0FP49cg_2dzhou12moon__lottie3lib7runtime24serialize__double__array(va
       if (i > 0) {
         result = `${result},`;
       }
-      result = `${result}${_M0IP016_24default__implPB4Show10to__stringGdE(_M0MPC15array5Array2atGdE(values, i))}`;
+      result = `${result}${_M0IPC16double6DoublePB4Show10to__string(_M0MPC15array5Array2atGdE(values, i))}`;
       _tmp = i + 1 | 0;
       continue;
     } else {
@@ -17663,7 +17656,7 @@ function _M0FP49cg_2dzhou12moon__lottie3lib7runtime23serialize__bezier__path(val
   const vertices = _M0FP49cg_2dzhou12moon__lottie3lib7runtime22serialize__vec2__array(value.vertices);
   const in_tangents = _M0FP49cg_2dzhou12moon__lottie3lib7runtime22serialize__vec2__array(value.in_tangents);
   const out_tangents = _M0FP49cg_2dzhou12moon__lottie3lib7runtime22serialize__vec2__array(value.out_tangents);
-  return `${_M0IP016_24default__implPB4Show10to__stringGiE(closed)}|${vertices}|${in_tangents}|${out_tangents}`;
+  return `${_M0IPC13int3IntPB4Show10to__string(closed)}|${vertices}|${in_tangents}|${out_tangents}`;
 }
 function _M0FP49cg_2dzhou12moon__lottie3lib7runtime19parse__bezier__path(input, fallback) {
   const parts = _M0FP49cg_2dzhou12moon__lottie3lib7runtime13split__string(input, 124);
@@ -18375,7 +18368,7 @@ function _M0FP49cg_2dzhou12moon__lottie3lib8renderer20dash__array__to__svg(dash_
   return buffer.val;
 }
 function _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer8next__id(self, prefix) {
-  const id = `${prefix}_${_M0IP016_24default__implPB4Show10to__stringGiE(self.gradient_count)}`;
+  const id = `${prefix}_${_M0IPC13int3IntPB4Show10to__string(self.gradient_count)}`;
   self.gradient_count = self.gradient_count + 1 | 0;
   return id;
 }
@@ -18767,7 +18760,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
   const p1 = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, x1, y1);
   const p2 = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, x2, y2);
   const scale = _M0FP49cg_2dzhou12moon__lottie3lib8renderer21matrix__stroke__scale(self.current_matrix);
-  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<linearGradient id=\"${id}\" x1=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p1._0)}\" y1=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p1._1)}\" x2=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p2._0)}\" y2=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p2._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<linearGradient id=\"${id}\" x1=\"${_M0IPC16double6DoublePB4Show10to__string(p1._0)}\" y1=\"${_M0IPC16double6DoublePB4Show10to__string(p1._1)}\" x2=\"${_M0IPC16double6DoublePB4Show10to__string(p2._0)}\" y2=\"${_M0IPC16double6DoublePB4Show10to__string(p2._1)}\" gradientUnits=\"userSpaceOnUse\">`);
   let _tmp = 0;
   while (true) {
     const i = _tmp;
@@ -18778,7 +18771,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
       if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
         opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
       }
-      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IP016_24default__implPB4Show10to__stringGdE(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity_stop)}\" />`);
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IPC16double6DoublePB4Show10to__string(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IPC16double6DoublePB4Show10to__string(opacity_stop)}\" />`);
       _tmp = i + 1 | 0;
       continue;
     } else {
@@ -18798,7 +18791,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
   const id = _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer8next__id(self, "grad");
   const p_c = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, cx, cy);
   const p_f = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, fx, fy);
-  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<radialGradient id=\"${id}\" cx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._0)}\" cy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._1)}\" r=\"${_M0IP016_24default__implPB4Show10to__stringGdE(r)}\" fx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._0)}\" fy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<radialGradient id=\"${id}\" cx=\"${_M0IPC16double6DoublePB4Show10to__string(p_c._0)}\" cy=\"${_M0IPC16double6DoublePB4Show10to__string(p_c._1)}\" r=\"${_M0IPC16double6DoublePB4Show10to__string(r)}\" fx=\"${_M0IPC16double6DoublePB4Show10to__string(p_f._0)}\" fy=\"${_M0IPC16double6DoublePB4Show10to__string(p_f._1)}\" gradientUnits=\"userSpaceOnUse\">`);
   let _tmp = 0;
   while (true) {
     const i = _tmp;
@@ -18809,7 +18802,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
       if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
         opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
       }
-      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IP016_24default__implPB4Show10to__stringGdE(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity_stop)}\" />`);
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IPC16double6DoublePB4Show10to__string(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IPC16double6DoublePB4Show10to__string(opacity_stop)}\" />`);
       _tmp = i + 1 | 0;
       continue;
     } else {
@@ -18819,7 +18812,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
   _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, "</radialGradient>");
   const path_data = _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer19current__path__data(self);
   if (path_data.length > 0) {
-    _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer14append__markup(self, `<path d=\"${path_data}\" fill=\"url(#${id})\" fill-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity)}\" fill-rule=\"${self.current_fill_rule}\" />`);
+    _M0MP49cg_2dzhou12moon__lottie3lib8renderer11SvgRenderer14append__markup(self, `<path d=\"${path_data}\" fill=\"url(#${id})\" fill-opacity=\"${_M0IPC16double6DoublePB4Show10to__string(opacity)}\" fill-rule=\"${self.current_fill_rule}\" />`);
     return;
   } else {
     return;
@@ -18830,7 +18823,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
   const p_c = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, cx, cy);
   const p_f = _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix16transform__point(self.current_matrix, fx, fy);
   const scale = _M0FP49cg_2dzhou12moon__lottie3lib8renderer21matrix__stroke__scale(self.current_matrix);
-  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<radialGradient id=\"${id}\" cx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._0)}\" cy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_c._1)}\" r=\"${_M0IP016_24default__implPB4Show10to__stringGdE(r)}\" fx=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._0)}\" fy=\"${_M0IP016_24default__implPB4Show10to__stringGdE(p_f._1)}\" gradientUnits=\"userSpaceOnUse\">`);
+  _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<radialGradient id=\"${id}\" cx=\"${_M0IPC16double6DoublePB4Show10to__string(p_c._0)}\" cy=\"${_M0IPC16double6DoublePB4Show10to__string(p_c._1)}\" r=\"${_M0IPC16double6DoublePB4Show10to__string(r)}\" fx=\"${_M0IPC16double6DoublePB4Show10to__string(p_f._0)}\" fy=\"${_M0IPC16double6DoublePB4Show10to__string(p_f._1)}\" gradientUnits=\"userSpaceOnUse\">`);
   let _tmp = 0;
   while (true) {
     const i = _tmp;
@@ -18841,7 +18834,7 @@ function _M0IP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererP49cg_2dzhou12m
       if (stops.length >= ((Math.imul(p, 4) | 0) + (Math.imul(p, 2) | 0) | 0)) {
         opacity_stop = _M0MPC15array5Array2atGdE(stops, ((Math.imul(p, 4) | 0) + (Math.imul(i, 2) | 0) | 0) + 1 | 0);
       }
-      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IP016_24default__implPB4Show10to__stringGdE(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IP016_24default__implPB4Show10to__stringGdE(opacity_stop)}\" />`);
+      _M0IPB13StringBuilderPB6Logger13write__string(self.defs_buffer, `<stop offset=\"${_M0IPC16double6DoublePB4Show10to__string(offset)}\" stop-color=\"${color}\" stop-opacity=\"${_M0IPC16double6DoublePB4Show10to__string(opacity_stop)}\" />`);
       _tmp = i + 1 | 0;
       continue;
     } else {
@@ -19490,7 +19483,7 @@ function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player29apply__layer__mask_
 }
 function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player10debug__logGRP49cg_2dzhou12moon__lottie3lib8renderer14CanvasRendererE(self, stage) {
   if (self.debug_enabled) {
-    _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(self.debug_logs, `frame=${_M0IP016_24default__implPB4Show10to__stringGdE(self.current_frame)},layer=${self.debug_layer},shape=${self.debug_shape},property=${self.debug_property},stage=${stage}`);
+    _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(self.debug_logs, `frame=${_M0IPC16double6DoublePB4Show10to__string(self.current_frame)},layer=${self.debug_layer},shape=${self.debug_shape},property=${self.debug_property},stage=${stage}`);
     return;
   } else {
     return;
@@ -19498,7 +19491,7 @@ function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player10debug__logGRP49cg_2
 }
 function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player10debug__logGRP49cg_2dzhou12moon__lottie3lib8renderer11SvgRendererE(self, stage) {
   if (self.debug_enabled) {
-    _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(self.debug_logs, `frame=${_M0IP016_24default__implPB4Show10to__stringGdE(self.current_frame)},layer=${self.debug_layer},shape=${self.debug_shape},property=${self.debug_property},stage=${stage}`);
+    _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(self.debug_logs, `frame=${_M0IPC16double6DoublePB4Show10to__string(self.current_frame)},layer=${self.debug_layer},shape=${self.debug_shape},property=${self.debug_property},stage=${stage}`);
     return;
   } else {
     return;
@@ -22717,11 +22710,11 @@ function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player13render__layerGRP49c
   const _bind$2 = layer.name;
   let _tmp;
   if (_bind$2 === undefined) {
-    _tmp = `#${_M0IP016_24default__implPB4Show10to__stringGiE(layer.index)}`;
+    _tmp = `#${_M0IPC13int3IntPB4Show10to__string(layer.index)}`;
   } else {
     const _Some = _bind$2;
     const _name = _Some;
-    _tmp = `${_name}#${_M0IP016_24default__implPB4Show10to__stringGiE(layer.index)}`;
+    _tmp = `${_name}#${_M0IPC13int3IntPB4Show10to__string(layer.index)}`;
   }
   self.debug_layer = _tmp;
   self.debug_shape = "";
@@ -23003,11 +22996,11 @@ function _M0MP49cg_2dzhou12moon__lottie3lib8renderer6Player13render__layerGRP49c
   const _bind$2 = layer.name;
   let _tmp;
   if (_bind$2 === undefined) {
-    _tmp = `#${_M0IP016_24default__implPB4Show10to__stringGiE(layer.index)}`;
+    _tmp = `#${_M0IPC13int3IntPB4Show10to__string(layer.index)}`;
   } else {
     const _Some = _bind$2;
     const _name = _Some;
-    _tmp = `${_name}#${_M0IP016_24default__implPB4Show10to__stringGiE(layer.index)}`;
+    _tmp = `${_name}#${_M0IPC13int3IntPB4Show10to__string(layer.index)}`;
   }
   self.debug_layer = _tmp;
   self.debug_shape = "";
