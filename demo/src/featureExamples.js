@@ -2,8 +2,8 @@ const WIDTH = 240
 const HEIGHT = 180
 const FRAMES = 96
 const CENTER = [WIDTH / 2, HEIGHT / 2, 0]
-const TEXT_SAFE_POSITION = [18, 126, 0]
-const TEXT_SAFE_SIZE = 56
+const TEXT_SAFE_POSITION = [18, 96, 0]
+const TEXT_SAFE_SIZE = 48
 
 const COLORS = {
   ink: [0.07, 0.12, 0.22, 1],
@@ -1848,13 +1848,13 @@ function buildTextFontExample() {
     textLayer({
       name: "Font Text",
       ks: {
-        p: [28, 112, 0],
+        p: [28, 92, 0],
         r: pingPong(-4, 4),
       },
       document: textDocument({
         font: "Arial",
         text: "Moon",
-        size: 42,
+        size: 38,
         fillColor: COLORS.teal,
       }),
     }),
@@ -1866,13 +1866,13 @@ function buildTextTransformExample() {
     textLayer({
       name: "Text Transform",
       ks: {
-        p: pingPong([18, 128, 0], [92, 58, 0]),
+        p: pingPong([18, 104, 0], [84, 46, 0]),
         r: pingPong(-10, 10),
         s: pingPong([92, 92, 100], [114, 114, 100]),
       },
       document: textDocument({
         text: "WAVE",
-        size: 48,
+        size: 44,
         fillColor: COLORS.coral,
       }),
     }),
@@ -1937,10 +1937,10 @@ function buildTextTrackingExample() {
   return animation("text-tracking", [
     textLayer({
       name: "Text Tracking",
-      ks: { p: [12, 126, 0] },
+      ks: { p: [12, 96, 0] },
       document: textDocument({
         text: "WAVE",
-        size: 54,
+        size: 48,
         fillColor: COLORS.teal,
       }),
       animators: [
@@ -2015,10 +2015,10 @@ function buildTextRangeBasedOnExample() {
   return animation("text-range-based-on", [
     textLayer({
       name: "Text Range Based On",
-      ks: { p: [18, 126, 0] },
+      ks: { p: [18, 96, 0] },
       document: textDocument({
         text: "WA VE",
-        size: 54,
+        size: 48,
         fillColor: COLORS.teal,
       }),
       animators: [
