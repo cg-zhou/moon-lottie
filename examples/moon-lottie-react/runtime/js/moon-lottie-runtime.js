@@ -1920,10 +1920,10 @@ const _M0FPC28internal7strconv19left__shift__cheats = [_M0FPC28internal7strconv1
 const _M0FPC28internal7strconv10int__pow10 = [1n, 10n, 100n, 1000n, 10000n, 100000n, 1000000n, 10000000n, 100000000n, 1000000000n, 10000000000n, 100000000000n, 1000000000000n, 10000000000000n, 100000000000000n, 1000000000000000n];
 const _M0FPC28internal7strconv5table = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1e+12, 1e+13, 1e+14, 1e+15, 1e+16, 1e+17, 1e+18, 1e+19, 1e+20, 1e+21, 1e+22, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const _M0FPC28internal7strconv12checked__mulN6constrS1107 = 0n;
-const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1061 = ".";
-const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1062 = "e";
-const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1063 = "E";
-const _M0IPC14json8JsonPathPB4Show6outputN7_2abindS1382 = "~/";
+const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1089 = ".";
+const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1090 = "e";
+const _M0MPC14json12ParseContext16lex__number__endN7_2abindS1091 = "E";
+const _M0IPC14json8JsonPathPB4Show6outputN7_2abindS1410 = "~/";
 const _M0FP29cg_2dzhou14bezier__easing18sample__step__size = 1 / (11 + 0 - 1);
 const _M0MP49cg_2dzhou12moon__lottie3lib4math6Matrix8identityN6recordS114 = new _M0TP49cg_2dzhou12moon__lottie3lib4math6Matrix(1, 0, 0, 1, 0, 0);
 const _M0FP49cg_2dzhou12moon__lottie3lib7runtime27expression__double__handler = new _M0TPC13ref3RefGOWsdisdEdE(undefined);
@@ -1933,8 +1933,8 @@ const _M0FP49cg_2dzhou12moon__lottie3lib8renderer28is__path__segment__token__atN
 const _M0FP49cg_2dzhou12moon__lottie3lib8renderer28strip__path__segment__tokensN5tokenS2108 = "@@SEG@@";
 const _M0FP49cg_2dzhou12moon__lottie3lib8renderer21split__path__segmentsN5tokenS2101 = "@@SEG@@";
 const _M0FP49cg_2dzhou12moon__lottie3lib8renderer14color__to__hexN5charsS2062 = "0123456789ABCDEF";
-const _M0FPB18brute__force__findN6constrS8267 = 0;
-const _M0FPB28boyer__moore__horspool__findN6constrS8266 = 0;
+const _M0FPB18brute__force__findN6constrS8462 = 0;
+const _M0FPB28boyer__moore__horspool__findN6constrS8461 = 0;
 const _M0FPB4seed = _M0FPB12random__seed();
 const _M0FP49cg_2dzhou12moon__lottie3lib6parser31parse__transform__from__decodedN6constrS4845 = true;
 const _M0FP49cg_2dzhou12moon__lottie3lib6parser26parse__layer__fill__effectN6constrS4846 = 0;
@@ -2012,7 +2012,7 @@ function _M0MPC16string6String16unsafe__char__at(self, index) {
     return c1;
   }
 }
-function _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348(i) {
+function _M0MPC14byte4Byte7to__hexN14to__hex__digitS3433(i) {
   if (i < 10) {
     const _p = 48;
     const _p$2 = (i + _p | 0) & 255;
@@ -2028,9 +2028,9 @@ function _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348(i) {
 function _M0MPC14byte4Byte7to__hex(b) {
   const _self = _M0MPB13StringBuilder11new_2einner(0);
   const _p = 16;
-  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348((b / _p | 0) & 255));
+  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3433((b / _p | 0) & 255));
   const _p$2 = 16;
-  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3348((b % _p$2 | 0) & 255));
+  _M0IPB13StringBuilderPB6Logger11write__char(_self, _M0MPC14byte4Byte7to__hexN14to__hex__digitS3433((b % _p$2 | 0) & 255));
   const _p$3 = _self;
   return _p$3.val;
 }
@@ -2063,9 +2063,9 @@ function _M0MPC16string10StringView11sub_2einner(self, start, end) {
     return $panic();
   }
 }
-function _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i) {
-  const self = _env._1;
-  const logger = _env._0;
+function _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i) {
+  const logger = _env._1;
+  const self = _env._0;
   if (i > seg) {
     logger.method_table.method_2(logger.self, _M0MPC16string10StringView11sub_2einner(self, seg, i));
     return;
@@ -2078,14 +2078,14 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
     logger.method_table.method_3(logger.self, 34);
   }
   const len = self.end - self.start | 0;
-  const _env = { _0: logger, _1: self };
+  const _env = { _0: self, _1: logger };
   let _tmp = 0;
   let _tmp$2 = 0;
   _L: while (true) {
     const i = _tmp;
     const seg = _tmp$2;
     if (i >= len) {
-      _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+      _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
       break;
     }
     const code = self.str.charCodeAt(self.start + i | 0);
@@ -2101,28 +2101,28 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
           break _L$2;
         }
         case 10: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\n");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
           continue _L;
         }
         case 13: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\r");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
           continue _L;
         }
         case 8: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\b");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
           continue _L;
         }
         case 9: {
-          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+          _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
           logger.method_table.method_0(logger.self, "\\t");
           _tmp = i + 1 | 0;
           _tmp$2 = i + 1 | 0;
@@ -2130,7 +2130,7 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
         }
         default: {
           if (_M0IP016_24default__implPB7Compare6op__ltGkE(code, 32)) {
-            _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+            _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
             logger.method_table.method_0(logger.self, "\\u{");
             logger.method_table.method_0(logger.self, _M0MPC14byte4Byte7to__hex(code & 255));
             logger.method_table.method_3(logger.self, 125);
@@ -2144,7 +2144,7 @@ function _M0MPC16string10StringView18escape__to_2einner(self, logger, quote) {
         }
       }
     }
-    _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3333(_env, seg, i);
+    _M0MPC16string10StringView18escape__to_2einnerN14flush__segmentS3418(_env, seg, i);
     logger.method_table.method_3(logger.self, 92);
     logger.method_table.method_3(logger.self, c);
     _tmp = i + 1 | 0;
@@ -2263,7 +2263,7 @@ function _M0MPC16string10StringView12view_2einner(self, start_offset, end_offset
   }
   return start_offset >= 0 && (start_offset <= end_offset$2 && end_offset$2 <= (self.end - self.start | 0)) ? new _M0TPC16string10StringView(self.str, self.start + start_offset | 0, self.start + end_offset$2 | 0) : _M0FPC15abort5abortGRPB4JsonE("Invalid index for View");
 }
-function _M0IPC16string10StringViewPB4Show10to__string(self) {
+function _M0MPC16string10StringView9to__owned(self) {
   return self.str.substring(self.start, self.end);
 }
 function _M0MPC16string10StringView4iter(self) {
@@ -2460,7 +2460,7 @@ function _M0MPC16string6String29offset__of__nth__char_2einner(self, i, start_off
   return i >= 0 ? _M0MPC16string6String30offset__of__nth__char__forward(self, i, start_offset, end_offset$2) : _M0MPC16string6String31offset__of__nth__char__backward(self, -i | 0, start_offset, end_offset$2);
 }
 function _M0IPB13StringBuilderPB6Logger11write__view(self, str) {
-  self.val = `${self.val}${_M0IPC16string10StringViewPB4Show10to__string(str)}`;
+  self.val = `${self.val}${_M0MPC16string10StringView9to__owned(str)}`;
 }
 function _M0FPB28boyer__moore__horspool__find(haystack, needle) {
   const haystack_len = haystack.end - haystack.start | 0;
@@ -2517,7 +2517,7 @@ function _M0FPB28boyer__moore__horspool__find(haystack, needle) {
       return undefined;
     }
   } else {
-    return _M0FPB28boyer__moore__horspool__findN6constrS8266;
+    return _M0FPB28boyer__moore__horspool__findN6constrS8461;
   }
 }
 function _M0FPB18brute__force__find(haystack, needle) {
@@ -2564,7 +2564,7 @@ function _M0FPB18brute__force__find(haystack, needle) {
       return undefined;
     }
   } else {
-    return _M0FPB18brute__force__findN6constrS8267;
+    return _M0FPB18brute__force__findN6constrS8462;
   }
 }
 function _M0MPC16string10StringView4find(self, str) {
@@ -5562,18 +5562,18 @@ function _M0FPC28internal7strconv13parse__double(str) {
     return _M0FPC28internal7strconv11syntax__errGdE();
   }
 }
-function _M0IPC14json15JsonDecodeErrorPB4Show6output(_x_631, _x_632) {
-  const _JsonDecodeError = _x_631;
-  const _$42$arg_633 = _JsonDecodeError._0;
-  _x_632.method_table.method_0(_x_632.self, "JsonDecodeError(");
-  const _$42$x0_634 = _$42$arg_633._0;
-  const _$42$x1_635 = _$42$arg_633._1;
-  _x_632.method_table.method_0(_x_632.self, "(");
-  _M0MPB6Logger13write__objectGRPC14json8JsonPathE(_x_632, _$42$x0_634);
-  _x_632.method_table.method_0(_x_632.self, ", ");
-  _M0MPB6Logger13write__objectGsE(_x_632, _$42$x1_635);
-  _x_632.method_table.method_0(_x_632.self, ")");
-  _x_632.method_table.method_0(_x_632.self, ")");
+function _M0IPC14json15JsonDecodeErrorPB4Show6output(_x_636, _x_637) {
+  const _JsonDecodeError = _x_636;
+  const _$42$arg_638 = _JsonDecodeError._0;
+  _x_637.method_table.method_0(_x_637.self, "JsonDecodeError(");
+  const _$42$x0_639 = _$42$arg_638._0;
+  const _$42$x1_640 = _$42$arg_638._1;
+  _x_637.method_table.method_0(_x_637.self, "(");
+  _M0MPB6Logger13write__objectGRPC14json8JsonPathE(_x_637, _$42$x0_639);
+  _x_637.method_table.method_0(_x_637.self, ", ");
+  _M0MPB6Logger13write__objectGsE(_x_637, _$42$x1_640);
+  _x_637.method_table.method_0(_x_637.self, ")");
+  _x_637.method_table.method_0(_x_637.self, ")");
 }
 function _M0FPC14json20offset__to__position(input, offset) {
   let _tmp = 0;
@@ -5722,7 +5722,7 @@ function _M0MPC14json12ParseContext19expect__ascii__char(ctx, c) {
 }
 function _M0MPC14json12ParseContext16lex__number__end(ctx, start, end) {
   const s = _M0MPC16string10StringView12view_2einner(ctx.input, start, end);
-  if (!_M0MPC16string10StringView8contains(s, new _M0TPC16string10StringView(_M0MPC14json12ParseContext16lex__number__endN7_2abindS1061, 0, _M0MPC14json12ParseContext16lex__number__endN7_2abindS1061.length)) && (!_M0MPC16string10StringView8contains(s, new _M0TPC16string10StringView(_M0MPC14json12ParseContext16lex__number__endN7_2abindS1062, 0, _M0MPC14json12ParseContext16lex__number__endN7_2abindS1062.length)) && !_M0MPC16string10StringView8contains(s, new _M0TPC16string10StringView(_M0MPC14json12ParseContext16lex__number__endN7_2abindS1063, 0, _M0MPC14json12ParseContext16lex__number__endN7_2abindS1063.length)))) {
+  if (!_M0MPC16string10StringView8contains(s, new _M0TPC16string10StringView(_M0MPC14json12ParseContext16lex__number__endN7_2abindS1089, 0, _M0MPC14json12ParseContext16lex__number__endN7_2abindS1089.length)) && (!_M0MPC16string10StringView8contains(s, new _M0TPC16string10StringView(_M0MPC14json12ParseContext16lex__number__endN7_2abindS1090, 0, _M0MPC14json12ParseContext16lex__number__endN7_2abindS1090.length)) && !_M0MPC16string10StringView8contains(s, new _M0TPC16string10StringView(_M0MPC14json12ParseContext16lex__number__endN7_2abindS1091, 0, _M0MPC14json12ParseContext16lex__number__endN7_2abindS1091.length)))) {
     let parsed_int;
     let _try_err;
     _L: {
@@ -6345,7 +6345,7 @@ function _M0MPC14json12ParseContext10lex__value(ctx, allow_rbracket) {
                       }
                       const _n = _bind$4._0;
                       const _repr = _bind$4._1;
-                      return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0IPC16string10StringViewPB4Show10to__string(repr))));
+                      return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0MPC16string10StringView9to__owned(repr))));
                     } else {
                       if (_x$2 >= 49 && _x$2 <= 57) {
                         const _bind$3 = _M0MPC14json12ParseContext21lex__decimal__integer(ctx, ctx.offset - 2 | 0);
@@ -6358,7 +6358,7 @@ function _M0MPC14json12ParseContext10lex__value(ctx, allow_rbracket) {
                         }
                         const _n = _bind$4._0;
                         const _repr = _bind$4._1;
-                        return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0IPC16string10StringViewPB4Show10to__string(repr))));
+                        return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0MPC16string10StringView9to__owned(repr))));
                       }
                       return _M0MPC14json12ParseContext21invalid__char_2einnerGRPB4JsonE(ctx, -1);
                     }
@@ -6375,7 +6375,7 @@ function _M0MPC14json12ParseContext10lex__value(ctx, allow_rbracket) {
                     }
                     const _n = _bind$3._0;
                     const _repr = _bind$3._1;
-                    return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0IPC16string10StringViewPB4Show10to__string(repr))));
+                    return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0MPC16string10StringView9to__owned(repr))));
                   } else {
                     if (_x >= 49 && _x <= 57) {
                       const _bind$2 = _M0MPC14json12ParseContext21lex__decimal__integer(ctx, ctx.offset - 1 | 0);
@@ -6388,7 +6388,7 @@ function _M0MPC14json12ParseContext10lex__value(ctx, allow_rbracket) {
                       }
                       const _n = _bind$3._0;
                       const _repr = _bind$3._1;
-                      return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0IPC16string10StringViewPB4Show10to__string(repr))));
+                      return new _M0DTPC16result6ResultGRPC14json5TokenRPC14json10ParseErrorE2Ok(new _M0DTPC14json5Token6Number(_n, _M0MPC16option6Option3mapGRPC16string10StringViewsE(_repr, (repr) => _M0MPC16string10StringView9to__owned(repr))));
                     } else {
                       if (_x === 34) {
                         const _bind$2 = _M0MPC14json12ParseContext11lex__string(ctx);
@@ -6750,7 +6750,7 @@ function _M0IPC14json8JsonPathPB4Show6outputN11build__pathS181(path, logger) {
       const _key = _Key._1;
       _M0IPC14json8JsonPathPB4Show6outputN11build__pathS181(_parent, logger);
       logger.method_table.method_3(logger.self, 47);
-      if (!_M0MPC16string6String13contains__any(_key, new _M0TPC16string10StringView(_M0IPC14json8JsonPathPB4Show6outputN7_2abindS1382, 0, _M0IPC14json8JsonPathPB4Show6outputN7_2abindS1382.length))) {
+      if (!_M0MPC16string6String13contains__any(_key, new _M0TPC16string10StringView(_M0IPC14json8JsonPathPB4Show6outputN7_2abindS1410, 0, _M0IPC14json8JsonPathPB4Show6outputN7_2abindS1410.length))) {
         logger.method_table.method_0(logger.self, _key);
         return;
       }
@@ -17538,7 +17538,7 @@ function _M0FP49cg_2dzhou12moon__lottie3lib7runtime13split__string(input, delimi
       $bound_check(input, i);
       const _p = input.charCodeAt(i);
       if (_p === delimiter_uint16) {
-        _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(parts, _M0IPC16string10StringViewPB4Show10to__string(_M0MPC16string6String11sub_2einner(input, start, i)));
+        _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(parts, _M0MPC16string10StringView9to__owned(_M0MPC16string6String11sub_2einner(input, start, i)));
         start = i + 1 | 0;
       }
       _tmp = i + 1 | 0;
@@ -17547,7 +17547,7 @@ function _M0FP49cg_2dzhou12moon__lottie3lib7runtime13split__string(input, delimi
       break;
     }
   }
-  _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(parts, _M0IPC16string10StringViewPB4Show10to__string(_M0MPC16string6String11sub_2einner(input, start, input.length)));
+  _M0MPC15array5Array4pushGRP49cg_2dzhou12moon__lottie3lib5model5AssetE(parts, _M0MPC16string10StringView9to__owned(_M0MPC16string6String11sub_2einner(input, start, input.length)));
   return parts;
 }
 function _M0FP49cg_2dzhou12moon__lottie3lib7runtime24serialize__double__array(values) {
