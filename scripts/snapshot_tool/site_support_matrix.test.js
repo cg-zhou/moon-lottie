@@ -65,7 +65,7 @@ test('audited feature demos use section-specific animations instead of unrelated
   }
 });
 
-test('support page demo regressions keep audited feature examples aligned and complete', async () => {
+test('support page demo regressions preserve audited example alignment and text safety', async () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const { featureExampleMap } = await importRepoModule(repoRoot, 'demo', 'src', 'featureExamples.js');
 
@@ -86,6 +86,9 @@ test('support page demo regressions keep audited feature examples aligned and co
   assert.deepEqual(timeRemapLayer?.ks?.a?.k, [120, 90, 0]);
   assert.equal(timeRemapAsset?.w, 240);
   assert.equal(timeRemapAsset?.h, 180);
+
+  const fontExample = featureExampleMap.text['字体']?.animationData;
+  assert.equal(fontExample?.layers?.[0]?.t?.d?.k?.[0]?.s?.t, 'Moon');
 
   for (const [feature, example] of Object.entries(featureExampleMap.text ?? {})) {
     const animationData = example?.animationData;
