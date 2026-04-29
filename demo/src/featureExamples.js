@@ -2,6 +2,8 @@ const WIDTH = 240
 const HEIGHT = 180
 const FRAMES = 96
 const CENTER = [WIDTH / 2, HEIGHT / 2, 0]
+const TEXT_SAFE_POSITION = [18, 126, 0]
+const TEXT_SAFE_SIZE = 56
 
 const COLORS = {
   ink: [0.07, 0.12, 0.22, 1],
@@ -1151,7 +1153,7 @@ function buildAnchorPointExample() {
   return animation("anchor-point", [
     shapeLayer({
       name: "Pivot Dot",
-      ks: { p: [90, 60, 0] },
+      ks: { p: CENTER },
       groups: [shapeGroup([ellipse([12, 12]), fill(COLORS.ink)])],
     }),
     shapeLayer({
@@ -1821,11 +1823,11 @@ function buildTextGlyphExample() {
     textLayer({
       name: "Glyph Text",
       ks: {
-        p: [36, 128, 0],
+        p: TEXT_SAFE_POSITION,
       },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.blue,
       }),
       animators: [
@@ -1846,13 +1848,13 @@ function buildTextFontExample() {
     textLayer({
       name: "Font Text",
       ks: {
-        p: [44, 110, 0],
+        p: [28, 112, 0],
         r: pingPong(-4, 4),
       },
       document: textDocument({
         font: "Arial",
-        text: "Moon Font",
-        size: 44,
+        text: "Moon",
+        size: 42,
         fillColor: COLORS.teal,
       }),
     }),
@@ -1864,13 +1866,13 @@ function buildTextTransformExample() {
     textLayer({
       name: "Text Transform",
       ks: {
-        p: pingPong([48, 130, 0], [184, 58, 0]),
+        p: pingPong([18, 128, 0], [92, 58, 0]),
         r: pingPong(-10, 10),
         s: pingPong([92, 92, 100], [114, 114, 100]),
       },
       document: textDocument({
-        text: "MOVE",
-        size: 60,
+        text: "WAVE",
+        size: 48,
         fillColor: COLORS.coral,
       }),
     }),
@@ -1884,10 +1886,10 @@ function buildTextFillExample() {
   return animation("text-fill", [
     textLayer({
       name: "Text Fill",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.blue,
       }),
       animators: [
@@ -1907,10 +1909,10 @@ function buildTextStrokeExample() {
   return animation("text-stroke", [
     textLayer({
       name: "Text Stroke",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.white,
         strokeColor: COLORS.ink,
         strokeWidth: 4,
@@ -1935,15 +1937,15 @@ function buildTextTrackingExample() {
   return animation("text-tracking", [
     textLayer({
       name: "Text Tracking",
-      ks: { p: [40, 128, 0] },
+      ks: { p: [12, 126, 0] },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: 54,
         fillColor: COLORS.teal,
       }),
       animators: [
         textAnimator(
-          { tracking: pingPong(0, 28) },
+          { tracking: pingPong(0, 18) },
           { start: 0, end: 100, shape: 2 },
         ),
       ],
@@ -1958,10 +1960,10 @@ function buildTextAnchorGroupingExample() {
   return animation("text-anchor-grouping", [
     textLayer({
       name: "Text Anchor Grouping",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.violet,
       }),
       animators: [
@@ -1985,10 +1987,10 @@ function buildTextRangeUnitsExample() {
   return animation("text-range-units", [
     textLayer({
       name: "Text Range Units",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.blue,
       }),
       animators: [
@@ -2013,10 +2015,10 @@ function buildTextRangeBasedOnExample() {
   return animation("text-range-based-on", [
     textLayer({
       name: "Text Range Based On",
-      ks: { p: [36, 128, 0] },
+      ks: { p: [18, 126, 0] },
       document: textDocument({
         text: "WA VE",
-        size: 60,
+        size: 54,
         fillColor: COLORS.teal,
       }),
       animators: [
@@ -2041,10 +2043,10 @@ function buildTextRangeQuantityExample() {
   return animation("text-range-quantity", [
     textLayer({
       name: "Text Range Quantity",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.coral,
       }),
       animators: [
@@ -2070,10 +2072,10 @@ function buildTextRangeShapeExample() {
   return animation("text-range-shape", [
     textLayer({
       name: "Text Range Shape",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: 52,
         fillColor: COLORS.amber,
       }),
       animators: [
@@ -2098,10 +2100,10 @@ function buildTextEaseHighExample() {
   return animation("text-range-ease-high", [
     textLayer({
       name: "Text Ease High",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.blue,
       }),
       animators: [
@@ -2127,10 +2129,10 @@ function buildTextEaseLowExample() {
   return animation("text-range-ease-low", [
     textLayer({
       name: "Text Ease Low",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.teal,
       }),
       animators: [
@@ -2156,10 +2158,10 @@ function buildTextRandomOrderExample() {
   return animation("text-range-random-order", [
     textLayer({
       name: "Text Random Order",
-      ks: { p: [40, 128, 0] },
+      ks: { p: TEXT_SAFE_POSITION },
       document: textDocument({
         text: "WAVE",
-        size: 64,
+        size: TEXT_SAFE_SIZE,
         fillColor: COLORS.violet,
       }),
       animators: [
@@ -2187,6 +2189,7 @@ function buildPrecompExample() {
       name: "Wave Precomp",
       refId: "comp_wave",
       ks: {
+        a: CENTER,
         p: CENTER,
         s: pingPong([90, 90, 100], [110, 110, 100]),
         r: pingPong(-8, 8),
@@ -2196,6 +2199,8 @@ function buildPrecompExample() {
     assets: [
       {
         id: "comp_wave",
+        w: WIDTH,
+        h: HEIGHT,
         layers: [
           shapeLayer({
             name: "Precomp Dot",
@@ -2216,12 +2221,14 @@ function buildTimeRemapExample() {
       name: "Time Remap",
       refId: "comp_time",
       tm: pingPong(0.3, 2.3),
-      ks: { p: CENTER },
+      ks: { a: CENTER, p: CENTER },
     }),
   ], {
     assets: [
       {
         id: "comp_time",
+        w: WIDTH,
+        h: HEIGHT,
         layers: [
           shapeLayer({
             name: "Time Guide",

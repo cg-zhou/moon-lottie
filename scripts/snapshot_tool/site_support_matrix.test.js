@@ -64,3 +64,43 @@ test('audited feature demos use section-specific animations instead of unrelated
     }
   }
 });
+
+test('support page demo regressions keep audited feature examples aligned and complete', async () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const { featureExampleMap } = await importRepoModule(repoRoot, 'demo', 'src', 'featureExamples.js');
+
+  const anchorExample = featureExampleMap.transforms['锚点']?.animationData;
+  assert.ok(anchorExample);
+  assert.deepEqual(anchorExample.layers[0]?.ks?.p?.k, anchorExample.layers[1]?.ks?.p?.k);
+
+  const precompExample = featureExampleMap.other['预合成']?.animationData;
+  const precompLayer = precompExample?.layers?.[0];
+  const precompAsset = precompExample?.assets?.[0];
+  assert.deepEqual(precompLayer?.ks?.a?.k, [120, 90, 0]);
+  assert.equal(precompAsset?.w, 240);
+  assert.equal(precompAsset?.h, 180);
+
+  const timeRemapExample = featureExampleMap.other['时间重映射']?.animationData;
+  const timeRemapLayer = timeRemapExample?.layers?.[0];
+  const timeRemapAsset = timeRemapExample?.assets?.[0];
+  assert.deepEqual(timeRemapLayer?.ks?.a?.k, [120, 90, 0]);
+  assert.equal(timeRemapAsset?.w, 240);
+  assert.equal(timeRemapAsset?.h, 180);
+
+  for (const [feature, example] of Object.entries(featureExampleMap.text ?? {})) {
+    const animationData = example?.animationData;
+    const supportedGlyphs = new Set((animationData?.chars ?? []).map((char) => char.ch));
+    for (const layer of animationData?.layers ?? []) {
+      if (layer?.ty !== 5) {
+        continue;
+      }
+      const text = layer?.t?.d?.k?.[0]?.s?.t ?? '';
+      for (const char of text.replace(/\s+/g, '')) {
+        assert.ok(
+          supportedGlyphs.size === 0 || supportedGlyphs.has(char),
+          `text.${feature} uses unsupported demo glyph "${char}"`,
+        );
+      }
+    }
+  }
+});
