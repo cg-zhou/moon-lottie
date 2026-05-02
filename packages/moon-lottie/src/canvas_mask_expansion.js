@@ -3,37 +3,64 @@ function normalizeExpansion(expansion) {
     return Number.isFinite(value) ? value : 0;
 }
 
+const morphologyBuffer = {
+    alpha: null,
+    result: null,
+    length: 0,
+    ensure(len) {
+        if (this.length < len) {
+            this.alpha = new Uint8ClampedArray(len);
+            this.result = new Uint8ClampedArray(len);
+            this.length = len;
+        }
+    }
+};
+
 export function applyAlphaMorphology(alpha, width, height, radius, operation = 'erode') {
     const pixelRadius = Math.max(0, Math.round(Math.abs(Number(radius) || 0)));
-    const source = alpha instanceof Uint8ClampedArray ? alpha : new Uint8ClampedArray(alpha);
+    const len = alpha.length;
+    morphologyBuffer.ensure(len);
+    const source = morphologyBuffer.alpha;
+    source.set(alpha);
     if (pixelRadius === 0) {
-        return new Uint8ClampedArray(source);
+        return alpha;
     }
-    const result = new Uint8ClampedArray(source.length);
+    const result = morphologyBuffer.result;
     const dilate = operation === 'dilate';
+    
+    // Quick path: avoid inner loop if pixelRadius is 0 (already handled)
+    
     for (let y = 0; y < height; y += 1) {
         const minY = Math.max(0, y - pixelRadius);
         const maxY = Math.min(height - 1, y + pixelRadius);
+        const yOffset = y * width;
         for (let x = 0; x < width; x += 1) {
             const minX = Math.max(0, x - pixelRadius);
             const maxX = Math.min(width - 1, x + pixelRadius);
             let alphaValue = dilate ? 0 : 255;
             for (let sampleY = minY; sampleY <= maxY; sampleY += 1) {
+                const sampleYOffset = sampleY * width;
                 for (let sampleX = minX; sampleX <= maxX; sampleX += 1) {
-                    const sampleAlpha = source[(sampleY * width + sampleX) * 4 + 3];
-                    alphaValue = dilate
-                        ? Math.max(alphaValue, sampleAlpha)
-                        : Math.min(alphaValue, sampleAlpha);
+                    const sampleAlpha = source[(sampleYOffset + sampleX) * 4 + 3];
+                    if (dilate) {
+                        if (sampleAlpha > alphaValue) alphaValue = sampleAlpha;
+                        if (alphaValue === 255) break; 
+                    } else {
+                        if (sampleAlpha < alphaValue) alphaValue = sampleAlpha;
+                        if (alphaValue === 0) break;
+                    }
                 }
+                if (dilate && alphaValue === 255) break;
+                if (!dilate && alphaValue === 0) break;
             }
-            const offset = (y * width + x) * 4;
+            const offset = (yOffset + x) * 4;
             result[offset] = 255;
             result[offset + 1] = 255;
             result[offset + 2] = 255;
             result[offset + 3] = alphaValue;
         }
     }
-    return result;
+    return result.slice(0, len);
 }
 
 function applyNegativeExpansion(pathCtx, expansion) {

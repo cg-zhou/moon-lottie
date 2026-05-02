@@ -54,6 +54,25 @@ export function createCanvasRuntimeBridge(options = {}) {
     const fillRuleStack = [];
     const offscreenStack = [];
     const matteStack = [];
+    const pool = {
+        canvases: [],
+        get(w, h) {
+            let c = this.canvases.pop();
+            if (!c) {
+                c = document.createElement('canvas');
+            }
+            if (c.width !== w || c.height !== h) {
+                c.width = w;
+                c.height = h;
+            }
+            return c;
+        },
+        release(c) {
+            if (c && this.canvases.length < 10) {
+                this.canvases.push(c);
+            }
+        }
+    };
 
     const expressionModule = createExpressionModule({
         getAnimationData: () => getExpressionAnimationData(),
@@ -208,9 +227,11 @@ export function createCanvasRuntimeBridge(options = {}) {
                 const entry = getCurrentOffscreenEntry();
                 if (!entry || entry.maskState) return;
                 const sourceCanvas = ctx?.canvas || entry.offscreen;
-                const maskCanvas = createBlankCanvasLike(document, sourceCanvas);
-                const pathCanvas = createBlankCanvasLike(document, sourceCanvas);
-                const workCanvas = createBlankCanvasLike(document, sourceCanvas);
+                const w = sourceCanvas.width;
+                const h = sourceCanvas.height;
+                const maskCanvas = pool.get(w, h);
+                const pathCanvas = pool.get(w, h);
+                const workCanvas = pool.get(w, h);
                 entry.maskState = {
                     contentCtx: ctx,
                     maskCanvas,
@@ -290,6 +311,12 @@ export function createCanvasRuntimeBridge(options = {}) {
                     state.contentCtx.drawImage(state.maskCanvas, 0, 0);
                     state.contentCtx.restore();
                 }
+
+                // Release pooled canvases
+                pool.release(state.maskCanvas);
+                pool.release(state.pathCanvas);
+                pool.release(state.workCanvas);
+
                 entry.maskState = null;
                 ctx = state.contentCtx;
             },
