@@ -17,7 +17,8 @@ test "snapshot_render_circle" {
   inspect(
     commands,
     content=(
-      #|[SetTransform({a: 1, b: 0, c: 0, d: 1, e: 0, f: 0}), ClearRect(0, 0, 500, 500), Save, ConcatTransform({a: 1, b: 0, c: 0, d: 1, e: 250, f: 250}), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(0, -50), CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0), CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50), CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0), CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50), ClosePath, Fill(255, 0, 0, 1), Restore]
+      #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 500, 500), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 250, f: 250 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(0, -50), CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0), CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50), CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0), CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50), ClosePath, Fill(255, 0, 0, 1), Restore]
+
 
     ),
   )

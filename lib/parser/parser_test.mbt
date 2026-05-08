@@ -6,26 +6,26 @@ struct JsonTest3 {
   FromJson(fields(x(rename="renamedX"))),
   ToJson(fields(x(rename="renamedX"))),
   Eq,
-  Show,
+  Debug,
 )
 
 ///|
 enum JsonTest4 {
   A(x~ : Int)
   B(x~ : Int, y~ : Int)
-} derive(FromJson, ToJson, Eq, Show)
+} derive(FromJson, ToJson, Eq, Debug)
 
 ///|
 test "derive rename mapping json args" {
   let input = JsonTest3::{ x: 123, y: 456 }
   let expected : Json = { "renamedX": 123, "y": 456 }
   assert_eq(input.to_json(), expected)
-  assert_eq(@json.from_json(expected), input)
+  assert_true(@json.from_json(expected) == input)
 
   let input = JsonTest4::A(x=123)
   let expected : Json = ["A", { "x": 123 }]
   assert_eq(input.to_json(), expected)
-  assert_eq(@json.from_json(expected), input)
+  assert_true(@json.from_json(expected) == input)
 }
 
 ///|
@@ -68,8 +68,8 @@ test "parse_animation_with_optional_root_fields" {
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse animation optional root fields: \{e}")
   }
-  inspect(ani.name, content="Some(\"demo\")")
-  inspect(ani.three_d, content="Some(1)")
+  debug_inspect(ani.name, content="Some(\"demo\")")
+  debug_inspect(ani.three_d, content="Some(1)")
 }
 
 ///|
@@ -518,9 +518,9 @@ test "parse_position_keyframe_infra_fields" {
     @model.PropertyValue::Animated(keyframes) => {
       inspect(keyframes.length(), content="2")
       let kf = keyframes[0]
-      inspect(kf.hold, content="Some(1)")
-      inspect(kf.value_out_tangent, content="Some([10, 0, 0])")
-      inspect(kf.value_in_tangent, content="Some([-10, 0, 0])")
+      debug_inspect(kf.hold, content="Some(1)")
+      debug_inspect(kf.value_out_tangent, content="Some([10, 0, 0])")
+      debug_inspect(kf.value_in_tangent, content="Some([-10, 0, 0])")
       match (kf.in_tangent, kf.out_tangent) {
         (Some(it), Some(ot)) => {
           match (it.x, ot.x) {
@@ -548,7 +548,7 @@ test "parse_transform_split_position_with_x_and_y_fields" {
     e => fail("Failed to parse split position transform: \{e}")
   }
   let tr = ani.layers[0].transform
-  assert_eq(tr.split, Some(true))
+  debug_inspect(tr.split, content="Some(true)")
   match tr.px {
     Some(px) =>
       match px.value {
@@ -736,9 +736,9 @@ test "parse_layer_parent_and_matte" {
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse layer parent/matte: \{e}")
   }
-  inspect(ani.layers[0].parent, content="Some(1)")
-  inspect(ani.layers[0].matte_type, content="Some(2)")
-  inspect(ani.layers[0].matte_inherit, content="Some(1)")
+  debug_inspect(ani.layers[0].parent, content="Some(1)")
+  debug_inspect(ani.layers[0].matte_type, content="Some(2)")
+  debug_inspect(ani.layers[0].matte_inherit, content="Some(1)")
 }
 
 ///|
@@ -749,7 +749,7 @@ test "parse_layer_auto_orient" {
   let ani = @parser.parse_animation(json) catch {
     e => fail("Failed to parse layer auto orient: \{e}")
   }
-  inspect(ani.layers[0].auto_orient, content="Some(1)")
+  debug_inspect(ani.layers[0].auto_orient, content="Some(1)")
 }
 
 ///|
@@ -803,7 +803,7 @@ test "parse_layer_time_remap_expression" {
   }
   match ani.layers[0].time_remap {
     Some(time_remap) => {
-      inspect(time_remap.expression, content="Some(\"var $bm_rt; $bm_rt = loopOut('cycle');\")")
+      debug_inspect(time_remap.expression, content="Some(\"var $bm_rt; $bm_rt = loopOut('cycle');\")")
       match time_remap.value {
         @model.PropertyValue::Animated(keys) => {
           assert_eq(keys.length(), 2)
@@ -844,7 +844,7 @@ test "parse_shape_path_expression" {
   }
   match shape.data {
     @model.ShapeData::Path(path_shape) => {
-      inspect(
+      debug_inspect(
         path_shape.path.expression,
         content=(
           "Some(\"var $bm_rt; $bm_rt = createPath(thisProperty.points(), thisProperty.inTangents(), thisProperty.outTangents(), false);\")"

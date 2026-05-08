@@ -195,7 +195,7 @@ fn is_option_token(value : String) -> Bool {
 
 ///|
 fn looks_like_json_path(value : String) -> Bool {
-  value.length() >= 5 && value[value.length() - 5:value.length()].to_string() == ".json"
+  value.length() >= 5 && value[value.length() - 5:value.length()].to_owned() == ".json"
 }
 
 ///|
@@ -307,9 +307,9 @@ fn file_stem(path : String) -> String {
   }
 
   if dot_index > name_start {
-    path[name_start:dot_index].to_string()
+    path[name_start:dot_index].to_owned()
   } else {
-    path[name_start:path.length()].to_string()
+    path[name_start:path.length()].to_owned()
   }
 }
 
@@ -330,7 +330,7 @@ fn ensure_dir_all(path : String) -> Unit raise {
   let mut current = ""
   let mut index = 0
   if path.length() >= 2 && path[1].to_int().unsafe_to_char() == ':' {
-    current = path[0:2].to_string()
+    current = path[0:2].to_owned()
     index = 2
     if index < path.length() && is_path_separator(path[index].to_int().unsafe_to_char()) {
       current = current + "/"
@@ -346,7 +346,7 @@ fn ensure_dir_all(path : String) -> Unit raise {
     if index == path.length() ||
       is_path_separator(path[index].to_int().unsafe_to_char()) {
       if index > segment_start {
-        let segment = path[segment_start:index].to_string()
+        let segment = path[segment_start:index].to_owned()
         current = join_path(current, segment)
         if @fs.path_exists(current) {
           let current_is_dir = try { @fs.is_dir(current) } catch { _ => false }
@@ -602,7 +602,7 @@ fn strip_trailing_line_endings(text : String) -> String {
       break
     }
   }
-  text[0:end].to_string()
+  text[0:end].to_owned()
 }
 
 ///|

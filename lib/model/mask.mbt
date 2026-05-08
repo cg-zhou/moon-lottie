@@ -8,7 +8,7 @@ pub(all) enum MaskMode {
   Darken
   Difference
   None
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct Mask {

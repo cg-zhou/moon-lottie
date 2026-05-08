@@ -69,7 +69,10 @@ test "sibling groups with own fill should not leak paths to next group" {
   }
 
   assert_eq(fill_count, 2)
-  assert_eq(second_fill_path_move_count, Some(1))
+  assert_true(
+    second_fill_path_move_count == Some(1),
+    "second fill should emit exactly one MoveTo after BeginPath",
+  )
 }
 
 test "rounded rectangle path preserves roundness in rendered commands" {
@@ -133,7 +136,7 @@ test "svg-exported layer renders top-level groups in reverse order" {
       assert_eq(g, 0)
       assert_eq(b, 0)
     }
-    _ => fail("Expected last fill to be red, got \{last_fill}")
+    _ => fail("Expected last fill to be red, got \{debug(last_fill)}")
   }
 }
 
@@ -555,7 +558,10 @@ test "path expressions from parsed shape properties are evaluated during render"
       _ => ()
     }
   }
-  assert_eq(first_move_command_point, Some((100.0, 0.0)))
+  assert_true(
+    first_move_command_point == Some((100.0, 0.0)),
+    "first MoveTo should land on the circle's right-most point",
+  )
 }
 
 test "image layers use resolved asset source instead of asset id" {
@@ -579,7 +585,10 @@ test "image layers use resolved asset source instead of asset id" {
       _ => ()
     }
   }
-  assert_eq(image_info, Some(("data:image/png;base64,AAAA", 0)))
+  assert_true(
+    image_info == Some(("data:image/png;base64,AAAA", 0)),
+    "image layer should resolve asset source and preserve the first asset index",
+  )
 }
 
 test "image layers preserve matched asset index for wasm bridge" {
@@ -603,7 +612,10 @@ test "image layers preserve matched asset index for wasm bridge" {
       _ => ()
     }
   }
-  assert_eq(image_info, Some(("data:image/png;base64,BBBB", 1)))
+  assert_true(
+    image_info == Some(("data:image/png;base64,BBBB", 1)),
+    "image layer should preserve the matched asset index for the wasm bridge",
+  )
 }
 
 test "image layer honors split position transform" {

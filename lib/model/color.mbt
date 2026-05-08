@@ -7,7 +7,7 @@ pub struct Color {
   g : Double
   b : Double
   a : Double
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub fn Color::new(r : Double, g : Double, b : Double, a : Double) -> Color {
