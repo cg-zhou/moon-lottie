@@ -26,6 +26,38 @@
             display: grid;
             place-items: center;
         }
+        .preview-play-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 62px;
+            height: 62px;
+            display: grid;
+            place-items: center;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.52);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(8px);
+            transform: translate(-50%, -50%) scale(0.92);
+            opacity: 0;
+            transition: opacity 160ms ease, transform 160ms ease;
+            pointer-events: none;
+            z-index: 3;
+        }
+        .preview-play-hint::before {
+            content: '';
+            width: 0;
+            height: 0;
+            margin-left: 3px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 14px solid rgba(15, 23, 42, 0.62);
+        }
+        .preview-stage.is-paused .preview-play-hint {
+            opacity: 0.82;
+            transform: translate(-50%, -50%) scale(1);
+        }
         #lottie-container {
             width: 100vw;
             height: 105.5vh;
@@ -43,6 +75,7 @@
 <body>
     <main class="preview-stage" aria-label="Moon Lottie Super Mario preview">
             <div id="lottie-container" aria-label="Animated Super Mario"></div>
+            <div class="preview-play-hint" aria-hidden="true"></div>
     </main>
 
     <script type="module">
@@ -59,9 +92,15 @@
         })
 
         const container = document.getElementById('lottie-container')
+        const previewStage = document.querySelector('.preview-stage')
         let isPaused = false
 
+        const syncPausedState = () => {
+            previewStage?.classList.toggle('is-paused', isPaused)
+        }
+
         player.play?.()
+        syncPausedState()
 
         container?.addEventListener('click', () => {
             if (isPaused) {
@@ -71,6 +110,8 @@
                 player.pause?.()
                 isPaused = true
             }
+
+            syncPausedState()
         })
 
         window.addEventListener('beforeunload', () => {
