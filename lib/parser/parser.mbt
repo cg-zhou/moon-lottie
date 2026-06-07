@@ -6,8 +6,8 @@ pub suberror LottieError {
   UnexpectedType(String, String) // key, expected type
 } derive(Debug)
 
-pub impl Show for LottieError with to_string(self) {
-  @debug.to_string(self)
+pub impl Show for LottieError with output(self, logger) {
+  logger.write_string(@debug.to_string(self))
 }
 
 ///|

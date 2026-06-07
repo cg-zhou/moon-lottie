@@ -1673,6 +1673,85 @@ tbody tr:last-child td {
     linear-gradient(135deg, rgba(15, 23, 42, 0.04), transparent 62%);
 }
 
+.hero-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 560px);
+  gap: 36px;
+  align-items: center;
+}
+
+.hero-showcase__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hero-showcase__preview {
+  min-width: 0;
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.hero-browser-frame {
+  width: min(100%, 500px);
+  aspect-ratio: 1.45;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #dbdbdbeb;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 2;
+}
+
+.hero-browser-frame__topbar {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.hero-browser-frame__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.hero-browser-frame__dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: block;
+}
+
+.hero-browser-frame__dots span:nth-child(1) { background: #ff5f57; }
+.hero-browser-frame__dots span:nth-child(2) { background: #febc2e; }
+.hero-browser-frame__dots span:nth-child(3) { background: #28c840; }
+
+.hero-browser-frame__title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.hero-browser-frame__body {
+  height: calc(100% - 46px);
+}
+
+.hero-browser-frame__iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+}
+
 .hero-card .ant-card-body {
   padding: 32px 0 !important;
   display: flex;
@@ -2230,7 +2309,15 @@ tbody tr:last-child td {
   line-height: 1.75;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1000px) {
+  .hero-showcase {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-showcase__preview {
+    justify-content: center;
+  }
+
   .feature-example-card__content {
     grid-template-columns: 1fr;
   }
@@ -2712,6 +2799,14 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 560px) {
+  .hero-browser-frame {
+    border-radius: 18px;
+  }
+
+  .hero-browser-frame__topbar {
+    padding: 0 14px;
+  }
+
   .github-ribbon span {
     display: none;
   }

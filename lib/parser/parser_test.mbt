@@ -19,12 +19,12 @@ enum JsonTest4 {
 test "derive rename mapping json args" {
   let input = JsonTest3::{ x: 123, y: 456 }
   let expected : Json = { "renamedX": 123, "y": 456 }
-  assert_eq(input.to_json(), expected)
+  assert_true(input.to_json() == expected)
   assert_true(@json.from_json(expected) == input)
 
   let input = JsonTest4::A(x=123)
   let expected : Json = ["A", { "x": 123 }]
-  assert_eq(input.to_json(), expected)
+  assert_true(input.to_json() == expected)
   assert_true(@json.from_json(expected) == input)
 }
 
@@ -353,7 +353,7 @@ test "parse_repeater_shape_with_typed_tr" {
         _ => fail("repeater offset should be static")
       }
       match rp.transform.position.value {
-        @model.PropertyValue::Static(v) => inspect(v, content="[10, 20]")
+        @model.PropertyValue::Static(v) => debug_inspect(v, content="[10, 20]")
         _ => fail("repeater transform position should be static")
       }
     }
@@ -395,7 +395,7 @@ test "parse_text_stroke_document_and_animator_properties" {
     @model.LayerData::Text(text_data) => {
       match text_data.text.value {
         @model.PropertyValue::Static(doc) => {
-          inspect(doc.stroke_color, content="[1, 0, 0]")
+          debug_inspect(doc.stroke_color, content="[1, 0, 0]")
           inspect(doc.stroke_width, content="3")
           inspect(doc.stroke_over_fill, content="true")
         }
@@ -406,7 +406,7 @@ test "parse_text_stroke_document_and_animator_properties" {
           match stroke_color.value {
             @model.PropertyValue::Animated(keyframes) => {
               inspect(keyframes.length(), content="2")
-              inspect(keyframes[0].start_value, content="[0, 1, 0]")
+              debug_inspect(keyframes[0].start_value, content="[0, 1, 0]")
             }
             _ => fail("text animator stroke color should be animated")
           }
@@ -852,7 +852,7 @@ test "parse_shape_path_expression" {
       )
       match path_shape.path.value {
         @model.PropertyValue::Static(path) => {
-          assert_eq(path.vertices, [[0.0, 0.0], [10.0, 0.0]])
+          assert_true(path.vertices == [[0.0, 0.0], [10.0, 0.0]])
           assert_eq(path.closed, false)
         }
         _ => fail("Expected static path property")

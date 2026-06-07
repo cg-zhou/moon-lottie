@@ -893,7 +893,7 @@ test "text stroke animators render glyph stroke in lottie-web order" {
     }
   }
 
-  inspect(paint_order, content="[\"fill\", \"stroke\"]")
+  debug_inspect(paint_order, content="[\"fill\", \"stroke\"]")
   assert_eq(saw_green_stroke, true)
 }
 
@@ -1220,7 +1220,7 @@ test "text animator randomize changes selector order" {
       _ => ()
     }
   }
-  inspect(opacities, content="[0.625, 0.875, 0.125, 0.375]")
+  debug_inspect(opacities, content="[0.625, 0.875, 0.125, 0.375]")
 }
 
 test "text animator selector based on words shares word index" {
@@ -1241,7 +1241,7 @@ test "text animator selector based on words shares word index" {
       _ => ()
     }
   }
-  inspect(opacities, content="[0.75, 0.25]")
+  debug_inspect(opacities, content="[0.75, 0.25]")
 }
 
 test "text animator selector range units index uses raw indices" {
@@ -1262,7 +1262,7 @@ test "text animator selector range units index uses raw indices" {
       _ => ()
     }
   }
-  inspect(opacities, content="[1, 0.75, 0.25]")
+  debug_inspect(opacities, content="[1, 0.75, 0.25]")
 }
 
 test "matte source render resets transform to identity during matte exit" {
@@ -1347,7 +1347,7 @@ test "track matte target renders inside an isolated layer before matte buffers" 
     }
     _ =>
       fail(
-        "Expected BeginLayer, PrepareMatteLayer, EndMatteExit, and EndLayer commands. Commands: \{commands}",
+        "Expected BeginLayer, PrepareMatteLayer, EndMatteExit, and EndLayer commands. Commands: \{debug(commands)}",
       )
   }
 }

@@ -15,6 +15,7 @@ const NAV_ITEMS = [
 const PAGE_IDS = new Set(NAV_ITEMS.map((item) => item.id))
 const DEFAULT_PAGE_ID = "overview"
 const BASE_PATH = (import.meta.env.BASE_URL || "/").replace(/\/$/, "")
+const PREVIEW_PATH = `${BASE_PATH || ""}/preview.html`
 
 const STATUS_META = {
   supported: { label: "支持", color: "success", Icon: CircleCheck },
@@ -366,18 +367,41 @@ function getPathForPage(pageId) {
 function OverviewPage({ onNavigate }) {
   return (
     <div className="page-stack">
-      <Typography.Title className="hero-card__title">极速、现代的 Lottie 动画渲染引擎</Typography.Title>
-      <Typography.Paragraph className="hero-card__lead">
-          Moon Lottie 是对性能和跨平台一致性的重新思考。基于 <MoonBitLink /> 强大的类型系统与编译优化，为 Web 提供极致的渲染体验。
-      </Typography.Paragraph>
-      <div className="hero-card__actions">
-        <Button type="primary" size="large" onClick={() => onNavigate("playground")}>
-          在线演示
-        </Button>
-        <Button size="large" onClick={() => onNavigate("features")}>
-          查看支持矩阵
-        </Button>
-      </div>
+      <section className="hero-showcase">
+        <div className="hero-showcase__copy">
+          <Typography.Title className="hero-card__title">极速、现代的 Lottie 动画渲染引擎</Typography.Title>
+          <Typography.Paragraph className="hero-card__lead">
+            Moon Lottie 是对性能和跨平台一致性的重新思考。基于 <MoonBitLink /> 强大的类型系统与编译优化，为 Web 提供极致的渲染体验。
+          </Typography.Paragraph>
+          <div className="hero-card__actions">
+            <Button type="primary" size="large" onClick={() => onNavigate("playground")}>
+              在线演示
+            </Button>
+            <Button size="large" onClick={() => onNavigate("features")}>
+              查看支持矩阵
+            </Button>
+          </div>
+        </div>
+
+        <div className="hero-showcase__preview">
+          <div className="hero-browser-frame">
+            <div className="hero-browser-frame__topbar">
+              <div className="hero-browser-frame__dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div className="hero-browser-frame__title">Moon Lottie</div>
+            </div>
+            <div className="hero-browser-frame__body">
+              <iframe
+                className="hero-browser-frame__iframe"
+                src={PREVIEW_PATH}
+                title="Moon Lottie preview"
+                loading="lazy"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="section-block">
         <div className="section-heading">

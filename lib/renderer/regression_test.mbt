@@ -22,7 +22,7 @@ test "regression_starfish" {
   let json = starfish_json
   // Sample 0%, 50%, 100%
   // Starfish op=301
-  inspect(
+  debug_inspect(
     run_frame_test(json, 0.0),
     content=(
       #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 800, 600), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 397.96, f: 286.023 }), SetOpacity(1), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 2.04, f: 13.977 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(71, 20), CubicTo(71, -17.083, 103.315, 130.97, 103.315, 130.97), CubicTo(103.315, 130.97, 6.234, 75.734, 2.919, 73.705), CubicTo(-97.477, 16.439999999999998, -92.634, 138.73, -92.634, 138.73), CubicTo(
@@ -83,7 +83,7 @@ test "regression_starfish" {
 
     ),
   )
-  inspect(
+  debug_inspect(
     run_frame_test(json, 150.0),
     content=(
       #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 800, 600), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 397.96, f: 286.023 }), SetOpacity(1), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 2.04, f: 13.977 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(71, 20), CubicTo(71, -17.083, 103.315, 130.97, 103.315, 130.97), CubicTo(103.315, 130.97, 6.234, 75.734, 2.919, 73.705), CubicTo(-97.477, 16.439999999999998, -92.634, 138.73, -92.634, 138.73), CubicTo(
@@ -144,7 +144,7 @@ test "regression_starfish" {
 
     ),
   )
-  inspect(
+  debug_inspect(
     run_frame_test(json, 300.0),
     content=(
       #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 800, 600), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 397.96, f: 286.023 }), SetOpacity(1), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 2.04, f: 13.977 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(71, 20), CubicTo(71, -17.083, 103.315, 130.97, 103.315, 130.97), CubicTo(103.315, 130.97, 6.234, 75.734, 2.919, 73.705), CubicTo(-97.477, 16.439999999999998, -92.634, 138.73, -92.634, 138.73), CubicTo(
@@ -210,7 +210,7 @@ test "regression_starfish" {
 ///|
 test "regression_bacon" {
   let json = bacon_json
-  inspect(
+  debug_inspect(
     run_frame_test(json, 0.0),
     content=(
       #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 500, 500), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 250, f: 250 }), SetOpacity(1), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(19, 0), CubicTo(19, -10.493, 10.493, -19, 0, -19), CubicTo(-10.493, -19, -19, -10.493, -19, 0), CubicTo(-19, 10.493, -10.493, 19, 0, 19), CubicTo(10.493, 19, 19, 10.493, 19, 0), ClosePath, Fill(255, 127, 0, 1), Restore, Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(-115.5, -123), CubicTo(-115.5, -123, -115.5, 123, -115.5, 123), CubicTo(-115.5, 123, 115.5, 123, 115.5, 123), CubicTo(115.5, 123, 115.5, -123, 115.5, -123), CubicTo(115.5, -123, -115.5, -123, -115.5, -123), ClosePath, Fill(243, 155, 35, 1), Restore, Restore]
@@ -218,7 +218,7 @@ test "regression_bacon" {
 
     ),
   )
-  inspect(
+  debug_inspect(
     run_frame_test(json, 20.0),
     content=(
       #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 500, 500), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 250, f: 250 }), SetOpacity(1), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(19, 0), CubicTo(19, -10.493, 10.493, -19, 0, -19), CubicTo(-10.493, -19, -19, -10.493, -19, 0), CubicTo(-19, 10.493, -10.493, 19, 0, 19), CubicTo(10.493, 19, 19, 10.493, 19, 0), ClosePath, Fill(255, 127, 0, 1), Restore, Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(-115.5, -123), CubicTo(-115.5, -123, -115.5, 123, -115.5, 123), CubicTo(-115.5, 123, 115.5, 123, 115.5, 123), CubicTo(115.5, 123, 115.5, -123, 115.5, -123), CubicTo(115.5, -123, -115.5, -123, -115.5, -123), ClosePath, Fill(243, 155, 35, 1), Restore, Restore]

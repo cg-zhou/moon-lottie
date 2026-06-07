@@ -14,7 +14,7 @@ test "snapshot_render_circle" {
 
   let commands = recorder.get_commands()
   // Compare with expected commands
-  inspect(
+  debug_inspect(
     commands,
     content=(
       #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 500, 500), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 250, f: 250 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(0, -50), CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0), CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50), CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0), CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50), ClosePath, Fill(255, 0, 0, 1), Restore]
@@ -57,7 +57,7 @@ test "snapshot_render_static_full_opacity_zero_expansion_add_mask_keeps_clip_fas
     })
   if !has_clip || has_begin_mask {
     fail(
-      "Simple add-only mask should stay on the clip fast path. Commands: \{commands}",
+      "Simple add-only mask should stay on the clip fast path. Commands: \{debug(commands)}",
     )
   }
 }
@@ -96,7 +96,7 @@ test "snapshot_render_multiple_add_masks_stack_clip_fast_path" {
     .count()
   if has_begin_mask || clip_count != 1 {
     fail(
-      "Multiple add masks should stay on one clip fast path. Commands: \{commands}",
+      "Multiple add masks should stay on one clip fast path. Commands: \{debug(commands)}",
     )
   }
 }
@@ -134,7 +134,7 @@ test "snapshot_render_add_mask_with_partial_opacity_uses_mask_composite" {
     })
   if has_clip || !has_partial_add_mask {
     fail(
-      "Add mask with partial opacity should use SVG-style mask compositing. Commands: \{commands}",
+      "Add mask with partial opacity should use SVG-style mask compositing. Commands: \{debug(commands)}",
     )
   }
 }
@@ -172,7 +172,7 @@ test "snapshot_render_add_mask_with_animated_opacity_uses_mask_composite" {
     })
   if has_clip || !has_animated_add_mask {
     fail(
-      "Animated add mask opacity should use SVG-style mask compositing. Commands: \{commands}",
+      "Animated add mask opacity should use SVG-style mask compositing. Commands: \{debug(commands)}",
     )
   }
 }
@@ -218,13 +218,13 @@ test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
         "Layer content should render before SVG-style mask compositing starts",
       )
     }
-    _ => fail("Expected Fill and BeginMaskComposite commands. Commands: \{commands}")
+    _ => fail("Expected Fill and BeginMaskComposite commands. Commands: \{debug(commands)}")
   }
   // The JSON mask modes appear in the order `a` -> `i` -> `s`
   // (Add -> Intersect -> Subtract), and the new mask compositor preserves that
   // exact SVG-style accumulation sequence using the shared renderer constants
   // (1=Add, 3=Intersect, 2=Subtract).
-  inspect(mask_modes, content="[1, 3, 2]")
+  debug_inspect(mask_modes, content="[1, 3, 2]")
 }
 
 ///|
@@ -273,7 +273,7 @@ test "snapshot_render_composite_mask_uses_layer_transform_space" {
     }
     None =>
       fail(
-        "Expected composite mask path commands to be emitted for parented layer. Commands: \{commands}",
+        "Expected composite mask path commands to be emitted for parented layer. Commands: \{debug(commands)}",
       )
   }
 }
@@ -311,7 +311,7 @@ test "snapshot_render_add_mask_with_expansion_uses_mask_composite" {
     })
   if has_clip || !has_expanded_add_mask {
     fail(
-      "Add mask with expansion should use SVG-style mask compositing. Commands: \{commands}",
+      "Add mask with expansion should use SVG-style mask compositing. Commands: \{debug(commands)}",
     )
   }
 }
@@ -349,7 +349,7 @@ test "snapshot_render_add_mask_with_animated_zero_expansion_still_uses_mask_comp
     })
   if has_clip || !has_composite_mask {
     fail(
-      "Animated mask expansion should force SVG-style mask compositing even at zero. Commands: \{commands}",
+      "Animated mask expansion should force SVG-style mask compositing even at zero. Commands: \{debug(commands)}",
     )
   }
 }
@@ -377,7 +377,7 @@ test "snapshot_render_shape_closed_flag_without_path_c" {
     })
   if !has_close_path {
     fail(
-      "Expected ClosePath from shape.closed fallback, but none was emitted. Commands: \{commands}",
+      "Expected ClosePath from shape.closed fallback, but none was emitted. Commands: \{debug(commands)}",
     )
   }
 }
@@ -411,7 +411,7 @@ test "snapshot_merge_paths_noop" {
     })
   if has_evenodd {
     fail(
-      "MergePaths should be a no-op: SetFillRule('evenodd') must not appear. Commands: \{commands}",
+      "MergePaths should be a no-op: SetFillRule('evenodd') must not appear. Commands: \{debug(commands)}",
     )
   }
   // Fill shape with no `r` property defaults to nonzero
@@ -425,7 +425,7 @@ test "snapshot_merge_paths_noop" {
     })
   if !(has_nonzero) {
     fail(
-      "SetFillRule('nonzero') from fill shape r=1 missing. Commands: \{commands}",
+      "SetFillRule('nonzero') from fill shape r=1 missing. Commands: \{debug(commands)}",
     )
   }
 }
@@ -458,7 +458,7 @@ test "snapshot_fill_rule_evenodd" {
     })
   if !(has_evenodd) {
     fail(
-      "SetFillRule('evenodd') missing for fill with r=2. Commands: \{commands}",
+      "SetFillRule('evenodd') missing for fill with r=2. Commands: \{debug(commands)}",
     )
   }
 }
@@ -506,7 +506,7 @@ test "snapshot_render_alpha_matte" {
       }
     })
   if !(has_prepare && has_begin_exit && has_end_exit) {
-    fail("Two-buffer matte pattern missing. Commands: \{commands}")
+    fail("Two-buffer matte pattern missing. Commands: \{debug(commands)}")
   }
 }
 
@@ -549,7 +549,7 @@ test "snapshot_render_matte_in_comp_space" {
   }
   if !matte_source_at_comp_pos {
     fail(
-      "Matte source should be rendered from composition transform space. Commands: \{commands}",
+      "Matte source should be rendered from composition transform space. Commands: \{debug(commands)}",
     )
   }
 }
@@ -589,7 +589,7 @@ test "snapshot_group_without_paint_contributes_paths" {
     })
   if !has_fill {
     fail(
-      "Fill command missing – group without paint did not contribute paths. Commands: \{commands}",
+      "Fill command missing – group without paint did not contribute paths. Commands: \{debug(commands)}",
     )
   }
   // Also check there is at least one CubicTo (from the ellipse) before the fill.
@@ -603,7 +603,7 @@ test "snapshot_group_without_paint_contributes_paths" {
     })
   if !has_cubic {
     fail(
-      "CubicTo command missing – group ellipse paths not rendered. Commands: \{commands}",
+      "CubicTo command missing – group ellipse paths not rendered. Commands: \{debug(commands)}",
     )
   }
 }
@@ -643,7 +643,7 @@ test "snapshot_group_without_paint_applies_transform" {
     })
   if !has_translated_path {
     fail(
-      "Paths from group without paint were not transformed by group's local matrix. Commands: \{commands}",
+      "Paths from group without paint were not transformed by group's local matrix. Commands: \{debug(commands)}",
     )
   }
 }
@@ -679,7 +679,7 @@ test "snapshot_merge_paths_add_with_path_groups" {
   }
   if cubic_count < 8 {
     fail(
-      "Expected at least 8 CubicTo commands (2 ellipses × 4 segments) but got \{cubic_count}. Commands: \{commands}",
+      "Expected at least 8 CubicTo commands (2 ellipses × 4 segments) but got \{cubic_count}. Commands: \{debug(commands)}",
     )
   }
   // Also verify the fill color (blue-ish for pants)
@@ -693,7 +693,7 @@ test "snapshot_merge_paths_add_with_path_groups" {
     })
   if !has_pants_fill {
     fail(
-      "Pants-colored fill missing from MergePaths Add rendering. Commands: \{commands}",
+      "Pants-colored fill missing from MergePaths Add rendering. Commands: \{debug(commands)}",
     )
   }
 }
@@ -731,11 +731,11 @@ test "snapshot_painted_group_and_fill_share_z_order" {
     }
   }
   if red_fill_idx == -1 || blue_fill_idx == -1 {
-    fail("Missing expected red/blue fills. Commands: \{commands}")
+    fail("Missing expected red/blue fills. Commands: \{debug(commands)}")
   }
   if red_fill_idx > blue_fill_idx {
     fail(
-      "Expected red painted-group fill to be rendered before blue sibling fill (blue on top). Commands: \{commands}",
+      "Expected red painted-group fill to be rendered before blue sibling fill (blue on top). Commands: \{debug(commands)}",
     )
   }
 }
@@ -787,12 +787,12 @@ test "snapshot_ellipse_direction_ccw_d3" {
   // d=3 CCW: first vertex = top (0, -50), first segment ends at LEFT (-50, 0)
   if move_x != 0.0 || move_y != -50.0 {
     fail(
-      "CCW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
+      "CCW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{debug(commands)}",
     )
   }
   if first_cubic_ex != -50.0 || first_cubic_ey != 0.0 {
     fail(
-      "CCW ellipse first segment should end at left (-50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{commands}",
+      "CCW ellipse first segment should end at left (-50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{debug(commands)}",
     )
   }
 }
@@ -844,12 +844,12 @@ test "snapshot_ellipse_direction_cw_d1" {
   // d=1 CW: first vertex = top (0, -50), first segment ends at RIGHT (50, 0)
   if move_x != 0.0 || move_y != -50.0 {
     fail(
-      "CW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
+      "CW ellipse should start at top (0, -50), got (\{move_x}, \{move_y}). Commands: \{debug(commands)}",
     )
   }
   if first_cubic_ex != 50.0 || first_cubic_ey != 0.0 {
     fail(
-      "CW ellipse first segment should end at right (50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{commands}",
+      "CW ellipse first segment should end at right (50, 0), got (\{first_cubic_ex}, \{first_cubic_ey}). Commands: \{debug(commands)}",
     )
   }
 }
@@ -889,7 +889,7 @@ test "snapshot_rect_direction_ccw_d3" {
   }
   if move_x != 50.0 || move_y != -50.0 {
     fail(
-      "CCW rect (d=3) should start at top-right (50, -50), got (\{move_x}, \{move_y}). Commands: \{commands}",
+      "CCW rect (d=3) should start at top-right (50, -50), got (\{move_x}, \{move_y}). Commands: \{debug(commands)}",
     )
   }
 }

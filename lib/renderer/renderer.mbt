@@ -221,8 +221,8 @@ pub enum DrawCommand {
   EndMaskComposite
 } derive(Debug, Eq)
 
-pub impl Show for DrawCommand with to_string(self) {
-  @debug.to_string(self)
+pub impl Show for DrawCommand with output(self, logger) {
+  logger.write_string(@debug.to_string(self))
 }
 
 ///|
