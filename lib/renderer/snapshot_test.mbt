@@ -14,12 +14,26 @@ test "snapshot_render_circle" {
 
   let commands = recorder.get_commands()
   // Compare with expected commands
-  debug_inspect(
-    commands,
+  inspect(
+    @debug.to_string(commands),
     content=(
-      #|[SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), ClearRect(0, 0, 500, 500), Save, ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 250, f: 250 }), SetOpacity(1), SetFillRule("nonzero"), BeginPath, MoveTo(0, -50), CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0), CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50), CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0), CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50), ClosePath, Fill(255, 0, 0, 1), Restore]
-
-
+      #|[
+      #|  SetTransform({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+      #|  ClearRect(0, 0, 500, 500),
+      #|  Save,
+      #|  ConcatTransform({ a: 1, b: 0, c: 0, d: 1, e: 250, f: 250 }),
+      #|  SetOpacity(1),
+      #|  SetFillRule("nonzero"),
+      #|  BeginPath,
+      #|  MoveTo(0, -50),
+      #|  CubicTo(27.614237499999998, -50, 50, -27.614237499999998, 50, 0),
+      #|  CubicTo(50, 27.614237499999998, 27.614237499999998, 50, 0, 50),
+      #|  CubicTo(-27.614237499999998, 50, -50, 27.614237499999998, -50, 0),
+      #|  CubicTo(-50, -27.614237499999998, -27.614237499999998, -50, 0, -50),
+      #|  ClosePath,
+      #|  Fill(255, 0, 0, 1),
+      #|  Restore,
+      #|]
     ),
   )
 }
@@ -224,7 +238,7 @@ test "snapshot_render_mixed_masks_apply_after_content_in_svg_order" {
   // (Add -> Intersect -> Subtract), and the new mask compositor preserves that
   // exact SVG-style accumulation sequence using the shared renderer constants
   // (1=Add, 3=Intersect, 2=Subtract).
-  debug_inspect(mask_modes, content="[1, 3, 2]")
+  inspect(@debug.to_string(mask_modes), content="[1, 3, 2]")
 }
 
 ///|
